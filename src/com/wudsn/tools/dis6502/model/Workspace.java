@@ -49,6 +49,21 @@ public final class Workspace {
 		return userEquateList;
 	}
 
+	/** Clears the transient definition/reference flags on all equates. Does not fire a "changed" event. */
+	public void clearEquateFlags() {
+		systemEquateList.clearFlags();
+		userEquateList.clearFlags();
+	}
+
+	/** Finds the SDX symbol for a PC address, or {@code null} if there is none. */
+	public String findSymbolByAddress(int segmentIndex, int address, int addressOffset) {
+		Symbol symbol = segmentList.getSegment(segmentIndex).findSymbol(address);
+		if (symbol != null) {
+			return symbol.getSymbol() + Memory.addressOffsetToString(addressOffset);
+		}
+		return null;
+	}
+
 	public InstructionSet getInstructionSet(ProcessorType processorType) {
 		switch (processorType) {
 		case MOS6502:

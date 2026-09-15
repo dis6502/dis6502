@@ -12,10 +12,7 @@ package com.wudsn.tools.dis6502.model;
  * The C++ version's {@code SetPass}/{@code SetSegmentNumber}/{@code
  * SendInfo} log through the global {@code Application} object; that is not
  * ported yet, so they default to no-ops here - override them once
- * application-level logging exists. {@code StartDisassembly} (the timing
- * wrapper that calls {@code Disassembly::DisassembleInternal}) is not
- * ported yet either, deferred to when {@code Disassembly.disassembleInternal}
- * itself is ported.
+ * application-level logging exists.
  *
  * @author Peter Dell
  */
@@ -31,6 +28,18 @@ public class DisassemblyProgressMonitor {
 
 	public boolean isVerbose() {
 		return verbose;
+	}
+
+	/** Runs {@code disassembly}'s disassembly. @return the elapsed time in microseconds. */
+	public long startDisassembly(Disassembly disassembly) {
+		long start = System.nanoTime();
+		disassembleInternal(disassembly);
+		long stop = System.nanoTime();
+		return (stop - start) / 1000;
+	}
+
+	protected void disassembleInternal(Disassembly disassembly) {
+		disassembly.disassembleInternal();
 	}
 
 	public void setPass(String pass) {
