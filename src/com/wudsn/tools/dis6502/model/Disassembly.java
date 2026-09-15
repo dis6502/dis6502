@@ -49,16 +49,13 @@ import com.wudsn.tools.base.common.HexUtility;
  * {@code cDisByteType} is likewise promoted to the {@link #byteType}
  * field.</li>
  * <li>Pass 4's {@code ReservedNop2Byte}/{@code ReservedNop3Byte} cases
- * display the just-read operand byte(s) correctly here, rather than
- * matching the C++ source: there, {@code DIS_GET_WORD_IN_PASS_4(bByte,
- * cLow, ...)} passes the byte-sized {@code cLow} as the macro's word
- * out-parameter, so the actual bytes read get truncated away into
- * {@code cLow} and the code goes on to display the stale, unrelated
- * {@code wAddr} left over from a previous switch case/iteration instead -
- * an evident copy-paste bug (mixing up {@code cLow} and {@code wAddr}), not
- * a deliberate quirk, and not practically reproducible in a meaningful way
- * (it would require carrying a "stale value from whatever an unrelated
- * earlier case happened to leave behind" across calls).</li>
+ * display the just-read operand byte(s) correctly here. The original C++
+ * source had a variable mix-up bug there (passing the byte-sized {@code
+ * cLow} as {@code DIS_GET_WORD_IN_PASS_4}'s word out-parameter truncated
+ * the read bytes away, so the code went on to display a stale, unrelated
+ * {@code wAddr} left over from a previous switch case/iteration); that bug
+ * has since been fixed upstream in Disassembly.cpp, and this port already
+ * matched the corrected behavior.</li>
  * </ul>
  *
  * @author Peter Dell
@@ -1584,8 +1581,6 @@ public final class Disassembly {
 				disassemblyWriter.flushAndAddLineWithComment(opcodeBuffer, 1, 0);
 				break;
 
-			// See the class-level "Design deviations" note: displays the byte actually read,
-			// not the C++ source's stale/unrelated wAddr.
 			case ReservedNop2Byte: {
 				int cLow = nextByteInPass4(disassemblyWriter, by);
 				lineWriter.string(profile.directiveBYTE).space();
@@ -1596,8 +1591,6 @@ public final class Disassembly {
 				break;
 			}
 
-			// See the class-level "Design deviations" note: displays the bytes actually read,
-			// not the C++ source's stale/unrelated wAddr.
 			case ReservedNop3Byte: {
 				int address = nextWordInPass4(disassemblyWriter, by);
 				lineWriter.string(profile.directiveBYTE).space();
