@@ -10,9 +10,6 @@ package com.wudsn.tools.dis6502.model;
  * {@link ComputerSystemType}.
  * <p>
  * Ported from systems/ComputerSystemFactory.h / ComputerSystemFactory.cpp.
- * {@code ATARI800} is not ported yet ({@link Atari800} needs the much
- * larger AtariDOS/disk-image subsystem, deferred); {@link
- * #getComputerSystem(ComputerSystemType)} throws for it in the meantime.
  *
  * @author Peter Dell
  */
@@ -29,12 +26,14 @@ public final class ComputerSystemFactory {
 	private static final ComputerSystemTypeInfo ORIC_INFO = new ComputerSystemTypeInfo(ComputerSystemType.ORIC,
 			"ORIC", "Oric", "Oric");
 
+	private final Atari800 atari800;
 	private final Atari5200 atari5200;
 	private final C64 c64;
 	private final Oric oric;
 	private final Unknown unknown;
 
 	public ComputerSystemFactory() {
+		atari800 = new Atari800(getComputerSystemTypeInfo(ComputerSystemType.ATARI800));
 		atari5200 = new Atari5200(getComputerSystemTypeInfo(ComputerSystemType.ATARI5200));
 		c64 = new C64(getComputerSystemTypeInfo(ComputerSystemType.C64));
 		oric = new Oric(getComputerSystemTypeInfo(ComputerSystemType.ORIC));
@@ -77,14 +76,14 @@ public final class ComputerSystemFactory {
 		switch (type) {
 		case UNKNOWN:
 			return unknown;
+		case ATARI800:
+			return atari800;
 		case ATARI5200:
 			return atari5200;
 		case C64:
 			return c64;
 		case ORIC:
 			return oric;
-		case ATARI800:
-			throw new UnsupportedOperationException("Atari800 is not ported yet.");
 		default:
 			throw new IllegalArgumentException("Invalid computer system type: " + type + ".");
 		}
