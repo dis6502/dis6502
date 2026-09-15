@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Writes one disassembly listing file: line-numbered, optionally
@@ -22,11 +23,6 @@ import java.io.OutputStream;
  * {@code java.io.File}/{@code java.io.OutputStream} directly instead, the
  * same simplification already used elsewhere in this port for C++-specific
  * infrastructure classes Java's standard library already covers.
- * <p>
- * {@code UTF8} is ported exactly as observed, not as its name suggests: the
- * C++ source writes the raw UTF-16 code units of the string as little-endian
- * byte pairs, rather than actually UTF-8-encoding it. This looks like a bug,
- * but is preserved here rather than silently "fixed".
  *
  * @author Peter Dell
  */
@@ -170,13 +166,7 @@ public final class DisassemblyResultWriter implements AutoCloseable {
 		}
 
 		case UTF8: {
-			byte[] buffer = new byte[value.length() * 2];
-			for (int i = 0; i < value.length(); i++) {
-				char c = value.charAt(i);
-				buffer[i * 2] = (byte) (c & 0xFF);
-				buffer[i * 2 + 1] = (byte) ((c >> 8) & 0xFF);
-			}
-			outputStream.write(buffer);
+			outputStream.write(value.getBytes(StandardCharsets.UTF_8));
 			break;
 		}
 		}
