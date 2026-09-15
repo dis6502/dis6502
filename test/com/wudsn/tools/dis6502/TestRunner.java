@@ -1,0 +1,89 @@
+/*
+ * Copyright (C) 2025 <a href="https://www.wudsn.com" target="_top">Peter Dell</a>
+ *
+ * This file is part of dis6502.
+ */
+package com.wudsn.tools.dis6502;
+
+import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
+import com.wudsn.tools.dis6502.model.ComputerSystemTest;
+import com.wudsn.tools.dis6502.model.DisassemblyResultFileTest;
+import com.wudsn.tools.dis6502.model.DisassemblyResultTest;
+import com.wudsn.tools.dis6502.model.EquateTest;
+import com.wudsn.tools.dis6502.model.SegmentTest;
+
+/**
+ * Runs the ported unit tests and reports a pass/fail summary.
+ * <p>
+ * This is a new, minimal aggregator - not a port of MainTest.h/MainTest.cpp,
+ * whose {@code Execute}/{@code ExecuteVariant} drive a much larger
+ * integration suite (workspace load/save, an external MADS assembler
+ * invocation, reference-file comparison across notation variants) that
+ * depends on {@code WorkspaceLogic} and other application-level pieces not
+ * ported yet. This only runs the tests that exercise already-ported model
+ * classes: {@link EquateTest}, {@link SegmentTest}, {@link
+ * DisassemblyResultTest}, {@link DisassemblyResultFileTest}, and {@link
+ * ComputerSystemTest} (which in turn covers {@code Atari800Test} and the
+ * C64 system).
+ * <p>
+ * There is no JUnit (or other) test framework dependency: the offline Maven
+ * repository this project builds against is missing the pieces Surefire
+ * needs to actually run JUnit 5 (the {@code surefire-junit-platform}
+ * provider and {@code junit-platform-launcher} jars), so this follows the
+ * C++ project's own approach instead - a hand-rolled {@link
+ * com.wudsn.tools.dis6502.model.Assert} plus a plain runner with a {@code
+ * main} method, compiled via {@code mvn -o test-compile} and run directly
+ * (e.g. {@code java -cp target/classes;target/test-classes;<wudsn-base
+ * jars> com.wudsn.tools.dis6502.TestRunner}).
+ *
+ * @author Peter Dell
+ */
+public final class TestRunner {
+
+	private int totalCount;
+	private int failedCount;
+
+	public static void main(String[] args) {
+		TestRunner runner = new TestRunner();
+		runner.execute();
+		if (runner.failedCount > 0) {
+			System.exit(1);
+		}
+	}
+
+	private interface TestCase {
+		void run() throws Exception;
+	}
+
+	public void execute() {
+		log("INFO: Starting unit tests.");
+
+		runTest("EquateTest", EquateTest::testEquate);
+		runTest("SegmentTest", SegmentTest::testSegment);
+		runTest("DisassemblyResultTest", DisassemblyResultTest::testDisassemblyResult);
+		runTest("DisassemblyResultFileTest", DisassemblyResultFileTest::testDisassemblyResultFile);
+		runTest("ComputerSystemTest", () -> ComputerSystemTest.testSystems(new ComputerSystemFactory()));
+
+		if (failedCount == 0) {
+			log("INFO: All " + totalCount + " unit tests were successful.");
+		} else {
+			log("ERROR: " + failedCount + " of " + totalCount + " unit tests failed.");
+		}
+	}
+
+	private void runTest(String name, TestCase testCase) {
+		totalCount++;
+		log("INFO: Running " + name + ".");
+		try {
+			testCase.run();
+			log("INFO: " + name + " successful.");
+		} catch (Throwable ex) {
+			failedCount++;
+			log("ERROR: " + name + " failed: " + ex);
+		}
+	}
+
+	private static void log(String text) {
+		System.out.println(text);
+	}
+}

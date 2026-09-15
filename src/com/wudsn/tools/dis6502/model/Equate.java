@@ -332,7 +332,8 @@ public final class Equate implements Xml.Serializable {
 		}
 
 		if (skipBlanks(line, index)) {
-			return new ReadResult(equateType, "", labelAccess, address, comment, "No access qualifier specified.");
+			return new ReadResult(equateType, label.toString(), labelAccess, address, comment,
+					"No access qualifier specified.");
 		}
 
 		c = line.charAt(index[0]);
@@ -353,12 +354,12 @@ public final class Equate implements Xml.Serializable {
 		default:
 			String error = "Character '" + c + "' at position " + (index[0] + 1)
 					+ " is not an access qualifier. Use '=', '<', '>' or '#'.";
-			return new ReadResult(equateType, "", labelAccess, address, comment, error);
+			return new ReadResult(equateType, label.toString(), labelAccess, address, comment, error);
 		}
 		index[0]++;
 
 		if (skipBlanks(line, index)) {
-			return new ReadResult(equateType, "", labelAccess, address, comment, "No value specified.");
+			return new ReadResult(equateType, label.toString(), labelAccess, address, comment, "No value specified.");
 		}
 
 		// Now we must have an address (hex or decimal).
@@ -369,7 +370,7 @@ public final class Equate implements Xml.Serializable {
 			if (address < 0) {
 				String error = "Characters '" + line.substring(start) + "' at position " + (start + 1)
 						+ " cannot be interpreted as a hexadecimal number.";
-				return new ReadResult(equateType, "", labelAccess, 0, comment, error);
+				return new ReadResult(equateType, label.toString(), labelAccess, 0, comment, error);
 			}
 		} else {
 			int start = index[0];
@@ -377,7 +378,7 @@ public final class Equate implements Xml.Serializable {
 			if (address < 0) {
 				String error = "Characters '" + line.substring(start) + "' at position " + (start + 1)
 						+ " cannot be interpreted as a decimal number.";
-				return new ReadResult(equateType, "", labelAccess, 0, comment, error);
+				return new ReadResult(equateType, label.toString(), labelAccess, 0, comment, error);
 			}
 		}
 
@@ -396,7 +397,7 @@ public final class Equate implements Xml.Serializable {
 		}
 
 		String error = "Invalid character '" + c + "' after value found. Line end or comment expected.";
-		return new ReadResult(equateType, "", labelAccess, address, comment, error);
+		return new ReadResult(equateType, label.toString(), labelAccess, address, comment, error);
 	}
 
 	@Override

@@ -1,0 +1,6 @@
+﻿<Segments Count="1">
+    <Segment Title="" Header="0xFFFF" Begin="0x02E2" End="0x02E3" Binary="true" LabelPrefix="" SDXFixUpSize="0" SDXBlockNumber="0" SDXControlByte="0x00" SDXSymbol="" ProcessorType="MOS6502">
+        <Content Size="0x2" Data="0x2E94" Type="0x0505"/>
+        <Comments/>
+    </Segment>
+</Segments>

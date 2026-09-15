@@ -33,6 +33,7 @@
 	<build>
 		<finalName>dis6502</finalName>
 		<sourceDirectory>src</sourceDirectory>
+		<testSourceDirectory>test</testSourceDirectory>
 		<resources>
 			<resource>
 				<directory>src</directory>
