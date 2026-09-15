@@ -58,8 +58,7 @@ public final class AtariFile {
 
 	// File attributes.
 
-	/** Despite the name, matches the C++ source exactly: checks {@link FileAttribute#OPEN_FOR_OUTPUT}, not an "input" bit. */
-	public boolean isOpenForInput() {
+	public boolean isOpenForOutput() {
 		return isAttributeSet(FileAttribute.OPEN_FOR_OUTPUT);
 	}
 
