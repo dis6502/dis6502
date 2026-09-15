@@ -35,4 +35,20 @@ public final class LabelAccess {
 	public static boolean isSupported(int value, int labelAccess) {
 		return (value & labelAccess) != 0;
 	}
+
+	/** Gets the single-character qualifier used in an equate's text representation. */
+	public static String getQualifier(int labelAccess) {
+		switch (labelAccess) {
+		case READ:
+			return "<";
+		case WRITE:
+			return ">";
+		case READ_WRITE:
+			return "=";
+		case IMMEDIATE:
+			return "#";
+		default:
+			return "?";
+		}
+	}
 }
