@@ -236,13 +236,24 @@ public final class DisassemblyResult {
 		}
 	}
 
-	/** Sequentially iterates every line across a contiguous range of sections. */
+	/**
+	 * Sequentially iterates every line across a contiguous range of sections.
+	 * Also assigns each returned line's line number as a running counter
+	 * starting at 1 - matching the C++ source's {@code
+	 * DisassemblyResultLineIterator::Next}, which is the only place {@code
+	 * DIS_LINE::SetLineNumber} is ever called. A line's number is therefore
+	 * only meaningful right after being visited by a full traversal (e.g.
+	 * {@link #createLineIterator()} run to completion); an earlier traversal
+	 * (say, only over one section) leaves other lines' numbers stale or
+	 * unset, exactly as in the C++ version.
+	 */
 	public static final class LineIterator implements Iterator<DisassemblyLine> {
 
 		private final DisassemblyResult result;
 		private final int endSectionIndex;
 		private int sectionIndex;
 		private int lineIndex;
+		private int lineNumber;
 
 		private LineIterator(DisassemblyResult result, int startSectionIndex, int endSectionIndex) {
 			this.result = result;
@@ -274,6 +285,8 @@ public final class DisassemblyResult {
 			}
 			DisassemblyLine line = result.getSection(sectionIndex).lines.get(lineIndex);
 			lineIndex++;
+			lineNumber++;
+			line.setLineNumber(lineNumber);
 			advanceToNextLine();
 			return line;
 		}
