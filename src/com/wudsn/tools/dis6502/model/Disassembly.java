@@ -89,12 +89,12 @@ public final class Disassembly {
 	private int markNextSegmentIndex;
 	private int markSegmentIndex;
 	private int markOffset;
-	private int markSize;
+	int markSize; // Package-private: DisassemblyWriter is the C++ friend equivalent.
 
-	private final DisassemblyLineWriter lineWriter = new DisassemblyLineWriter();
+	final DisassemblyLineWriter lineWriter = new DisassemblyLineWriter(); // Package-private: see markSize.
 
 	// Initialized in disInit() and used in addLine().
-	private int absoluteAddress;
+	int absoluteAddress; // Package-private: see markSize.
 	private int systemAddress = 0x1234;
 
 	// Current disassembly position and the type of the byte last read; see the class-level "Design deviations" note.
@@ -383,7 +383,7 @@ public final class Disassembly {
 		addLine(profile.commentPrefix, disassemblySectionType);
 	}
 
-	private void addLine(String text) {
+	void addLine(String text) { // Package-private: DisassemblyWriter is the C++ friend equivalent.
 		addLine(text, DisassemblySectionType.CODE_LINES);
 	}
 
@@ -444,7 +444,7 @@ public final class Disassembly {
 		addLineInSection(templateLine, text, section);
 	}
 
-	private void addLineWriter() {
+	void addLineWriter() { // Package-private: DisassemblyWriter is the C++ friend equivalent.
 		addLineWriter(DisassemblySectionType.CODE_LINES);
 	}
 
