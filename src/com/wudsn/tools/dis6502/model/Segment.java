@@ -49,13 +49,13 @@ public final class Segment {
 	public String sdxSymbol = ""; // SDX symbol name for SDX_SYM_REQUIRED and SDX_SYM_DEFINED.
 	public ProcessorType processorType = ProcessorType.MOS6502;
 	public final MemoryBlock memoryBlock = new MemoryBlock();
-	public final List<Comment> comments = new ArrayList<>();
+	public final List<Comment> comments = new ArrayList<>(); // List of comments in this segment.
 
 	// Transient attributes which are not serialized to XML.
 	public final List<Symbol> symbols = new ArrayList<>(); // List of SDX system symbols to fix up.
 	public final List<Fixup> fixups = new ArrayList<>(); // List of addresses to fix up.
 
-	private FileHeader wHeader = FileHeader.RAW;
+	private FileHeader wHeader = FileHeader.RAW; // Magic word for file header type.
 	private final AddressLabelList fixupAddressLabels = new AddressLabelList(); // Addresses defined through fixup.
 	private final AddressLabelList addressLabels = new AddressLabelList(); // Addresses referenced by code.
 	private int firstLineNumber; // First line in CODE_SECTION part of listing of this segment.
@@ -483,6 +483,8 @@ public final class Segment {
 			insertIndex = 0;
 		} else {
 			insertIndex = fixups.size();
+			// Starts at 1, not 0: a tie with the first entry's address is intentionally
+			// not matched here, so it is inserted right after that entry rather than before it.
 			for (int i = 1; i < fixups.size(); i++) {
 				if (fixups.get(i).getAddress() >= address) {
 					insertIndex = i;

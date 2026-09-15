@@ -15,9 +15,9 @@ package com.wudsn.tools.dis6502.model;
  */
 public final class AddressLabel {
 
-	private final int address;
-	private int nearestAddress;
-	private boolean aligned;
+	private final int address; // Address of the label.
+	private int nearestAddress; // Nearest address before address.
+	private boolean aligned; // True if the address is at the beginning of an instruction.
 
 	public AddressLabel(int address) {
 		this.address = address;

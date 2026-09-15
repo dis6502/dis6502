@@ -16,8 +16,8 @@ package com.wudsn.tools.dis6502.model;
  */
 public final class Comment {
 
-	private int offset;
-	private String text = "";
+	private int offset; // Memory offset of the byte owning the comment.
+	private String text = ""; // Text of the comment (can be multi-line).
 
 	public void clear() {
 		offset = 0;

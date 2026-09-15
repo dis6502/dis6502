@@ -21,8 +21,8 @@ public final class Symbol {
 
 	public static final Comparator<Symbol> BY_ADDRESS = Comparator.comparingInt(Symbol::getAddress);
 
-	private final int address;
-	private final String symbol;
+	private final int address; // Address of the word to fix up in the segment.
+	private final String symbol; // Symbol name to fix up.
 
 	public Symbol(int address, String symbol) {
 		this.address = address;

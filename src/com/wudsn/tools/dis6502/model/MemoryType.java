@@ -34,8 +34,8 @@ public enum MemoryType {
 	DLIST,
 	STORE,
 	CODE,
-	SYMBOL,
-	FIXUP;
+	SYMBOL, // New in version 3.0.
+	FIXUP; // New in version 3.0.
 
 	/**
 	 * The values in enum declaration order, for indexing a type buffer by

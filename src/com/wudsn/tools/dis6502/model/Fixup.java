@@ -21,8 +21,8 @@ public final class Fixup {
 
 	public static final Comparator<Fixup> BY_ADDRESS = Comparator.comparingInt(Fixup::getAddress);
 
-	private int address;
-	private int labelSegmentIndex;
+	private int address; // Address of the word to fix up in the segment.
+	private int labelSegmentIndex; // Segment where this address is located.
 
 	public int getAddress() {
 		return address;
