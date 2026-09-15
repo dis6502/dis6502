@@ -16,13 +16,7 @@ import java.util.Set;
 /**
  * The Atari 800 computer system: the primary/default target of this tool.
  * <p>
- * Ported from systems/atari800/Atari800.h / Atari800.cpp. {@code
- * ReadCassetteFile} (the .cas tape format) is not ported yet: unlike the
- * rest of this file, its bookkeeping doesn't add up on inspection (it
- * subtracts a description-text length from the byte budget without ever
- * skipping that text), which looks like a genuine bug rather than a quirk
- * to preserve - porting it faithfully needs figuring out what it was
- * actually supposed to do first, which is a task of its own.
+ * Ported from systems/atari800/Atari800.h / Atari800.cpp.
  * <p>
  * Design deviations:
  * <ul>
@@ -35,6 +29,14 @@ import java.util.Set;
  * source, per its own "TODO: Introduce bounded InputStream" comment - not
  * bounds-checked against the remaining byte budget before reading, unlike
  * every other read in this class.</li>
+ * <li>{@code ReadCassetteFile} had three bugs in the C++ source, all fixed
+ * upstream and matched here rather than ported faithfully-but-broken: the
+ * FUJI chunk's title text was never actually skipped (only accounted for
+ * in the byte budget), the 2 bytes of the title's own length field were
+ * never subtracted from that budget either, and a multi-chunk segment's
+ * previously-accumulated bytes were discarded (read into uninitialized
+ * memory) every time the accumulation buffer grew for a new chunk. See
+ * the upstream Atari800.cpp commit history for the details.</li>
  * </ul>
  *
  * @author Peter Dell
@@ -50,6 +52,11 @@ public final class Atari800 extends ComputerSystem {
 	private static final int SIZE_16K_CAR = SIZE_16K + CAR_HEADER_SIZE;
 
 	private static final int SDX_SYMBOL_LEN = 8;
+
+	private static final byte[] FUJI = { 'F', 'U', 'J', 'I' };
+	private static final byte[] DATA_CHUNK = { 'd', 'a', 't', 'a' };
+	private static final int CAS_HEADER_SIZE = 4; // The "FUJI"/"data" name only.
+	private static final int CAS_CHUNK_HEADER_SIZE = 8; // name (4) + length (2) + aux (2).
 
 	private static final Set<Integer> BASE_ADDRESSES = Set.of(0x0200 /* VDSLST */, 0x0202 /* VPRCED */,
 			0x0204 /* VINTER */, 0x0206 /* VBREAK */, 0x0208 /* VKEYBD */, 0x020A /* VSERIN */, 0x020C /* VSEROR */,
@@ -456,14 +463,186 @@ public final class Atari800 extends ComputerSystem {
 		segment.setType(offset++, MemoryType.LABEL);
 	}
 
+	/**
+	 * Reads a .cas tape image: a "FUJI" header (name/title, skipped) followed
+	 * by zero or more chunks, of which only "data" chunks matter here. A
+	 * segment can span several consecutive "data" chunks - {@code
+	 * CAS_SEGMENT.segmentCount}, read from the first chunk's payload, says
+	 * how many chunks belong to the segment currently being accumulated -
+	 * so segment data is built up in a growing buffer across chunks and only
+	 * turned into an actual {@link Segment} once that count reaches zero
+	 * (matching the class-level "Design deviations" note: the C++ source had
+	 * three bugs in this accumulation, all fixed here rather than preserved).
+	 * <p>
+	 * A new (mostly unused, if this isn't a "data" chunk) {@link Segment} is
+	 * inserted on every loop iteration, matching the C++ source exactly,
+	 * quirky as that looks - preserved as observed since it's unclear
+	 * whether this is intentional.
+	 */
+	@Override
+	protected void readCassetteFile(SegmentListInserter segmentListInserter, InputStream inputStream, long fileSize)
+			throws IOException {
+		byte[] casHeader = new byte[CAS_HEADER_SIZE];
+		readFully(inputStream, casHeader);
+		if (!Arrays.equals(casHeader, FUJI)) {
+			throw new IOException("Invalid file header. Stream is not a FUJI stream.");
+		}
+
+		long bytesRemaining = fileSize - CAS_HEADER_SIZE; // Consumed: name (4 bytes).
+
+		// Skip the title of the software.
+		int titleLength = readWordLEUnchecked(inputStream);
+		bytesRemaining -= 2; // Consumed: length (2 bytes).
+
+		skipFully(inputStream, 2);
+		bytesRemaining -= 2; // Consumed: aux (2 bytes).
+
+		skipFully(inputStream, titleLength);
+		bytesRemaining -= titleLength; // Consumed: title/description (titleLength bytes).
+
+		// Read all the data chunks.
+		boolean firstSegment = true;
+		int expectedSegmentCount = 0;
+		int offset = 0;
+		byte[] buffer = null;
+
+		while (bytesRemaining > CAS_CHUNK_HEADER_SIZE) {
+			Segment segment = segmentListInserter.insertSegment();
+
+			// Read a header.
+			byte[] name = new byte[4];
+			readFully(inputStream, name);
+			int length = readWordLEUnchecked(inputStream);
+			skipFully(inputStream, 2); // aux/gap - unused here.
+			bytesRemaining -= CAS_CHUNK_HEADER_SIZE;
+
+			if (Arrays.equals(name, DATA_CHUNK)) {
+				// Save the previous segment.
+				if (expectedSegmentCount == 0 && buffer != null && offset > 0) {
+					int loadAddress = Memory.toAddress(buffer[2] & 0xFF, buffer[3] & 0xFF);
+
+					// Allocate memory for data and for byte type.
+					segment.createMemoryBlockWithSize(offset);
+					segment.setData(0, buffer, 0, offset);
+
+					if (firstSegment) {
+						segment.setType(0, MemoryType.BYTE);
+						segment.setType(1, MemoryType.BYTE);
+						segment.setType(2, MemoryType.LABEL);
+						segment.setType(3, MemoryType.LABEL);
+						segment.setType(4, MemoryType.LABEL);
+						segment.setType(5, MemoryType.LABEL);
+					}
+
+					// Create a new segment.
+					segment.wBegin = loadAddress;
+					segment.wEnd = segment.wBegin + offset - 1;
+					segment.bBinary = true;
+
+					// Forget this segment.
+					firstSegment = false;
+					offset = 0;
+				}
+
+				// Skip the first 3 bytes of the data (usually $55 $55 $FC).
+				skipFully(inputStream, 3);
+
+				bytesRemaining -= 4;
+				length -= 4;
+
+				// Allocate a buffer to hold the real data, preserving any data already accumulated.
+				byte[] newBuffer = new byte[offset + length];
+				if (buffer != null) {
+					System.arraycopy(buffer, 0, newBuffer, 0, offset);
+				}
+				buffer = newBuffer;
+
+				// Read data excluding the last byte (probably a checksum byte).
+				readFully(inputStream, buffer, offset, length);
+
+				offset += length;
+				bytesRemaining -= length;
+
+				// Skip the last byte of the data (probably a checksum byte).
+				skipFully(inputStream, 1);
+
+				// Check if we have a new segment.
+				if (expectedSegmentCount == 0) {
+					expectedSegmentCount = buffer[1] & 0xFF; // CAS_SEGMENT.segmentCount.
+					if (expectedSegmentCount == 0) {
+						expectedSegmentCount = 256;
+					}
+				}
+
+				expectedSegmentCount--;
+			}
+		}
+
+		// Save the previous segment.
+		if (buffer != null && offset > 0) {
+			// Check if the segment is valid.
+			int unused = buffer[0] & 0xFF;
+			int segmentCount = buffer[1] & 0xFF;
+			int loadAddress = Memory.toAddress(buffer[2] & 0xFF, buffer[3] & 0xFF);
+			int initAddress = Memory.toAddress(buffer[4] & 0xFF, buffer[5] & 0xFF);
+
+			if (segmentCount != 0 || unused != 0 || initAddress != 0 || loadAddress != 0) {
+				// Allocate memory for data and for byte type.
+				Segment segment = segmentListInserter.insertSegment();
+				segment.createMemoryBlockWithSize(offset);
+				segment.setData(0, buffer, 0, offset);
+
+				if (firstSegment) {
+					segment.setType(0, MemoryType.BYTE);
+					segment.setType(1, MemoryType.BYTE);
+					segment.setType(2, MemoryType.LABEL);
+					segment.setType(3, MemoryType.LABEL);
+					segment.setType(4, MemoryType.LABEL);
+					segment.setType(5, MemoryType.LABEL);
+				}
+
+				// Create a new segment.
+				segment.wBegin = loadAddress;
+				segment.wEnd = segment.wBegin + offset - 1;
+				segment.bBinary = true;
+			}
+		}
+	}
+
 	private static void readFully(InputStream inputStream, byte[] buffer) throws IOException {
+		readFully(inputStream, buffer, 0, buffer.length);
+	}
+
+	private static void readFully(InputStream inputStream, byte[] buffer, int offset, int length)
+			throws IOException {
 		int totalRead = 0;
-		while (totalRead < buffer.length) {
-			int read = inputStream.read(buffer, totalRead, buffer.length - totalRead);
+		while (totalRead < length) {
+			int read = inputStream.read(buffer, offset + totalRead, length - totalRead);
 			if (read < 0) {
 				throw new EOFException("Unexpected end of file.");
 			}
 			totalRead += read;
+		}
+	}
+
+	private static int readWordLEUnchecked(InputStream inputStream) throws IOException {
+		byte[] buffer = new byte[2];
+		readFully(inputStream, buffer);
+		return Memory.toAddress(buffer[0] & 0xFF, buffer[1] & 0xFF);
+	}
+
+	/** Skips exactly {@code count} bytes, falling back to reading and discarding since {@link InputStream#skip} may return less than requested. */
+	private static void skipFully(InputStream inputStream, long count) throws IOException {
+		long remaining = count;
+		while (remaining > 0) {
+			long skipped = inputStream.skip(remaining);
+			if (skipped > 0) {
+				remaining -= skipped;
+			} else if (inputStream.read() < 0) {
+				throw new EOFException("Unexpected end of file.");
+			} else {
+				remaining--;
+			}
 		}
 	}
 
