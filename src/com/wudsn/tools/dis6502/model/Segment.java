@@ -282,6 +282,16 @@ public final class Segment implements Xml.Serializable {
 		memoryBlock.readData(inputStream, size);
 	}
 
+	/** Reads this segment's data and type buffers from the pre-3.0 binary workspace format. */
+	public void load14(InputStream inputStream) throws IOException {
+		createMemoryBlockFromBeginToEnd();
+
+		int size = getSize();
+
+		memoryBlock.readData(inputStream, size);
+		memoryBlock.readType(inputStream, size);
+	}
+
 	public void clearMemoryBlock() {
 		memoryBlock.clear();
 	}

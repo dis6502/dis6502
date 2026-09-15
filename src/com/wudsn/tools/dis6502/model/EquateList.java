@@ -5,6 +5,10 @@
  */
 package com.wudsn.tools.dis6502.model;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -17,15 +21,13 @@ import org.w3c.dom.Element;
  * A list of {@link Equate}s, e.g. the system equates or the user equates of
  * a workspace.
  * <p>
- * Ported from EquateList.h / EquateList.cpp. Not ported yet, deferred to
- * when {@code Workspace} is ported:
- * <ul>
- * <li>{@code Load1X}/{@code Save1X} (the workspace-version-1X binary
- * format),</li>
- * <li>{@code Load(filePath)}/{@code Save(filePath, xasm)} (depend on
- * application-level logging and file I/O, ported alongside the rest of the
- * application wiring).</li>
- * </ul>
+ * Ported from EquateList.h / EquateList.cpp. {@code Save1X} and {@code
+ * Load(filePath)}/{@code Save(filePath, xasm)} (depend on application-level
+ * logging and file I/O) are not ported - see {@link Workspace1X}'s javadoc
+ * for why writing the legacy binary format has no value going forward; the
+ * modern text equates file Load/Save is deferred the same way other
+ * "application-level I/O" methods are elsewhere in this port.
+ * <p>
  * The C++ source's {@code DeserializeFrom} passed the wrong element to each
  * {@code Equate::DeserializeFrom} call (the outer {@code <EquateList>}
  * element instead of the individual {@code <Equate>} child) - fixed
@@ -35,6 +37,13 @@ import org.w3c.dom.Element;
  * @author Peter Dell
  */
 public final class EquateList implements Xml.Serializable {
+
+	// Load1X's record layout: 2 bytes little-endian address, 1 unused/padding byte
+	// (the original C++ source advances 3 bytes past a 2-byte field for reasons lost
+	// to history - verified against a real DIS6502WRK14 fixture file, see Workspace1X),
+	// 1 byte access, then a NUL-terminated ANSI label.
+	private static final int MAX_BUF_LABEL_1X = 60000;
+	private static final int LABEL_MEM_SIZE_1X = MAX_BUF_LABEL_1X + 32;
 
 	private final WorkspaceProperty property;
 	private final List<Equate> equateList = new ArrayList<>();
@@ -119,6 +128,53 @@ public final class EquateList implements Xml.Serializable {
 				equate.deserializeFrom(equateElement);
 				equateElement = Xml.getNextSiblingElement(equateElement, "Equate");
 			}
+		}
+	}
+
+	/** Reads user labels from the pre-3.0 binary workspace format. */
+	public void load1X(InputStream inputStream) throws IOException {
+		clear();
+
+		byte[] marker = new byte[4];
+		readFully(inputStream, marker);
+		long equateArrayMarker = (marker[0] & 0xFFL) | ((marker[1] & 0xFFL) << 8) | ((marker[2] & 0xFFL) << 16)
+				| ((marker[3] & 0xFFL) << 24);
+
+		if (equateArrayMarker != 0L) {
+			byte[] equateArray = new byte[LABEL_MEM_SIZE_1X];
+			readFully(inputStream, equateArray);
+
+			int p = 0;
+			while (p < MAX_BUF_LABEL_1X) {
+				int labelAddress = (equateArray[p] & 0xFF) | ((equateArray[p + 1] & 0xFF) << 8);
+				if (labelAddress == 0) {
+					break; // Unused equate slot.
+				}
+				p += 3;
+				int labelAccess = equateArray[p] & 0xFF;
+				p += 1;
+
+				int labelStart = p;
+				while (equateArray[p] != 0) {
+					p++;
+				}
+				String label = new String(equateArray, labelStart, p - labelStart, StandardCharsets.ISO_8859_1);
+				p += 1;
+
+				Equate equate = addEquate();
+				equate.init(EquateType.LABEL, label, labelAccess, labelAddress, "");
+			}
+		}
+	}
+
+	private static void readFully(InputStream inputStream, byte[] buffer) throws IOException {
+		int totalRead = 0;
+		while (totalRead < buffer.length) {
+			int read = inputStream.read(buffer, totalRead, buffer.length - totalRead);
+			if (read < 0) {
+				throw new EOFException("Unexpected end of file.");
+			}
+			totalRead += read;
 		}
 	}
 

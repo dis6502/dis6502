@@ -11,6 +11,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.Text;
@@ -20,17 +21,18 @@ import com.wudsn.tools.dis6502.Text;
  * WorkspaceLogic.h / WorkspaceLogic.cpp, scoped down to what needs only
  * already-ported pieces:
  * <ul>
- * <li>{@link #load}/{@link #save} only support the modern XML workspace
- * format ({@code Workspace::Format::WORKSPACE36} in C++) - the legacy
- * binary "1X"/"14" formats ({@code Workspace1X}, and the {@code
- * Workspace::Format} parameter that picks between them) are not ported.
- * The C++ version peeks at the file's magic bytes to dispatch to whichever
- * loader applies; since only the XML loader exists here, {@link #load}
- * skips that check and simply attempts the XML load - a legacy-format
- * file fails to parse as XML and is reported as "not a valid workspace"
- * exactly like any other malformed workspace file, which is the same
- * user-visible behavior the C++ version's dedicated magic check produces
- * for a file it can't handle at all.</li>
+ * <li>{@link #load} peeks at the file's 12 byte magic like the C++
+ * version, but only dispatches to the modern XML loader or {@link
+ * Workspace1X#load14} - {@code Workspace1X.Load10}/{@code Save14} are not
+ * ported (see {@link Workspace1X}'s javadoc for why), so a {@code
+ * DIS6502WRK10} file, like any other unrecognized magic, falls through to
+ * the XML loader, fails to parse, and is reported as "not a valid
+ * workspace" - the same user-visible outcome the C++ version's dedicated
+ * magic check produces for a file it can't handle at all.</li>
+ * <li>{@link #save} only writes the modern XML format ({@code
+ * Workspace::Format::WORKSPACE36} in C++); there is no {@code
+ * Workspace::Format} parameter, since nothing needs to write the legacy
+ * format going forward.</li>
  * <li>{@code LoadSystemEquates} is not ported: it needs both {@code
  * EquateListLogic} (not ported) and {@code ComputerSystem}'s {@code
  * GetResourceFilePathByExtension} (also not ported - see {@code
@@ -62,9 +64,17 @@ public final class WorkspaceLogic {
 
 		application.sendInfoMessage(Text.IDS_LOG_OPEN_WORK, filePath);
 
+		File file = new File(filePath);
 		workspace.beginUpdate();
 		try {
-			Xml.load(workspace, "Workspace", new File(filePath));
+			if (Workspace1X.MAGIC14.equals(readMagic(file))) {
+				try (InputStream inputStream = new FileInputStream(file)) {
+					Workspace1X.skipFully(inputStream, Workspace1X.MAGIC_SIZE);
+					Workspace1X.load14(workspace, inputStream);
+				}
+			} else {
+				Xml.load(workspace, "Workspace", file);
+			}
 			workspace.setFilePath(filePath);
 
 			SegmentList segmentList = workspace.getSegmentList();
@@ -81,6 +91,22 @@ public final class WorkspaceLogic {
 		}
 
 		return false;
+	}
+
+	/** Reads the file's first {@link Workspace1X#MAGIC_SIZE} bytes as ASCII, or {@code ""} if the file is shorter. */
+	private static String readMagic(File file) throws IOException {
+		byte[] magic = new byte[Workspace1X.MAGIC_SIZE];
+		try (InputStream inputStream = new FileInputStream(file)) {
+			int totalRead = 0;
+			int read;
+			while (totalRead < magic.length && (read = inputStream.read(magic, totalRead, magic.length - totalRead)) >= 0) {
+				totalRead += read;
+			}
+			if (totalRead < magic.length) {
+				return "";
+			}
+		}
+		return new String(magic, StandardCharsets.US_ASCII);
 	}
 
 	/** Saves a workspace to disk. Returns {@code false}, and logs, instead of throwing. */
