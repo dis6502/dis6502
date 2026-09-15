@@ -28,6 +28,15 @@
 			<artifactId>com.wudsn.tools.base.atari</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
+		<!-- org.eclipse.osgi.util.NLS: the same standalone text-repository mechanism
+		     used by com.wudsn.tools.base.hello.standalone's Texts.java, used here by
+		     Text.java. Used purely as a plain library class - no OSGi runtime/container
+		     is involved. -->
+		<dependency>
+			<groupId>org.eclipse.platform</groupId>
+			<artifactId>org.eclipse.osgi</artifactId>
+			<version>3.21.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
