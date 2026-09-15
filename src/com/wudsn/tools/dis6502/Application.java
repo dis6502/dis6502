@@ -5,14 +5,19 @@
  */
 package com.wudsn.tools.dis6502;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.prefs.Preferences;
 
 import com.wudsn.tools.base.common.Log;
 import com.wudsn.tools.base.common.TextUtility;
 
 /**
- * Minimal application-wide message handling, ported from Application.h /
- * Application.cpp.
+ * Minimal application-wide message handling plus settings/module-path
+ * access, ported from Application.h / Application.cpp.
  * <p>
  * The C++ version is an abstract base class: {@code GetModuleFilePath}/
  * {@code GetSettingsSection} are pure virtual (implemented by the concrete
@@ -32,11 +37,19 @@ import com.wudsn.tools.base.common.TextUtility;
  * <p>
  * This is concrete, not abstract, unlike the C++ version - there is no
  * ported UI layer yet to subclass it, and a plain instance is all any
- * ported logic class currently needs.
+ * ported logic class currently needs. {@link #getSettingsSection} is
+ * backed by {@link Preferences} rather than a Windows INI file (see
+ * {@link ApplicationSettingsSection}'s javadoc), and {@link
+ * #getModuleFilePath} resolves relative to the directory containing this
+ * class's own jar/classes (the closest cross-platform equivalent of "the
+ * running executable's own folder") instead of using the Win32 module
+ * handle APIs.
  *
  * @author Peter Dell
  */
 public class Application {
+
+	private final Map<String, ApplicationSettingsSection> settingsSections = new HashMap<>();
 
 	protected void sendLogMessage(String text) {
 		Log.logInfo("{0}", new Object[] { text });
@@ -60,5 +73,25 @@ public class Application {
 
 	public void sendErrorMessage(Throwable ex) {
 		sendErrorMessage(Text.IDS_ERR_EXCEPTION, String.valueOf(ex.getMessage()));
+	}
+
+	public ApplicationSettingsSection getSettingsSection(String name) {
+		return settingsSections.computeIfAbsent(name,
+				key -> new ApplicationSettingsSection(Preferences.userNodeForPackage(Application.class).node(key)));
+	}
+
+	/** Resolves {@code relativeFilePath} against the directory containing this application's own jar/classes. */
+	public String getModuleFilePath(String relativeFilePath) {
+		File baseDirectory = getModuleBaseDirectory();
+		return relativeFilePath.isEmpty() ? baseDirectory.getPath() : new File(baseDirectory, relativeFilePath).getPath();
+	}
+
+	private static File getModuleBaseDirectory() {
+		try {
+			File location = new File(Application.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+			return location.isDirectory() ? location : location.getParentFile();
+		} catch (URISyntaxException | NullPointerException | SecurityException ex) {
+			return new File(".");
+		}
 	}
 }

@@ -9,8 +9,11 @@ package com.wudsn.tools.dis6502.model;
  * The kind of file a {@link ComputerSystem} can read, write, or guess from
  * its content.
  * <p>
- * Ported from FileType.h. {@code FileTypeInfo}/{@code FileTypeFactory} (the
- * UI-facing key/text/filter lookup) is not ported yet.
+ * Ported from FileType.h. {@code FileTypeInfo}/{@code FileTypeFactory}'s
+ * fuller UI-facing text/filter/folder-type lookup is not ported yet - only
+ * {@link #getKey()}/{@link #fromKey(String)} (the key names, needed by
+ * {@link MRUList}'s persistence) are, following the same pattern as {@link
+ * LabelAccess}/{@link Encoding}/{@link FolderType}.
  *
  * @author Peter Dell
  */
@@ -26,5 +29,17 @@ public enum FileType {
 	WORKSPACE_FILE,
 	EQUATES_FILE,
 	PROFILE_FILE,
-	DISASSEMBLY_FILE
+	DISASSEMBLY_FILE;
+
+	public String getKey() {
+		return name();
+	}
+
+	public static FileType fromKey(String key) {
+		try {
+			return valueOf(key);
+		} catch (IllegalArgumentException e) {
+			return UNKNOWN_FILE;
+		}
+	}
 }
