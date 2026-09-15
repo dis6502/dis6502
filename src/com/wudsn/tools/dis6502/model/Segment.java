@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.w3c.dom.Element;
+
 import com.wudsn.tools.base.common.HexUtility;
 
 /**
@@ -18,17 +20,12 @@ import com.wudsn.tools.base.common.HexUtility;
  * segment, its disassembly type information, comments, and (transient,
  * rebuilt on every disassembly pass) symbols/fixups/address labels.
  * <p>
- * Ported from Segment.h / Segment.cpp. Not ported yet:
- * <ul>
- * <li>{@code SerializeTo}/{@code DeserializeFrom} (XML persistence, deferred
- * to when {@code Workspace}'s wudsn-base {@code XMLUtility} wiring is
- * ported),</li>
- * <li>{@code Load14} (the workspace-version-1X binary format).</li>
- * </ul>
+ * Ported from Segment.h / Segment.cpp. {@code Load14} (the
+ * workspace-version-1X binary format) is not ported yet.
  *
  * @author Peter Dell
  */
-public final class Segment {
+public final class Segment implements Xml.Serializable {
 
 	private static final int MAX_SEGMENT_SIZE = 0x10000;
 
@@ -335,6 +332,81 @@ public final class Segment {
 
 	public boolean containsAddress(int address) {
 		return !isEmpty() && wBegin <= address && address <= wEnd;
+	}
+
+	@Override
+	public void serializeTo(Element element) {
+		Xml.setStringAttribute(element, "Title", title);
+
+		Xml.setWordAttributeHex(element, "Header", wHeader.getValue());
+		Xml.setWordAttributeHex(element, "Begin", wBegin);
+		Xml.setWordAttributeHex(element, "End", wEnd);
+
+		Xml.setBoolAttribute(element, "Binary", bBinary);
+		Xml.setStringAttribute(element, "LabelPrefix", labelPrefix);
+
+		Xml.setWordAttribute(element, "SDXFixUpSize", wSDXFixUpSize);
+		Xml.setByteAttribute(element, "SDXBlockNumber", bSDXBlockNumber);
+		Xml.setByteAttributeHex(element, "SDXControlByte", bSDXControlByte);
+		Xml.setStringAttribute(element, "SDXSymbol", sdxSymbol);
+
+		Xml.setStringAttribute(element, "ProcessorType", processorType.name());
+
+		Element contentElement = Xml.addChildElement(element, "Content");
+		memoryBlock.serializeTo(contentElement);
+
+		Element commentsElement = Xml.addChildElement(element, "Comments");
+		for (Comment comment : comments) {
+			comment.serializeTo(Xml.addChildElement(commentsElement, "Comment"));
+		}
+	}
+
+	@Override
+	public void deserializeFrom(Element element) {
+		clear();
+
+		title = Xml.getStringAttribute(element, "Title", title);
+
+		// Unlike the C++ version, which C-style casts an uninitialized/unvalidated
+		// word into the FileHeader enum, this falls back to RAW if the attribute is
+		// missing or does not match a known header value.
+		int headerValue = Xml.getWordAttribute(element, "Header", wHeader.getValue());
+		FileHeader header = FileHeader.valueOf(headerValue);
+		wHeader = header != null ? header : FileHeader.RAW;
+		wBegin = Xml.getWordAttribute(element, "Begin", wBegin);
+		wEnd = Xml.getWordAttribute(element, "End", wEnd);
+
+		bBinary = Xml.getBoolAttribute(element, "Binary", bBinary);
+		labelPrefix = Xml.getStringAttribute(element, "LabelPrefix", labelPrefix);
+		wSDXFixUpSize = Xml.getWordAttribute(element, "SDXFixUpSize", wSDXFixUpSize);
+		bSDXBlockNumber = Xml.getByteAttribute(element, "SDXBlockNumber", bSDXBlockNumber);
+		bSDXControlByte = Xml.getByteAttribute(element, "SDXControlByte", bSDXControlByte);
+		sdxSymbol = Xml.getStringAttribute(element, "SDXSymbol", sdxSymbol);
+
+		String processorTypeString = Xml.getStringAttribute(element, "ProcessorType", "");
+		try {
+			processorType = ProcessorType.valueOf(processorTypeString);
+		} catch (IllegalArgumentException e) {
+			processorType = ProcessorType.UNKNOWN;
+		}
+		if (processorType == ProcessorType.UNKNOWN) {
+			processorType = ProcessorType.MOS6502;
+		}
+
+		Element contentElement = Xml.getFirstChildElement(element, "Content");
+		if (contentElement != null) {
+			memoryBlock.deserializeFrom(contentElement);
+		}
+
+		Element commentsElement = Xml.getFirstChildElement(element, "Comments");
+		if (commentsElement != null) {
+			Element commentElement = Xml.getFirstChildElement(commentsElement, "Comment");
+			while (commentElement != null) {
+				Comment comment = allocateComment();
+				comment.deserializeFrom(commentElement);
+				commentElement = Xml.getNextSiblingElement(commentElement);
+			}
+		}
 	}
 
 	public void clearComments() {

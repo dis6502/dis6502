@@ -11,6 +11,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 
+import org.w3c.dom.Element;
+
 /**
  * A block of memory: the raw byte content plus, in parallel, a
  * {@link MemoryType} for every byte.
@@ -20,12 +22,11 @@ import java.util.Arrays;
  * through a {@code ByteSequence}/{@code ByteArray} abstraction - Java's
  * {@code byte[]} together with {@code System.arraycopy}/{@code
  * java.util.Arrays} already covers everything that abstraction existed for
- * in C++. {@code SerializeTo}/{@code DeserializeFrom} (XML persistence) are
- * not ported yet.
+ * in C++.
  *
  * @author Peter Dell
  */
-public final class MemoryBlock {
+public final class MemoryBlock implements Xml.Serializable {
 
 	private int size;
 	private byte[] data;
@@ -104,6 +105,40 @@ public final class MemoryBlock {
 	public void copyTo(int startOffset, int size, MemoryBlock target, int targetOffset) {
 		System.arraycopy(data, startOffset, target.data, targetOffset, size);
 		System.arraycopy(type, startOffset, target.type, targetOffset, size);
+	}
+
+	@Override
+	public void serializeTo(Element element) {
+		Xml.setSizeAttributeHex(element, "Size", size);
+		Xml.setByteArrayAttributeHex(element, "Data", data);
+		Xml.setByteArrayAttributeHex(element, "Type", type);
+	}
+
+	@Override
+	public void deserializeFrom(Element element) {
+		clear();
+		int newSize = (int) Xml.getSizeAttribute(element, "Size", 0);
+
+		// "Dump" is the attribute name used by file format version 3.6.
+		byte[] newData = Xml.getByteArrayAttribute(element, "Data");
+		if (newData == null) {
+			newData = Xml.getByteArrayAttribute(element, "Dump");
+		}
+		if (newData == null) {
+			throw new IllegalStateException("Attribute \"Data\" of memory block is missing.");
+		}
+		if (newData.length != newSize) {
+			throw new IllegalStateException("Size of content array is different from size of memory block.");
+		}
+
+		byte[] newType = Xml.getByteArrayAttribute(element, "Type");
+		if (newType == null || newType.length != newSize) {
+			throw new IllegalStateException("Size of type array is different from size of memory block.");
+		}
+
+		create(newSize);
+		System.arraycopy(newData, 0, data, 0, newSize);
+		System.arraycopy(newType, 0, type, 0, newSize);
 	}
 
 	/** Reads exactly {@code length} bytes, throwing {@link EOFException} if the stream ends first. */

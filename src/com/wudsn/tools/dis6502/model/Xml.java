@@ -235,6 +235,39 @@ public final class Xml {
 		element.setAttribute(name, "0x" + Long.toHexString(value).toUpperCase());
 	}
 
+	/** Sets a byte array as a "0x"-prefixed hexadecimal attribute, 2 digits per byte. */
+	public static void setByteArrayAttributeHex(Element element, String name, byte[] value) {
+		StringBuilder buffer = new StringBuilder("0x");
+		for (byte b : value) {
+			buffer.append(HexUtility.getByteValueHexString(b & 0xFF));
+		}
+		element.setAttribute(name, buffer.toString());
+	}
+
+	/** Parses a "0x"-prefixed hexadecimal byte array attribute, or {@code null} if missing or malformed. */
+	public static byte[] getByteArrayAttribute(Element element, String name) {
+		if (!element.hasAttribute(name)) {
+			return null;
+		}
+		String value = element.getAttribute(name);
+		if (value.length() < 2 || value.charAt(0) != '0' || (value.charAt(1) != 'x' && value.charAt(1) != 'X')) {
+			return null;
+		}
+		String hex = value.substring(2);
+		if (hex.length() % 2 != 0) {
+			return null;
+		}
+		byte[] result = new byte[hex.length() / 2];
+		try {
+			for (int i = 0; i < result.length; i++) {
+				result[i] = (byte) Integer.parseInt(hex.substring(i * 2, i * 2 + 2), 16);
+			}
+		} catch (NumberFormatException e) {
+			return null;
+		}
+		return result;
+	}
+
 	public static long getSizeAttribute(Element element, String name, long defaultValue) {
 		if (!element.hasAttribute(name)) {
 			return defaultValue;

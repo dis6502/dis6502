@@ -18,5 +18,19 @@ public enum Encoding {
 	ASCII,
 	ATASCII,
 	BINARY,
-	UTF8
+	UTF8;
+
+	/** The XML attribute key for an encoding value, used by {@link Profile}'s serialization. */
+	public String getKey() {
+		return name();
+	}
+
+	/** The inverse of {@link #getKey()}. */
+	public static Encoding fromKey(String key) {
+		try {
+			return valueOf(key);
+		} catch (IllegalArgumentException e) {
+			return UNKNOWN;
+		}
+	}
 }

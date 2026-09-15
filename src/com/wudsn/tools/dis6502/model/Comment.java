@@ -5,16 +5,17 @@
  */
 package com.wudsn.tools.dis6502.model;
 
+import org.w3c.dom.Element;
+
 /**
  * A comment attached to one memory offset within a {@link Segment}; its text
  * can be multi-line.
  * <p>
- * Ported from Comment.h / Comment.cpp. {@code SerializeTo}/{@code
- * DeserializeFrom} (XML persistence) are not ported yet.
+ * Ported from Comment.h / Comment.cpp.
  *
  * @author Peter Dell
  */
-public final class Comment {
+public final class Comment implements Xml.Serializable {
 
 	private int offset; // Memory offset of the byte owning the comment.
 	private String text = ""; // Text of the comment (can be multi-line).
@@ -22,6 +23,18 @@ public final class Comment {
 	public void clear() {
 		offset = 0;
 		setText("");
+	}
+
+	@Override
+	public void serializeTo(Element element) {
+		Xml.setWordAttributeHex(element, "Offset", offset);
+		Xml.setStringAttribute(element, "Text", text);
+	}
+
+	@Override
+	public void deserializeFrom(Element element) {
+		offset = Xml.getWordAttribute(element, "Offset", offset);
+		text = Xml.getStringAttribute(element, "Text", text);
 	}
 
 	public int getOffset() {

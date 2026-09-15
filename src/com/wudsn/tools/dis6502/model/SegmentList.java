@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import org.w3c.dom.Element;
+
 import com.wudsn.tools.base.common.HexUtility;
 import com.wudsn.tools.base.common.Log;
 
@@ -16,12 +18,11 @@ import com.wudsn.tools.base.common.Log;
  * The list of {@link Segment}s of a {@link Workspace}, plus the transient
  * "global segment" that holds address labels not owned by any real segment.
  * <p>
- * Ported from SegmentList.h / SegmentList.cpp. {@code SerializeTo}/{@code
- * DeserializeFrom} (XML persistence) are not ported yet.
+ * Ported from SegmentList.h / SegmentList.cpp.
  *
  * @author Peter Dell
  */
-public final class SegmentList {
+public final class SegmentList implements Xml.Serializable {
 
 	public static final int MAX_SEGMENTS = 4096;
 	public static final int NO_SEGMENT_INDEX = -1;
@@ -99,6 +100,31 @@ public final class SegmentList {
 
 	private Segment addSegment() {
 		return insertSegmentAt(getCount());
+	}
+
+	@Override
+	public void serializeTo(Element element) {
+		Xml.setWordAttribute(element, "Count", getCount());
+		for (Segment segment : segmentList) {
+			segment.serializeTo(Xml.addChildElement(element, "Segment"));
+		}
+	}
+
+	@Override
+	public void deserializeFrom(Element element) {
+		beginUpdate();
+		clear();
+		int count = Xml.getWordAttribute(element, "Count", 0);
+		if (count > 0) {
+			Element segmentElement = Xml.getFirstChildElement(element);
+			for (int segmentIndex = 0; segmentElement != null && segmentIndex < count; segmentIndex++) {
+				Segment segment = addSegment();
+				segment.deserializeFrom(segmentElement);
+				segmentElement = Xml.getNextSiblingElement(segmentElement, "Segment");
+			}
+			setSelectedIndex(0);
+		}
+		endUpdate();
 	}
 
 	public Segment insertSegmentAt(int segmentIndex) {

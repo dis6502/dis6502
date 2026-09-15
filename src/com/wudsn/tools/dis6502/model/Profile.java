@@ -5,18 +5,18 @@
  */
 package com.wudsn.tools.dis6502.model;
 
+import org.w3c.dom.Element;
+
 /**
  * A disassembly output formatting profile: syntax and layout settings for
  * one target assembler, used to render labels, numbers, bytes, comments, and
  * directives.
  * <p>
- * Ported from Profile.h / Profile.cpp. {@code SerializeTo}/{@code
- * DeserializeFrom} (XML persistence) are not ported yet, deferred to when
- * {@code Workspace}'s XML persistence is ported.
+ * Ported from Profile.h / Profile.cpp.
  *
  * @author Peter Dell
  */
-public final class Profile {
+public final class Profile implements Xml.Serializable {
 
 	// Source Layout.
 	public boolean useLineNumbers; // Since 1.0.
@@ -136,5 +136,165 @@ public final class Profile {
 		directiveINCLUDEAllEquatesInOneIncludeFile = true;
 		directiveINCLUDEAllIncludesInMainFile = false;
 		directiveINCLUDEMaximumNumberOfLinesPerFile = 0;
+	}
+
+	@Override
+	public void serializeTo(Element element) {
+		// Source Layout
+		Xml.setBoolAttribute(element, "UseLineNumbers", useLineNumbers);
+		Xml.setBoolAttribute(element, "AlignInstructions", alignInstructions);
+		Xml.setBoolAttribute(element, "ShowLowerCaseInstructions", showLowerCaseInstructions);
+
+		// Opcodes
+		Xml.setBoolAttribute(element, "UseIllegalOpcodes", useIllegalOpcodes);
+		Xml.setBoolAttribute(element, "ShowAInAccumulatorMode", showAInAccumulatorMode);
+		Xml.setBoolAttribute(element, "ShowColonAfterLabel", showColonAfterLabel);
+		Xml.setBoolAttribute(element, "ShowOpcodeAsComment", showOpcodeAsComment);
+		Xml.setBoolAttribute(element, "ShowBRKAsByte0", showBRKAsByte0);
+		Xml.setBoolAttribute(element, "ShowZPAbsoluteAsByte", showZPAbsoluteAsByte);
+		Xml.setStringAttribute(element, "DirectiveForceAbsolute", directiveForceAbsolute);
+
+		// Comments
+		Xml.setStringAttribute(element, "CommentPrefix", commentPrefix);
+
+		// Numbers
+		Xml.setBoolAttribute(element, "UseHexNotation", useHexNotation);
+		Xml.setStringAttribute(element, "HexNotationPrefix", hexNotationPrefix);
+
+		// Strings
+		Xml.setBoolAttribute(element, "ShowNonASCIIChararactersAsBytes", showNonASCIIChararactersAsBytes);
+		Xml.setStringAttribute(element, "QuoteForASCIIStrings", quoteForASCIIStrings);
+
+		// Directives
+		Xml.setStringAttribute(element, "DirectiveLOWHead", directiveLOWHead);
+		Xml.setStringAttribute(element, "DirectiveLOWTail", directiveLOWTail);
+		Xml.setStringAttribute(element, "DirectiveHIGHHead", directiveHIGHHead);
+		Xml.setStringAttribute(element, "DirectiveHIGHTail", directiveHIGHTail);
+
+		Xml.setStringAttribute(element, "DirectiveBYTE", directiveBYTE);
+		Xml.setStringAttribute(element, "DirectiveBYTESeparator", directiveBYTESeparator);
+		Xml.setWordAttribute(element, "DirectiveBYTENumberOfBytesPerLine", directiveBYTENumberOfBytesPerLine);
+		Xml.setWordAttribute(element, "DirectiveBYTENumberOfCharactersPerString",
+				directiveBYTENumberOfCharactersPerString);
+		Xml.setBoolAttribute(element, "DirectiveBYTEOnlyNumbersAllowed", directiveBYTEOnlyNumbersAllowed);
+		Xml.setBoolAttribute(element, "DirectiveSBYTEAllowed", directiveSBYTEAllowed);
+		Xml.setStringAttribute(element, "DirectiveSBYTE", directiveSBYTE);
+		Xml.setBoolAttribute(element, "DirectiveWORDAllowed", directiveWORDAllowed);
+		Xml.setStringAttribute(element, "DirectiveWORD", directiveWORD);
+		Xml.setWordAttribute(element, "DirectiveWORDNumberOfWordsPerLine", directiveWORDNumberOfWordsPerLine);
+		Xml.setBoolAttribute(element, "DirectiveDSAllowed", directiveDSAllowed);
+		Xml.setStringAttribute(element, "DirectiveDS", directiveDS);
+
+		// Source structure
+		Xml.setStringAttribute(element, "DirectiveORG", directiveORG);
+		Xml.setStringAttribute(element, "DirectiveEQU", directiveEQU);
+		Xml.setStringAttribute(element, "DirectiveENDHead", directiveENDHead);
+		Xml.setStringAttribute(element, "DirectiveENDTail", directiveENDTail);
+		Xml.setBoolAttribute(element, "DirectiveENDNeedsFilename", directiveENDNeedsFilename);
+
+		// Disassembly listing
+		Xml.setStringAttribute(element, "OutputEncoding", outputEncoding.getKey());
+		Xml.setBoolAttribute(element, "OmitUnreferencedSystemLabels", omitUnreferencedSystemLabels);
+
+		// Include files
+		Xml.setBoolAttribute(element, "DirectiveINCLUDEAllowed", directiveINCLUDEAllowed);
+		Xml.setStringAttribute(element, "DirectiveINCLUDEHead", directiveINCLUDEHead);
+		Xml.setStringAttribute(element, "DirectiveINCLUDETail", directiveINCLUDETail);
+		Xml.setBoolAttribute(element, "DirectiveINCLUDEAllEquatesInOneIncludeFile",
+				directiveINCLUDEAllEquatesInOneIncludeFile);
+		Xml.setBoolAttribute(element, "DirectiveINCLUDEAllIncludesInMainFile",
+				directiveINCLUDEAllIncludesInMainFile);
+		Xml.setWordAttribute(element, "DirectiveINCLUDEMaximumNumberOfLinesPerFile",
+				directiveINCLUDEMaximumNumberOfLinesPerFile);
+	}
+
+	@Override
+	public void deserializeFrom(Element element) {
+		clear();
+
+		// Source Layout
+		useLineNumbers = Xml.getBoolAttribute(element, "UseLineNumbers", useLineNumbers);
+		alignInstructions = Xml.getBoolAttribute(element, "AlignInstructions", alignInstructions);
+		showLowerCaseInstructions = Xml.getBoolAttribute(element, "ShowLowerCaseInstructions",
+				showLowerCaseInstructions);
+
+		// Opcodes
+		useIllegalOpcodes = Xml.getBoolAttribute(element, "UseIllegalOpcodes", useIllegalOpcodes);
+		showAInAccumulatorMode = Xml.getBoolAttribute(element, "ShowAInAccumulatorMode", showAInAccumulatorMode);
+		showColonAfterLabel = Xml.getBoolAttribute(element, "ShowColonAfterLabel", showColonAfterLabel);
+		showOpcodeAsComment = Xml.getBoolAttribute(element, "ShowOpcodeAsComment", showOpcodeAsComment);
+		showBRKAsByte0 = Xml.getBoolAttribute(element, "ShowBRKAsByte0", showBRKAsByte0);
+		showZPAbsoluteAsByte = Xml.getBoolAttribute(element, "ShowZPAbsoluteAsByte", showZPAbsoluteAsByte);
+		directiveForceAbsolute = Xml.getStringAttribute(element, "DirectiveForceAbsolute", directiveForceAbsolute);
+
+		// Comments
+		commentPrefix = Xml.getStringAttribute(element, "CommentPrefix", commentPrefix);
+
+		// Numbers
+		useHexNotation = Xml.getBoolAttribute(element, "UseHexNotation", useHexNotation);
+		hexNotationPrefix = Xml.getStringAttribute(element, "HexNotationPrefix", hexNotationPrefix);
+
+		// Strings
+		showNonASCIIChararactersAsBytes = Xml.getBoolAttribute(element, "ShowNonASCIIChararactersAsBytes",
+				showNonASCIIChararactersAsBytes);
+		quoteForASCIIStrings = Xml.getStringAttribute(element, "QuoteForASCIIStrings", quoteForASCIIStrings);
+
+		// Directives
+		directiveLOWHead = Xml.getStringAttribute(element, "DirectiveLOWHead", directiveLOWHead);
+		directiveLOWTail = Xml.getStringAttribute(element, "DirectiveLOWTail", directiveLOWTail);
+		directiveHIGHHead = Xml.getStringAttribute(element, "DirectiveHIGHHead", directiveHIGHHead);
+		directiveHIGHTail = Xml.getStringAttribute(element, "DirectiveHIGHTail", directiveHIGHTail);
+
+		directiveBYTE = Xml.getStringAttribute(element, "DirectiveBYTE", directiveBYTE);
+		directiveBYTESeparator = Xml.getStringAttribute(element, "DirectiveBYTESeparator", directiveBYTESeparator);
+		directiveBYTENumberOfBytesPerLine = Xml.getWordAttribute(element, "DirectiveBYTENumberOfBytesPerLine",
+				directiveBYTENumberOfBytesPerLine);
+		directiveBYTENumberOfCharactersPerString = Xml.getWordAttribute(element,
+				"DirectiveBYTENumberOfCharactersPerString", directiveBYTENumberOfCharactersPerString);
+		directiveBYTEOnlyNumbersAllowed = Xml.getBoolAttribute(element, "DirectiveBYTEOnlyNumbersAllowed",
+				directiveBYTEOnlyNumbersAllowed);
+		directiveSBYTEAllowed = Xml.getBoolAttribute(element, "DirectiveSBYTEAllowed", directiveSBYTEAllowed);
+		directiveSBYTE = Xml.getStringAttribute(element, "DirectiveSBYTE", directiveSBYTE);
+		directiveWORDAllowed = Xml.getBoolAttribute(element, "DirectiveWORDAllowed", directiveWORDAllowed);
+		directiveWORD = Xml.getStringAttribute(element, "DirectiveWORD", directiveWORD);
+		directiveWORDNumberOfWordsPerLine = Xml.getWordAttribute(element, "DirectiveWORDNumberOfWordsPerLine",
+				directiveWORDNumberOfWordsPerLine);
+		directiveDSAllowed = Xml.getBoolAttribute(element, "DirectiveDSAllowed", directiveDSAllowed);
+		directiveDS = Xml.getStringAttribute(element, "DirectiveDS", directiveDS);
+
+		// Source Structure
+		directiveORG = Xml.getStringAttribute(element, "DirectiveORG", directiveORG);
+		directiveEQU = Xml.getStringAttribute(element, "DirectiveEQU", directiveEQU);
+		directiveENDHead = Xml.getStringAttribute(element, "DirectiveENDHead", directiveENDHead);
+		directiveENDTail = Xml.getStringAttribute(element, "DirectiveENDTail", directiveENDTail);
+		directiveENDNeedsFilename = Xml.getBoolAttribute(element, "DirectiveENDNeedsFilename",
+				directiveENDNeedsFilename);
+
+		// Disassembly listing
+		String outputEncodingString = Xml.getStringAttribute(element, "OutputEncoding", "");
+		outputEncoding = Encoding.fromKey(outputEncodingString);
+
+		// Ignore unsuitable encodings.
+		switch (outputEncoding) {
+		case ASCII:
+		case ATASCII:
+		case UTF8:
+			break;
+		default:
+			outputEncoding = Encoding.ASCII;
+		}
+		omitUnreferencedSystemLabels = Xml.getBoolAttribute(element, "OmitUnreferencedSystemLabels",
+				omitUnreferencedSystemLabels);
+
+		// Include files
+		directiveINCLUDEAllowed = Xml.getBoolAttribute(element, "DirectiveINCLUDEAllowed", directiveINCLUDEAllowed);
+		directiveINCLUDEHead = Xml.getStringAttribute(element, "DirectiveINCLUDEHead", directiveINCLUDEHead);
+		directiveINCLUDETail = Xml.getStringAttribute(element, "DirectiveINCLUDETail", directiveINCLUDETail);
+		directiveINCLUDEAllEquatesInOneIncludeFile = Xml.getBoolAttribute(element,
+				"DirectiveINCLUDEAllEquatesInOneIncludeFile", directiveINCLUDEAllEquatesInOneIncludeFile);
+		directiveINCLUDEAllIncludesInMainFile = Xml.getBoolAttribute(element, "DirectiveINCLUDEAllIncludesInMainFile",
+				directiveINCLUDEAllIncludesInMainFile);
+		directiveINCLUDEMaximumNumberOfLinesPerFile = Xml.getWordAttribute(element,
+				"DirectiveINCLUDEMaximumNumberOfLinesPerFile", directiveINCLUDEMaximumNumberOfLinesPerFile);
 	}
 }
