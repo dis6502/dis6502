@@ -5,12 +5,14 @@
  */
 package com.wudsn.tools.dis6502;
 
+import com.wudsn.tools.dis6502.model.AssemblerTest;
 import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.ComputerSystemTest;
 import com.wudsn.tools.dis6502.model.DisassemblyResultFileTest;
 import com.wudsn.tools.dis6502.model.DisassemblyResultTest;
 import com.wudsn.tools.dis6502.model.EquateTest;
 import com.wudsn.tools.dis6502.model.SegmentTest;
+import com.wudsn.tools.dis6502.model.Workspace;
 
 /**
  * Runs the ported unit tests and reports a pass/fail summary.
@@ -21,10 +23,10 @@ import com.wudsn.tools.dis6502.model.SegmentTest;
  * invocation, reference-file comparison across notation variants) that
  * depends on {@code WorkspaceLogic} and other application-level pieces not
  * ported yet. This only runs the tests that exercise already-ported model
- * classes: {@link EquateTest}, {@link SegmentTest}, {@link
- * DisassemblyResultTest}, {@link DisassemblyResultFileTest}, and {@link
- * ComputerSystemTest} (which in turn covers {@code Atari800Test} and the
- * C64 system).
+ * classes: {@link AssemblerTest}, {@link EquateTest}, {@link SegmentTest},
+ * {@link DisassemblyResultTest}, {@link DisassemblyResultFileTest}, and
+ * {@link ComputerSystemTest} (which in turn covers {@code Atari800Test} and
+ * the C64 system).
  * <p>
  * There is no JUnit (or other) test framework dependency: the offline Maven
  * repository this project builds against is missing the pieces Surefire
@@ -58,6 +60,7 @@ public final class TestRunner {
 	public void execute() {
 		log("INFO: Starting unit tests.");
 
+		runTest("AssemblerTest", () -> AssemblerTest.testAssembler(new Workspace(new ComputerSystemFactory())));
 		runTest("EquateTest", EquateTest::testEquate);
 		runTest("SegmentTest", SegmentTest::testSegment);
 		runTest("DisassemblyResultTest", DisassemblyResultTest::testDisassemblyResult);

@@ -64,6 +64,15 @@ public final class Assert {
 		}
 	}
 
+	/** Ported from {@code Assert::PointerEquals(actual, nullptr)}. */
+	public static void isNull(Object actual) {
+		if (actual != null) {
+			logValue("Actual Value  ", String.valueOf(actual));
+			logValue("Expected Value", "null");
+			fail("Value is not null");
+		}
+	}
+
 	public static void log(String text) {
 		Log.logInfo("{0}", new Object[] { text });
 	}
