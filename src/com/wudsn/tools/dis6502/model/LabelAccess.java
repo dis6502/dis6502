@@ -51,4 +51,36 @@ public final class LabelAccess {
 			return "?";
 		}
 	}
+
+	/** The XML attribute key for a single label access value, used by {@link Equate}'s serialization. */
+	public static String getKey(int labelAccess) {
+		switch (labelAccess) {
+		case READ:
+			return "READ";
+		case WRITE:
+			return "WRITE";
+		case READ_WRITE:
+			return "READ_WRITE";
+		case IMMEDIATE:
+			return "IMMEDIATE";
+		default:
+			return "UNKNOWN";
+		}
+	}
+
+	/** The inverse of {@link #getKey(int)}. */
+	public static int fromKey(String key) {
+		switch (key) {
+		case "READ":
+			return READ;
+		case "WRITE":
+			return WRITE;
+		case "READ_WRITE":
+			return READ_WRITE;
+		case "IMMEDIATE":
+			return IMMEDIATE;
+		default:
+			return UNKNOWN;
+		}
+	}
 }

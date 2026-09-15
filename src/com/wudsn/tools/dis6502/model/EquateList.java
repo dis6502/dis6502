@@ -11,6 +11,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
+import org.w3c.dom.Element;
+
 /**
  * A list of {@link Equate}s, e.g. the system equates or the user equates of
  * a workspace.
@@ -18,18 +20,21 @@ import java.util.Objects;
  * Ported from EquateList.h / EquateList.cpp. Not ported yet, deferred to
  * when {@code Workspace} is ported:
  * <ul>
- * <li>{@code SerializeTo}/{@code DeserializeFrom} (XML persistence, to be
- * built on wudsn-base's {@code XMLUtility}/{@code XMLHandler}),</li>
  * <li>{@code Load1X}/{@code Save1X} (the workspace-version-1X binary
  * format),</li>
  * <li>{@code Load(filePath)}/{@code Save(filePath, xasm)} (depend on
  * application-level logging and file I/O, ported alongside the rest of the
  * application wiring).</li>
  * </ul>
+ * The C++ source's {@code DeserializeFrom} passed the wrong element to each
+ * {@code Equate::DeserializeFrom} call (the outer {@code <EquateList>}
+ * element instead of the individual {@code <Equate>} child) - fixed
+ * upstream and correct here from the start; see the fix commit for
+ * details.
  *
  * @author Peter Dell
  */
-public final class EquateList {
+public final class EquateList implements Xml.Serializable {
 
 	private final WorkspaceProperty property;
 	private final List<Equate> equateList = new ArrayList<>();
@@ -89,6 +94,32 @@ public final class EquateList {
 		Equate equate = new Equate();
 		equateList.add(equate);
 		return equate;
+	}
+
+	@Override
+	public void serializeTo(Element element) {
+		Xml.setWordAttribute(element, "Count", getCount());
+
+		for (Equate equate : equateList) {
+			Element equateElement = Xml.addChildElement(element, "Equate");
+			equate.serializeTo(equateElement);
+		}
+	}
+
+	@Override
+	public void deserializeFrom(Element element) {
+		clear();
+
+		int count = Xml.getWordAttribute(element, "Count", 0);
+
+		if (count > 0) {
+			Element equateElement = Xml.getFirstChildElement(element);
+			for (int equateIndex = 0; equateElement != null && equateIndex < count; equateIndex++) {
+				Equate equate = addEquate();
+				equate.deserializeFrom(equateElement);
+				equateElement = Xml.getNextSiblingElement(equateElement, "Equate");
+			}
+		}
 	}
 
 	/**

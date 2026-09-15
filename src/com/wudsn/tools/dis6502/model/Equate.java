@@ -5,17 +5,17 @@
  */
 package com.wudsn.tools.dis6502.model;
 
+import org.w3c.dom.Element;
+
 import com.wudsn.tools.base.common.HexUtility;
 
 /**
  * One entry read from (or to be written to) an equates file: an empty line,
  * a comment line, or a label definition line ("LABEL = $1234 ; comment").
  * <p>
- * Ported from Equate.h / Equate.cpp. {@code SerializeTo}/{@code
- * DeserializeFrom} (XML persistence) and the workspace-version-1X binary
- * Load1X/Save1X format are not ported yet; they are deferred to when
- * {@code Workspace}'s XML persistence (via wudsn-base's {@code XMLUtility})
- * is ported.
+ * Ported from Equate.h / Equate.cpp. The workspace-version-1X binary
+ * Load1X/Save1X format is not ported yet; deferred to when {@code
+ * Workspace}'s own binary-format loading is ported.
  * <p>
  * Only {@link EquateList} may create and initialize instances (it was a C++
  * {@code friend class}); the constructor and {@link #init} are
@@ -23,7 +23,7 @@ import com.wudsn.tools.base.common.HexUtility;
  *
  * @author Peter Dell
  */
-public final class Equate {
+public final class Equate implements Xml.Serializable {
 
 	/**
 	 * The result of parsing one line of an equates file with {@link #readFrom}.
@@ -142,6 +142,51 @@ public final class Equate {
 		this.labelValue = labelValue;
 		this.comment = comment;
 
+		initTransientFields();
+	}
+
+	@Override
+	public void serializeTo(Element element) {
+		Xml.setStringAttribute(element, "EquateType", equateType.name());
+		switch (equateType) {
+		case UNKNOWN:
+			throw new IllegalStateException("Invalid equate type.");
+
+		case EMPTY:
+			break;
+
+		case COMMENT:
+			Xml.setStringAttribute(element, "Comment", comment);
+			break;
+
+		case LABEL:
+			Xml.setStringAttribute(element, "Label", label);
+			Xml.setStringAttribute(element, "LabelAccess", LabelAccess.getKey(labelAccess));
+			if (labelValue < 0x100) {
+				Xml.setByteAttributeHex(element, "LabelValue", labelValue);
+			} else {
+				Xml.setWordAttributeHex(element, "LabelValue", labelValue);
+			}
+			if (!comment.isEmpty()) {
+				Xml.setStringAttribute(element, "Comment", comment);
+			}
+			break;
+		}
+	}
+
+	@Override
+	public void deserializeFrom(Element element) {
+		clear();
+		String equateTypeString = Xml.getStringAttribute(element, "EquateType", "");
+		try {
+			equateType = EquateType.valueOf(equateTypeString);
+		} catch (IllegalArgumentException e) {
+			equateType = EquateType.UNKNOWN;
+		}
+		label = Xml.getStringAttribute(element, "Label", label);
+		labelAccess = LabelAccess.fromKey(Xml.getStringAttribute(element, "LabelAccess", ""));
+		labelValue = Xml.getWordAttribute(element, "LabelValue", labelValue);
+		comment = Xml.getStringAttribute(element, "Comment", comment);
 		initTransientFields();
 	}
 
