@@ -1,0 +1,81 @@
+/*
+ * Copyright (C) 2025 <a href="https://www.wudsn.com" target="_top">Peter Dell</a>
+ *
+ * This file is part of dis6502.
+ */
+package com.wudsn.tools.dis6502.model;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+
+import com.wudsn.tools.dis6502.Application;
+import com.wudsn.tools.dis6502.ApplicationSettingsSection;
+import com.wudsn.tools.dis6502.Text;
+
+/**
+ * Loads and saves a {@link Profile}, trying the legacy binary format
+ * ({@link Profile1X}) before falling back to the modern XML format.
+ * Ported from ProfileLogic.h / ProfileLogic.cpp.
+ *
+ * @author Peter Dell
+ */
+public final class ProfileLogic {
+
+	private final Application application;
+
+	public ProfileLogic(Application application) {
+		this.application = application;
+	}
+
+	public void loadDefaultProfile(Profile profile, ComputerSystemTypeInfo computerSystemTypeInfo) {
+		ApplicationSettingsSection settingsSection = application.getSettingsSection(computerSystemTypeInfo.id);
+		String filePath = settingsSection.getString("LastProfile", "");
+		if (!filePath.isEmpty()) {
+			load(profile, filePath);
+		}
+	}
+
+	/** Loads a profile from disk (the legacy binary format or the modern XML format). Returns {@code false}, and logs, instead of throwing. */
+	public boolean load(Profile profile, String filePath) {
+		application.sendInfoMessage(Text.IDS_LOG_OPEN_PROFILE_FILE, filePath);
+
+		try {
+			File file = new File(filePath);
+			byte[] buffer = Files.readAllBytes(file.toPath());
+			if (buffer.length == 0) {
+				throw new IOException("File '" + filePath + "' is empty.");
+			}
+			if (!Profile1X.load(profile, buffer, application)) {
+				Xml.load(profile, "Profile", file);
+			}
+			return true;
+		} catch (IOException ex) {
+			application.sendErrorMessage(Text.IDS_ERR_BAD_PROFILE);
+			application.sendErrorMessage(ex);
+			return false;
+		}
+	}
+
+	public boolean loadAndSetDefaultProfile(Profile profile, ComputerSystemTypeInfo computerSystemTypeInfo,
+			String filePath) {
+		if (load(profile, filePath)) {
+			ApplicationSettingsSection settingsSection = application.getSettingsSection(computerSystemTypeInfo.id);
+			settingsSection.writeString("LastProfile", filePath);
+			return true;
+		}
+		return false;
+	}
+
+	public void save(Profile profile, String filePath) {
+		application.sendInfoMessage(Text.IDS_LOG_SAVE_PROFILE_FILE, filePath);
+
+		try (OutputStream outputStream = new FileOutputStream(filePath)) {
+			Xml.save(profile, "Profile", outputStream);
+		} catch (IOException ex) {
+			application.sendErrorMessage(ex);
+		}
+	}
+}
