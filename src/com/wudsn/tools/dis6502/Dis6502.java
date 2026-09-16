@@ -15,6 +15,7 @@ import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
+import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
 import com.wudsn.tools.dis6502.model.EquateList;
@@ -37,11 +38,16 @@ import com.wudsn.tools.dis6502.ui.UIApplication;
  * Ported from ui/Main.h / Main.cpp / ui/MainController.h / MainController.cpp
  * / ui/MainFile.cpp, reduced to a first working slice: the main window
  * shell (see {@link MainWindow}) plus workspace New/Open/Save/Save As/Exit,
- * opening/adding an executable file, and Help &gt; About. {@link
- * #confirmClearWorkspace} mirrors {@code Main::PromptToClearWorkspace}.
- * Raw/ROM/cassette/disk-image file opening, equate editing, the memory
- * inspector, and cross-reference view are not wired up yet - see the
- * individual {@code ui} panel classes for what is and isn't ported so far.
+ * opening/adding an executable file, loading/saving/clearing/exporting
+ * equates, the View menu's No Disassembly/Double Font Height toggles, and
+ * Help &gt; About. {@link #confirmClearWorkspace} mirrors {@code
+ * Main::PromptToClearWorkspace}; {@link #updateDisassembly} mirrors {@code
+ * Main::UpdateDisassembly}, called explicitly after each action instead of
+ * through the reactive {@code Main::HandleWorkspaceChanged} dispatcher,
+ * which is not ported. Raw/ROM/cassette/disk-image file opening, editing
+ * equates through a dialog, the memory inspector, and cross-reference view
+ * are not wired up yet - see the individual {@code ui} panel classes for
+ * what is and isn't ported so far.
  *
  * @author Peter Dell
  */
@@ -121,6 +127,11 @@ public final class Dis6502 {
 		mainWindow.mainMenu.saveUserEquatesMenuItem.addActionListener(e -> performSaveUserEquates(false));
 		mainWindow.mainMenu.exportUserEquatesMenuItem.addActionListener(e -> performSaveUserEquates(true));
 
+		mainWindow.mainMenu.noDisassemblyMenuItem.setSelected(workspace.isViewNoDisassembly());
+		mainWindow.mainMenu.noDisassemblyMenuItem.addActionListener(e -> performToggleViewDisassembly());
+		mainWindow.mainMenu.doubleFontHeightMenuItem.setSelected(workspace.isViewDoubleHeight());
+		mainWindow.mainMenu.doubleFontHeightMenuItem.addActionListener(e -> performToggleViewDoubleFontHeight());
+
 		mainWindow.mainMenu.aboutMenuItem.addActionListener(e -> performAbout());
 
 		refreshMRUMenus();
@@ -161,7 +172,7 @@ public final class Dis6502 {
 		mruController.save();
 		refreshMRUMenus();
 		mainWindow.segmentListPanel.refresh();
-		performDisassemble();
+		updateDisassembly(true);
 		updateTitle();
 	}
 
@@ -184,7 +195,7 @@ public final class Dis6502 {
 		mruController.save();
 		refreshMRUMenus();
 		mainWindow.segmentListPanel.refresh();
-		performDisassemble();
+		updateDisassembly(true);
 		updateTitle();
 	}
 
@@ -226,7 +237,7 @@ public final class Dis6502 {
 		mruController.save();
 		refreshMRUMenus();
 		mainWindow.segmentListPanel.refresh();
-		performDisassemble();
+		updateDisassembly(true);
 		updateTitle();
 	}
 
@@ -268,7 +279,7 @@ public final class Dis6502 {
 		mruController.save();
 		refreshMRUMenus();
 		mainWindow.segmentListPanel.refresh();
-		performDisassemble();
+		updateDisassembly(true);
 		updateTitle();
 	}
 
@@ -314,6 +325,26 @@ public final class Dis6502 {
 		}
 		lastEquateFile = fileChooser.getSelectedFile();
 		equateListLogic.save(workspace.getUserEquateList(), lastEquateFile.getPath(), xasm);
+	}
+
+	/** Ported from Main::ToggleViewDisassembly. */
+	private void performToggleViewDisassembly() {
+		workspace.setViewNoDisassembly(mainWindow.mainMenu.noDisassemblyMenuItem.isSelected());
+		updateDisassembly(false); // Will do nothing if it is now true, matching the C++ comment at the same spot.
+	}
+
+	/**
+	 * Ported from Main::ToggleViewDoubleFontHeight. The font-resizing this
+	 * notification is meant to trigger ({@code Main::SetLayoutFont}/{@code
+	 * layout->Compute}) is not ported - {@link
+	 * com.wudsn.tools.dis6502.ui.DisassemblyPanel} does not yet respond to a
+	 * {@link WorkspaceProperty#FONT} change - so toggling this has no
+	 * visible effect yet; it still updates real, already-ported
+	 * {@link Workspace} state and fires the same notification C++ does.
+	 */
+	private void performToggleViewDoubleFontHeight() {
+		workspace.setViewDoubleHeight(mainWindow.mainMenu.doubleFontHeightMenuItem.isSelected());
+		workspace.notifyFontChanged();
 	}
 
 	/**
@@ -371,8 +402,25 @@ public final class Dis6502 {
 		return saved;
 	}
 
-	/** Ported from Disassembly's use in MainTest::ExecuteUnitTestItem - not yet triggered from a menu command like ui/MainFile.cpp's real flow. */
-	private void performDisassemble() {
+	/**
+	 * Ported from Main::UpdateDisassembly, using the real {@link Disassembly}
+	 * pipeline the way {@code MainTest::ExecuteUnitTestItem} does. Unlike the
+	 * C++ version, whose callers compute {@code bForce} from which {@link
+	 * WorkspaceProperty} changed (see {@code Main::HandleWorkspaceChanged} -
+	 * that whole reactive dispatcher is not ported, {@code Dis6502} instead
+	 * calls this explicitly after each action), every call site here passes
+	 * {@code force=true} except the "No Disassembly" toggle - matching the
+	 * C++ behavior for the actions currently wired: opening/adding a file or
+	 * a workspace always corresponds to a {@code SEGMENTS} change, which C++
+	 * always forces.
+	 */
+	private void updateDisassembly(boolean force) {
+		if (workspace.getComputerSystem().getType() == ComputerSystemType.UNKNOWN) {
+			return;
+		}
+		if (!force && workspace.isViewNoDisassembly()) {
+			return;
+		}
 		if (workspace.getSegmentList().isEmpty()) {
 			return;
 		}
