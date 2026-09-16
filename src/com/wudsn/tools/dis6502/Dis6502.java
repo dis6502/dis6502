@@ -17,10 +17,13 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
+import com.wudsn.tools.dis6502.model.EquateList;
+import com.wudsn.tools.dis6502.model.EquateListLogic;
 import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.MRUEntry;
 import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogic;
+import com.wudsn.tools.dis6502.model.WorkspaceProperty;
 import com.wudsn.tools.dis6502.ui.MainWindow;
 import com.wudsn.tools.dis6502.ui.MRUController;
 import com.wudsn.tools.dis6502.ui.UIApplication;
@@ -48,10 +51,12 @@ public final class Dis6502 {
 
 	private UIApplication application;
 	private WorkspaceLogic workspaceLogic;
+	private EquateListLogic equateListLogic;
 	private Workspace workspace;
 	private MainWindow mainWindow;
 	private MRUController mruController;
 	private File currentFile;
+	private File lastEquateFile;
 
 	public static void main(final String[] args) {
 
@@ -80,6 +85,7 @@ public final class Dis6502 {
 		application = new UIApplication();
 		ComputerSystemFactory computerSystemFactory = new ComputerSystemFactory();
 		workspaceLogic = new WorkspaceLogic(application);
+		equateListLogic = new EquateListLogic(application);
 		workspace = new Workspace(computerSystemFactory);
 		workspace.setComputerSystemTypeID("ATARI800");
 		mruController = new MRUController(application);
@@ -88,6 +94,11 @@ public final class Dis6502 {
 		mainWindow = new MainWindow();
 		application.setLogPanel(mainWindow.logPanel);
 		mainWindow.segmentListPanel.setWorkspace(workspace);
+		workspace.addListener((changedWorkspace, properties) -> {
+			if (properties.contains(WorkspaceProperty.SYSTEM_EQUATES) || properties.contains(WorkspaceProperty.USER_EQUATES)) {
+				updateEquatesMenuState();
+			}
+		});
 
 		mainWindow.getFrame().addWindowListener(new WindowAdapter() {
 			@Override
@@ -103,11 +114,29 @@ public final class Dis6502 {
 		mainWindow.mainMenu.saveWorkspaceMenuItem.addActionListener(e -> performSaveWorkspace());
 		mainWindow.mainMenu.saveWorkspaceAsMenuItem.addActionListener(e -> performSaveWorkspaceAs());
 		mainWindow.mainMenu.exitMenuItem.addActionListener(e -> performExit());
+
+		mainWindow.mainMenu.clearSystemEquatesMenuItem.addActionListener(e -> performClearEquates(workspace.getSystemEquateList()));
+		mainWindow.mainMenu.clearUserEquatesMenuItem.addActionListener(e -> performClearEquates(workspace.getUserEquateList()));
+		mainWindow.mainMenu.openUserEquatesMenuItem.addActionListener(e -> performOpenUserEquates());
+		mainWindow.mainMenu.saveUserEquatesMenuItem.addActionListener(e -> performSaveUserEquates(false));
+		mainWindow.mainMenu.exportUserEquatesMenuItem.addActionListener(e -> performSaveUserEquates(true));
+
 		mainWindow.mainMenu.aboutMenuItem.addActionListener(e -> performAbout());
 
 		refreshMRUMenus();
+		updateEquatesMenuState();
 		updateTitle();
 		mainWindow.setVisible(true);
+	}
+
+	/** Ported from Main::UpdateMenuState's Equates-menu part (ui/Main.cpp). */
+	private void updateEquatesMenuState() {
+		boolean hasSystemEquates = !workspace.getSystemEquateList().isEmpty();
+		boolean hasUserEquates = !workspace.getUserEquateList().isEmpty();
+		mainWindow.mainMenu.clearSystemEquatesMenuItem.setEnabled(hasSystemEquates);
+		mainWindow.mainMenu.clearUserEquatesMenuItem.setEnabled(hasUserEquates);
+		mainWindow.mainMenu.saveUserEquatesMenuItem.setEnabled(hasUserEquates);
+		mainWindow.mainMenu.exportUserEquatesMenuItem.setEnabled(hasUserEquates);
 	}
 
 	/** Repopulates the "Recent Workspaces"/"Recent Files" menus from {@link #mruController}. */
@@ -241,6 +270,50 @@ public final class Dis6502 {
 		mainWindow.segmentListPanel.refresh();
 		performDisassemble();
 		updateTitle();
+	}
+
+	/** Ported from EquateListController::Clear, without the not-yet-ported "Display System Equates" callers care about. */
+	private void performClearEquates(EquateList equateList) {
+		if (equateList.isEmpty()) {
+			return;
+		}
+		String message = equateList.getProperty() == WorkspaceProperty.SYSTEM_EQUATES
+				? Text.IDS_EQUATES_CONFIRM_CLEAR_SYSTEM_EQUATES
+				: Text.IDS_EQUATES_CONFIRM_CLEAR_USER_EQUATES;
+		if (JOptionPane.showConfirmDialog(mainWindow.getFrame(), message, "Clear Equates",
+				JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+			equateList.clear();
+		}
+	}
+
+	/** Ported from EquateListController::LoadUserEquates. */
+	private void performOpenUserEquates() {
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle("Open User Equates File");
+		fileChooser.setFileFilter(new FileNameExtensionFilter("Equate Files (*.equ)", "equ"));
+		if (lastEquateFile != null) {
+			fileChooser.setCurrentDirectory(lastEquateFile.getParentFile());
+		}
+		if (fileChooser.showOpenDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+		lastEquateFile = fileChooser.getSelectedFile();
+		equateListLogic.load(workspace.getUserEquateList(), lastEquateFile.getPath());
+	}
+
+	/** Ported from EquateListController::Save, invoked for both "Save User Equates" ({@code xasm=false}) and "Export User Equates" ({@code xasm=true}). */
+	private void performSaveUserEquates(boolean xasm) {
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle(xasm ? "Export User Equates File" : "Save User Equates File");
+		fileChooser.setFileFilter(new FileNameExtensionFilter("Equate Files (*.equ)", "equ"));
+		if (lastEquateFile != null) {
+			fileChooser.setCurrentDirectory(lastEquateFile.getParentFile());
+		}
+		if (fileChooser.showSaveDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+		lastEquateFile = fileChooser.getSelectedFile();
+		equateListLogic.save(workspace.getUserEquateList(), lastEquateFile.getPath(), xasm);
 	}
 
 	/**

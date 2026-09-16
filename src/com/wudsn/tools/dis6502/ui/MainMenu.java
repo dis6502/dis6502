@@ -20,12 +20,14 @@ import javax.swing.KeyStroke;
  * {@code MAIN_MENU} resource, simplified for this first pass: File &gt;
  * New/Open/Save/Save As/Exit, File &gt; Open File/Add File &gt; Executable
  * File, File &gt; Recent Workspaces/Recent Files (see {@link
- * MRUController}), and Help &gt; About are wired to real actions (see
+ * MRUController}), Equates &gt; Clear System/User Equates and Open/Save/
+ * Export User Equates, and Help &gt; About are wired to real actions (see
  * {@code Dis6502}); every other menu item is present (matching the .rc
  * structure, for visual completeness) but disabled, since the
- * dialogs/logic they need (equate editing, the Profile/Default Folders
- * dialogs, the other per-file-type open dialogs - raw/ROM/cassette/disk
- * image) are not ported yet.
+ * dialogs/logic they need (the Edit User Equates/Define Address Range/
+ * Display System Equates/Profile/Default Folders dialogs, the other
+ * per-file-type open dialogs - raw/ROM/cassette/disk image) are not ported
+ * yet.
  *
  * @author Peter Dell
  */
@@ -43,11 +45,17 @@ public final class MainMenu {
 	public final JMenu recentFilesMenu = new JMenu("Recent Files");
 	public final JMenuItem exitMenuItem = new JMenuItem("Exit");
 
+	public final JMenuItem clearSystemEquatesMenuItem = new JMenuItem("Clear System Equates");
+	public final JMenuItem clearUserEquatesMenuItem = new JMenuItem("Clear User Equates");
+	public final JMenuItem openUserEquatesMenuItem = new JMenuItem("Open User Equates...");
+	public final JMenuItem saveUserEquatesMenuItem = new JMenuItem("Save User Equates...");
+	public final JMenuItem exportUserEquatesMenuItem = new JMenuItem("Export User Equates...");
+
 	public final JMenuItem aboutMenuItem = new JMenuItem("About...");
 
 	public MainMenu() {
 		menuBar.add(createFileMenu());
-		menuBar.add(createDisabledMenu("Equates"));
+		menuBar.add(createEquatesMenu());
 		menuBar.add(createDisabledMenu("View"));
 		menuBar.add(createHelpMenu());
 	}
@@ -87,6 +95,27 @@ public final class MainMenu {
 		menu.addSeparator();
 
 		menu.add(exitMenuItem);
+
+		return menu;
+	}
+
+	private JMenu createEquatesMenu() {
+		JMenu menu = new JMenu("Equates");
+
+		menu.add(clearSystemEquatesMenuItem);
+		menu.add(createDisabledMenuItem("Display System Equates"));
+		menu.addSeparator();
+
+		menu.add(clearUserEquatesMenuItem);
+		menu.add(createDisabledMenuItem("Edit User Equates..."));
+		menu.add(createDisabledMenuItem("Define Address Range..."));
+		menu.addSeparator();
+
+		menu.add(openUserEquatesMenuItem);
+		menu.add(saveUserEquatesMenuItem);
+		menu.addSeparator();
+
+		menu.add(exportUserEquatesMenuItem);
 
 		return menu;
 	}

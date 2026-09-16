@@ -21,12 +21,13 @@ import org.w3c.dom.Element;
  * A list of {@link Equate}s, e.g. the system equates or the user equates of
  * a workspace.
  * <p>
- * Ported from EquateList.h / EquateList.cpp. {@code Save1X} and {@code
- * Load(filePath)}/{@code Save(filePath, xasm)} (depend on application-level
- * logging and file I/O) are not ported - see {@link Workspace1X}'s javadoc
- * for why writing the legacy binary format has no value going forward; the
- * modern text equates file Load/Save is deferred the same way other
- * "application-level I/O" methods are elsewhere in this port.
+ * Ported from EquateList.h / EquateList.cpp. {@code Save1X} is not ported -
+ * see {@link Workspace1X}'s javadoc for why writing the legacy binary
+ * format has no value going forward. The modern text equates file {@code
+ * Load(filePath)}/{@code Save(filePath, xasm)} are ported onto
+ * {@link EquateListLogic} instead of here, since they need the
+ * application-level logging/file I/O that class's {@code Application}
+ * parameter provides.
  * <p>
  * The C++ source's {@code DeserializeFrom} passed the wrong element to each
  * {@code Equate::DeserializeFrom} call (the outer {@code <EquateList>}
@@ -69,7 +70,8 @@ public final class EquateList implements Xml.Serializable {
 		listeners.clear();
 	}
 
-	private void notifyListeners() {
+	/** Package-private so {@link EquateListLogic#load} can fire one notification after a bulk load, matching {@code EquateList::Load}'s single trailing {@code NotifyListeners()} call in C++. */
+	void notifyListeners() {
 		for (EquateListChangedListener listener : listeners) {
 			listener.handleEquateListChanged(this, property);
 		}
