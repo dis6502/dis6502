@@ -19,12 +19,13 @@ import javax.swing.KeyStroke;
  * Ported from ui/MainWindowMenu.h / MainWindowMenu.cpp and dis6502.rc's
  * {@code MAIN_MENU} resource, simplified for this first pass: File &gt;
  * New/Open/Save/Save As/Exit, File &gt; Open File/Add File &gt; Executable
- * File, and Help &gt; About are wired to real actions (see {@code
- * Dis6502}); every other menu item is present (matching the .rc structure,
- * for visual completeness) but disabled, since the dialogs/logic they need
- * (equate editing, the Profile/Default Folders dialogs, the other
- * per-file-type open dialogs - raw/ROM/cassette/disk image - MRU lists)
- * are not ported yet.
+ * File, File &gt; Recent Workspaces/Recent Files (see {@link
+ * MRUController}), and Help &gt; About are wired to real actions (see
+ * {@code Dis6502}); every other menu item is present (matching the .rc
+ * structure, for visual completeness) but disabled, since the
+ * dialogs/logic they need (equate editing, the Profile/Default Folders
+ * dialogs, the other per-file-type open dialogs - raw/ROM/cassette/disk
+ * image) are not ported yet.
  *
  * @author Peter Dell
  */
@@ -38,6 +39,8 @@ public final class MainMenu {
 	public final JMenuItem addExecutableFileMenuItem = new JMenuItem("Add Executable File...");
 	public final JMenuItem saveWorkspaceMenuItem = new JMenuItem("Save Workspace");
 	public final JMenuItem saveWorkspaceAsMenuItem = new JMenuItem("Save Workspace As...");
+	public final JMenu recentWorkspacesMenu = new JMenu("Recent Workspaces");
+	public final JMenu recentFilesMenu = new JMenu("Recent Files");
 	public final JMenuItem exitMenuItem = new JMenuItem("Exit");
 
 	public final JMenuItem aboutMenuItem = new JMenuItem("About...");
@@ -77,8 +80,10 @@ public final class MainMenu {
 		menu.add(createDisabledMenuItem("Save Disassembly Files..."));
 		menu.addSeparator();
 
-		menu.add(createDisabledMenu("Recent Workspaces"));
-		menu.add(createDisabledMenu("Recent Files"));
+		recentWorkspacesMenu.setEnabled(false);
+		menu.add(recentWorkspacesMenu);
+		recentFilesMenu.setEnabled(false);
+		menu.add(recentFilesMenu);
 		menu.addSeparator();
 
 		menu.add(exitMenuItem);

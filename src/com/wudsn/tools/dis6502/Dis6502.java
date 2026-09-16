@@ -18,9 +18,11 @@ import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
 import com.wudsn.tools.dis6502.model.FileType;
+import com.wudsn.tools.dis6502.model.MRUEntry;
 import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogic;
 import com.wudsn.tools.dis6502.ui.MainWindow;
+import com.wudsn.tools.dis6502.ui.MRUController;
 import com.wudsn.tools.dis6502.ui.UIApplication;
 
 /**
@@ -48,6 +50,7 @@ public final class Dis6502 {
 	private WorkspaceLogic workspaceLogic;
 	private Workspace workspace;
 	private MainWindow mainWindow;
+	private MRUController mruController;
 	private File currentFile;
 
 	public static void main(final String[] args) {
@@ -79,6 +82,8 @@ public final class Dis6502 {
 		workspaceLogic = new WorkspaceLogic(application);
 		workspace = new Workspace(computerSystemFactory);
 		workspace.setComputerSystemTypeID("ATARI800");
+		mruController = new MRUController(application);
+		mruController.load();
 
 		mainWindow = new MainWindow();
 		application.setLogPanel(mainWindow.logPanel);
@@ -100,8 +105,58 @@ public final class Dis6502 {
 		mainWindow.mainMenu.exitMenuItem.addActionListener(e -> performExit());
 		mainWindow.mainMenu.aboutMenuItem.addActionListener(e -> performAbout());
 
+		refreshMRUMenus();
 		updateTitle();
 		mainWindow.setVisible(true);
+	}
+
+	/** Repopulates the "Recent Workspaces"/"Recent Files" menus from {@link #mruController}. */
+	private void refreshMRUMenus() {
+		mruController.fillMenu(mainWindow.mainMenu.recentWorkspacesMenu, true, this::openRecentWorkspace);
+		mruController.fillMenu(mainWindow.mainMenu.recentFilesMenu, false, this::openRecentFile);
+	}
+
+	/** Ported from MRUController's use in MainController::OnCommand for a "Recent Workspaces" selection. */
+	private void openRecentWorkspace(MRUEntry entry) {
+		if (!confirmClearWorkspace()) {
+			return;
+		}
+		if (!workspaceLogic.load(workspace, entry.getFilePath())) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(),
+					"Could not open workspace '" + entry.getFilePath() + "'. See the log for details.",
+					"Open Workspace", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		currentFile = new File(entry.getFilePath());
+		mruController.addFile(entry.getFilePath(), FileType.WORKSPACE_FILE);
+		mruController.save();
+		refreshMRUMenus();
+		mainWindow.segmentListPanel.refresh();
+		performDisassemble();
+		updateTitle();
+	}
+
+	/** Ported from MRUController's use in MainController::OnCommand for a "Recent Files" selection. */
+	private void openRecentFile(MRUEntry entry) {
+		if (!confirmClearWorkspace()) {
+			return;
+		}
+		workspace.init();
+		workspace.setComputerSystemTypeID("ATARI800");
+		currentFile = null;
+
+		if (!workspaceLogic.addFile(workspace, entry.getFileType(), entry.getFilePath())) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(),
+					"Could not open file '" + entry.getFilePath() + "'. See the log for details.", "Open File",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		mruController.addFile(entry.getFilePath(), entry.getFileType());
+		mruController.save();
+		refreshMRUMenus();
+		mainWindow.segmentListPanel.refresh();
+		performDisassemble();
+		updateTitle();
 	}
 
 	private void performNewWorkspace() {
@@ -138,6 +193,9 @@ public final class Dis6502 {
 			return;
 		}
 		currentFile = file;
+		mruController.addFile(file.getPath(), FileType.WORKSPACE_FILE);
+		mruController.save();
+		refreshMRUMenus();
 		mainWindow.segmentListPanel.refresh();
 		performDisassemble();
 		updateTitle();
@@ -177,6 +235,9 @@ public final class Dis6502 {
 			return;
 		}
 
+		mruController.addFile(file.getPath(), fileType);
+		mruController.save();
+		refreshMRUMenus();
 		mainWindow.segmentListPanel.refresh();
 		performDisassemble();
 		updateTitle();
@@ -229,6 +290,9 @@ public final class Dis6502 {
 		boolean saved = workspaceLogic.save(workspace, file.getPath());
 		if (saved) {
 			currentFile = file;
+			mruController.addFile(file.getPath(), FileType.WORKSPACE_FILE);
+			mruController.save();
+			refreshMRUMenus();
 			updateTitle();
 		}
 		return saved;
