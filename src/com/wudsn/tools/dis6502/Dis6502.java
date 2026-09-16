@@ -12,6 +12,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.JFileChooser;
@@ -27,7 +29,9 @@ import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.DefaultFolders;
 import com.wudsn.tools.dis6502.model.DefaultFoldersLogic;
 import com.wudsn.tools.dis6502.model.Disassembly;
+import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
+import com.wudsn.tools.dis6502.model.DisassemblyResult;
 import com.wudsn.tools.dis6502.model.DiskImage;
 import com.wudsn.tools.dis6502.model.EquateList;
 import com.wudsn.tools.dis6502.model.EquateListLogic;
@@ -37,6 +41,7 @@ import com.wudsn.tools.dis6502.model.ImgRWPacket;
 import com.wudsn.tools.dis6502.model.MRUEntry;
 import com.wudsn.tools.dis6502.model.ProfileLogic;
 import com.wudsn.tools.dis6502.model.Segment;
+import com.wudsn.tools.dis6502.model.SegmentList;
 import com.wudsn.tools.dis6502.model.SegmentListInserter;
 import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogic;
@@ -51,6 +56,7 @@ import com.wudsn.tools.dis6502.ui.MRUController;
 import com.wudsn.tools.dis6502.ui.ProfileDialog;
 import com.wudsn.tools.dis6502.ui.RawFileDialog;
 import com.wudsn.tools.dis6502.ui.UIApplication;
+import com.wudsn.tools.dis6502.ui.XRefPanel;
 
 /**
  * Application entry point. Follows the same bootstrap pattern as
@@ -74,9 +80,11 @@ import com.wudsn.tools.dis6502.ui.UIApplication;
  * {@link #updateDisassembly} mirrors {@code Main::UpdateDisassembly},
  * called explicitly after each action instead of through the reactive
  * {@code Main::HandleWorkspaceChanged} dispatcher, which is not ported.
- * The memory inspector and cross-reference view are not wired up yet -
- * see the individual {@code ui} panel classes for what is and isn't
- * ported so far.
+ * {@link #performFindInDisassembly}/{@link #performXRefSelected} wire the
+ * disassembly search field to {@link XRefPanel}, ported from
+ * MainDisassembly::RefreshXRef/XRefSelected. The memory inspector is not
+ * wired up yet - see {@link com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}
+ * for what is and isn't ported so far.
  *
  * @author Peter Dell
  */
@@ -184,6 +192,10 @@ public final class Dis6502 {
 		mainWindow.mainMenu.profileMenuItem.addActionListener(e -> performShowProfile());
 
 		mainWindow.mainMenu.aboutMenuItem.addActionListener(e -> performAbout());
+
+		mainWindow.disassemblyPanel.findButton.addActionListener(e -> performFindInDisassembly());
+		mainWindow.disassemblyPanel.findField.addActionListener(e -> performFindInDisassembly());
+		mainWindow.xrefPanel.setSelectionListener(this::performXRefSelected);
 
 		refreshMRUMenus();
 		updateEquatesMenuState();
@@ -852,6 +864,61 @@ public final class Dis6502 {
 			application.sendErrorMessage(ex);
 		}
 		mainWindow.disassemblyPanel.refresh(workspace.getDisassemblyResult());
+		mainWindow.disassemblyPanel.findField.setText("");
+		mainWindow.xrefPanel.updateList("", Collections.emptyList());
+	}
+
+	/**
+	 * Searches the current disassembly for lines containing the {@link
+	 * DisassemblyPanel#findField} text, ported from
+	 * MainDisassembly::RefreshXRef (triggered there from a label
+	 * double-click; this port uses an explicit search field instead - see
+	 * {@link DisassemblyPanel}'s javadoc). Populates {@link XRefPanel} with
+	 * every matching line and scrolls the disassembly view to the first
+	 * one.
+	 */
+	private void performFindInDisassembly() {
+		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
+		if (disassemblyResult == null) {
+			return;
+		}
+		String findString = mainWindow.disassemblyPanel.findField.getText();
+		int[] findFirstLineNumber = { 0 };
+		boolean found = disassemblyResult.findAndSelectLines(true, findFirstLineNumber, findString);
+
+		List<XRefPanel.Entry> entries = new ArrayList<>();
+		if (!findString.isEmpty()) {
+			for (DisassemblyResult.LineIterator i = disassemblyResult.createLineIterator(); i.hasNext();) {
+				DisassemblyLine line = i.next();
+				if (line.xrefLineNumber != 0) {
+					entries.add(new XRefPanel.Entry(line.xrefLineNumber, line.getLine()));
+				}
+			}
+		}
+		mainWindow.xrefPanel.updateList(findString, entries);
+
+		if (found) {
+			mainWindow.disassemblyPanel.navigateToLine(findFirstLineNumber[0]);
+		}
+	}
+
+	/**
+	 * Ported from MainDisassembly::XRefSelected, minus the memory inspector
+	 * byte-range selection sync - the memory inspector is not wired up yet.
+	 */
+	private void performXRefSelected(int xrefLineNumber) {
+		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
+		if (disassemblyResult == null) {
+			return;
+		}
+		for (DisassemblyResult.LineIterator i = disassemblyResult.createLineIterator(); i.hasNext();) {
+			DisassemblyLine line = i.next();
+			if (line.xrefLineNumber == xrefLineNumber && line.segmentIndex != SegmentList.NO_SEGMENT_INDEX) {
+				workspace.getSegmentList().setSelectedIndex(line.segmentIndex);
+				mainWindow.disassemblyPanel.navigateToLine(line.getLineNumber());
+				return;
+			}
+		}
 	}
 
 	/** Ported from the exit path in Main::Execute, which saves the MRU lists (already saved incrementally here, see {@link #mruController}) and any loaded {@link DefaultFolders}. */
