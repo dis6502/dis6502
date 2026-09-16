@@ -19,11 +19,12 @@ import javax.swing.KeyStroke;
  * <p>
  * Ported from ui/MainWindowMenu.h / MainWindowMenu.cpp and dis6502.rc's
  * {@code MAIN_MENU} resource, simplified for this first pass: File &gt;
- * New/Open/Save/Save As/Exit, File &gt; Open File/Add File &gt;
- * Executable/ROM Image/Cassette Image/Raw/Disk Image Executable/Disk Image
- * Boot Sectors/Disk Image Sectors File (see {@link RawFileDialog}/{@link
- * DiskImageExecutableFileDialog}/{@link DiskImageSectorsDialog}), File &gt;
- * Recent Workspaces/Recent Files (see {@link MRUController}), Equates &gt;
+ * New/Open/Save/Save As/Save Disassembly Files.../Exit, File &gt; Open
+ * File/Add File &gt; Executable/ROM Image/Cassette Image/Raw/Disk Image
+ * Executable/Disk Image Boot Sectors/Disk Image Sectors File (see {@link
+ * RawFileDialog}/{@link DiskImageExecutableFileDialog}/{@link
+ * DiskImageSectorsDialog}), File &gt; Recent Workspaces/Recent Files (see
+ * {@link MRUController}), Equates &gt;
  * Clear/Display System Equates, Clear/Edit User Equates, Define Address
  * Range..., and Open/Save/Export User Equates (see {@link EquateDialog}/
  * {@link EquateRangeDialog}), View &gt; Display as Screen Code/No
@@ -58,6 +59,7 @@ public final class MainMenu {
 	public final JMenuItem addDiskImageSectorsMenuItem = new JMenuItem("Add Disk Image Sectors...");
 	public final JMenuItem saveWorkspaceMenuItem = new JMenuItem("Save Workspace");
 	public final JMenuItem saveWorkspaceAsMenuItem = new JMenuItem("Save Workspace As...");
+	public final JMenuItem saveDisassemblyFilesMenuItem = new JMenuItem("Save Disassembly Files...");
 	public final JMenu recentWorkspacesMenu = new JMenu("Recent Workspaces");
 	public final JMenu recentFilesMenu = new JMenu("Recent Files");
 	public final JMenuItem exitMenuItem = new JMenuItem("Exit");
@@ -123,7 +125,7 @@ public final class MainMenu {
 		saveWorkspaceMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
 		menu.add(saveWorkspaceMenuItem);
 		menu.add(saveWorkspaceAsMenuItem);
-		menu.add(createDisabledMenuItem("Save Disassembly Files..."));
+		menu.add(saveDisassemblyFilesMenuItem);
 		menu.addSeparator();
 
 		recentWorkspacesMenu.setEnabled(false);
@@ -178,15 +180,4 @@ public final class MainMenu {
 		return menu;
 	}
 
-	private static JMenu createDisabledMenu(String text) {
-		JMenu menu = new JMenu(text);
-		menu.setEnabled(false);
-		return menu;
-	}
-
-	private static JMenuItem createDisabledMenuItem(String text) {
-		JMenuItem menuItem = new JMenuItem(text);
-		menuItem.setEnabled(false);
-		return menuItem;
-	}
 }

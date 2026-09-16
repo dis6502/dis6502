@@ -33,6 +33,7 @@ import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
 import com.wudsn.tools.dis6502.model.DisassemblyResult;
+import com.wudsn.tools.dis6502.model.DisassemblyResultFile;
 import com.wudsn.tools.dis6502.model.DiskImage;
 import com.wudsn.tools.dis6502.model.EquateList;
 import com.wudsn.tools.dis6502.model.EquateListLogic;
@@ -72,7 +73,8 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * Ported from ui/Main.h / Main.cpp / ui/MainController.h / MainController.cpp
  * / ui/MainFile.cpp / ui/MainMenu.cpp, reduced to a first working slice: the
  * main window shell (see {@link MainWindow}) plus workspace New (see {@link
- * #performNewWorkspace}/{@link WorkspaceDialog})/Open/Save/Save As/Exit,
+ * #performNewWorkspace}/{@link WorkspaceDialog})/Open/Save/Save As/Save
+ * Disassembly Files (see {@link #performSaveDisassemblyFiles})/Exit,
  * opening/adding an executable, ROM image, cassette image, raw, disk image
  * executable, disk image boot sectors, or disk image sectors file (see
  * {@link RawFileDialog}/{@link DiskImageExecutableFileDialog}/{@link
@@ -207,6 +209,7 @@ public final class Dis6502 {
 		mainWindow.mainMenu.addDiskImageSectorsMenuItem.addActionListener(e -> performOpenDiskImageSectors(true));
 		mainWindow.mainMenu.saveWorkspaceMenuItem.addActionListener(e -> performSaveWorkspace());
 		mainWindow.mainMenu.saveWorkspaceAsMenuItem.addActionListener(e -> performSaveWorkspaceAs());
+		mainWindow.mainMenu.saveDisassemblyFilesMenuItem.addActionListener(e -> performSaveDisassemblyFiles());
 		mainWindow.mainMenu.exitMenuItem.addActionListener(e -> performExit());
 
 		mainWindow.mainMenu.clearSystemEquatesMenuItem.addActionListener(e -> performClearEquates(workspace.getSystemEquateList()));
@@ -982,6 +985,27 @@ public final class Dis6502 {
 			updateTitle();
 		}
 		return saved;
+	}
+
+	/**
+	 * Ported from MainFile::SaveDisassemblyFiles: writes the current
+	 * disassembly listing (split into include files as {@link
+	 * Workspace#getProfile()} dictates) via the already-complete {@link
+	 * DisassemblyResultFile#saveListing}.
+	 */
+	private void performSaveDisassemblyFiles() {
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle("Save Disassembly Files");
+		fileChooser.setFileFilter(new FileNameExtensionFilter("Assembler Files (*.asm)", "asm"));
+		if (fileChooser.showSaveDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+		File file = fileChooser.getSelectedFile();
+		try {
+			new DisassemblyResultFile().saveListing(workspace.getDisassemblyResult(), workspace.getProfile(), file);
+		} catch (IOException ex) {
+			application.sendErrorMessage(ex);
+		}
 	}
 
 	/**
