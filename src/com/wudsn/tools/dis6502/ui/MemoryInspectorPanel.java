@@ -6,20 +6,39 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Rectangle;
 
 import javax.swing.BorderFactory;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.border.TitledBorder;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
+
+import com.wudsn.tools.dis6502.model.FileHeader;
+import com.wudsn.tools.dis6502.model.MemoryInspectorSelection;
+import com.wudsn.tools.dis6502.model.Segment;
 
 /**
- * Placeholder for the memory inspector (hex dump editor) view.
+ * A read-only hex/ASCII dump of the currently selected segment, with a
+ * highlighted byte-range selection.
  * <p>
- * Not ported yet: ui/MemoryInspectorWindow.h/.cpp, ui/MemoryInspectorControl
- * (Impl).h/.cpp (the custom-painted hex/ASCII dump grid with inline byte
- * editing), and {@link com.wudsn.tools.dis6502.model.MemoryInspectorSelection}/
- * {@link com.wudsn.tools.dis6502.model.MemoryInspectorStack}'s UI wiring -
- * this only reserves the panel's place in the main window layout.
+ * Ported from ui/MemoryInspectorWindow.h/.cpp and the display/selection
+ * parts of ui/MemoryInspector.h/.cpp - {@link #segmentChanged} from {@code
+ * MemoryInspector::SegmentChanged}, {@link #select}/{@link
+ * #clearSelection} from {@code MemoryInspector::Select}/{@code
+ * ClearSelection}. Drastically simplified for this first pass, the same
+ * way {@link DisassemblyPanel} simplifies the disassembly view: a plain,
+ * non-editable text area rather than the C++ version's virtualized/
+ * custom-painted grid, and no inline byte-type editing, popup menu (ui/
+ * MemoryInspectorPopupMenu.h/.cpp), find-string dialog (ui/
+ * MemoryInspectorFindStringDialog.h/.cpp), or "guess code"/sprite tools -
+ * those all mutate the disassembly's understanding of the data and are
+ * out of scope here.
  *
  * @author Peter Dell
  */
@@ -27,9 +46,129 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
+	private static final int BYTES_PER_LINE = 16;
+
+	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("Memory Inspector");
+	private final JTextArea hexDumpArea = new JTextArea();
+
+	private MemoryInspectorSelection memoryInspectorSelection;
+	private int[] byteCharOffsets = new int[0];
+	private Object highlightTag;
+
 	public MemoryInspectorPanel() {
 		super(new BorderLayout());
-		setBorder(BorderFactory.createTitledBorder("Memory Inspector"));
-		add(new JLabel("Not implemented yet.", SwingConstants.CENTER), BorderLayout.CENTER);
+		setBorder(titledBorder);
+		hexDumpArea.setEditable(false);
+		hexDumpArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+		add(new JScrollPane(hexDumpArea), BorderLayout.CENTER);
+		showPlaceholder();
+	}
+
+	private void showPlaceholder() {
+		hexDumpArea.setText("No segment selected.");
+		byteCharOffsets = new int[0];
+		highlightTag = null;
+	}
+
+	/**
+	 * Ported from MemoryInspector::SegmentChanged. Some segments (an SDX
+	 * symbol-table header, or an SDX relocation block with no data of its
+	 * own) have nothing to display, matching the C++ version's {@code
+	 * hasData} check.
+	 */
+	public void segmentChanged(MemoryInspectorSelection memoryInspectorSelection) {
+		this.memoryInspectorSelection = memoryInspectorSelection;
+		Segment segment = memoryInspectorSelection.getSegment();
+		boolean hasData = segment != null && !segment.isHeader(FileHeader.SDX_SYM_DEFINED) && !segment.isSDXRelocBlkWithoutData();
+
+		if (!hasData) {
+			showPlaceholder();
+			titledBorder.setTitle("Memory Inspector");
+			revalidate();
+			repaint();
+			return;
+		}
+
+		titledBorder.setTitle(
+				String.format("Memory Inspector - %s ($%04X-$%04X)", segment.title, segment.wBegin, segment.wEnd));
+		buildHexDump(segment);
+		memoryInspectorSelection.clearSelection();
+		revalidate();
+		repaint();
+	}
+
+	private void buildHexDump(Segment segment) {
+		int size = segment.getSize();
+		byteCharOffsets = new int[size];
+
+		StringBuilder text = new StringBuilder();
+		for (int lineOffset = 0; lineOffset < size; lineOffset += BYTES_PER_LINE) {
+			int lineEnd = Math.min(lineOffset + BYTES_PER_LINE, size);
+			text.append(String.format("%04X: ", segment.wBegin + lineOffset));
+			for (int i = lineOffset; i < lineOffset + BYTES_PER_LINE; i++) {
+				if (i < lineEnd) {
+					byteCharOffsets[i] = text.length();
+					text.append(String.format("%02X ", segment.getData(i)));
+				} else {
+					text.append("   ");
+				}
+			}
+			text.append(' ');
+			for (int i = lineOffset; i < lineEnd; i++) {
+				int value = segment.getData(i);
+				text.append(value >= 32 && value < 127 ? (char) value : '.');
+			}
+			text.append('\n');
+		}
+		hexDumpArea.setText(text.toString());
+		hexDumpArea.setCaretPosition(0);
+		clearHighlight();
+	}
+
+	/** Ported from MemoryInspector::Select. */
+	public void select(int begin, int end) {
+		if (memoryInspectorSelection == null || memoryInspectorSelection.getSegment() == null
+				|| memoryInspectorSelection.getSegment().isEmpty()) {
+			return;
+		}
+		memoryInspectorSelection.setSelection(begin, end);
+		highlightRange(memoryInspectorSelection.getBegin(), memoryInspectorSelection.getEnd());
+	}
+
+	/** Ported from MemoryInspector::ClearSelection. */
+	public void clearSelection() {
+		if (memoryInspectorSelection != null) {
+			memoryInspectorSelection.clearSelection();
+		}
+		clearHighlight();
+	}
+
+	private void highlightRange(int begin, int end) {
+		clearHighlight();
+		if (byteCharOffsets.length == 0 || begin < 0 || begin >= byteCharOffsets.length) {
+			return;
+		}
+		int endIndex = Math.min(end, byteCharOffsets.length - 1);
+		int startOffset = byteCharOffsets[begin];
+		int endOffset = byteCharOffsets[endIndex] + 2; // Each byte is rendered as exactly 2 hex digits.
+
+		Highlighter highlighter = hexDumpArea.getHighlighter();
+		try {
+			highlightTag = highlighter.addHighlight(startOffset, endOffset, new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW));
+			hexDumpArea.setCaretPosition(startOffset);
+			Rectangle rectangle = hexDumpArea.modelToView(startOffset);
+			if (rectangle != null) {
+				hexDumpArea.scrollRectToVisible(rectangle);
+			}
+		} catch (BadLocationException ex) {
+			highlightTag = null;
+		}
+	}
+
+	private void clearHighlight() {
+		if (highlightTag != null) {
+			hexDumpArea.getHighlighter().removeHighlight(highlightTag);
+			highlightTag = null;
+		}
 	}
 }

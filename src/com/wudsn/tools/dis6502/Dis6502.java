@@ -39,6 +39,7 @@ import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.ImgInfo;
 import com.wudsn.tools.dis6502.model.ImgRWPacket;
 import com.wudsn.tools.dis6502.model.MRUEntry;
+import com.wudsn.tools.dis6502.model.MemoryInspectorSelection;
 import com.wudsn.tools.dis6502.model.ProfileLogic;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentList;
@@ -82,9 +83,11 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * {@code Main::HandleWorkspaceChanged} dispatcher, which is not ported.
  * {@link #performFindInDisassembly}/{@link #performXRefSelected} wire the
  * disassembly search field to {@link XRefPanel}, ported from
- * MainDisassembly::RefreshXRef/XRefSelected. The memory inspector is not
- * wired up yet - see {@link com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}
- * for what is and isn't ported so far.
+ * MainDisassembly::RefreshXRef/XRefSelected, and (via {@link
+ * #updateMemoryInspectorSegment}) keep {@link
+ * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s hex dump in sync with
+ * the selected segment - see that class's javadoc for what its
+ * drastically-simplified first pass does and doesn't cover.
  *
  * @author Peter Dell
  */
@@ -101,6 +104,7 @@ public final class Dis6502 {
 	private MainWindow mainWindow;
 	private MRUController mruController;
 	private DefaultFolders defaultFolders;
+	private MemoryInspectorSelection memoryInspectorSelection;
 	private File currentFile;
 	private File lastEquateFile;
 
@@ -138,6 +142,7 @@ public final class Dis6502 {
 		workspace.setComputerSystemTypeID("ATARI800");
 		mruController = new MRUController(application);
 		mruController.load();
+		memoryInspectorSelection = new MemoryInspectorSelection(workspace);
 
 		mainWindow = new MainWindow();
 		application.setLogPanel(mainWindow.logPanel);
@@ -145,6 +150,9 @@ public final class Dis6502 {
 		workspace.addListener((changedWorkspace, properties) -> {
 			if (properties.contains(WorkspaceProperty.SYSTEM_EQUATES) || properties.contains(WorkspaceProperty.USER_EQUATES)) {
 				updateEquatesMenuState();
+			}
+			if (properties.contains(WorkspaceProperty.SELECTED_SEGMENT)) {
+				updateMemoryInspectorSegment();
 			}
 		});
 
@@ -199,8 +207,15 @@ public final class Dis6502 {
 
 		refreshMRUMenus();
 		updateEquatesMenuState();
+		updateMemoryInspectorSegment();
 		updateTitle();
 		mainWindow.setVisible(true);
+	}
+
+	/** Ported from MemoryInspector::SegmentChanged's trigger (Main::HandleWorkspaceChanged's SEGMENTS/SELECTED_SEGMENT handling). */
+	private void updateMemoryInspectorSegment() {
+		memoryInspectorSelection.setSegmentIndex(workspace.getSegmentList().getSelectedIndex());
+		mainWindow.memoryInspectorPanel.segmentChanged(memoryInspectorSelection);
 	}
 
 	/** Ported from Main::UpdateMenuState's Equates-menu part (ui/Main.cpp). */
@@ -902,10 +917,7 @@ public final class Dis6502 {
 		}
 	}
 
-	/**
-	 * Ported from MainDisassembly::XRefSelected, minus the memory inspector
-	 * byte-range selection sync - the memory inspector is not wired up yet.
-	 */
+	/** Ported from MainDisassembly::XRefSelected. */
 	private void performXRefSelected(int xrefLineNumber) {
 		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
 		if (disassemblyResult == null) {
@@ -914,7 +926,15 @@ public final class Dis6502 {
 		for (DisassemblyResult.LineIterator i = disassemblyResult.createLineIterator(); i.hasNext();) {
 			DisassemblyLine line = i.next();
 			if (line.xrefLineNumber == xrefLineNumber && line.segmentIndex != SegmentList.NO_SEGMENT_INDEX) {
+				// Selecting the segment refreshes the memory inspector's own hex
+				// dump (via updateMemoryInspectorSegment, on the SELECTED_SEGMENT
+				// listener) before the explicit select()/clearSelection() below.
 				workspace.getSegmentList().setSelectedIndex(line.segmentIndex);
+				if (line.size != 0) {
+					mainWindow.memoryInspectorPanel.select(line.offset, line.offset + line.size - 1);
+				} else {
+					mainWindow.memoryInspectorPanel.clearSelection();
+				}
 				mainWindow.disassemblyPanel.navigateToLine(line.getLineNumber());
 				return;
 			}
