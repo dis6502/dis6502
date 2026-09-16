@@ -50,10 +50,15 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * paste, "guess code"/sprite tools) mutate the disassembly's
  * understanding of the data and are out of scope here - {@link
  * #splitAtSelectionButton} (from {@code MemoryInspector::SplitAtSelection}/
- * IDM_DUMP_SPLIT_AT_SELECTION) is the one structural exception, since it
- * only splits the segment list the same way {@code
+ * IDM_DUMP_SPLIT_AT_SELECTION) is a structural exception, since it only
+ * splits the segment list the same way {@code
  * com.wudsn.tools.dis6502.ui.SegmentListPanel}'s Move Up/Down/Merge/
- * Delete already do, without reinterpreting any byte's type. Drastically
+ * Delete already do, without reinterpreting any byte's type, and {@link
+ * #selectAll}/{@link #saveSelectionNoHeaderButton}/{@link
+ * #saveSelectionHeaderButton} (from {@code MemoryInspector::SelectAll}
+ * and {@code MainMemoryInspector::SaveWithoutHeader}/{@code
+ * SaveWithHeader}) are non-mutating too - selecting, and writing out,
+ * bytes that already exist. Drastically
  * simplified for this first pass, the same way {@link DisassemblyPanel}
  * simplifies the disassembly view: a plain, non-editable text area rather
  * than the C++ version's virtualized/custom-painted grid (so unlike the
@@ -71,6 +76,9 @@ public final class MemoryInspectorPanel extends JPanel {
 	public final JButton findButton = new JButton("Find...");
 	public final JButton findNextButton = new JButton("Find Next");
 	public final JButton splitAtSelectionButton = new JButton("Split at Selection");
+	public final JButton selectAllButton = new JButton("Select All");
+	public final JButton saveSelectionNoHeaderButton = new JButton("Save Selection (No Header)...");
+	public final JButton saveSelectionHeaderButton = new JButton("Save Selection (With Header)...");
 
 	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("Memory Inspector");
 	private final JTextArea hexDumpArea = new JTextArea();
@@ -97,6 +105,9 @@ public final class MemoryInspectorPanel extends JPanel {
 		toolBar.add(findButton);
 		toolBar.add(findNextButton);
 		toolBar.add(splitAtSelectionButton);
+		toolBar.add(selectAllButton);
+		toolBar.add(saveSelectionNoHeaderButton);
+		toolBar.add(saveSelectionHeaderButton);
 		add(toolBar, BorderLayout.NORTH);
 		add(new JScrollPane(hexDumpArea), BorderLayout.CENTER);
 
@@ -108,8 +119,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		currentSegment = null;
 		byteCharOffsets = new int[0];
 		highlightTag = null;
-		updateFindButtonsState();
-		updateSplitButtonState();
+		updateActionButtonsState();
 	}
 
 	/**
@@ -135,8 +145,7 @@ public final class MemoryInspectorPanel extends JPanel {
 				String.format("Memory Inspector - %s ($%04X-$%04X)", segment.title, segment.wBegin, segment.wEnd));
 		buildHexDump(segment);
 		memoryInspectorSelection.clearSelection();
-		updateFindButtonsState();
-		updateSplitButtonState();
+		updateActionButtonsState();
 		revalidate();
 		repaint();
 	}
@@ -211,7 +220,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		}
 		memoryInspectorSelection.setSelection(begin, end);
 		highlightRange(memoryInspectorSelection.getBegin(), memoryInspectorSelection.getEnd());
-		updateSplitButtonState();
+		updateActionButtonsState();
 	}
 
 	/** Ported from MemoryInspector::ClearSelection. */
@@ -220,15 +229,44 @@ public final class MemoryInspectorPanel extends JPanel {
 			memoryInspectorSelection.clearSelection();
 		}
 		clearHighlight();
-		updateSplitButtonState();
+		updateActionButtonsState();
 	}
 
-	/** Ported from the IDM_DUMP_SPLIT_AT_SELECTION enablement in MemoryInspectorPopupMenu::Update. */
-	private void updateSplitButtonState() {
-		boolean enabled = memoryInspectorSelection != null && memoryInspectorSelection.hasSelection()
+	/**
+	 * Ported from MemoryInspector::SelectAll: selects the whole segment.
+	 * {@code end} is passed as the segment's size (one past the last valid
+	 * offset), matching the C++ version - {@link #select}/{@link
+	 * MemoryInspectorSelection#setSelection} clamp it back down to the last
+	 * valid offset, the same way the C++ version's own {@code Select}/
+	 * {@code MemoryInspectorSelection::SetSelection} do.
+	 */
+	public void selectAll() {
+		if (memoryInspectorSelection == null || memoryInspectorSelection.getSegment() == null
+				|| memoryInspectorSelection.getSegment().isEmpty()) {
+			return;
+		}
+		select(0, memoryInspectorSelection.getSegment().getSize());
+	}
+
+	/**
+	 * Ported from the enablement logic in MemoryInspectorPopupMenu::Update
+	 * for IDM_DUMP_FIND/IDM_DUMP_FIND_NEXT/IDM_DUMP_SELECT_ALL/
+	 * IDM_DUMP_SAVE_NO_HEADER/IDM_DUMP_SAVE_HEADER/IDM_DUMP_SPLIT_AT_SELECTION.
+	 */
+	private void updateActionButtonsState() {
+		findButton.setEnabled(canFind(true));
+		findNextButton.setEnabled(canFind(false));
+
+		boolean hasSegment = memoryInspectorSelection != null && memoryInspectorSelection.hasSegment()
+				&& !memoryInspectorSelection.getSegment().isEmpty();
+		selectAllButton.setEnabled(hasSegment);
+
+		boolean hasSelection = memoryInspectorSelection != null && memoryInspectorSelection.hasSelection();
+		saveSelectionNoHeaderButton.setEnabled(hasSelection);
+		saveSelectionHeaderButton.setEnabled(hasSelection);
+		splitAtSelectionButton.setEnabled(hasSelection
 				&& memoryInspectorSelection.getWorkspace().getSegmentList().getCount() < SegmentList.MAX_SEGMENTS
-				&& memoryInspectorSelection.getSegment().canSplitAt(memoryInspectorSelection.getBegin());
-		splitAtSelectionButton.setEnabled(enabled);
+				&& memoryInspectorSelection.getSegment().canSplitAt(memoryInspectorSelection.getBegin()));
 	}
 
 	private void highlightRange(int begin, int end) {
@@ -284,11 +322,6 @@ public final class MemoryInspectorPanel extends JPanel {
 		return true;
 	}
 
-	private void updateFindButtonsState() {
-		findButton.setEnabled(canFind(true));
-		findNextButton.setEnabled(canFind(false));
-	}
-
 	/** Ported from MemoryInspector::FindString. */
 	public boolean findString(String findAscii, boolean allSegments) {
 		findSegmentIndex = allSegments ? 0 : memoryInspectorSelection.getSegmentIndex();
@@ -314,8 +347,7 @@ public final class MemoryInspectorPanel extends JPanel {
 				Segment segment = segmentList.getSegment(segmentIndex);
 
 				if (searchString(segmentIndex, segment)) {
-					updateFindButtonsState();
-					return true;
+					return true; // select(), called by searchString, already updated button state.
 				}
 
 				if (!findAllSegments) {
@@ -324,7 +356,7 @@ public final class MemoryInspectorPanel extends JPanel {
 				findOffset = 0;
 			}
 		}
-		updateFindButtonsState();
+		updateActionButtonsState();
 		return false;
 	}
 

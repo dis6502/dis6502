@@ -37,6 +37,7 @@ import com.wudsn.tools.dis6502.model.DisassemblyResultFile;
 import com.wudsn.tools.dis6502.model.DiskImage;
 import com.wudsn.tools.dis6502.model.EquateList;
 import com.wudsn.tools.dis6502.model.EquateListLogic;
+import com.wudsn.tools.dis6502.model.FileHeader;
 import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.ImgInfo;
 import com.wudsn.tools.dis6502.model.ImgRWPacket;
@@ -109,6 +110,11 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * IDM_DUMP_FIND/IDM_DUMP_FIND_NEXT commands, and {@link
  * #performSplitAtSelection} wires its Split at Selection button, ported
  * from IDM_DUMP_SPLIT_AT_SELECTION/{@code MemoryInspector::SplitAtSelection}.
+ * {@link #performSaveMemoryInspectorSelection} wires the Save Selection
+ * buttons, ported from IDM_DUMP_SAVE_NO_HEADER/IDM_DUMP_SAVE_HEADER/{@code
+ * MainMemoryInspector::SaveWithoutHeader}/{@code SaveWithHeader}; the
+ * Select All button just calls {@code
+ * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#selectAll} directly.
  *
  * @author Peter Dell
  */
@@ -242,6 +248,9 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.findButton.addActionListener(e -> performShowMemoryInspectorFindDialog());
 		mainWindow.memoryInspectorPanel.findNextButton.addActionListener(e -> performMemoryInspectorFindNext());
 		mainWindow.memoryInspectorPanel.splitAtSelectionButton.addActionListener(e -> performSplitAtSelection());
+		mainWindow.memoryInspectorPanel.selectAllButton.addActionListener(e -> mainWindow.memoryInspectorPanel.selectAll());
+		mainWindow.memoryInspectorPanel.saveSelectionNoHeaderButton.addActionListener(e -> performSaveMemoryInspectorSelection(false));
+		mainWindow.memoryInspectorPanel.saveSelectionHeaderButton.addActionListener(e -> performSaveMemoryInspectorSelection(true));
 
 		refreshMRUMenus();
 		updateEquatesMenuState();
@@ -891,6 +900,37 @@ public final class Dis6502 {
 			return;
 		}
 		workspace.getSegmentList().splitSelectedSegment(memoryInspectorSelection.getBegin());
+	}
+
+	/**
+	 * Ported from MainMemoryInspector::SaveWithoutHeader/SaveWithHeader
+	 * (IDM_DUMP_SAVE_NO_HEADER/IDM_DUMP_SAVE_HEADER): writes the memory
+	 * inspector's current byte selection to a file, optionally prefixed
+	 * with a plain Atari executable header ($FFFF, begin address, end
+	 * address).
+	 */
+	private void performSaveMemoryInspectorSelection(boolean withHeader) {
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle(withHeader ? "Save Selection (With Header)" : "Save Selection (No Header)");
+		if (fileChooser.showSaveDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+		try (FileOutputStream outputStream = new FileOutputStream(fileChooser.getSelectedFile())) {
+			if (withHeader) {
+				int[] addressRange = memoryInspectorSelection.getAddressRange();
+				writeWordLE(outputStream, FileHeader.ATARI_BINARY.getValue());
+				writeWordLE(outputStream, addressRange[0]);
+				writeWordLE(outputStream, addressRange[1]);
+			}
+			outputStream.write(memoryInspectorSelection.getByteSequence());
+		} catch (IOException ex) {
+			application.sendErrorMessage(ex);
+		}
+	}
+
+	private static void writeWordLE(FileOutputStream outputStream, int value) throws IOException {
+		outputStream.write(value & 0xFF);
+		outputStream.write((value >> 8) & 0xFF);
 	}
 
 	/**
