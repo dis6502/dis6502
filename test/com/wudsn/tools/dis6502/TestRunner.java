@@ -11,6 +11,7 @@ import com.wudsn.tools.dis6502.model.ComputerSystemTest;
 import com.wudsn.tools.dis6502.model.DisassemblyResultFileTest;
 import com.wudsn.tools.dis6502.model.DisassemblyResultTest;
 import com.wudsn.tools.dis6502.model.EquateTest;
+import com.wudsn.tools.dis6502.model.Profile1XTest;
 import com.wudsn.tools.dis6502.model.SegmentTest;
 import com.wudsn.tools.dis6502.model.Workspace;
 
@@ -24,9 +25,9 @@ import com.wudsn.tools.dis6502.model.Workspace;
  * depends on {@code WorkspaceLogic} and other application-level pieces not
  * ported yet. This only runs the tests that exercise already-ported model
  * classes: {@link AssemblerTest}, {@link EquateTest}, {@link SegmentTest},
- * {@link DisassemblyResultTest}, {@link DisassemblyResultFileTest}, and
- * {@link ComputerSystemTest} (which in turn covers {@code Atari800Test} and
- * the C64 system).
+ * {@link DisassemblyResultTest}, {@link DisassemblyResultFileTest}, {@link
+ * ComputerSystemTest} (which in turn covers {@code Atari800Test} and the
+ * C64 system), and {@link Profile1XTest}.
  * <p>
  * There is no JUnit (or other) test framework dependency: the offline Maven
  * repository this project builds against is missing the pieces Surefire
@@ -66,6 +67,7 @@ public final class TestRunner {
 		runTest("DisassemblyResultTest", DisassemblyResultTest::testDisassemblyResult);
 		runTest("DisassemblyResultFileTest", DisassemblyResultFileTest::testDisassemblyResultFile);
 		runTest("ComputerSystemTest", () -> ComputerSystemTest.testSystems(new ComputerSystemFactory()));
+		runTest("Profile1XTest", Profile1XTest::testProfile1X);
 
 		if (failedCount == 0) {
 			log("INFO: All " + totalCount + " unit tests were successful.");
