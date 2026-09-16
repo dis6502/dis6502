@@ -24,6 +24,7 @@ import com.wudsn.tools.dis6502.model.EquateList;
 import com.wudsn.tools.dis6502.model.EquateListLogic;
 import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.MRUEntry;
+import com.wudsn.tools.dis6502.model.ProfileLogic;
 import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogic;
 import com.wudsn.tools.dis6502.model.WorkspaceProperty;
@@ -31,6 +32,7 @@ import com.wudsn.tools.dis6502.ui.DefaultFoldersDialog;
 import com.wudsn.tools.dis6502.ui.EquateDialog;
 import com.wudsn.tools.dis6502.ui.MainWindow;
 import com.wudsn.tools.dis6502.ui.MRUController;
+import com.wudsn.tools.dis6502.ui.ProfileDialog;
 import com.wudsn.tools.dis6502.ui.UIApplication;
 
 /**
@@ -44,8 +46,9 @@ import com.wudsn.tools.dis6502.ui.UIApplication;
  * shell (see {@link MainWindow}) plus workspace New/Open/Save/Save As/Exit,
  * opening/adding an executable file, loading/saving/clearing/exporting/
  * editing equates (see {@link EquateDialog}), the View menu's No
- * Disassembly/Double Font Height toggles and Default Folders dialog (see
- * {@link DefaultFoldersDialog}), and Help &gt; About. {@link
+ * Disassembly/Double Font Height toggles and Default Folders/Profile
+ * dialogs (see {@link DefaultFoldersDialog}/{@link ProfileDialog}), and
+ * Help &gt; About. {@link
  * #confirmClearWorkspace} mirrors {@code Main::PromptToClearWorkspace};
  * {@link #updateDisassembly} mirrors {@code Main::UpdateDisassembly},
  * called explicitly after each action instead of through the reactive
@@ -65,6 +68,7 @@ public final class Dis6502 {
 	private WorkspaceLogic workspaceLogic;
 	private EquateListLogic equateListLogic;
 	private DefaultFoldersLogic defaultFoldersLogic;
+	private ProfileLogic profileLogic;
 	private Workspace workspace;
 	private MainWindow mainWindow;
 	private MRUController mruController;
@@ -101,6 +105,7 @@ public final class Dis6502 {
 		workspaceLogic = new WorkspaceLogic(application);
 		equateListLogic = new EquateListLogic(application);
 		defaultFoldersLogic = new DefaultFoldersLogic(application);
+		profileLogic = new ProfileLogic(application);
 		workspace = new Workspace(computerSystemFactory);
 		workspace.setComputerSystemTypeID("ATARI800");
 		mruController = new MRUController(application);
@@ -143,6 +148,7 @@ public final class Dis6502 {
 		mainWindow.mainMenu.doubleFontHeightMenuItem.setSelected(workspace.isViewDoubleHeight());
 		mainWindow.mainMenu.doubleFontHeightMenuItem.addActionListener(e -> performToggleViewDoubleFontHeight());
 		mainWindow.mainMenu.defaultFoldersMenuItem.addActionListener(e -> performShowDefaultFolders());
+		mainWindow.mainMenu.profileMenuItem.addActionListener(e -> performShowProfile());
 
 		mainWindow.mainMenu.aboutMenuItem.addActionListener(e -> performAbout());
 
@@ -398,6 +404,15 @@ public final class Dis6502 {
 			defaultFoldersLogic.load(defaultFolders);
 		}
 		new DefaultFoldersDialog(mainWindow.getFrame()).show(defaultFolders);
+	}
+
+	/** Ported from Main::ShowProfileDialog. */
+	private void performShowProfile() {
+		ProfileDialog dialog = new ProfileDialog(mainWindow.getFrame(), profileLogic);
+		if (dialog.show(workspace.getProfile(), workspace.getComputerSystem().getTypeInfo())) {
+			workspace.notifyProfileChanged();
+			updateDisassembly(true); // Matches Main::HandleWorkspaceChanged's forced refresh on a PROFILE change.
+		}
 	}
 
 	/**

@@ -24,13 +24,13 @@ import javax.swing.KeyStroke;
  * MRUController}), Equates &gt; Clear/Display System Equates, Clear/Edit
  * User Equates, and Open/Save/Export User Equates (see {@link
  * EquateDialog}), View &gt; No Disassembly/Double Font Height/Default
- * Folders... (see {@link DefaultFoldersDialog}), and Help &gt; About are
- * wired to real actions (see {@code Dis6502}); every other menu item is
- * present (matching the .rc structure, for visual completeness) but
- * disabled, since the dialogs/logic they need (the Define Address Range
- * dialog, Display as Screen Code - needs the not-yet-ported memory
- * inspector -, the Profile dialog, the other per-file-type open dialogs -
- * raw/ROM/cassette/disk image) are not ported yet.
+ * Folders.../Profile... dialogs (see {@link DefaultFoldersDialog}/{@link
+ * ProfileDialog}), and Help &gt; About are wired to real actions (see
+ * {@code Dis6502}); every other menu item is present (matching the .rc
+ * structure, for visual completeness) but disabled, since the dialogs/logic
+ * they need (the Define Address Range dialog, Display as Screen Code -
+ * needs the not-yet-ported memory inspector -, the other per-file-type
+ * open dialogs - raw/ROM/cassette/disk image) are not ported yet.
  *
  * @author Peter Dell
  */
@@ -59,6 +59,7 @@ public final class MainMenu {
 	public final JCheckBoxMenuItem noDisassemblyMenuItem = new JCheckBoxMenuItem("No Disassembly");
 	public final JCheckBoxMenuItem doubleFontHeightMenuItem = new JCheckBoxMenuItem("Double Font Height");
 	public final JMenuItem defaultFoldersMenuItem = new JMenuItem("Default Folders...");
+	public final JMenuItem profileMenuItem = new JMenuItem("Profile...");
 
 	public final JMenuItem aboutMenuItem = new JMenuItem("About...");
 
@@ -138,7 +139,7 @@ public final class MainMenu {
 		menu.addSeparator();
 
 		menu.add(defaultFoldersMenuItem);
-		menu.add(createDisabledMenuItem("Profile..."));
+		menu.add(profileMenuItem);
 
 		return menu;
 	}
