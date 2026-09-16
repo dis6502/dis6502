@@ -113,8 +113,9 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * {@link #performSaveMemoryInspectorSelection} wires the Save Selection
  * buttons, ported from IDM_DUMP_SAVE_NO_HEADER/IDM_DUMP_SAVE_HEADER/{@code
  * MainMemoryInspector::SaveWithoutHeader}/{@code SaveWithHeader}; the
- * Select All button just calls {@code
- * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#selectAll} directly.
+ * Select All/Select Next Unknown Block buttons just call {@code
+ * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#selectAll}/{@code
+ * #selectNextUnknownBlock} directly.
  *
  * @author Peter Dell
  */
@@ -249,6 +250,8 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.findNextButton.addActionListener(e -> performMemoryInspectorFindNext());
 		mainWindow.memoryInspectorPanel.splitAtSelectionButton.addActionListener(e -> performSplitAtSelection());
 		mainWindow.memoryInspectorPanel.selectAllButton.addActionListener(e -> mainWindow.memoryInspectorPanel.selectAll());
+		mainWindow.memoryInspectorPanel.selectNextUnknownBlockButton
+				.addActionListener(e -> mainWindow.memoryInspectorPanel.selectNextUnknownBlock());
 		mainWindow.memoryInspectorPanel.saveSelectionNoHeaderButton.addActionListener(e -> performSaveMemoryInspectorSelection(false));
 		mainWindow.memoryInspectorPanel.saveSelectionHeaderButton.addActionListener(e -> performSaveMemoryInspectorSelection(true));
 

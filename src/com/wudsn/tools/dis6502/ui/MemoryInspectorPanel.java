@@ -54,11 +54,12 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * splits the segment list the same way {@code
  * com.wudsn.tools.dis6502.ui.SegmentListPanel}'s Move Up/Down/Merge/
  * Delete already do, without reinterpreting any byte's type, and {@link
- * #selectAll}/{@link #saveSelectionNoHeaderButton}/{@link
- * #saveSelectionHeaderButton} (from {@code MemoryInspector::SelectAll}
- * and {@code MainMemoryInspector::SaveWithoutHeader}/{@code
- * SaveWithHeader}) are non-mutating too - selecting, and writing out,
- * bytes that already exist. Drastically
+ * #selectAll}/{@link #selectNextUnknownBlock}/{@link
+ * #saveSelectionNoHeaderButton}/{@link #saveSelectionHeaderButton} (from
+ * {@code MemoryInspector::SelectAll}/{@code SelectNextUnknownBlock} and
+ * {@code MainMemoryInspector::SaveWithoutHeader}/{@code SaveWithHeader})
+ * are non-mutating too - selecting, and writing out, bytes that already
+ * exist. Drastically
  * simplified for this first pass, the same way {@link DisassemblyPanel}
  * simplifies the disassembly view: a plain, non-editable text area rather
  * than the C++ version's virtualized/custom-painted grid (so unlike the
@@ -77,6 +78,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	public final JButton findNextButton = new JButton("Find Next");
 	public final JButton splitAtSelectionButton = new JButton("Split at Selection");
 	public final JButton selectAllButton = new JButton("Select All");
+	public final JButton selectNextUnknownBlockButton = new JButton("Select Next Unknown Block");
 	public final JButton saveSelectionNoHeaderButton = new JButton("Save Selection (No Header)...");
 	public final JButton saveSelectionHeaderButton = new JButton("Save Selection (With Header)...");
 
@@ -106,6 +108,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		toolBar.add(findNextButton);
 		toolBar.add(splitAtSelectionButton);
 		toolBar.add(selectAllButton);
+		toolBar.add(selectNextUnknownBlockButton);
 		toolBar.add(saveSelectionNoHeaderButton);
 		toolBar.add(saveSelectionHeaderButton);
 		add(toolBar, BorderLayout.NORTH);
@@ -249,9 +252,55 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
+	 * Ported from MemoryInspector::SelectNextUnknownBlock: scans forward
+	 * from just after the current selection (or the segment's start, if
+	 * there is none) for the next run of bytes with an unrecognized type,
+	 * across this segment and every later one in the segment list - never
+	 * wrapping back around to earlier segments/offsets, matching the C++
+	 * version, which simply stops (with nothing selected) once the
+	 * segment list is exhausted.
+	 */
+	public void selectNextUnknownBlock() {
+		if (memoryInspectorSelection == null || memoryInspectorSelection.getSegment() == null
+				|| memoryInspectorSelection.getSegment().isEmpty() || !memoryInspectorSelection.getSegment().bBinary) {
+			return;
+		}
+
+		int last = memoryInspectorSelection.hasSelection() ? memoryInspectorSelection.getBegin() + 1 : 0;
+
+		SegmentList segmentList = memoryInspectorSelection.getWorkspace().getSegmentList();
+		int count = segmentList.getCount();
+		for (int segmentIndex = memoryInspectorSelection.getSegmentIndex(); segmentIndex < count; segmentIndex++) {
+			Segment segment = segmentList.getSegment(segmentIndex);
+			int end = segment.wEnd - segment.wBegin;
+
+			for (int offset = last; offset <= end; offset++) {
+				if (segment.isUnknown(offset)) {
+					if (memoryInspectorSelection.getSegmentIndex() != segmentIndex) {
+						memoryInspectorSelection.setSegmentIndex(segmentIndex);
+						segmentList.setSelectedIndex(segmentIndex);
+					}
+
+					int begin = offset;
+					last = begin;
+					for (offset = begin + 1; offset <= end && segment.isUnknown(offset); offset++) {
+						last = offset;
+					}
+
+					select(begin, last);
+					return;
+				}
+			}
+
+			last = 0;
+		}
+	}
+
+	/**
 	 * Ported from the enablement logic in MemoryInspectorPopupMenu::Update
 	 * for IDM_DUMP_FIND/IDM_DUMP_FIND_NEXT/IDM_DUMP_SELECT_ALL/
-	 * IDM_DUMP_SAVE_NO_HEADER/IDM_DUMP_SAVE_HEADER/IDM_DUMP_SPLIT_AT_SELECTION.
+	 * IDM_DUMP_SELECT_NEXT_UNKNOWN_BLOCK/IDM_DUMP_SAVE_NO_HEADER/
+	 * IDM_DUMP_SAVE_HEADER/IDM_DUMP_SPLIT_AT_SELECTION.
 	 */
 	private void updateActionButtonsState() {
 		findButton.setEnabled(canFind(true));
@@ -260,6 +309,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		boolean hasSegment = memoryInspectorSelection != null && memoryInspectorSelection.hasSegment()
 				&& !memoryInspectorSelection.getSegment().isEmpty();
 		selectAllButton.setEnabled(hasSegment);
+		selectNextUnknownBlockButton.setEnabled(hasSegment);
 
 		boolean hasSelection = memoryInspectorSelection != null && memoryInspectorSelection.hasSelection();
 		saveSelectionNoHeaderButton.setEnabled(hasSelection);
