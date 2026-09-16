@@ -47,19 +47,23 @@ import com.wudsn.tools.dis6502.model.ProfileLogic;
  * wrapper) is folded directly into this class's Load/Save button handlers
  * instead of being ported separately.
  * <p>
- * One behavioral deviation, worth noting since it is easy to miss: the C++
- * version's checkbox/radio-button change handler calls {@code
+ * The C++ version originally had a bug here, found while porting it: its
+ * checkbox/radio-button change handler called {@code
  * GetDialogValues(*profile)} - writing the widgets' current values straight
  * into the real, caller-owned {@code profile} - purely to recompute the
  * other widgets' enabled state via the following {@code
- * SetDialogValues(*profile)}. Since {@code OnCancel} never reverts this,
- * clicking Cancel after toggling even one checkbox leaves the real {@code
- * Profile} object partially mutated. This port instead recomputes enabled
- * state against a private scratch {@link Profile} ({@link #workingProfile})
- * and only writes into the real one passed to {@link #show} when the user
+ * SetDialogValues(*profile)}. Since {@code OnCancel} never reverted this,
+ * clicking Cancel after toggling even one checkbox left the real {@code
+ * Profile} object partially mutated. This port recomputes enabled state
+ * against a private scratch {@link Profile} ({@link #workingProfile}) and
+ * only writes into the real one passed to {@link #show} when the user
  * clicks OK, so Cancel is always a true no-op - the same "decouple the edit
  * session from the real model until commit" fix already applied to {@link
- * EquateDialog}.
+ * EquateDialog}. The C++ source has since been fixed the same way (see that
+ * commit), using its own {@code workingProfile} member kept in sync via the
+ * same {@code SetDialogValues}/{@code GetDialogValues} round trip, since
+ * {@code Profile} cannot be copy-assigned there ({@code XML::Serializable}
+ * explicitly deletes copy/move).
  *
  * @author Peter Dell
  */
