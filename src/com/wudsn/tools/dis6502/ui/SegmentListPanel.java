@@ -6,9 +6,13 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -29,9 +33,14 @@ import com.wudsn.tools.dis6502.model.WorkspaceProperty;
  * MainSegment::Selected} - simplified to a plain {@link JTable} for this
  * first pass; the {@code updating} guard replicates {@code
  * MainSegment::updateCounter}'s reentrancy protection between the two
- * directions of selection sync. The segment properties dialog and the
- * segment list popup menu (ui/SegmentListPopupMenu.h/.cpp, with its Up/
- * Down/Delete/Merge/Save actions) are not ported yet.
+ * directions of selection sync. {@link #updatePopupMenuState} is ported
+ * from {@code SegmentListPopupMenu::Update} and {@link #maybeShowPopup}
+ * from {@code MainSegment::RButtonDownProc} (including its "no segments,
+ * no menu" guard); the popup's items are exposed as public fields, with
+ * their commands wired up by {@code Dis6502} the same way {@link
+ * MainMenu}'s items are, since running them (saving files, editing a
+ * segment) needs things ({@code Application}, a parent {@link
+ * java.awt.Frame}) this panel does not otherwise have.
  *
  * @author Peter Dell
  */
@@ -39,6 +48,16 @@ public final class SegmentListPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
+	public final JMenuItem moveUpMenuItem = new JMenuItem("Move Up");
+	public final JMenuItem moveDownMenuItem = new JMenuItem("Move Down");
+	public final JMenuItem mergeMenuItem = new JMenuItem("Merge Segments");
+	public final JMenuItem deleteMenuItem = new JMenuItem("Delete");
+	public final JMenuItem saveNoHeaderMenuItem = new JMenuItem("Save Segment (No Header)...");
+	public final JMenuItem saveHeaderMenuItem = new JMenuItem("Save Segment (With Header)...");
+	public final JMenuItem saveAllMenuItem = new JMenuItem("Save All Segments...");
+	public final JMenuItem propertiesMenuItem = new JMenuItem("Properties...");
+
+	private final JPopupMenu popupMenu = new JPopupMenu();
 	private final Model model = new Model();
 	private final JTable table = new JTable(model);
 	private Workspace workspace;
@@ -52,7 +71,56 @@ public final class SegmentListPanel extends JPanel {
 				selected();
 			}
 		});
+
+		popupMenu.add(moveUpMenuItem);
+		popupMenu.add(moveDownMenuItem);
+		popupMenu.addSeparator();
+		popupMenu.add(mergeMenuItem);
+		popupMenu.add(deleteMenuItem);
+		popupMenu.addSeparator();
+		popupMenu.add(saveNoHeaderMenuItem);
+		popupMenu.add(saveHeaderMenuItem);
+		popupMenu.add(saveAllMenuItem);
+		popupMenu.addSeparator();
+		popupMenu.add(propertiesMenuItem);
+		table.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				maybeShowPopup(e);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				maybeShowPopup(e);
+			}
+		});
+
 		add(new JScrollPane(table), BorderLayout.CENTER);
+	}
+
+	/** Ported from MainSegment::RButtonDownProc (the "no edit mode" branch - there is no memory inspector edit mode to check here yet). */
+	private void maybeShowPopup(MouseEvent e) {
+		if (!e.isPopupTrigger() || workspace == null || workspace.getSegmentList().isEmpty()) {
+			return;
+		}
+		updatePopupMenuState();
+		popupMenu.show(table, e.getX(), e.getY());
+	}
+
+	/** Ported from SegmentListPopupMenu::Update. */
+	private void updatePopupMenuState() {
+		int segmentCount = workspace.getSegmentList().getCount();
+		int selectedIndex = workspace.getSegmentList().getSelectedIndex();
+		boolean selected = selectedIndex >= 0;
+
+		moveUpMenuItem.setEnabled(selectedIndex > 0);
+		moveDownMenuItem.setEnabled(selectedIndex < segmentCount - 1);
+		mergeMenuItem.setEnabled(segmentCount > 1);
+		deleteMenuItem.setEnabled(selected);
+		saveNoHeaderMenuItem.setEnabled(selected);
+		saveHeaderMenuItem.setEnabled(selected);
+		saveAllMenuItem.setEnabled(segmentCount > 0);
+		propertiesMenuItem.setEnabled(selected);
 	}
 
 	public void setWorkspace(Workspace workspace) {

@@ -10,6 +10,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -56,6 +57,7 @@ import com.wudsn.tools.dis6502.ui.MainWindow;
 import com.wudsn.tools.dis6502.ui.MRUController;
 import com.wudsn.tools.dis6502.ui.ProfileDialog;
 import com.wudsn.tools.dis6502.ui.RawFileDialog;
+import com.wudsn.tools.dis6502.ui.SegmentPropertiesDialog;
 import com.wudsn.tools.dis6502.ui.UIApplication;
 import com.wudsn.tools.dis6502.ui.XRefPanel;
 
@@ -88,7 +90,12 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * #updateMemoryInspectorSegment}) keep {@link
  * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s hex dump in sync with
  * the selected segment - see that class's javadoc for what its
- * drastically-simplified first pass does and doesn't cover.
+ * drastically-simplified first pass does and doesn't cover. The segment
+ * list's popup menu commands (Move Up/Down, Merge, Delete, Save Segment/
+ * Save All Segments, Properties...) are wired here too, from {@code
+ * com.wudsn.tools.dis6502.ui.SegmentListPanel}'s exposed menu items -
+ * ported from ui/MainSegment.cpp - and {@link
+ * #performShowSegmentProperties} uses {@link SegmentPropertiesDialog}.
  *
  * @author Peter Dell
  */
@@ -148,6 +155,14 @@ public final class Dis6502 {
 		mainWindow = new MainWindow();
 		application.setLogPanel(mainWindow.logPanel);
 		mainWindow.segmentListPanel.setWorkspace(workspace);
+		mainWindow.segmentListPanel.moveUpMenuItem.addActionListener(e -> workspace.getSegmentList().moveSelectedSegmentUp());
+		mainWindow.segmentListPanel.moveDownMenuItem.addActionListener(e -> workspace.getSegmentList().moveSelectedSegmentDown());
+		mainWindow.segmentListPanel.mergeMenuItem.addActionListener(e -> performMergeSegments());
+		mainWindow.segmentListPanel.deleteMenuItem.addActionListener(e -> workspace.getSegmentList().deleteSelectedSegment());
+		mainWindow.segmentListPanel.saveNoHeaderMenuItem.addActionListener(e -> performSaveSegment(false));
+		mainWindow.segmentListPanel.saveHeaderMenuItem.addActionListener(e -> performSaveSegment(true));
+		mainWindow.segmentListPanel.saveAllMenuItem.addActionListener(e -> performSaveAllSegments());
+		mainWindow.segmentListPanel.propertiesMenuItem.addActionListener(e -> performShowSegmentProperties());
 		workspace.addListener((changedWorkspace, properties) -> {
 			if (properties.contains(WorkspaceProperty.SYSTEM_EQUATES) || properties.contains(WorkspaceProperty.USER_EQUATES)) {
 				updateEquatesMenuState();
@@ -749,6 +764,67 @@ public final class Dis6502 {
 		}
 		lastEquateFile = fileChooser.getSelectedFile();
 		equateListLogic.save(workspace.getUserEquateList(), lastEquateFile.getPath(), xasm);
+	}
+
+	/** Ported from MainSegment::PerformCommands's IDM_SEGMENT_MERGE case. */
+	private void performMergeSegments() {
+		if (workspace.getSegmentList().getCount() > 1) {
+			int mergedCount = workspace.getSegmentList().mergeSegments();
+			application.sendInfoMessage(Text.IDS_LOG_SEGMENTS_MERGED, String.valueOf(mergedCount));
+		}
+	}
+
+	/** Ported from MainSegment::SaveSegment. */
+	private void performSaveSegment(boolean writeHeader) {
+		int segmentIndex = workspace.getSegmentList().getSelectedIndex();
+		if (segmentIndex < 0) {
+			return;
+		}
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle("Save Segment");
+		if (currentFile != null) {
+			fileChooser.setCurrentDirectory(currentFile.getParentFile());
+		}
+		if (fileChooser.showSaveDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+		try (FileOutputStream outputStream = new FileOutputStream(fileChooser.getSelectedFile())) {
+			workspace.getComputerSystem().writeExecutableFile(workspace.getSegmentList(), segmentIndex, writeHeader, outputStream);
+		} catch (IOException ex) {
+			application.sendErrorMessage(ex);
+		}
+	}
+
+	/** Ported from MainSegment::SaveAllSegments. */
+	private void performSaveAllSegments() {
+		if (workspace.getSegmentList().getCount() == 0) {
+			return;
+		}
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle("Save All Segments");
+		if (currentFile != null) {
+			fileChooser.setCurrentDirectory(currentFile.getParentFile());
+		}
+		if (fileChooser.showSaveDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+		try (FileOutputStream outputStream = new FileOutputStream(fileChooser.getSelectedFile())) {
+			workspace.getComputerSystem().writeExecutableFile(workspace.getSegmentList(), SegmentList.NO_SEGMENT_INDEX, true, outputStream);
+		} catch (IOException ex) {
+			application.sendErrorMessage(ex);
+		}
+	}
+
+	/** Ported from MainSegment::ShowPropertiesDialog. */
+	private void performShowSegmentProperties() {
+		int segmentIndex = workspace.getSegmentList().getSelectedIndex();
+		if (segmentIndex < 0) {
+			return;
+		}
+		SegmentPropertiesDialog dialog = new SegmentPropertiesDialog(mainWindow.getFrame());
+		if (dialog.show(workspace, workspace.getSegmentList().getSegment(segmentIndex))) {
+			workspace.getSegmentList().notifySegmentContentChanged();
+		}
 	}
 
 	/**

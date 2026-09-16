@@ -224,12 +224,24 @@ public final class SegmentList implements Xml.Serializable {
 		return NO_SEGMENT_INDEX;
 	}
 
+	/**
+	 * Ported from SegmentList::MergeSegments, with a bug fixed along the
+	 * way: the original C++ (and this method's first Java port) captured
+	 * {@code count} once, before the loop, but each merge shrinks the list
+	 * by one via {@link #deleteSegment}, so a stale count let the loop run
+	 * past the new end and throw once enough consecutive segments had
+	 * merged (three or more in a row was enough to reproduce it). This
+	 * version re-checks {@link #getCount()} every iteration and only
+	 * advances {@code segmentIndex} when nothing merged at it, so a freshly
+	 * merged (now bigger) segment gets a chance to merge with its new
+	 * neighbor too.
+	 */
 	public int mergeSegments() {
 		beginUpdate();
 
 		int mergedCount = 0;
-		int count = getCount();
-		for (int segmentIndex = 0; segmentIndex < count - 1; segmentIndex++) {
+		int segmentIndex = 0;
+		while (segmentIndex < getCount() - 1) {
 			Segment segment = segmentList.get(segmentIndex);
 			Segment nextSegment = segmentList.get(segmentIndex + 1);
 
@@ -237,6 +249,8 @@ public final class SegmentList implements Xml.Serializable {
 				segment.mergeWith(nextSegment);
 				deleteSegment(segmentIndex + 1);
 				mergedCount++;
+			} else {
+				segmentIndex++;
 			}
 		}
 		if (mergedCount > 0) {
