@@ -27,9 +27,13 @@ import com.wudsn.tools.dis6502.model.DefaultFolders;
 import com.wudsn.tools.dis6502.model.DefaultFoldersLogic;
 import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
+import com.wudsn.tools.dis6502.model.DiskImage;
 import com.wudsn.tools.dis6502.model.EquateList;
 import com.wudsn.tools.dis6502.model.EquateListLogic;
 import com.wudsn.tools.dis6502.model.FileType;
+import com.wudsn.tools.dis6502.model.ImgError;
+import com.wudsn.tools.dis6502.model.ImgInfo;
+import com.wudsn.tools.dis6502.model.ImgRWPacket;
 import com.wudsn.tools.dis6502.model.MRUEntry;
 import com.wudsn.tools.dis6502.model.ProfileLogic;
 import com.wudsn.tools.dis6502.model.Workspace;
@@ -54,9 +58,10 @@ import com.wudsn.tools.dis6502.ui.UIApplication;
  * Ported from ui/Main.h / Main.cpp / ui/MainController.h / MainController.cpp
  * / ui/MainFile.cpp, reduced to a first working slice: the main window
  * shell (see {@link MainWindow}) plus workspace New/Open/Save/Save As/Exit,
- * opening/adding an executable, ROM image, cassette image, raw, or disk
- * image executable file (see {@link RawFileDialog}/{@link
- * DiskImageExecutableFileDialog}), loading/saving/clearing/exporting/
+ * opening/adding an executable, ROM image, cassette image, raw, disk image
+ * executable, or disk image boot sectors file (see {@link RawFileDialog}/
+ * {@link DiskImageExecutableFileDialog}/{@link
+ * #performOpenDiskImageBootSectors}), loading/saving/clearing/exporting/
  * editing equates and defining a user equate address range (see {@link
  * EquateDialog}/{@link EquateRangeDialog}), the View menu's No Disassembly/
  * Double Font Height toggles and Default Folders/Profile dialogs (see
@@ -65,11 +70,11 @@ import com.wudsn.tools.dis6502.ui.UIApplication;
  * {@link #updateDisassembly} mirrors {@code Main::UpdateDisassembly},
  * called explicitly after each action instead of through the reactive
  * {@code Main::HandleWorkspaceChanged} dispatcher, which is not ported.
- * Opening a disk image's boot sectors or raw sectors (both need the
- * not-yet-ported low-level {@code DiskImage} raw-sector API - see {@link
- * #performOpenDiskImageExecutableFile}), the memory inspector, and
- * cross-reference view are not wired up yet - see the individual {@code
- * ui} panel classes for what is and isn't ported so far.
+ * Opening a disk image's individual raw sectors (needs its own not-yet-
+ * ported dialog, a per-sector byte-range picker - unlike boot sectors,
+ * which just reads a fixed, self-describing chain of sectors), the memory
+ * inspector, and cross-reference view are not wired up yet - see the
+ * individual {@code ui} panel classes for what is and isn't ported so far.
  *
  * @author Peter Dell
  */
@@ -152,6 +157,8 @@ public final class Dis6502 {
 		mainWindow.mainMenu.addRawFileMenuItem.addActionListener(e -> performOpenRawFile(true));
 		mainWindow.mainMenu.openDiskImageExecutableFileMenuItem.addActionListener(e -> performOpenDiskImageExecutableFile(false));
 		mainWindow.mainMenu.addDiskImageExecutableFileMenuItem.addActionListener(e -> performOpenDiskImageExecutableFile(true));
+		mainWindow.mainMenu.openDiskImageBootSectorsMenuItem.addActionListener(e -> performOpenDiskImageBootSectors(false));
+		mainWindow.mainMenu.addDiskImageBootSectorsMenuItem.addActionListener(e -> performOpenDiskImageBootSectors(true));
 		mainWindow.mainMenu.saveWorkspaceMenuItem.addActionListener(e -> performSaveWorkspace());
 		mainWindow.mainMenu.saveWorkspaceAsMenuItem.addActionListener(e -> performSaveWorkspaceAs());
 		mainWindow.mainMenu.exitMenuItem.addActionListener(e -> performExit());
@@ -471,6 +478,69 @@ public final class Dis6502 {
 		}
 
 		mruController.addFile(file.getPath(), FileType.DISK_IMAGE_EXECUTABLE_FILE);
+		mruController.save();
+		refreshMRUMenus();
+		mainWindow.segmentListPanel.refresh();
+		updateDisassembly(true);
+		updateTitle();
+	}
+
+	/**
+	 * Opens or adds a disk image's Atari DOS boot sectors as a single
+	 * segment. Ported from MainFile::OpenDiskImageBootSectors; the actual
+	 * segment construction (including reading any boot sectors beyond the
+	 * first) is {@link WorkspaceLogic#addDiskImageBootSectorsSegment}.
+	 */
+	private void performOpenDiskImageBootSectors(boolean add) {
+		if (!add && !confirmClearWorkspace()) {
+			return;
+		}
+
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle((add ? "Add " : "Open ") + "Disk Image Boot Sectors");
+		if (currentFile != null) {
+			fileChooser.setCurrentDirectory(currentFile.getParentFile());
+		}
+		if (fileChooser.showOpenDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+		File file = fileChooser.getSelectedFile();
+
+		ImgInfo info = new ImgInfo();
+		DiskImage.getInfo(file.getPath(), info);
+		if (DiskImage.isError(info.result)) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(),
+					"Could not read disk image '" + file.getPath() + "': " + info.result.getErrorText(),
+					"Open Disk Image Boot Sectors", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		ImgRWPacket sector = new ImgRWPacket();
+		sector.filePath = file.getPath();
+		sector.sectorNumber = 1;
+		sector.sectorSize = 128; // Atari boot sectors are always 128 bytes long.
+		DiskImage.readSector(sector);
+		if (DiskImage.isError(sector.result)) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(),
+					"Could not read the boot sector of '" + file.getPath() + "': " + sector.result.getErrorText(),
+					"Open Disk Image Boot Sectors", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		if ((sector.sectorData[1] & 0xFF) == 0) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), "Disk image '" + file.getPath() + "' is not bootable.",
+					"Open Disk Image Boot Sectors", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		if (!add) {
+			workspace.init();
+			workspace.setComputerSystemTypeID("ATARI800");
+			currentFile = null;
+		}
+
+		workspaceLogic.addDiskImageBootSectorsSegment(workspace, file.getPath(), sector.sectorData);
+
+		mruController.addFile(file.getPath(), FileType.DISK_IMAGE_BOOT_SECTORS);
 		mruController.save();
 		refreshMRUMenus();
 		mainWindow.segmentListPanel.refresh();

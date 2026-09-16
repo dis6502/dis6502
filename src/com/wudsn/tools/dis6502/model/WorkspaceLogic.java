@@ -166,4 +166,72 @@ public final class WorkspaceLogic {
 			application.sendErrorMessage(Text.IDS_ERR_READING_FILE, String.valueOf(ex.getMessage()));
 		}
 	}
+
+	/**
+	 * Builds and inserts a single segment from a disk image's Atari DOS
+	 * boot sectors: {@code firstSectorData} holds sector 1's already-read
+	 * content in its first 128 bytes (byte 1 is the total boot sector
+	 * count, bytes 2-3 the little-endian load address) - it may be longer,
+	 * e.g. an {@link ImgRWPacket#sectorData}'s fixed 256-byte buffer, since
+	 * only the first 128 bytes are ever read from it, matching boot sectors
+	 * always being 128 bytes regardless of the disk's overall sector size.
+	 * Any further sectors the chain needs are read directly via {@link
+	 * DiskImage#readSector}.
+	 * <p>
+	 * Ported from MainFile::AddDiskImageBootSectorsSegment (marked "TODO:
+	 * Move to ComputerSystem" in the C++ source) plus the segment-insertion
+	 * part of MainFile::OpenDiskImageBootSectors - folded together here the
+	 * same way {@link #addRawSegment} folds {@code
+	 * WorkspaceLogic::AddRawSegment}'s inserter lifecycle. The chunk sizes
+	 * this walks (122 bytes for the payload already in sector 1, 128 for
+	 * every following sector) always divide {@code sectorCount * 128 - 6}
+	 * evenly down to exactly 0, so - unlike a general copy loop - no bounds
+	 * clamping is needed on the per-sector writes.
+	 */
+	public void addDiskImageBootSectorsSegment(Workspace workspace, String diskImageFilePath, byte[] firstSectorData) {
+		SegmentListInserter segmentListInserter = workspace.getSegmentList().createInserter();
+		try {
+			Segment segment = segmentListInserter.insertSegment();
+
+			int sectorCount = firstSectorData[1] & 0xFF;
+			int size = sectorCount * 128 - 6;
+
+			segment.wBegin = (firstSectorData[2] & 0xFF) + (firstSectorData[3] & 0xFF) * 256 + 6;
+			segment.wEnd = segment.wBegin + size - 1;
+			segment.createMemoryBlockFromBeginToEnd();
+			segment.bBinary = true;
+
+			int chunkSize = Math.min(128 - 6, size);
+			int position = 0;
+			segment.setData(position, firstSectorData, 6, chunkSize);
+
+			size -= chunkSize;
+			sectorCount--;
+			int sectorNumber = 2;
+
+			while (size > 0 && sectorCount > 0) {
+				position += chunkSize;
+				chunkSize = Math.min(128, size);
+
+				ImgRWPacket sector = new ImgRWPacket();
+				sector.filePath = diskImageFilePath;
+				sector.sectorNumber = sectorNumber++;
+				sector.sectorSize = 128;
+				DiskImage.readSector(sector);
+
+				if (DiskImage.isError(sector.result)) {
+					break;
+				}
+				segment.setData(position, sector.sectorData, 0, sector.sectorSize);
+
+				size -= chunkSize;
+				sectorCount--;
+			}
+
+			segmentListInserter.apply();
+		} catch (RuntimeException ex) {
+			segmentListInserter.cancel();
+			application.sendErrorMessage(Text.IDS_ERR_READING_FILE, String.valueOf(ex.getMessage()));
+		}
+	}
 }

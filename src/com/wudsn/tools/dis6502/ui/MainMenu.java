@@ -31,10 +31,8 @@ import javax.swing.KeyStroke;
  * (see {@code Dis6502}); every other menu item is present (matching the
  * .rc structure, for visual completeness) but disabled, since the
  * dialogs/logic they need (Display as Screen Code - needs the not-yet-
- * ported memory inspector -, Disk Image Boot Sectors/Sectors - need the
- * not-yet-ported low-level {@code DiskImage} raw-sector API, unlike Disk
- * Image Executable File, which only needs the already-ported DOS
- * filesystem layer) are not ported yet.
+ * ported memory inspector -, Disk Image Sectors - needs its own not-yet-
+ * ported dialog, a per-sector byte-range picker) are not ported yet.
  *
  * @author Peter Dell
  */
@@ -54,6 +52,8 @@ public final class MainMenu {
 	public final JMenuItem addRawFileMenuItem = new JMenuItem("Add Raw File...");
 	public final JMenuItem openDiskImageExecutableFileMenuItem = new JMenuItem("Open Disk Image Executable File...");
 	public final JMenuItem addDiskImageExecutableFileMenuItem = new JMenuItem("Add Disk Image Executable File...");
+	public final JMenuItem openDiskImageBootSectorsMenuItem = new JMenuItem("Open Disk Image Boot Sectors...");
+	public final JMenuItem addDiskImageBootSectorsMenuItem = new JMenuItem("Add Disk Image Boot Sectors...");
 	public final JMenuItem saveWorkspaceMenuItem = new JMenuItem("Save Workspace");
 	public final JMenuItem saveWorkspaceAsMenuItem = new JMenuItem("Save Workspace As...");
 	public final JMenu recentWorkspacesMenu = new JMenu("Recent Workspaces");
@@ -96,7 +96,7 @@ public final class MainMenu {
 		JMenu openFileMenu = new JMenu("Open File");
 		openFileMenu.add(openCassetteImageFileMenuItem);
 		openFileMenu.add(openDiskImageExecutableFileMenuItem);
-		openFileMenu.add(createDisabledMenuItem("Open Disk Image Boot Sectors..."));
+		openFileMenu.add(openDiskImageBootSectorsMenuItem);
 		openFileMenu.add(createDisabledMenuItem("Open Disk Image Sectors..."));
 		openExecutableFileMenuItem
 				.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
@@ -108,7 +108,7 @@ public final class MainMenu {
 		JMenu addFileMenu = new JMenu("Add File");
 		addFileMenu.add(addCassetteImageFileMenuItem);
 		addFileMenu.add(addDiskImageExecutableFileMenuItem);
-		addFileMenu.add(createDisabledMenuItem("Add Disk Image Boot Sectors..."));
+		addFileMenu.add(addDiskImageBootSectorsMenuItem);
 		addFileMenu.add(createDisabledMenuItem("Add Disk Image Sectors..."));
 		addExecutableFileMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK));
 		addFileMenu.add(addExecutableFileMenuItem);
