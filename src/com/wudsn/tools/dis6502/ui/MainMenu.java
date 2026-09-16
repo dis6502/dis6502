@@ -20,8 +20,9 @@ import javax.swing.KeyStroke;
  * Ported from ui/MainWindowMenu.h / MainWindowMenu.cpp and dis6502.rc's
  * {@code MAIN_MENU} resource, simplified for this first pass: File &gt;
  * New/Open/Save/Save As/Exit, File &gt; Open File/Add File &gt;
- * Executable/ROM Image/Cassette Image/Raw/Disk Image Executable File (see
- * {@link RawFileDialog}/{@link DiskImageExecutableFileDialog}), File &gt;
+ * Executable/ROM Image/Cassette Image/Raw/Disk Image Executable/Disk Image
+ * Boot Sectors/Disk Image Sectors File (see {@link RawFileDialog}/{@link
+ * DiskImageExecutableFileDialog}/{@link DiskImageSectorsDialog}), File &gt;
  * Recent Workspaces/Recent Files (see {@link MRUController}), Equates &gt;
  * Clear/Display System Equates, Clear/Edit User Equates, Define Address
  * Range..., and Open/Save/Export User Equates (see {@link EquateDialog}/
@@ -31,8 +32,7 @@ import javax.swing.KeyStroke;
  * (see {@code Dis6502}); every other menu item is present (matching the
  * .rc structure, for visual completeness) but disabled, since the
  * dialogs/logic they need (Display as Screen Code - needs the not-yet-
- * ported memory inspector -, Disk Image Sectors - needs its own not-yet-
- * ported dialog, a per-sector byte-range picker) are not ported yet.
+ * ported memory inspector) are not ported yet.
  *
  * @author Peter Dell
  */
@@ -54,6 +54,8 @@ public final class MainMenu {
 	public final JMenuItem addDiskImageExecutableFileMenuItem = new JMenuItem("Add Disk Image Executable File...");
 	public final JMenuItem openDiskImageBootSectorsMenuItem = new JMenuItem("Open Disk Image Boot Sectors...");
 	public final JMenuItem addDiskImageBootSectorsMenuItem = new JMenuItem("Add Disk Image Boot Sectors...");
+	public final JMenuItem openDiskImageSectorsMenuItem = new JMenuItem("Open Disk Image Sectors...");
+	public final JMenuItem addDiskImageSectorsMenuItem = new JMenuItem("Add Disk Image Sectors...");
 	public final JMenuItem saveWorkspaceMenuItem = new JMenuItem("Save Workspace");
 	public final JMenuItem saveWorkspaceAsMenuItem = new JMenuItem("Save Workspace As...");
 	public final JMenu recentWorkspacesMenu = new JMenu("Recent Workspaces");
@@ -97,7 +99,7 @@ public final class MainMenu {
 		openFileMenu.add(openCassetteImageFileMenuItem);
 		openFileMenu.add(openDiskImageExecutableFileMenuItem);
 		openFileMenu.add(openDiskImageBootSectorsMenuItem);
-		openFileMenu.add(createDisabledMenuItem("Open Disk Image Sectors..."));
+		openFileMenu.add(openDiskImageSectorsMenuItem);
 		openExecutableFileMenuItem
 				.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
 		openFileMenu.add(openExecutableFileMenuItem);
@@ -109,7 +111,7 @@ public final class MainMenu {
 		addFileMenu.add(addCassetteImageFileMenuItem);
 		addFileMenu.add(addDiskImageExecutableFileMenuItem);
 		addFileMenu.add(addDiskImageBootSectorsMenuItem);
-		addFileMenu.add(createDisabledMenuItem("Add Disk Image Sectors..."));
+		addFileMenu.add(addDiskImageSectorsMenuItem);
 		addExecutableFileMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK));
 		addFileMenu.add(addExecutableFileMenuItem);
 		addFileMenu.add(addRawFileMenuItem);

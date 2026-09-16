@@ -12,6 +12,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -31,16 +32,18 @@ import com.wudsn.tools.dis6502.model.DiskImage;
 import com.wudsn.tools.dis6502.model.EquateList;
 import com.wudsn.tools.dis6502.model.EquateListLogic;
 import com.wudsn.tools.dis6502.model.FileType;
-import com.wudsn.tools.dis6502.model.ImgError;
 import com.wudsn.tools.dis6502.model.ImgInfo;
 import com.wudsn.tools.dis6502.model.ImgRWPacket;
 import com.wudsn.tools.dis6502.model.MRUEntry;
 import com.wudsn.tools.dis6502.model.ProfileLogic;
+import com.wudsn.tools.dis6502.model.Segment;
+import com.wudsn.tools.dis6502.model.SegmentListInserter;
 import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogic;
 import com.wudsn.tools.dis6502.model.WorkspaceProperty;
 import com.wudsn.tools.dis6502.ui.DefaultFoldersDialog;
 import com.wudsn.tools.dis6502.ui.DiskImageExecutableFileDialog;
+import com.wudsn.tools.dis6502.ui.DiskImageSectorsDialog;
 import com.wudsn.tools.dis6502.ui.EquateDialog;
 import com.wudsn.tools.dis6502.ui.EquateRangeDialog;
 import com.wudsn.tools.dis6502.ui.MainWindow;
@@ -59,22 +62,21 @@ import com.wudsn.tools.dis6502.ui.UIApplication;
  * / ui/MainFile.cpp, reduced to a first working slice: the main window
  * shell (see {@link MainWindow}) plus workspace New/Open/Save/Save As/Exit,
  * opening/adding an executable, ROM image, cassette image, raw, disk image
- * executable, or disk image boot sectors file (see {@link RawFileDialog}/
- * {@link DiskImageExecutableFileDialog}/{@link
- * #performOpenDiskImageBootSectors}), loading/saving/clearing/exporting/
- * editing equates and defining a user equate address range (see {@link
- * EquateDialog}/{@link EquateRangeDialog}), the View menu's No Disassembly/
- * Double Font Height toggles and Default Folders/Profile dialogs (see
- * {@link DefaultFoldersDialog}/{@link ProfileDialog}), and Help &gt; About.
+ * executable, disk image boot sectors, or disk image sectors file (see
+ * {@link RawFileDialog}/{@link DiskImageExecutableFileDialog}/{@link
+ * #performOpenDiskImageBootSectors}/{@link DiskImageSectorsDialog}),
+ * loading/saving/clearing/exporting/editing equates and defining a user
+ * equate address range (see {@link EquateDialog}/{@link
+ * EquateRangeDialog}), the View menu's No Disassembly/Double Font Height
+ * toggles and Default Folders/Profile dialogs (see {@link
+ * DefaultFoldersDialog}/{@link ProfileDialog}), and Help &gt; About.
  * {@link #confirmClearWorkspace} mirrors {@code Main::PromptToClearWorkspace};
  * {@link #updateDisassembly} mirrors {@code Main::UpdateDisassembly},
  * called explicitly after each action instead of through the reactive
  * {@code Main::HandleWorkspaceChanged} dispatcher, which is not ported.
- * Opening a disk image's individual raw sectors (needs its own not-yet-
- * ported dialog, a per-sector byte-range picker - unlike boot sectors,
- * which just reads a fixed, self-describing chain of sectors), the memory
- * inspector, and cross-reference view are not wired up yet - see the
- * individual {@code ui} panel classes for what is and isn't ported so far.
+ * The memory inspector and cross-reference view are not wired up yet -
+ * see the individual {@code ui} panel classes for what is and isn't
+ * ported so far.
  *
  * @author Peter Dell
  */
@@ -159,6 +161,8 @@ public final class Dis6502 {
 		mainWindow.mainMenu.addDiskImageExecutableFileMenuItem.addActionListener(e -> performOpenDiskImageExecutableFile(true));
 		mainWindow.mainMenu.openDiskImageBootSectorsMenuItem.addActionListener(e -> performOpenDiskImageBootSectors(false));
 		mainWindow.mainMenu.addDiskImageBootSectorsMenuItem.addActionListener(e -> performOpenDiskImageBootSectors(true));
+		mainWindow.mainMenu.openDiskImageSectorsMenuItem.addActionListener(e -> performOpenDiskImageSectors(false));
+		mainWindow.mainMenu.addDiskImageSectorsMenuItem.addActionListener(e -> performOpenDiskImageSectors(true));
 		mainWindow.mainMenu.saveWorkspaceMenuItem.addActionListener(e -> performSaveWorkspace());
 		mainWindow.mainMenu.saveWorkspaceAsMenuItem.addActionListener(e -> performSaveWorkspaceAs());
 		mainWindow.mainMenu.exitMenuItem.addActionListener(e -> performExit());
@@ -541,6 +545,83 @@ public final class Dis6502 {
 		workspaceLogic.addDiskImageBootSectorsSegment(workspace, file.getPath(), sector.sectorData);
 
 		mruController.addFile(file.getPath(), FileType.DISK_IMAGE_BOOT_SECTORS);
+		mruController.save();
+		refreshMRUMenus();
+		mainWindow.segmentListPanel.refresh();
+		updateDisassembly(true);
+		updateTitle();
+	}
+
+	/**
+	 * Opens or adds one or more disk image sectors (or byte ranges within
+	 * them) as segments, via {@link DiskImageSectorsDialog}. Ported from
+	 * MainFile::OpenDiskImageSectors, kept inline here rather than folded
+	 * into {@link WorkspaceLogic} (unlike {@link
+	 * #performOpenDiskImageBootSectors}'s segment building) since the C++
+	 * source itself keeps this loop in {@code MainFile}, not in a separate
+	 * method - see {@link DiskImageSectorsDialog}'s javadoc for the bug
+	 * found (but not fixed in C++) while porting this loop's body.
+	 */
+	private void performOpenDiskImageSectors(boolean add) {
+		if (!add && !confirmClearWorkspace()) {
+			return;
+		}
+
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle((add ? "Add " : "Open ") + "Disk Image Sectors");
+		if (currentFile != null) {
+			fileChooser.setCurrentDirectory(currentFile.getParentFile());
+		}
+		if (fileChooser.showOpenDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+		File file = fileChooser.getSelectedFile();
+
+		ImgInfo info = new ImgInfo();
+		DiskImage.getInfo(file.getPath(), info);
+		if (DiskImage.isError(info.result)) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(),
+					"Could not read disk image '" + file.getPath() + "': " + info.result.getErrorText(),
+					"Open Disk Image Sectors", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		DiskImageSectorsDialog dialog = new DiskImageSectorsDialog(mainWindow.getFrame());
+		if (!dialog.show(file.getPath(), info)) {
+			return;
+		}
+		List<DiskImageSectorsDialog.Item> items = dialog.getItems();
+		if (items.isEmpty()) {
+			return;
+		}
+
+		if (!add) {
+			workspace.init();
+			workspace.setComputerSystemTypeID("ATARI800");
+			currentFile = null;
+		}
+
+		SegmentListInserter segmentListInserter = workspace.getSegmentList().createInserter();
+		try {
+			for (DiskImageSectorsDialog.Item item : items) {
+				Segment segment = segmentListInserter.insertSegment();
+				segment.bBinary = true;
+				segment.wBegin = item.address;
+				segment.wEnd = item.address + item.size - 1;
+				segment.createMemoryBlockFromBeginToEnd();
+
+				int[] sectorSize = new int[1];
+				byte[] sectorData = dialog.readSector(item.sectorNumber, sectorSize);
+				segment.setData(0, sectorData, item.begin, item.size);
+			}
+			segmentListInserter.apply();
+		} catch (RuntimeException ex) {
+			segmentListInserter.cancel();
+			application.sendErrorMessage(ex);
+			return;
+		}
+
+		mruController.addFile(file.getPath(), FileType.DISK_IMAGE_SECTORS);
 		mruController.save();
 		refreshMRUMenus();
 		mainWindow.segmentListPanel.refresh();
