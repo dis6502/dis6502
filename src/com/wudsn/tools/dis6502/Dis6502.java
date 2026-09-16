@@ -8,13 +8,18 @@ package com.wudsn.tools.dis6502;
 import java.awt.EventQueue;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.wudsn.tools.dis6502.model.AtariDisk;
+import com.wudsn.tools.dis6502.model.AtariError;
+import com.wudsn.tools.dis6502.model.AtariFile;
 import com.wudsn.tools.dis6502.model.ComputerSystem;
 import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.ComputerSystemType;
@@ -31,6 +36,7 @@ import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogic;
 import com.wudsn.tools.dis6502.model.WorkspaceProperty;
 import com.wudsn.tools.dis6502.ui.DefaultFoldersDialog;
+import com.wudsn.tools.dis6502.ui.DiskImageExecutableFileDialog;
 import com.wudsn.tools.dis6502.ui.EquateDialog;
 import com.wudsn.tools.dis6502.ui.EquateRangeDialog;
 import com.wudsn.tools.dis6502.ui.MainWindow;
@@ -48,18 +54,20 @@ import com.wudsn.tools.dis6502.ui.UIApplication;
  * Ported from ui/Main.h / Main.cpp / ui/MainController.h / MainController.cpp
  * / ui/MainFile.cpp, reduced to a first working slice: the main window
  * shell (see {@link MainWindow}) plus workspace New/Open/Save/Save As/Exit,
- * opening/adding an executable, ROM image, cassette image, or raw file (see
- * {@link RawFileDialog}), loading/saving/clearing/exporting/editing equates
- * and defining a user equate address range (see {@link EquateDialog}/{@link
- * EquateRangeDialog}), the View menu's No Disassembly/Double Font Height
- * toggles and Default Folders/Profile dialogs (see {@link
- * DefaultFoldersDialog}/{@link ProfileDialog}), and Help &gt; About. {@link
- * #confirmClearWorkspace} mirrors {@code Main::PromptToClearWorkspace};
+ * opening/adding an executable, ROM image, cassette image, raw, or disk
+ * image executable file (see {@link RawFileDialog}/{@link
+ * DiskImageExecutableFileDialog}), loading/saving/clearing/exporting/
+ * editing equates and defining a user equate address range (see {@link
+ * EquateDialog}/{@link EquateRangeDialog}), the View menu's No Disassembly/
+ * Double Font Height toggles and Default Folders/Profile dialogs (see
+ * {@link DefaultFoldersDialog}/{@link ProfileDialog}), and Help &gt; About.
+ * {@link #confirmClearWorkspace} mirrors {@code Main::PromptToClearWorkspace};
  * {@link #updateDisassembly} mirrors {@code Main::UpdateDisassembly},
  * called explicitly after each action instead of through the reactive
  * {@code Main::HandleWorkspaceChanged} dispatcher, which is not ported.
- * Opening any disk image (each variant needs its own not-yet-ported dialog
- * - a file-within-the-image picker), the memory inspector, and
+ * Opening a disk image's boot sectors or raw sectors (both need the
+ * not-yet-ported low-level {@code DiskImage} raw-sector API - see {@link
+ * #performOpenDiskImageExecutableFile}), the memory inspector, and
  * cross-reference view are not wired up yet - see the individual {@code
  * ui} panel classes for what is and isn't ported so far.
  *
@@ -142,6 +150,8 @@ public final class Dis6502 {
 		mainWindow.mainMenu.addROMImageFileMenuItem.addActionListener(e -> performOpenFile(FileType.ROM_IMAGE_FILE, true));
 		mainWindow.mainMenu.openRawFileMenuItem.addActionListener(e -> performOpenRawFile(false));
 		mainWindow.mainMenu.addRawFileMenuItem.addActionListener(e -> performOpenRawFile(true));
+		mainWindow.mainMenu.openDiskImageExecutableFileMenuItem.addActionListener(e -> performOpenDiskImageExecutableFile(false));
+		mainWindow.mainMenu.addDiskImageExecutableFileMenuItem.addActionListener(e -> performOpenDiskImageExecutableFile(true));
 		mainWindow.mainMenu.saveWorkspaceMenuItem.addActionListener(e -> performSaveWorkspace());
 		mainWindow.mainMenu.saveWorkspaceAsMenuItem.addActionListener(e -> performSaveWorkspaceAs());
 		mainWindow.mainMenu.exitMenuItem.addActionListener(e -> performExit());
@@ -363,6 +373,104 @@ public final class Dis6502 {
 		workspaceLogic.addRawSegment(workspace, dialog.getFileBuffer(), dialog.getBegin(), dialog.getResultSize(), dialog.getAddress());
 
 		mruController.addFile(file.getPath(), FileType.RAW_FILE);
+		mruController.save();
+		refreshMRUMenus();
+		mainWindow.segmentListPanel.refresh();
+		updateDisassembly(true);
+		updateTitle();
+	}
+
+	/**
+	 * Opens or adds an executable file picked from within an Atari DOS 2.x
+	 * disk image, via {@link DiskImageExecutableFileDialog}. Ported from
+	 * MainFile::OpenDiskImageExecutableFile: the picked file's bytes are
+	 * read directly through the already-ported {@link
+	 * AtariDisk#readFile(String)} and fed to {@code WorkspaceLogic.addFile}
+	 * the same way {@link #performOpenFile} feeds it a real file's {@link
+	 * InputStream} - unlike the C++ version, which needs its own {@code
+	 * DiskImageFileInputStream} wrapper to stream a disk image file's
+	 * sectors on demand, {@link AtariDisk#readFile(String)} already returns
+	 * the whole file as a {@code byte[]}, so a plain {@link
+	 * ByteArrayInputStream} is enough.
+	 */
+	private void performOpenDiskImageExecutableFile(boolean add) {
+		if (!add && !confirmClearWorkspace()) {
+			return;
+		}
+
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle((add ? "Add " : "Open ") + "Disk Image Executable File");
+		if (currentFile != null) {
+			fileChooser.setCurrentDirectory(currentFile.getParentFile());
+		}
+		if (fileChooser.showOpenDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+		File file = fileChooser.getSelectedFile();
+
+		AtariDisk atariDisk = new AtariDisk(file.getPath());
+		AtariFile info = new AtariFile();
+		AtariError error;
+		try {
+			error = atariDisk.findFirst(info);
+		} catch (IOException ex) {
+			application.sendErrorMessage(ex);
+			return;
+		}
+		if (error != AtariError.OK) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(),
+					"Could not read disk image '" + file.getPath() + "': " + error.getErrorText(),
+					"Open Disk Image Executable File", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		DiskImageExecutableFileDialog dialog = new DiskImageExecutableFileDialog(mainWindow.getFrame());
+		boolean confirmed;
+		try {
+			confirmed = dialog.show(atariDisk);
+		} catch (IOException ex) {
+			application.sendErrorMessage(ex);
+			return;
+		}
+		if (!confirmed) {
+			return;
+		}
+
+		byte[] fileBuffer;
+		try {
+			fileBuffer = atariDisk.readFile(dialog.getExecutableFileName());
+		} catch (IOException ex) {
+			application.sendErrorMessage(ex);
+			return;
+		}
+		if (fileBuffer.length == 0) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), "File in disk image is empty.",
+					"Open Disk Image Executable File", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		if (!add) {
+			workspace.init();
+			workspace.setComputerSystemTypeID("ATARI800");
+			currentFile = null;
+		}
+
+		boolean success;
+		try (InputStream inputStream = new ByteArrayInputStream(fileBuffer)) {
+			success = workspaceLogic.addFile(workspace, FileType.EXECUTABLE_FILE, inputStream, fileBuffer.length);
+		} catch (IOException ex) {
+			application.sendErrorMessage(ex);
+			return;
+		}
+		if (!success) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(),
+					"Could not " + (add ? "add" : "open") + " file '" + dialog.getExecutableFileName()
+							+ "'. See the log for details.",
+					(add ? "Add " : "Open ") + "Disk Image Executable File", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		mruController.addFile(file.getPath(), FileType.DISK_IMAGE_EXECUTABLE_FILE);
 		mruController.save();
 		refreshMRUMenus();
 		mainWindow.segmentListPanel.refresh();
