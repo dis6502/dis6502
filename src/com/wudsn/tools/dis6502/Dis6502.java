@@ -28,6 +28,7 @@ import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogic;
 import com.wudsn.tools.dis6502.model.WorkspaceProperty;
 import com.wudsn.tools.dis6502.ui.DefaultFoldersDialog;
+import com.wudsn.tools.dis6502.ui.EquateDialog;
 import com.wudsn.tools.dis6502.ui.MainWindow;
 import com.wudsn.tools.dis6502.ui.MRUController;
 import com.wudsn.tools.dis6502.ui.UIApplication;
@@ -41,17 +42,18 @@ import com.wudsn.tools.dis6502.ui.UIApplication;
  * Ported from ui/Main.h / Main.cpp / ui/MainController.h / MainController.cpp
  * / ui/MainFile.cpp, reduced to a first working slice: the main window
  * shell (see {@link MainWindow}) plus workspace New/Open/Save/Save As/Exit,
- * opening/adding an executable file, loading/saving/clearing/exporting
- * equates, the View menu's No Disassembly/Double Font Height toggles and
- * Default Folders dialog (see {@link DefaultFoldersDialog}), and Help &gt;
- * About. {@link #confirmClearWorkspace} mirrors {@code
- * Main::PromptToClearWorkspace}; {@link #updateDisassembly} mirrors {@code
- * Main::UpdateDisassembly}, called explicitly after each action instead of
- * through the reactive {@code Main::HandleWorkspaceChanged} dispatcher,
- * which is not ported. Raw/ROM/cassette/disk-image file opening, editing
- * equates through a dialog, the memory inspector, and cross-reference view
- * are not wired up yet - see the individual {@code ui} panel classes for
- * what is and isn't ported so far.
+ * opening/adding an executable file, loading/saving/clearing/exporting/
+ * editing equates (see {@link EquateDialog}), the View menu's No
+ * Disassembly/Double Font Height toggles and Default Folders dialog (see
+ * {@link DefaultFoldersDialog}), and Help &gt; About. {@link
+ * #confirmClearWorkspace} mirrors {@code Main::PromptToClearWorkspace};
+ * {@link #updateDisassembly} mirrors {@code Main::UpdateDisassembly},
+ * called explicitly after each action instead of through the reactive
+ * {@code Main::HandleWorkspaceChanged} dispatcher, which is not ported.
+ * Raw/ROM/cassette/disk-image file opening, defining a user equate address
+ * range, the memory inspector, and cross-reference view are not wired up
+ * yet - see the individual {@code ui} panel classes for what is and isn't
+ * ported so far.
  *
  * @author Peter Dell
  */
@@ -129,7 +131,9 @@ public final class Dis6502 {
 		mainWindow.mainMenu.exitMenuItem.addActionListener(e -> performExit());
 
 		mainWindow.mainMenu.clearSystemEquatesMenuItem.addActionListener(e -> performClearEquates(workspace.getSystemEquateList()));
+		mainWindow.mainMenu.displaySystemEquatesMenuItem.addActionListener(e -> performEditEquates(workspace.getSystemEquateList(), false));
 		mainWindow.mainMenu.clearUserEquatesMenuItem.addActionListener(e -> performClearEquates(workspace.getUserEquateList()));
+		mainWindow.mainMenu.editUserEquatesMenuItem.addActionListener(e -> performEditEquates(workspace.getUserEquateList(), true));
 		mainWindow.mainMenu.openUserEquatesMenuItem.addActionListener(e -> performOpenUserEquates());
 		mainWindow.mainMenu.saveUserEquatesMenuItem.addActionListener(e -> performSaveUserEquates(false));
 		mainWindow.mainMenu.exportUserEquatesMenuItem.addActionListener(e -> performSaveUserEquates(true));
@@ -291,7 +295,7 @@ public final class Dis6502 {
 		updateTitle();
 	}
 
-	/** Ported from EquateListController::Clear, without the not-yet-ported "Display System Equates" callers care about. */
+	/** Ported from EquateListController::Clear. */
 	private void performClearEquates(EquateList equateList) {
 		if (equateList.isEmpty()) {
 			return;
@@ -302,6 +306,30 @@ public final class Dis6502 {
 		if (JOptionPane.showConfirmDialog(mainWindow.getFrame(), message, "Clear Equates",
 				JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 			equateList.clear();
+			updateDisassembly(false); // Matches Main::HandleWorkspaceChanged's non-forced refresh on a SYSTEM_EQUATES/USER_EQUATES change.
+		}
+	}
+
+	/**
+	 * Ported from EquateListController::Edit. Wraps the mutation {@link
+	 * EquateDialog#show} performs on OK in {@code beginUpdate}/{@code
+	 * endUpdate}, since {@link EquateList#clear()} (called first, to discard
+	 * the list's old content before re-adding the edited lines) would
+	 * otherwise fire an immediate "changed" notification while the list is
+	 * still momentarily empty - before the re-add loop that follows it in
+	 * the same method runs - matching the same "batch a multi-step mutation"
+	 * pattern {@link WorkspaceLogic#load} already uses.
+	 */
+	private void performEditEquates(EquateList equateList, boolean editable) {
+		workspace.beginUpdate();
+		boolean changed;
+		try {
+			changed = new EquateDialog(mainWindow.getFrame()).show(equateList, editable, "");
+		} finally {
+			workspace.endUpdate();
+		}
+		if (changed) {
+			updateDisassembly(false); // Matches Main::HandleWorkspaceChanged's non-forced refresh on a SYSTEM_EQUATES/USER_EQUATES change.
 		}
 	}
 
@@ -317,7 +345,9 @@ public final class Dis6502 {
 			return;
 		}
 		lastEquateFile = fileChooser.getSelectedFile();
-		equateListLogic.load(workspace.getUserEquateList(), lastEquateFile.getPath());
+		if (equateListLogic.load(workspace.getUserEquateList(), lastEquateFile.getPath())) {
+			updateDisassembly(false); // Matches Main::HandleWorkspaceChanged's non-forced refresh on a SYSTEM_EQUATES/USER_EQUATES change.
+		}
 	}
 
 	/** Ported from EquateListController::Save, invoked for both "Save User Equates" ({@code xasm=false}) and "Export User Equates" ({@code xasm=true}). */

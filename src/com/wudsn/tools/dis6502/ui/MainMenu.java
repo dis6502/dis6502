@@ -21,16 +21,16 @@ import javax.swing.KeyStroke;
  * {@code MAIN_MENU} resource, simplified for this first pass: File &gt;
  * New/Open/Save/Save As/Exit, File &gt; Open File/Add File &gt; Executable
  * File, File &gt; Recent Workspaces/Recent Files (see {@link
- * MRUController}), Equates &gt; Clear System/User Equates and Open/Save/
- * Export User Equates, View &gt; No Disassembly/Double Font Height/Default
+ * MRUController}), Equates &gt; Clear/Display System Equates, Clear/Edit
+ * User Equates, and Open/Save/Export User Equates (see {@link
+ * EquateDialog}), View &gt; No Disassembly/Double Font Height/Default
  * Folders... (see {@link DefaultFoldersDialog}), and Help &gt; About are
  * wired to real actions (see {@code Dis6502}); every other menu item is
  * present (matching the .rc structure, for visual completeness) but
- * disabled, since the dialogs/logic they need (the Edit User Equates/
- * Define Address Range dialogs, Display System Equates, Display as Screen
- * Code - needs the not-yet-ported memory inspector -, the Profile dialog,
- * the other per-file-type open dialogs - raw/ROM/cassette/disk image) are
- * not ported yet.
+ * disabled, since the dialogs/logic they need (the Define Address Range
+ * dialog, Display as Screen Code - needs the not-yet-ported memory
+ * inspector -, the Profile dialog, the other per-file-type open dialogs -
+ * raw/ROM/cassette/disk image) are not ported yet.
  *
  * @author Peter Dell
  */
@@ -49,7 +49,9 @@ public final class MainMenu {
 	public final JMenuItem exitMenuItem = new JMenuItem("Exit");
 
 	public final JMenuItem clearSystemEquatesMenuItem = new JMenuItem("Clear System Equates");
+	public final JMenuItem displaySystemEquatesMenuItem = new JMenuItem("Display System Equates");
 	public final JMenuItem clearUserEquatesMenuItem = new JMenuItem("Clear User Equates");
+	public final JMenuItem editUserEquatesMenuItem = new JMenuItem("Edit User Equates...");
 	public final JMenuItem openUserEquatesMenuItem = new JMenuItem("Open User Equates...");
 	public final JMenuItem saveUserEquatesMenuItem = new JMenuItem("Save User Equates...");
 	public final JMenuItem exportUserEquatesMenuItem = new JMenuItem("Export User Equates...");
@@ -110,11 +112,11 @@ public final class MainMenu {
 		JMenu menu = new JMenu("Equates");
 
 		menu.add(clearSystemEquatesMenuItem);
-		menu.add(createDisabledMenuItem("Display System Equates"));
+		menu.add(displaySystemEquatesMenuItem);
 		menu.addSeparator();
 
 		menu.add(clearUserEquatesMenuItem);
-		menu.add(createDisabledMenuItem("Edit User Equates..."));
+		menu.add(editUserEquatesMenuItem);
 		menu.add(createDisabledMenuItem("Define Address Range..."));
 		menu.addSeparator();
 
