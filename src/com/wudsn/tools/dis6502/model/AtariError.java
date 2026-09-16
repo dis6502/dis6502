@@ -10,7 +10,10 @@ package com.wudsn.tools.dis6502.model;
  * <p>
  * Ported from AtariDOS.h / AtariDOS.cpp. {@code AtariDOS::GetErrorCode}
  * (which just returned the constant's name as a string) is superseded by
- * {@link #name()}.
+ * {@link #name()}. Fixed two typos in {@code GetErrorText}'s strings while
+ * porting: {@code END_OF_FILE}'s text had a stray trailing {@code ")"},
+ * and the default case read "Unkown error" - both fixed upstream too (see
+ * those commits).
  *
  * @author Peter Dell
  */
@@ -42,7 +45,7 @@ public enum AtariError {
 		case NO_ENTRY_FOUND:
 			return "No matching directory entry found";
 		case END_OF_FILE:
-			return "End of file reached)";
+			return "End of file reached";
 		case DISK_NOT_FOUND:
 			return "Disk not found";
 		case DIRECTORY_NOT_FOUND:
