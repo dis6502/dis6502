@@ -17,13 +17,14 @@ import javax.swing.KeyStroke;
  * The application's main menu bar.
  * <p>
  * Ported from ui/MainWindowMenu.h / MainWindowMenu.cpp and dis6502.rc's
- * {@code MAIN_MENU} resource, simplified for this first pass: only File
- * &gt; New/Open/Save/Save As/Exit and Help &gt; About are wired to real
- * actions (see {@code Dis6502}); every other menu item is present
- * (matching the .rc structure, for visual completeness) but disabled,
- * since the dialogs/logic they need (equate editing, the Profile/Default
- * Folders dialogs, per-file-type open dialogs, MRU lists) are not ported
- * yet.
+ * {@code MAIN_MENU} resource, simplified for this first pass: File &gt;
+ * New/Open/Save/Save As/Exit, File &gt; Open File/Add File &gt; Executable
+ * File, and Help &gt; About are wired to real actions (see {@code
+ * Dis6502}); every other menu item is present (matching the .rc structure,
+ * for visual completeness) but disabled, since the dialogs/logic they need
+ * (equate editing, the Profile/Default Folders dialogs, the other
+ * per-file-type open dialogs - raw/ROM/cassette/disk image - MRU lists)
+ * are not ported yet.
  *
  * @author Peter Dell
  */
@@ -33,6 +34,8 @@ public final class MainMenu {
 
 	public final JMenuItem newWorkspaceMenuItem = new JMenuItem("New Workspace");
 	public final JMenuItem openWorkspaceMenuItem = new JMenuItem("Open Workspace...");
+	public final JMenuItem openExecutableFileMenuItem = new JMenuItem("Open Executable File...");
+	public final JMenuItem addExecutableFileMenuItem = new JMenuItem("Add Executable File...");
 	public final JMenuItem saveWorkspaceMenuItem = new JMenuItem("Save Workspace");
 	public final JMenuItem saveWorkspaceAsMenuItem = new JMenuItem("Save Workspace As...");
 	public final JMenuItem exitMenuItem = new JMenuItem("Exit");
@@ -55,8 +58,17 @@ public final class MainMenu {
 
 		openWorkspaceMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
 		menu.add(openWorkspaceMenuItem);
-		menu.add(createDisabledMenu("Open File"));
-		menu.add(createDisabledMenu("Add File"));
+
+		JMenu openFileMenu = new JMenu("Open File");
+		openExecutableFileMenuItem
+				.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+		openFileMenu.add(openExecutableFileMenuItem);
+		menu.add(openFileMenu);
+
+		JMenu addFileMenu = new JMenu("Add File");
+		addExecutableFileMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK));
+		addFileMenu.add(addExecutableFileMenuItem);
+		menu.add(addFileMenu);
 		menu.addSeparator();
 
 		saveWorkspaceMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));

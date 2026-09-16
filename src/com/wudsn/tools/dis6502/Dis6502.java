@@ -17,6 +17,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
+import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogic;
 import com.wudsn.tools.dis6502.ui.MainWindow;
@@ -30,8 +31,10 @@ import com.wudsn.tools.dis6502.ui.UIApplication;
  * <p>
  * Ported from ui/Main.h / Main.cpp / ui/MainController.h / MainController.cpp
  * / ui/MainFile.cpp, reduced to a first working slice: the main window
- * shell (see {@link MainWindow}) plus workspace New/Open/Save/Save As/Exit
- * and Help &gt; About. Per-file-type opening, equate editing, the memory
+ * shell (see {@link MainWindow}) plus workspace New/Open/Save/Save As/Exit,
+ * opening/adding an executable file, and Help &gt; About. {@link
+ * #confirmClearWorkspace} mirrors {@code Main::PromptToClearWorkspace}.
+ * Raw/ROM/cassette/disk-image file opening, equate editing, the memory
  * inspector, and cross-reference view are not wired up yet - see the
  * individual {@code ui} panel classes for what is and isn't ported so far.
  *
@@ -90,6 +93,8 @@ public final class Dis6502 {
 
 		mainWindow.mainMenu.newWorkspaceMenuItem.addActionListener(e -> performNewWorkspace());
 		mainWindow.mainMenu.openWorkspaceMenuItem.addActionListener(e -> performOpenWorkspace());
+		mainWindow.mainMenu.openExecutableFileMenuItem.addActionListener(e -> performOpenFile(FileType.EXECUTABLE_FILE, false));
+		mainWindow.mainMenu.addExecutableFileMenuItem.addActionListener(e -> performOpenFile(FileType.EXECUTABLE_FILE, true));
 		mainWindow.mainMenu.saveWorkspaceMenuItem.addActionListener(e -> performSaveWorkspace());
 		mainWindow.mainMenu.saveWorkspaceAsMenuItem.addActionListener(e -> performSaveWorkspaceAs());
 		mainWindow.mainMenu.exitMenuItem.addActionListener(e -> performExit());
@@ -100,6 +105,9 @@ public final class Dis6502 {
 	}
 
 	private void performNewWorkspace() {
+		if (!confirmClearWorkspace()) {
+			return;
+		}
 		workspace.init();
 		workspace.setComputerSystemTypeID("ATARI800");
 		currentFile = null;
@@ -109,6 +117,10 @@ public final class Dis6502 {
 	}
 
 	private void performOpenWorkspace() {
+		if (!confirmClearWorkspace()) {
+			return;
+		}
+
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle("Open Workspace File");
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Workspace Files (*.wrk)", "wrk"));
@@ -131,15 +143,76 @@ public final class Dis6502 {
 		updateTitle();
 	}
 
-	private void performSaveWorkspace() {
-		if (currentFile == null) {
-			performSaveWorkspaceAs();
+	/**
+	 * Opens or adds a file of the given type. Ported from MainFile::OpenFile
+	 * (and the individual OpenXxxFile methods it dispatches to), scoped to
+	 * {@link FileType#EXECUTABLE_FILE} only for this first pass - see the
+	 * class javadoc.
+	 */
+	private void performOpenFile(FileType fileType, boolean add) {
+		if (!add && !confirmClearWorkspace()) {
 			return;
 		}
-		workspaceLogic.save(workspace, currentFile.getPath());
+
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle(add ? "Add Executable File" : "Open Executable File");
+		if (currentFile != null) {
+			fileChooser.setCurrentDirectory(currentFile.getParentFile());
+		}
+		if (fileChooser.showOpenDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+		File file = fileChooser.getSelectedFile();
+
+		if (!add) {
+			workspace.init();
+			workspace.setComputerSystemTypeID("ATARI800");
+			currentFile = null;
+		}
+
+		if (!workspaceLogic.addFile(workspace, fileType, file.getPath())) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(),
+					"Could not " + (add ? "add" : "open") + " file '" + file.getPath() + "'. See the log for details.",
+					add ? "Add File" : "Open File", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		mainWindow.segmentListPanel.refresh();
+		performDisassemble();
+		updateTitle();
 	}
 
-	private void performSaveWorkspaceAs() {
+	/**
+	 * Ported from Main::PromptToClearWorkspace, simplified: always passes
+	 * {@code loadSystemEquates=false} (system equate loading - {@code
+	 * WorkspaceLogic.loadSystemEquates} - is not ported yet, see its
+	 * javadoc). Returns {@code false} if the caller should abort (the user
+	 * cancelled, or a requested save failed).
+	 */
+	private boolean confirmClearWorkspace() {
+		if (workspace.getSegmentList().isEmpty()) {
+			return true;
+		}
+
+		int result = JOptionPane.showConfirmDialog(mainWindow.getFrame(), Text.IDS_MAIN_FILE_NEW_WORKSPACE_MESSAGE,
+				Text.IDS_MAIN_FILE_NEW_WORKSPACE_TITLE, JOptionPane.YES_NO_CANCEL_OPTION);
+		if (result == JOptionPane.CANCEL_OPTION || result == JOptionPane.CLOSED_OPTION) {
+			return false;
+		}
+		if (result == JOptionPane.YES_OPTION && !performSaveWorkspace()) {
+			return false; // The save (or its "Save As" dialog) was cancelled/failed.
+		}
+		return true;
+	}
+
+	private boolean performSaveWorkspace() {
+		if (currentFile == null) {
+			return performSaveWorkspaceAs();
+		}
+		return workspaceLogic.save(workspace, currentFile.getPath());
+	}
+
+	private boolean performSaveWorkspaceAs() {
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle("Save Workspace File As");
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Workspace Files (*.wrk)", "wrk"));
@@ -147,15 +220,18 @@ public final class Dis6502 {
 			fileChooser.setSelectedFile(currentFile);
 		}
 		if (fileChooser.showSaveDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
-			return;
+			return false;
 		}
 		File file = fileChooser.getSelectedFile();
 		if (!file.getName().contains(".")) {
 			file = new File(file.getPath() + ".wrk");
 		}
-		workspaceLogic.save(workspace, file.getPath());
-		currentFile = file;
-		updateTitle();
+		boolean saved = workspaceLogic.save(workspace, file.getPath());
+		if (saved) {
+			currentFile = file;
+			updateTitle();
+		}
+		return saved;
 	}
 
 	/** Ported from Disassembly's use in MainTest::ExecuteUnitTestItem - not yet triggered from a menu command like ui/MainFile.cpp's real flow. */
