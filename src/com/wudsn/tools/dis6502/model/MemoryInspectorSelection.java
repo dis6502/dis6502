@@ -37,6 +37,10 @@ public final class MemoryInspectorSelection {
 		clear();
 	}
 
+	public Workspace getWorkspace() {
+		return workspace;
+	}
+
 	public void clear() {
 		segmentIndex = SegmentList.NO_SEGMENT_INDEX;
 		segment = null;

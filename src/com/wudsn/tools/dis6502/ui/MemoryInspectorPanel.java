@@ -7,10 +7,12 @@ package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Rectangle;
 
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -22,14 +24,15 @@ import javax.swing.text.Highlighter;
 import com.wudsn.tools.dis6502.model.FileHeader;
 import com.wudsn.tools.dis6502.model.MemoryInspectorSelection;
 import com.wudsn.tools.dis6502.model.Segment;
+import com.wudsn.tools.dis6502.model.SegmentList;
 
 /**
  * A read-only hex/ASCII dump of the currently selected segment, with a
  * highlighted byte-range selection.
  * <p>
- * Ported from ui/MemoryInspectorWindow.h/.cpp and the display/selection
- * parts of ui/MemoryInspector.h/.cpp - {@link #segmentChanged} from {@code
- * MemoryInspector::SegmentChanged}, {@link #select}/{@link
+ * Ported from ui/MemoryInspectorWindow.h/.cpp and the display/selection/
+ * find parts of ui/MemoryInspector.h/.cpp - {@link #segmentChanged} from
+ * {@code MemoryInspector::SegmentChanged}, {@link #select}/{@link
  * #clearSelection} from {@code MemoryInspector::Select}/{@code
  * ClearSelection}, {@link #setDisplayAsScreenCode} from {@code
  * MemoryInspector::ToggleDisplayAsScreenCode}/{@code
@@ -37,16 +40,20 @@ import com.wudsn.tools.dis6502.model.Segment;
  * character transform for "internal" (Atari ANTIC screen code) mode is
  * copied verbatim from {@code MemoryInspectorControlImpl.cpp}'s paint
  * routine, the one piece of that routine's rendering this class
- * replicates. Drastically simplified for this first pass, the same way
- * {@link DisassemblyPanel} simplifies the disassembly view: a plain,
- * non-editable text area rather than the C++ version's virtualized/
- * custom-painted grid (so unlike the real ANTIC font, non-printable
- * character codes still show as {@code .} rather than their actual
- * glyph), and no inline byte-type editing, popup menu (ui/
- * MemoryInspectorPopupMenu.h/.cpp), find-string dialog (ui/
- * MemoryInspectorFindStringDialog.h/.cpp), or "guess code"/sprite tools -
- * those all mutate the disassembly's understanding of the data and are
- * out of scope here.
+ * replicates - and {@link #findString}/{@link #findNextString}/{@link
+ * #canFind} from {@code MemoryInspector::FindString}/{@code
+ * FindNextString}/{@code CanFind}, triggered from {@link #findButton}/
+ * {@link #findNextButton} (public fields wired up by {@code Dis6502}, the
+ * same way {@link DisassemblyPanel#findButton} is) rather than the C++
+ * version's popup menu (ui/MemoryInspectorPopupMenu.h/.cpp) commands -
+ * that menu's many other commands (inline byte-type editing, cut/copy/
+ * paste, "guess code"/sprite tools) mutate the disassembly's
+ * understanding of the data and are out of scope here. Drastically
+ * simplified for this first pass, the same way {@link DisassemblyPanel}
+ * simplifies the disassembly view: a plain, non-editable text area rather
+ * than the C++ version's virtualized/custom-painted grid (so unlike the
+ * real ANTIC font, non-printable character codes still show as {@code .}
+ * rather than their actual glyph).
  *
  * @author Peter Dell
  */
@@ -55,6 +62,9 @@ public final class MemoryInspectorPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 
 	private static final int BYTES_PER_LINE = 16;
+
+	public final JButton findButton = new JButton("Find...");
+	public final JButton findNextButton = new JButton("Find Next");
 
 	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("Memory Inspector");
 	private final JTextArea hexDumpArea = new JTextArea();
@@ -65,12 +75,24 @@ public final class MemoryInspectorPanel extends JPanel {
 	private int[] byteCharOffsets = new int[0];
 	private Object highlightTag;
 
+	private int findSegmentIndex = SegmentList.NO_SEGMENT_INDEX;
+	private int findOffset;
+	private int findSize;
+	private boolean findAllSegments = true;
+	private String findText = "";
+
 	public MemoryInspectorPanel() {
 		super(new BorderLayout());
 		setBorder(titledBorder);
 		hexDumpArea.setEditable(false);
 		hexDumpArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+
+		JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		toolBar.add(findButton);
+		toolBar.add(findNextButton);
+		add(toolBar, BorderLayout.NORTH);
 		add(new JScrollPane(hexDumpArea), BorderLayout.CENTER);
+
 		showPlaceholder();
 	}
 
@@ -79,6 +101,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		currentSegment = null;
 		byteCharOffsets = new int[0];
 		highlightTag = null;
+		updateFindButtonsState();
 	}
 
 	/**
@@ -104,6 +127,7 @@ public final class MemoryInspectorPanel extends JPanel {
 				String.format("Memory Inspector - %s ($%04X-$%04X)", segment.title, segment.wBegin, segment.wEnd));
 		buildHexDump(segment);
 		memoryInspectorSelection.clearSelection();
+		updateFindButtonsState();
 		revalidate();
 		repaint();
 	}
@@ -215,5 +239,106 @@ public final class MemoryInspectorPanel extends JPanel {
 			hexDumpArea.getHighlighter().removeHighlight(highlightTag);
 			highlightTag = null;
 		}
+	}
+
+	/** Ported from MemoryInspector::HasFindString. */
+	public boolean hasFindString() {
+		return !findText.isEmpty();
+	}
+
+	public String getFindString() {
+		return findText;
+	}
+
+	public boolean isFindAllSegments() {
+		return findAllSegments;
+	}
+
+	/** Ported from MemoryInspector::CanFind. */
+	public boolean canFind(boolean first) {
+		if (memoryInspectorSelection == null || memoryInspectorSelection.getSegment() == null) {
+			return false;
+		}
+		if (!first && findSize == 0) {
+			return false;
+		}
+		return true;
+	}
+
+	private void updateFindButtonsState() {
+		findButton.setEnabled(canFind(true));
+		findNextButton.setEnabled(canFind(false));
+	}
+
+	/** Ported from MemoryInspector::FindString. */
+	public boolean findString(String findAscii, boolean allSegments) {
+		findSegmentIndex = allSegments ? 0 : memoryInspectorSelection.getSegmentIndex();
+		findText = findAscii;
+		findOffset = 0;
+		findSize = findAscii.length();
+		findAllSegments = allSegments;
+		return findNextString();
+	}
+
+	/**
+	 * Ported from MemoryInspector::FindNextString, minus the "not found"
+	 * alert - unlike the C++ version, which shows it itself via {@code
+	 * FindStringDialog::ShowStringNotFoundMessage}, that is left to the
+	 * caller here (see {@code Dis6502}), matching how the rest of this
+	 * class stays free of its own popups.
+	 */
+	public boolean findNextString() {
+		if (findSegmentIndex != SegmentList.NO_SEGMENT_INDEX) {
+			SegmentList segmentList = memoryInspectorSelection.getWorkspace().getSegmentList();
+			int count = segmentList.getCount();
+			for (int segmentIndex = findSegmentIndex; segmentIndex < count; segmentIndex++) {
+				Segment segment = segmentList.getSegment(segmentIndex);
+
+				if (searchString(segmentIndex, segment)) {
+					updateFindButtonsState();
+					return true;
+				}
+
+				if (!findAllSegments) {
+					break;
+				}
+				findOffset = 0;
+			}
+		}
+		updateFindButtonsState();
+		return false;
+	}
+
+	/** Ported from MemoryInspector::SearchString. */
+	private boolean searchString(int segmentIndex, Segment segment) {
+		int size = segment.getSize();
+		if (size < findSize) {
+			return false;
+		}
+		for (int offset = findOffset; offset <= size - findSize; offset++) {
+			if (matchesAt(segment, offset)) {
+				int begin = offset;
+				int end = offset + findSize - 1;
+
+				findSegmentIndex = segmentIndex;
+				findOffset = offset + 1;
+
+				if (findSegmentIndex != memoryInspectorSelection.getSegmentIndex()) {
+					memoryInspectorSelection.getWorkspace().getSegmentList().setSelectedIndex(findSegmentIndex);
+				}
+				select(begin, end);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean matchesAt(Segment segment, int offset) {
+		for (int i = 0; i < findSize; i++) {
+			if (segment.getData(offset + i) != (findText.charAt(i) & 0xFF)) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

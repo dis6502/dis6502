@@ -54,6 +54,7 @@ import com.wudsn.tools.dis6502.ui.DiskImageSectorsDialog;
 import com.wudsn.tools.dis6502.ui.EquateDialog;
 import com.wudsn.tools.dis6502.ui.EquateRangeDialog;
 import com.wudsn.tools.dis6502.ui.MainWindow;
+import com.wudsn.tools.dis6502.ui.MemoryInspectorFindStringDialog;
 import com.wudsn.tools.dis6502.ui.MRUController;
 import com.wudsn.tools.dis6502.ui.ProfileDialog;
 import com.wudsn.tools.dis6502.ui.RawFileDialog;
@@ -96,6 +97,11 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * com.wudsn.tools.dis6502.ui.SegmentListPanel}'s exposed menu items -
  * ported from ui/MainSegment.cpp - and {@link
  * #performShowSegmentProperties} uses {@link SegmentPropertiesDialog}.
+ * {@link #performShowMemoryInspectorFindDialog}/{@link
+ * #performMemoryInspectorFindNext} wire {@code
+ * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s find buttons to
+ * {@link MemoryInspectorFindStringDialog}, ported from the popup menu's
+ * IDM_DUMP_FIND/IDM_DUMP_FIND_NEXT commands.
  *
  * @author Peter Dell
  */
@@ -222,6 +228,9 @@ public final class Dis6502 {
 		mainWindow.disassemblyPanel.findButton.addActionListener(e -> performFindInDisassembly());
 		mainWindow.disassemblyPanel.findField.addActionListener(e -> performFindInDisassembly());
 		mainWindow.xrefPanel.setSelectionListener(this::performXRefSelected);
+
+		mainWindow.memoryInspectorPanel.findButton.addActionListener(e -> performShowMemoryInspectorFindDialog());
+		mainWindow.memoryInspectorPanel.findNextButton.addActionListener(e -> performMemoryInspectorFindNext());
 
 		refreshMRUMenus();
 		updateEquatesMenuState();
@@ -824,6 +833,26 @@ public final class Dis6502 {
 		SegmentPropertiesDialog dialog = new SegmentPropertiesDialog(mainWindow.getFrame());
 		if (dialog.show(workspace, workspace.getSegmentList().getSegment(segmentIndex))) {
 			workspace.getSegmentList().notifySegmentContentChanged();
+		}
+	}
+
+	/** Ported from the IDM_DUMP_FIND popup menu command, which opens MemoryInspectorFindStringDialog. */
+	private void performShowMemoryInspectorFindDialog() {
+		new MemoryInspectorFindStringDialog(mainWindow.getFrame()).show(mainWindow.memoryInspectorPanel);
+	}
+
+	/**
+	 * Ported from the IDM_DUMP_FIND_NEXT popup menu command, which calls
+	 * MemoryInspector::FindNextString directly. Shows the same "not found"
+	 * alert {@link MemoryInspectorFindStringDialog#performOK} shows, since
+	 * {@link com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#findNextString}
+	 * stays free of popups (see that class's javadoc).
+	 */
+	private void performMemoryInspectorFindNext() {
+		if (!mainWindow.memoryInspectorPanel.findNextString()) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(),
+					"String \"" + mainWindow.memoryInspectorPanel.getFindString() + "\" not found.", "Find String",
+					JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
 
