@@ -106,7 +106,9 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * #performMemoryInspectorFindNext} wire {@code
  * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s find buttons to
  * {@link MemoryInspectorFindStringDialog}, ported from the popup menu's
- * IDM_DUMP_FIND/IDM_DUMP_FIND_NEXT commands.
+ * IDM_DUMP_FIND/IDM_DUMP_FIND_NEXT commands, and {@link
+ * #performSplitAtSelection} wires its Split at Selection button, ported
+ * from IDM_DUMP_SPLIT_AT_SELECTION/{@code MemoryInspector::SplitAtSelection}.
  *
  * @author Peter Dell
  */
@@ -239,6 +241,7 @@ public final class Dis6502 {
 
 		mainWindow.memoryInspectorPanel.findButton.addActionListener(e -> performShowMemoryInspectorFindDialog());
 		mainWindow.memoryInspectorPanel.findNextButton.addActionListener(e -> performMemoryInspectorFindNext());
+		mainWindow.memoryInspectorPanel.splitAtSelectionButton.addActionListener(e -> performSplitAtSelection());
 
 		refreshMRUMenus();
 		updateEquatesMenuState();
@@ -876,6 +879,18 @@ public final class Dis6502 {
 					"String \"" + mainWindow.memoryInspectorPanel.getFindString() + "\" not found.", "Find String",
 					JOptionPane.INFORMATION_MESSAGE);
 		}
+	}
+
+	/**
+	 * Ported from MemoryInspector::SplitAtSelection (IDM_DUMP_SPLIT_AT_SELECTION):
+	 * splits the selected segment into two at the current byte selection's
+	 * start.
+	 */
+	private void performSplitAtSelection() {
+		if (memoryInspectorSelection.isEmpty()) {
+			return;
+		}
+		workspace.getSegmentList().splitSelectedSegment(memoryInspectorSelection.getBegin());
 	}
 
 	/**

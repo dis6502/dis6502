@@ -48,7 +48,12 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * version's popup menu (ui/MemoryInspectorPopupMenu.h/.cpp) commands -
  * that menu's many other commands (inline byte-type editing, cut/copy/
  * paste, "guess code"/sprite tools) mutate the disassembly's
- * understanding of the data and are out of scope here. Drastically
+ * understanding of the data and are out of scope here - {@link
+ * #splitAtSelectionButton} (from {@code MemoryInspector::SplitAtSelection}/
+ * IDM_DUMP_SPLIT_AT_SELECTION) is the one structural exception, since it
+ * only splits the segment list the same way {@code
+ * com.wudsn.tools.dis6502.ui.SegmentListPanel}'s Move Up/Down/Merge/
+ * Delete already do, without reinterpreting any byte's type. Drastically
  * simplified for this first pass, the same way {@link DisassemblyPanel}
  * simplifies the disassembly view: a plain, non-editable text area rather
  * than the C++ version's virtualized/custom-painted grid (so unlike the
@@ -65,6 +70,7 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	public final JButton findButton = new JButton("Find...");
 	public final JButton findNextButton = new JButton("Find Next");
+	public final JButton splitAtSelectionButton = new JButton("Split at Selection");
 
 	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("Memory Inspector");
 	private final JTextArea hexDumpArea = new JTextArea();
@@ -90,6 +96,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		toolBar.add(findButton);
 		toolBar.add(findNextButton);
+		toolBar.add(splitAtSelectionButton);
 		add(toolBar, BorderLayout.NORTH);
 		add(new JScrollPane(hexDumpArea), BorderLayout.CENTER);
 
@@ -102,6 +109,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		byteCharOffsets = new int[0];
 		highlightTag = null;
 		updateFindButtonsState();
+		updateSplitButtonState();
 	}
 
 	/**
@@ -128,6 +136,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		buildHexDump(segment);
 		memoryInspectorSelection.clearSelection();
 		updateFindButtonsState();
+		updateSplitButtonState();
 		revalidate();
 		repaint();
 	}
@@ -202,6 +211,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		}
 		memoryInspectorSelection.setSelection(begin, end);
 		highlightRange(memoryInspectorSelection.getBegin(), memoryInspectorSelection.getEnd());
+		updateSplitButtonState();
 	}
 
 	/** Ported from MemoryInspector::ClearSelection. */
@@ -210,6 +220,15 @@ public final class MemoryInspectorPanel extends JPanel {
 			memoryInspectorSelection.clearSelection();
 		}
 		clearHighlight();
+		updateSplitButtonState();
+	}
+
+	/** Ported from the IDM_DUMP_SPLIT_AT_SELECTION enablement in MemoryInspectorPopupMenu::Update. */
+	private void updateSplitButtonState() {
+		boolean enabled = memoryInspectorSelection != null && memoryInspectorSelection.hasSelection()
+				&& memoryInspectorSelection.getWorkspace().getSegmentList().getCount() < SegmentList.MAX_SEGMENTS
+				&& memoryInspectorSelection.getSegment().canSplitAt(memoryInspectorSelection.getBegin());
+		splitAtSelectionButton.setEnabled(enabled);
 	}
 
 	private void highlightRange(int begin, int end) {
