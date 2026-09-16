@@ -60,6 +60,7 @@ import com.wudsn.tools.dis6502.ui.ProfileDialog;
 import com.wudsn.tools.dis6502.ui.RawFileDialog;
 import com.wudsn.tools.dis6502.ui.SegmentPropertiesDialog;
 import com.wudsn.tools.dis6502.ui.UIApplication;
+import com.wudsn.tools.dis6502.ui.WorkspaceDialog;
 import com.wudsn.tools.dis6502.ui.XRefPanel;
 
 /**
@@ -69,8 +70,9 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * dispatch thread.
  * <p>
  * Ported from ui/Main.h / Main.cpp / ui/MainController.h / MainController.cpp
- * / ui/MainFile.cpp, reduced to a first working slice: the main window
- * shell (see {@link MainWindow}) plus workspace New/Open/Save/Save As/Exit,
+ * / ui/MainFile.cpp / ui/MainMenu.cpp, reduced to a first working slice: the
+ * main window shell (see {@link MainWindow}) plus workspace New (see {@link
+ * #performNewWorkspace}/{@link WorkspaceDialog})/Open/Save/Save As/Exit,
  * opening/adding an executable, ROM image, cassette image, raw, disk image
  * executable, disk image boot sectors, or disk image sectors file (see
  * {@link RawFileDialog}/{@link DiskImageExecutableFileDialog}/{@link
@@ -304,13 +306,27 @@ public final class Dis6502 {
 		updateTitle();
 	}
 
+	/**
+	 * Ported from MainMenu::PerformFileMenuCommands's ID_FILE_NEW_WORKSPACE/
+	 * ID_FILE_NEW case: {@link #confirmClearWorkspace} plus {@code
+	 * workspace.init()} together mirror {@code Main::PromptToClearWorkspace}
+	 * (which does the actual clearing itself in the C++ version, unlike
+	 * this port's split - see that method's javadoc), then
+	 * {@link WorkspaceDialog} lets the user pick the new workspace's
+	 * computer system instead of always defaulting to Atari 800.
+	 */
 	private void performNewWorkspace() {
 		if (!confirmClearWorkspace()) {
 			return;
 		}
 		workspace.init();
-		workspace.setComputerSystemTypeID("ATARI800");
 		currentFile = null;
+
+		if (new WorkspaceDialog(mainWindow.getFrame()).show(workspace)) {
+			application.sendInfoMessage(Text.IDS_MAIN_FILE_LOG_NEW_WORKSPACE_PREPARED,
+					workspace.getComputerSystem().getTypeInfo().text);
+		}
+
 		mainWindow.segmentListPanel.refresh();
 		mainWindow.disassemblyPanel.refresh(null);
 		updateTitle();
