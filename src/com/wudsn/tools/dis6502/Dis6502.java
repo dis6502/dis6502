@@ -74,9 +74,10 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * #performOpenDiskImageBootSectors}/{@link DiskImageSectorsDialog}),
  * loading/saving/clearing/exporting/editing equates and defining a user
  * equate address range (see {@link EquateDialog}/{@link
- * EquateRangeDialog}), the View menu's No Disassembly/Double Font Height
- * toggles and Default Folders/Profile dialogs (see {@link
- * DefaultFoldersDialog}/{@link ProfileDialog}), and Help &gt; About.
+ * EquateRangeDialog}), the View menu's Display as Screen Code/No
+ * Disassembly/Double Font Height toggles and Default Folders/Profile
+ * dialogs (see {@link DefaultFoldersDialog}/{@link ProfileDialog}), and
+ * Help &gt; About.
  * {@link #confirmClearWorkspace} mirrors {@code Main::PromptToClearWorkspace};
  * {@link #updateDisassembly} mirrors {@code Main::UpdateDisassembly},
  * called explicitly after each action instead of through the reactive
@@ -192,6 +193,8 @@ public final class Dis6502 {
 		mainWindow.mainMenu.saveUserEquatesMenuItem.addActionListener(e -> performSaveUserEquates(false));
 		mainWindow.mainMenu.exportUserEquatesMenuItem.addActionListener(e -> performSaveUserEquates(true));
 
+		mainWindow.mainMenu.displayAsScreenCodeMenuItem.setSelected(workspace.isViewDisplayAsScreenCode());
+		mainWindow.mainMenu.displayAsScreenCodeMenuItem.addActionListener(e -> performToggleDisplayAsScreenCode());
 		mainWindow.mainMenu.noDisassemblyMenuItem.setSelected(workspace.isViewNoDisassembly());
 		mainWindow.mainMenu.noDisassemblyMenuItem.addActionListener(e -> performToggleViewDisassembly());
 		mainWindow.mainMenu.doubleFontHeightMenuItem.setSelected(workspace.isViewDoubleHeight());
@@ -746,6 +749,16 @@ public final class Dis6502 {
 		}
 		lastEquateFile = fileChooser.getSelectedFile();
 		equateListLogic.save(workspace.getUserEquateList(), lastEquateFile.getPath(), xasm);
+	}
+
+	/**
+	 * Ported from MemoryInspector::ToggleDisplayAsScreenCode. Switches the
+	 * Memory Inspector's ASCII column between plain byte values and their
+	 * Atari internal (ANTIC screen code) equivalent.
+	 */
+	private void performToggleDisplayAsScreenCode() {
+		workspace.setViewDisplayAsScreenCode(mainWindow.mainMenu.displayAsScreenCodeMenuItem.isSelected());
+		mainWindow.memoryInspectorPanel.setDisplayAsScreenCode(workspace.isViewDisplayAsScreenCode());
 	}
 
 	/** Ported from Main::ToggleViewDisassembly. */

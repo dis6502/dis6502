@@ -26,13 +26,13 @@ import javax.swing.KeyStroke;
  * Recent Workspaces/Recent Files (see {@link MRUController}), Equates &gt;
  * Clear/Display System Equates, Clear/Edit User Equates, Define Address
  * Range..., and Open/Save/Export User Equates (see {@link EquateDialog}/
- * {@link EquateRangeDialog}), View &gt; No Disassembly/Double Font Height/
- * Default Folders.../Profile... dialogs (see {@link DefaultFoldersDialog}/
- * {@link ProfileDialog}), and Help &gt; About are wired to real actions
- * (see {@code Dis6502}); every other menu item is present (matching the
- * .rc structure, for visual completeness) but disabled, since the
- * dialogs/logic they need (Display as Screen Code - needs the not-yet-
- * ported memory inspector) are not ported yet.
+ * {@link EquateRangeDialog}), View &gt; Display as Screen Code/No
+ * Disassembly/Double Font Height/Default Folders.../Profile... dialogs
+ * (see {@link MemoryInspectorPanel}/{@link DefaultFoldersDialog}/{@link
+ * ProfileDialog}), and Help &gt; About are wired to real actions (see
+ * {@code Dis6502}); every other menu item is present (matching the .rc
+ * structure, for visual completeness) but disabled, since the dialogs/
+ * logic they need are not ported yet.
  *
  * @author Peter Dell
  */
@@ -71,6 +71,7 @@ public final class MainMenu {
 	public final JMenuItem saveUserEquatesMenuItem = new JMenuItem("Save User Equates...");
 	public final JMenuItem exportUserEquatesMenuItem = new JMenuItem("Export User Equates...");
 
+	public final JCheckBoxMenuItem displayAsScreenCodeMenuItem = new JCheckBoxMenuItem("Display as Screen Code");
 	public final JCheckBoxMenuItem noDisassemblyMenuItem = new JCheckBoxMenuItem("No Disassembly");
 	public final JCheckBoxMenuItem doubleFontHeightMenuItem = new JCheckBoxMenuItem("Double Font Height");
 	public final JMenuItem defaultFoldersMenuItem = new JMenuItem("Default Folders...");
@@ -160,7 +161,7 @@ public final class MainMenu {
 	private JMenu createViewMenu() {
 		JMenu menu = new JMenu("View");
 
-		menu.add(createDisabledMenuItem("Display as Screen Code"));
+		menu.add(displayAsScreenCodeMenuItem);
 		menu.add(noDisassemblyMenuItem);
 		menu.add(doubleFontHeightMenuItem);
 		menu.addSeparator();

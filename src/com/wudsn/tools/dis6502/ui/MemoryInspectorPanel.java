@@ -31,10 +31,18 @@ import com.wudsn.tools.dis6502.model.Segment;
  * parts of ui/MemoryInspector.h/.cpp - {@link #segmentChanged} from {@code
  * MemoryInspector::SegmentChanged}, {@link #select}/{@link
  * #clearSelection} from {@code MemoryInspector::Select}/{@code
- * ClearSelection}. Drastically simplified for this first pass, the same
- * way {@link DisassemblyPanel} simplifies the disassembly view: a plain,
+ * ClearSelection}, {@link #setDisplayAsScreenCode} from {@code
+ * MemoryInspector::ToggleDisplayAsScreenCode}/{@code
+ * MemoryInspectorControlImpl::SetInternal} - the ASCII column's byte-to-
+ * character transform for "internal" (Atari ANTIC screen code) mode is
+ * copied verbatim from {@code MemoryInspectorControlImpl.cpp}'s paint
+ * routine, the one piece of that routine's rendering this class
+ * replicates. Drastically simplified for this first pass, the same way
+ * {@link DisassemblyPanel} simplifies the disassembly view: a plain,
  * non-editable text area rather than the C++ version's virtualized/
- * custom-painted grid, and no inline byte-type editing, popup menu (ui/
+ * custom-painted grid (so unlike the real ANTIC font, non-printable
+ * character codes still show as {@code .} rather than their actual
+ * glyph), and no inline byte-type editing, popup menu (ui/
  * MemoryInspectorPopupMenu.h/.cpp), find-string dialog (ui/
  * MemoryInspectorFindStringDialog.h/.cpp), or "guess code"/sprite tools -
  * those all mutate the disassembly's understanding of the data and are
@@ -52,6 +60,8 @@ public final class MemoryInspectorPanel extends JPanel {
 	private final JTextArea hexDumpArea = new JTextArea();
 
 	private MemoryInspectorSelection memoryInspectorSelection;
+	private Segment currentSegment;
+	private boolean displayAsScreenCode;
 	private int[] byteCharOffsets = new int[0];
 	private Object highlightTag;
 
@@ -66,6 +76,7 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	private void showPlaceholder() {
 		hexDumpArea.setText("No segment selected.");
+		currentSegment = null;
 		byteCharOffsets = new int[0];
 		highlightTag = null;
 	}
@@ -98,6 +109,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	private void buildHexDump(Segment segment) {
+		currentSegment = segment;
 		int size = segment.getSize();
 		byteCharOffsets = new int[size];
 
@@ -115,7 +127,7 @@ public final class MemoryInspectorPanel extends JPanel {
 			}
 			text.append(' ');
 			for (int i = lineOffset; i < lineEnd; i++) {
-				int value = segment.getData(i);
+				int value = displayAsScreenCode ? toInternalCode(segment.getData(i)) : segment.getData(i);
 				text.append(value >= 32 && value < 127 ? (char) value : '.');
 			}
 			text.append('\n');
@@ -123,6 +135,39 @@ public final class MemoryInspectorPanel extends JPanel {
 		hexDumpArea.setText(text.toString());
 		hexDumpArea.setCaretPosition(0);
 		clearHighlight();
+	}
+
+	/**
+	 * Ported verbatim from {@code MemoryInspectorControlImpl.cpp}'s paint
+	 * routine's {@code bInternal} branch: converts a raw byte to the
+	 * character its Atari internal (ANTIC screen code) representation
+	 * would display as.
+	 */
+	private static int toInternalCode(int value) {
+		if (value < 64) {
+			return value + 32;
+		} else if (value < 96) {
+			return value - 64;
+		} else if (value >= 128 && value < 128 + 64) {
+			return value + 32;
+		} else if (value >= 128 + 64 && value < 128 + 96) {
+			return value - 64;
+		}
+		return value;
+	}
+
+	/**
+	 * Ported from MemoryInspector::ToggleDisplayAsScreenCode/
+	 * MemoryInspectorControlImpl::SetInternal. Switches the ASCII column
+	 * between plain byte values and their Atari internal (ANTIC screen
+	 * code) equivalent, re-rendering the currently displayed segment if
+	 * there is one.
+	 */
+	public void setDisplayAsScreenCode(boolean displayAsScreenCode) {
+		this.displayAsScreenCode = displayAsScreenCode;
+		if (currentSegment != null) {
+			buildHexDump(currentSegment);
+		}
 	}
 
 	/** Ported from MemoryInspector::Select. */
