@@ -9,6 +9,7 @@ import java.awt.EventQueue;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -35,6 +36,7 @@ import com.wudsn.tools.dis6502.ui.EquateRangeDialog;
 import com.wudsn.tools.dis6502.ui.MainWindow;
 import com.wudsn.tools.dis6502.ui.MRUController;
 import com.wudsn.tools.dis6502.ui.ProfileDialog;
+import com.wudsn.tools.dis6502.ui.RawFileDialog;
 import com.wudsn.tools.dis6502.ui.UIApplication;
 
 /**
@@ -46,20 +48,20 @@ import com.wudsn.tools.dis6502.ui.UIApplication;
  * Ported from ui/Main.h / Main.cpp / ui/MainController.h / MainController.cpp
  * / ui/MainFile.cpp, reduced to a first working slice: the main window
  * shell (see {@link MainWindow}) plus workspace New/Open/Save/Save As/Exit,
- * opening/adding an executable, ROM image, or cassette image file, loading/
- * saving/clearing/exporting/editing equates and defining a user equate
- * address range (see {@link EquateDialog}/{@link EquateRangeDialog}), the
- * View menu's No Disassembly/Double Font Height toggles and Default
- * Folders/Profile dialogs (see {@link DefaultFoldersDialog}/{@link
- * ProfileDialog}), and Help &gt; About. {@link #confirmClearWorkspace}
- * mirrors {@code Main::PromptToClearWorkspace}; {@link #updateDisassembly}
- * mirrors {@code Main::UpdateDisassembly}, called explicitly after each
- * action instead of through the reactive {@code Main::HandleWorkspaceChanged}
- * dispatcher, which is not ported. Opening a raw file or any disk image
- * (each needs its own not-yet-ported dialog - see {@link #performOpenFile}),
- * the memory inspector, and cross-reference view are not wired up yet - see
- * the individual {@code ui} panel classes for what is and isn't ported so
- * far.
+ * opening/adding an executable, ROM image, cassette image, or raw file (see
+ * {@link RawFileDialog}), loading/saving/clearing/exporting/editing equates
+ * and defining a user equate address range (see {@link EquateDialog}/{@link
+ * EquateRangeDialog}), the View menu's No Disassembly/Double Font Height
+ * toggles and Default Folders/Profile dialogs (see {@link
+ * DefaultFoldersDialog}/{@link ProfileDialog}), and Help &gt; About. {@link
+ * #confirmClearWorkspace} mirrors {@code Main::PromptToClearWorkspace};
+ * {@link #updateDisassembly} mirrors {@code Main::UpdateDisassembly},
+ * called explicitly after each action instead of through the reactive
+ * {@code Main::HandleWorkspaceChanged} dispatcher, which is not ported.
+ * Opening any disk image (each variant needs its own not-yet-ported dialog
+ * - a file-within-the-image picker), the memory inspector, and
+ * cross-reference view are not wired up yet - see the individual {@code
+ * ui} panel classes for what is and isn't ported so far.
  *
  * @author Peter Dell
  */
@@ -138,6 +140,8 @@ public final class Dis6502 {
 		mainWindow.mainMenu.addExecutableFileMenuItem.addActionListener(e -> performOpenFile(FileType.EXECUTABLE_FILE, true));
 		mainWindow.mainMenu.openROMImageFileMenuItem.addActionListener(e -> performOpenFile(FileType.ROM_IMAGE_FILE, false));
 		mainWindow.mainMenu.addROMImageFileMenuItem.addActionListener(e -> performOpenFile(FileType.ROM_IMAGE_FILE, true));
+		mainWindow.mainMenu.openRawFileMenuItem.addActionListener(e -> performOpenRawFile(false));
+		mainWindow.mainMenu.addRawFileMenuItem.addActionListener(e -> performOpenRawFile(true));
 		mainWindow.mainMenu.saveWorkspaceMenuItem.addActionListener(e -> performSaveWorkspace());
 		mainWindow.mainMenu.saveWorkspaceAsMenuItem.addActionListener(e -> performSaveWorkspaceAs());
 		mainWindow.mainMenu.exitMenuItem.addActionListener(e -> performExit());
@@ -270,12 +274,13 @@ public final class Dis6502 {
 	/**
 	 * Opens or adds a file of the given type. Ported from MainFile::OpenFile
 	 * (and the individual OpenXxxFile methods it dispatches to), scoped to
-	 * the file types {@link ComputerSystem#readFile} already supports
-	 * without a dedicated selection dialog of its own - {@link
+	 * the file types {@link ComputerSystem#readFile} handles without a
+	 * dedicated selection dialog of its own - {@link
 	 * FileType#EXECUTABLE_FILE}, {@link FileType#ROM_IMAGE_FILE}, {@link
-	 * FileType#CASSETTE_IMAGE_FILE} - see the class javadoc for what still
-	 * needs one (raw files need a byte-offset/size/address picker, disk
-	 * images need a file-within-the-image picker).
+	 * FileType#CASSETTE_IMAGE_FILE}. {@link FileType#RAW_FILE} is handled by
+	 * {@link #performOpenRawFile} instead (it needs {@link RawFileDialog});
+	 * the three disk image file types still need their own not-yet-ported
+	 * dialog (a file-within-the-image picker) - see the class javadoc.
 	 */
 	private void performOpenFile(FileType fileType, boolean add) {
 		if (!add && !confirmClearWorkspace()) {
@@ -307,6 +312,57 @@ public final class Dis6502 {
 		}
 
 		mruController.addFile(file.getPath(), fileType);
+		mruController.save();
+		refreshMRUMenus();
+		mainWindow.segmentListPanel.refresh();
+		updateDisassembly(true);
+		updateTitle();
+	}
+
+	/**
+	 * Opens or adds a raw (headerless) file, via {@link RawFileDialog} for
+	 * picking the byte range and load address. Ported from
+	 * MainFile::OpenRawFile: unlike {@link #performOpenFile}, which routes
+	 * through {@code WorkspaceLogic.addFile}/{@code ComputerSystem.readFile},
+	 * this calls {@code WorkspaceLogic.addRawSegment} directly, since a raw
+	 * file has no format for a {@link ComputerSystem} to parse.
+	 */
+	private void performOpenRawFile(boolean add) {
+		if (!add && !confirmClearWorkspace()) {
+			return;
+		}
+
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle((add ? "Add " : "Open ") + "Raw File");
+		if (currentFile != null) {
+			fileChooser.setCurrentDirectory(currentFile.getParentFile());
+		}
+		if (fileChooser.showOpenDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+		File file = fileChooser.getSelectedFile();
+
+		RawFileDialog dialog = new RawFileDialog(mainWindow.getFrame());
+		boolean confirmed;
+		try {
+			confirmed = dialog.show(file);
+		} catch (IOException ex) {
+			application.sendErrorMessage(ex);
+			return;
+		}
+		if (!confirmed) {
+			return;
+		}
+
+		if (!add) {
+			workspace.init();
+			workspace.setComputerSystemTypeID("ATARI800");
+			currentFile = null;
+		}
+
+		workspaceLogic.addRawSegment(workspace, dialog.getFileBuffer(), dialog.getBegin(), dialog.getResultSize(), dialog.getAddress());
+
+		mruController.addFile(file.getPath(), FileType.RAW_FILE);
 		mruController.save();
 		refreshMRUMenus();
 		mainWindow.segmentListPanel.refresh();

@@ -20,18 +20,19 @@ import javax.swing.KeyStroke;
  * Ported from ui/MainWindowMenu.h / MainWindowMenu.cpp and dis6502.rc's
  * {@code MAIN_MENU} resource, simplified for this first pass: File &gt;
  * New/Open/Save/Save As/Exit, File &gt; Open File/Add File &gt;
- * Executable/ROM Image/Cassette Image File, File &gt; Recent Workspaces/
- * Recent Files (see {@link MRUController}), Equates &gt; Clear/Display
- * System Equates, Clear/Edit User Equates, Define Address Range..., and
- * Open/Save/Export User Equates (see {@link EquateDialog}/{@link
- * EquateRangeDialog}), View &gt; No Disassembly/Double Font Height/Default
- * Folders.../Profile... dialogs (see {@link DefaultFoldersDialog}/{@link
- * ProfileDialog}), and Help &gt; About are wired to real actions (see
- * {@code Dis6502}); every other menu item is present (matching the .rc
- * structure, for visual completeness) but disabled, since the dialogs/
- * logic they need (Display as Screen Code - needs the not-yet-ported
- * memory inspector -, Raw File and the three Disk Image open variants,
- * each of which needs its own not-yet-ported dialog) are not ported yet.
+ * Executable/ROM Image/Cassette Image/Raw File (see {@link
+ * RawFileDialog}), File &gt; Recent Workspaces/Recent Files (see {@link
+ * MRUController}), Equates &gt; Clear/Display System Equates, Clear/Edit
+ * User Equates, Define Address Range..., and Open/Save/Export User Equates
+ * (see {@link EquateDialog}/{@link EquateRangeDialog}), View &gt; No
+ * Disassembly/Double Font Height/Default Folders.../Profile... dialogs (see
+ * {@link DefaultFoldersDialog}/{@link ProfileDialog}), and Help &gt; About
+ * are wired to real actions (see {@code Dis6502}); every other menu item is
+ * present (matching the .rc structure, for visual completeness) but
+ * disabled, since the dialogs/logic they need (Display as Screen Code -
+ * needs the not-yet-ported memory inspector -, the three Disk Image open
+ * variants, each of which needs its own not-yet-ported dialog) are not
+ * ported yet.
  *
  * @author Peter Dell
  */
@@ -47,6 +48,8 @@ public final class MainMenu {
 	public final JMenuItem addExecutableFileMenuItem = new JMenuItem("Add Executable File...");
 	public final JMenuItem openROMImageFileMenuItem = new JMenuItem("Open ROM Image File...");
 	public final JMenuItem addROMImageFileMenuItem = new JMenuItem("Add ROM Image File...");
+	public final JMenuItem openRawFileMenuItem = new JMenuItem("Open Raw File...");
+	public final JMenuItem addRawFileMenuItem = new JMenuItem("Add Raw File...");
 	public final JMenuItem saveWorkspaceMenuItem = new JMenuItem("Save Workspace");
 	public final JMenuItem saveWorkspaceAsMenuItem = new JMenuItem("Save Workspace As...");
 	public final JMenu recentWorkspacesMenu = new JMenu("Recent Workspaces");
@@ -94,7 +97,7 @@ public final class MainMenu {
 		openExecutableFileMenuItem
 				.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
 		openFileMenu.add(openExecutableFileMenuItem);
-		openFileMenu.add(createDisabledMenuItem("Open Raw File..."));
+		openFileMenu.add(openRawFileMenuItem);
 		openFileMenu.add(openROMImageFileMenuItem);
 		menu.add(openFileMenu);
 
@@ -105,7 +108,7 @@ public final class MainMenu {
 		addFileMenu.add(createDisabledMenuItem("Add Disk Image Sectors..."));
 		addExecutableFileMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK));
 		addFileMenu.add(addExecutableFileMenuItem);
-		addFileMenu.add(createDisabledMenuItem("Add Raw File..."));
+		addFileMenu.add(addRawFileMenuItem);
 		addFileMenu.add(addROMImageFileMenuItem);
 		menu.add(addFileMenu);
 		menu.addSeparator();
