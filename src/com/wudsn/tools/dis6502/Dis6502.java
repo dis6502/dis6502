@@ -16,6 +16,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.ComputerSystemType;
+import com.wudsn.tools.dis6502.model.DefaultFolders;
+import com.wudsn.tools.dis6502.model.DefaultFoldersLogic;
 import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
 import com.wudsn.tools.dis6502.model.EquateList;
@@ -25,6 +27,7 @@ import com.wudsn.tools.dis6502.model.MRUEntry;
 import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogic;
 import com.wudsn.tools.dis6502.model.WorkspaceProperty;
+import com.wudsn.tools.dis6502.ui.DefaultFoldersDialog;
 import com.wudsn.tools.dis6502.ui.MainWindow;
 import com.wudsn.tools.dis6502.ui.MRUController;
 import com.wudsn.tools.dis6502.ui.UIApplication;
@@ -39,8 +42,9 @@ import com.wudsn.tools.dis6502.ui.UIApplication;
  * / ui/MainFile.cpp, reduced to a first working slice: the main window
  * shell (see {@link MainWindow}) plus workspace New/Open/Save/Save As/Exit,
  * opening/adding an executable file, loading/saving/clearing/exporting
- * equates, the View menu's No Disassembly/Double Font Height toggles, and
- * Help &gt; About. {@link #confirmClearWorkspace} mirrors {@code
+ * equates, the View menu's No Disassembly/Double Font Height toggles and
+ * Default Folders dialog (see {@link DefaultFoldersDialog}), and Help &gt;
+ * About. {@link #confirmClearWorkspace} mirrors {@code
  * Main::PromptToClearWorkspace}; {@link #updateDisassembly} mirrors {@code
  * Main::UpdateDisassembly}, called explicitly after each action instead of
  * through the reactive {@code Main::HandleWorkspaceChanged} dispatcher,
@@ -58,9 +62,11 @@ public final class Dis6502 {
 	private UIApplication application;
 	private WorkspaceLogic workspaceLogic;
 	private EquateListLogic equateListLogic;
+	private DefaultFoldersLogic defaultFoldersLogic;
 	private Workspace workspace;
 	private MainWindow mainWindow;
 	private MRUController mruController;
+	private DefaultFolders defaultFolders;
 	private File currentFile;
 	private File lastEquateFile;
 
@@ -92,6 +98,7 @@ public final class Dis6502 {
 		ComputerSystemFactory computerSystemFactory = new ComputerSystemFactory();
 		workspaceLogic = new WorkspaceLogic(application);
 		equateListLogic = new EquateListLogic(application);
+		defaultFoldersLogic = new DefaultFoldersLogic(application);
 		workspace = new Workspace(computerSystemFactory);
 		workspace.setComputerSystemTypeID("ATARI800");
 		mruController = new MRUController(application);
@@ -131,6 +138,7 @@ public final class Dis6502 {
 		mainWindow.mainMenu.noDisassemblyMenuItem.addActionListener(e -> performToggleViewDisassembly());
 		mainWindow.mainMenu.doubleFontHeightMenuItem.setSelected(workspace.isViewDoubleHeight());
 		mainWindow.mainMenu.doubleFontHeightMenuItem.addActionListener(e -> performToggleViewDoubleFontHeight());
+		mainWindow.mainMenu.defaultFoldersMenuItem.addActionListener(e -> performShowDefaultFolders());
 
 		mainWindow.mainMenu.aboutMenuItem.addActionListener(e -> performAbout());
 
@@ -348,6 +356,21 @@ public final class Dis6502 {
 	}
 
 	/**
+	 * Ported from Main::ShowDefaultFoldersDialog. {@code
+	 * FileDialogs::SetDefaultFolders} is not ported - there is no Java
+	 * equivalent of the C++ {@code FileDialogs} abstraction yet, so editing
+	 * the default folders here does not yet influence the directory the
+	 * various "Open"/"Save" {@link JFileChooser}s start in.
+	 */
+	private void performShowDefaultFolders() {
+		if (defaultFolders == null) {
+			defaultFolders = defaultFoldersLogic.createDefaultFolders(workspace.getComputerSystem().getTypeInfo());
+			defaultFoldersLogic.load(defaultFolders);
+		}
+		new DefaultFoldersDialog(mainWindow.getFrame()).show(defaultFolders);
+	}
+
+	/**
 	 * Ported from Main::PromptToClearWorkspace, simplified: always passes
 	 * {@code loadSystemEquates=false} (system equate loading - {@code
 	 * WorkspaceLogic.loadSystemEquates} - is not ported yet, see its
@@ -436,7 +459,11 @@ public final class Dis6502 {
 		mainWindow.disassemblyPanel.refresh(workspace.getDisassemblyResult());
 	}
 
+	/** Ported from the exit path in Main::Execute, which saves the MRU lists (already saved incrementally here, see {@link #mruController}) and any loaded {@link DefaultFolders}. */
 	private void performExit() {
+		if (defaultFolders != null) {
+			defaultFoldersLogic.save(defaultFolders);
+		}
 		System.exit(0);
 	}
 
