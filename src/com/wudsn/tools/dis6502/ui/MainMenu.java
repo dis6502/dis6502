@@ -19,18 +19,19 @@ import javax.swing.KeyStroke;
  * <p>
  * Ported from ui/MainWindowMenu.h / MainWindowMenu.cpp and dis6502.rc's
  * {@code MAIN_MENU} resource, simplified for this first pass: File &gt;
- * New/Open/Save/Save As/Exit, File &gt; Open File/Add File &gt; Executable
- * File, File &gt; Recent Workspaces/Recent Files (see {@link
- * MRUController}), Equates &gt; Clear/Display System Equates, Clear/Edit
- * User Equates, Define Address Range..., and Open/Save/Export User Equates
- * (see {@link EquateDialog}/{@link EquateRangeDialog}), View &gt; No
- * Disassembly/Double Font Height/Default Folders.../Profile... dialogs (see
- * {@link DefaultFoldersDialog}/{@link ProfileDialog}), and Help &gt; About
- * are wired to real actions (see {@code Dis6502}); every other menu item is
- * present (matching the .rc structure, for visual completeness) but
- * disabled, since the dialogs/logic they need (Display as Screen Code -
- * needs the not-yet-ported memory inspector -, the other per-file-type
- * open dialogs - raw/ROM/cassette/disk image) are not ported yet.
+ * New/Open/Save/Save As/Exit, File &gt; Open File/Add File &gt;
+ * Executable/ROM Image/Cassette Image File, File &gt; Recent Workspaces/
+ * Recent Files (see {@link MRUController}), Equates &gt; Clear/Display
+ * System Equates, Clear/Edit User Equates, Define Address Range..., and
+ * Open/Save/Export User Equates (see {@link EquateDialog}/{@link
+ * EquateRangeDialog}), View &gt; No Disassembly/Double Font Height/Default
+ * Folders.../Profile... dialogs (see {@link DefaultFoldersDialog}/{@link
+ * ProfileDialog}), and Help &gt; About are wired to real actions (see
+ * {@code Dis6502}); every other menu item is present (matching the .rc
+ * structure, for visual completeness) but disabled, since the dialogs/
+ * logic they need (Display as Screen Code - needs the not-yet-ported
+ * memory inspector -, Raw File and the three Disk Image open variants,
+ * each of which needs its own not-yet-ported dialog) are not ported yet.
  *
  * @author Peter Dell
  */
@@ -40,8 +41,12 @@ public final class MainMenu {
 
 	public final JMenuItem newWorkspaceMenuItem = new JMenuItem("New Workspace");
 	public final JMenuItem openWorkspaceMenuItem = new JMenuItem("Open Workspace...");
+	public final JMenuItem openCassetteImageFileMenuItem = new JMenuItem("Open Cassette Image File...");
+	public final JMenuItem addCassetteImageFileMenuItem = new JMenuItem("Add Cassette Image File...");
 	public final JMenuItem openExecutableFileMenuItem = new JMenuItem("Open Executable File...");
 	public final JMenuItem addExecutableFileMenuItem = new JMenuItem("Add Executable File...");
+	public final JMenuItem openROMImageFileMenuItem = new JMenuItem("Open ROM Image File...");
+	public final JMenuItem addROMImageFileMenuItem = new JMenuItem("Add ROM Image File...");
 	public final JMenuItem saveWorkspaceMenuItem = new JMenuItem("Save Workspace");
 	public final JMenuItem saveWorkspaceAsMenuItem = new JMenuItem("Save Workspace As...");
 	public final JMenu recentWorkspacesMenu = new JMenu("Recent Workspaces");
@@ -82,14 +87,26 @@ public final class MainMenu {
 		menu.add(openWorkspaceMenuItem);
 
 		JMenu openFileMenu = new JMenu("Open File");
+		openFileMenu.add(openCassetteImageFileMenuItem);
+		openFileMenu.add(createDisabledMenuItem("Open Disk Image Executable File..."));
+		openFileMenu.add(createDisabledMenuItem("Open Disk Image Boot Sectors..."));
+		openFileMenu.add(createDisabledMenuItem("Open Disk Image Sectors..."));
 		openExecutableFileMenuItem
 				.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
 		openFileMenu.add(openExecutableFileMenuItem);
+		openFileMenu.add(createDisabledMenuItem("Open Raw File..."));
+		openFileMenu.add(openROMImageFileMenuItem);
 		menu.add(openFileMenu);
 
 		JMenu addFileMenu = new JMenu("Add File");
+		addFileMenu.add(addCassetteImageFileMenuItem);
+		addFileMenu.add(createDisabledMenuItem("Add Disk Image Executable File..."));
+		addFileMenu.add(createDisabledMenuItem("Add Disk Image Boot Sectors..."));
+		addFileMenu.add(createDisabledMenuItem("Add Disk Image Sectors..."));
 		addExecutableFileMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK));
 		addFileMenu.add(addExecutableFileMenuItem);
+		addFileMenu.add(createDisabledMenuItem("Add Raw File..."));
+		addFileMenu.add(addROMImageFileMenuItem);
 		menu.add(addFileMenu);
 		menu.addSeparator();
 

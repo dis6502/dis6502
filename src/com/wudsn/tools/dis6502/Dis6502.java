@@ -14,6 +14,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.wudsn.tools.dis6502.model.ComputerSystem;
 import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.DefaultFolders;
@@ -45,19 +46,20 @@ import com.wudsn.tools.dis6502.ui.UIApplication;
  * Ported from ui/Main.h / Main.cpp / ui/MainController.h / MainController.cpp
  * / ui/MainFile.cpp, reduced to a first working slice: the main window
  * shell (see {@link MainWindow}) plus workspace New/Open/Save/Save As/Exit,
- * opening/adding an executable file, loading/saving/clearing/exporting/
- * editing equates and defining a user equate address range (see {@link
- * EquateDialog}/{@link EquateRangeDialog}), the View menu's No
- * Disassembly/Double Font Height toggles and Default Folders/Profile
- * dialogs (see {@link DefaultFoldersDialog}/{@link ProfileDialog}), and
- * Help &gt; About. {@link
- * #confirmClearWorkspace} mirrors {@code Main::PromptToClearWorkspace};
- * {@link #updateDisassembly} mirrors {@code Main::UpdateDisassembly},
- * called explicitly after each action instead of through the reactive
- * {@code Main::HandleWorkspaceChanged} dispatcher, which is not ported.
- * Raw/ROM/cassette/disk-image file opening, the memory inspector, and
- * cross-reference view are not wired up yet - see the individual {@code
- * ui} panel classes for what is and isn't ported so far.
+ * opening/adding an executable, ROM image, or cassette image file, loading/
+ * saving/clearing/exporting/editing equates and defining a user equate
+ * address range (see {@link EquateDialog}/{@link EquateRangeDialog}), the
+ * View menu's No Disassembly/Double Font Height toggles and Default
+ * Folders/Profile dialogs (see {@link DefaultFoldersDialog}/{@link
+ * ProfileDialog}), and Help &gt; About. {@link #confirmClearWorkspace}
+ * mirrors {@code Main::PromptToClearWorkspace}; {@link #updateDisassembly}
+ * mirrors {@code Main::UpdateDisassembly}, called explicitly after each
+ * action instead of through the reactive {@code Main::HandleWorkspaceChanged}
+ * dispatcher, which is not ported. Opening a raw file or any disk image
+ * (each needs its own not-yet-ported dialog - see {@link #performOpenFile}),
+ * the memory inspector, and cross-reference view are not wired up yet - see
+ * the individual {@code ui} panel classes for what is and isn't ported so
+ * far.
  *
  * @author Peter Dell
  */
@@ -130,8 +132,12 @@ public final class Dis6502 {
 
 		mainWindow.mainMenu.newWorkspaceMenuItem.addActionListener(e -> performNewWorkspace());
 		mainWindow.mainMenu.openWorkspaceMenuItem.addActionListener(e -> performOpenWorkspace());
+		mainWindow.mainMenu.openCassetteImageFileMenuItem.addActionListener(e -> performOpenFile(FileType.CASSETTE_IMAGE_FILE, false));
+		mainWindow.mainMenu.addCassetteImageFileMenuItem.addActionListener(e -> performOpenFile(FileType.CASSETTE_IMAGE_FILE, true));
 		mainWindow.mainMenu.openExecutableFileMenuItem.addActionListener(e -> performOpenFile(FileType.EXECUTABLE_FILE, false));
 		mainWindow.mainMenu.addExecutableFileMenuItem.addActionListener(e -> performOpenFile(FileType.EXECUTABLE_FILE, true));
+		mainWindow.mainMenu.openROMImageFileMenuItem.addActionListener(e -> performOpenFile(FileType.ROM_IMAGE_FILE, false));
+		mainWindow.mainMenu.addROMImageFileMenuItem.addActionListener(e -> performOpenFile(FileType.ROM_IMAGE_FILE, true));
 		mainWindow.mainMenu.saveWorkspaceMenuItem.addActionListener(e -> performSaveWorkspace());
 		mainWindow.mainMenu.saveWorkspaceAsMenuItem.addActionListener(e -> performSaveWorkspaceAs());
 		mainWindow.mainMenu.exitMenuItem.addActionListener(e -> performExit());
@@ -264,16 +270,21 @@ public final class Dis6502 {
 	/**
 	 * Opens or adds a file of the given type. Ported from MainFile::OpenFile
 	 * (and the individual OpenXxxFile methods it dispatches to), scoped to
-	 * {@link FileType#EXECUTABLE_FILE} only for this first pass - see the
-	 * class javadoc.
+	 * the file types {@link ComputerSystem#readFile} already supports
+	 * without a dedicated selection dialog of its own - {@link
+	 * FileType#EXECUTABLE_FILE}, {@link FileType#ROM_IMAGE_FILE}, {@link
+	 * FileType#CASSETTE_IMAGE_FILE} - see the class javadoc for what still
+	 * needs one (raw files need a byte-offset/size/address picker, disk
+	 * images need a file-within-the-image picker).
 	 */
 	private void performOpenFile(FileType fileType, boolean add) {
 		if (!add && !confirmClearWorkspace()) {
 			return;
 		}
+		String fileTypeDisplayName = getFileTypeDisplayName(fileType);
 
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(add ? "Add Executable File" : "Open Executable File");
+		fileChooser.setDialogTitle((add ? "Add " : "Open ") + fileTypeDisplayName);
 		if (currentFile != null) {
 			fileChooser.setCurrentDirectory(currentFile.getParentFile());
 		}
@@ -291,7 +302,7 @@ public final class Dis6502 {
 		if (!workspaceLogic.addFile(workspace, fileType, file.getPath())) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
 					"Could not " + (add ? "add" : "open") + " file '" + file.getPath() + "'. See the log for details.",
-					add ? "Add File" : "Open File", JOptionPane.ERROR_MESSAGE);
+					(add ? "Add " : "Open ") + fileTypeDisplayName, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
@@ -301,6 +312,20 @@ public final class Dis6502 {
 		mainWindow.segmentListPanel.refresh();
 		updateDisassembly(true);
 		updateTitle();
+	}
+
+	/** A short, human-readable name for a {@link FileType}, for dialog titles/messages. Ported ad hoc; the C++ source's fuller {@code FileTypeFactory} text lookup is not ported. */
+	private static String getFileTypeDisplayName(FileType fileType) {
+		switch (fileType) {
+		case EXECUTABLE_FILE:
+			return "Executable File";
+		case ROM_IMAGE_FILE:
+			return "ROM Image File";
+		case CASSETTE_IMAGE_FILE:
+			return "Cassette Image File";
+		default:
+			return "File";
+		}
 	}
 
 	/** Ported from EquateListController::Clear. */
