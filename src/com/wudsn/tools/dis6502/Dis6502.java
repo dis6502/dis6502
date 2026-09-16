@@ -87,9 +87,10 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * {@link #updateDisassembly} mirrors {@code Main::UpdateDisassembly},
  * called explicitly after each action instead of through the reactive
  * {@code Main::HandleWorkspaceChanged} dispatcher, which is not ported.
- * {@link #performFindInDisassembly}/{@link #performXRefSelected} wire the
- * disassembly search field to {@link XRefPanel}, ported from
- * MainDisassembly::RefreshXRef/XRefSelected, and (via {@link
+ * {@link #performFindInDisassembly}/{@link #performFindNextInDisassembly}/
+ * {@link #performXRefSelected} wire the disassembly search field/buttons
+ * to {@link XRefPanel}, ported from MainDisassembly::Find/FindNextString/
+ * RefreshXRef/XRefSelected, and (via {@link
  * #updateMemoryInspectorSegment}) keep {@link
  * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s hex dump in sync with
  * the selected segment - see that class's javadoc for what its
@@ -123,6 +124,7 @@ public final class Dis6502 {
 	private MemoryInspectorSelection memoryInspectorSelection;
 	private File currentFile;
 	private File lastEquateFile;
+	private final int[] findFirstLineNumber = { 0 };
 
 	public static void main(final String[] args) {
 
@@ -229,6 +231,7 @@ public final class Dis6502 {
 
 		mainWindow.disassemblyPanel.findButton.addActionListener(e -> performFindInDisassembly());
 		mainWindow.disassemblyPanel.findField.addActionListener(e -> performFindInDisassembly());
+		mainWindow.disassemblyPanel.findNextButton.addActionListener(e -> performFindNextInDisassembly());
 		mainWindow.xrefPanel.setSelectionListener(this::performXRefSelected);
 
 		mainWindow.memoryInspectorPanel.findButton.addActionListener(e -> performShowMemoryInspectorFindDialog());
@@ -1019,12 +1022,12 @@ public final class Dis6502 {
 
 	/**
 	 * Searches the current disassembly for lines containing the {@link
-	 * DisassemblyPanel#findField} text, ported from
-	 * MainDisassembly::RefreshXRef (triggered there from a label
-	 * double-click; this port uses an explicit search field instead - see
-	 * {@link DisassemblyPanel}'s javadoc). Populates {@link XRefPanel} with
-	 * every matching line and scrolls the disassembly view to the first
-	 * one.
+	 * DisassemblyPanel#findField} text, ported from {@code
+	 * MainDisassembly::Find}/{@code FindString} and {@code RefreshXRef}
+	 * (triggered there from a label double-click; this port uses an
+	 * explicit search field instead - see {@link DisassemblyPanel}'s
+	 * javadoc). Populates {@link XRefPanel} with every matching line and
+	 * scrolls the disassembly view to the first one.
 	 */
 	private void performFindInDisassembly() {
 		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
@@ -1032,7 +1035,7 @@ public final class Dis6502 {
 			return;
 		}
 		String findString = mainWindow.disassemblyPanel.findField.getText();
-		int[] findFirstLineNumber = { 0 };
+		findFirstLineNumber[0] = 0;
 		boolean found = disassemblyResult.findAndSelectLines(true, findFirstLineNumber, findString);
 
 		List<XRefPanel.Entry> entries = new ArrayList<>();
@@ -1048,6 +1051,28 @@ public final class Dis6502 {
 
 		if (found) {
 			mainWindow.disassemblyPanel.navigateToLine(findFirstLineNumber[0]);
+		}
+	}
+
+	/**
+	 * Ported from {@code MainDisassembly::FindNextString(false)}, bound in
+	 * C++ to ID_DIS_FIND_NEXT: continues the last search from {@link
+	 * #findFirstLineNumber} rather than starting over, matching the "not
+	 * found" alert {@code FindNextString} shows via {@code
+	 * FindStringDialog::ShowStringNotFoundMessage}.
+	 */
+	private void performFindNextInDisassembly() {
+		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
+		String findString = mainWindow.disassemblyPanel.findField.getText();
+		if (disassemblyResult == null || findString.isEmpty()) {
+			return;
+		}
+		boolean found = disassemblyResult.findAndSelectLines(false, findFirstLineNumber, findString);
+		if (found) {
+			mainWindow.disassemblyPanel.navigateToLine(findFirstLineNumber[0]);
+		} else {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), "String \"" + findString + "\" not found.", "Find String",
+					JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
 

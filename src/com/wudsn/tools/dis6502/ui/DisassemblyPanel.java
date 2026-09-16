@@ -27,8 +27,12 @@ import com.wudsn.tools.dis6502.model.DisassemblyResult;
 /**
  * A read-only view of the current {@link DisassemblyResult}'s lines, plus a
  * text search that drives the cross-reference list (see {@link
- * #findField}/{@link #findButton}, wired up by {@code Dis6502} to {@link
- * DisassemblyResult#findAndSelectLines} and {@link XRefPanel}).
+ * #findField}/{@link #findButton}/{@link #findNextButton}, wired up by
+ * {@code Dis6502} to {@link DisassemblyResult#findAndSelectLines} and
+ * {@link XRefPanel}) - {@code findButton} runs a fresh search (matching
+ * {@code MainDisassembly::Find}), {@code findNextButton} continues it
+ * (matching {@code MainDisassembly::FindNextString(false)}, bound in C++
+ * to ID_DIS_FIND_NEXT).
  * <p>
  * Ported from ui/DisassemblyWindow.h / DisassemblyWindow.cpp and
  * ui/DisassemblyControl(Impl).h/.cpp, drastically simplified for this first
@@ -49,6 +53,7 @@ public final class DisassemblyPanel extends JPanel {
 	private final JTextArea textArea = new JTextArea();
 	public final JTextField findField = new JTextField(24);
 	public final JButton findButton = new JButton("Find");
+	public final JButton findNextButton = new JButton("Find Next");
 
 	private final Map<Integer, Integer> lineNumberToOffset = new HashMap<>();
 	private final Map<Integer, Integer> lineNumberToLength = new HashMap<>();
@@ -59,9 +64,13 @@ public final class DisassemblyPanel extends JPanel {
 		textArea.setEditable(false);
 		textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 
+		JPanel findButtonsPanel = new JPanel();
+		findButtonsPanel.add(findButton);
+		findButtonsPanel.add(findNextButton);
+
 		JPanel findPanel = new JPanel(new BorderLayout(4, 4));
 		findPanel.add(findField, BorderLayout.CENTER);
-		findPanel.add(findButton, BorderLayout.EAST);
+		findPanel.add(findButtonsPanel, BorderLayout.EAST);
 
 		add(findPanel, BorderLayout.NORTH);
 		add(new JScrollPane(textArea), BorderLayout.CENTER);

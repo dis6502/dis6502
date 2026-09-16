@@ -167,6 +167,14 @@ public final class DisassemblyResult {
 	 * search window and selecting the first one found; otherwise scans
 	 * forward from {@code findFirstLineNumber[0]} for the next match.
 	 * {@code findFirstLineNumber[0]} is updated to the found line's number.
+	 * <p>
+	 * The {@code first=false} branch's line-number comparison is {@code >}
+	 * rather than the original C++'s {@code >=} - a bug found while adding
+	 * "Find Next" to the Java port's UI: {@code >=} re-matches the same line
+	 * {@code findFirstLineNumber[0]} already points to before any later
+	 * line gets a chance, so a second "find next" search could never
+	 * advance past the first match. Fixed here and in the corresponding
+	 * C++ (DisassemblyResult::FindAndSelectLines).
 	 */
 	public boolean findAndSelectLines(boolean first, int[] findFirstLineNumber, String findString) {
 		boolean found = false;
@@ -196,8 +204,8 @@ public final class DisassemblyResult {
 					found = true;
 				}
 			} else {
-				// Ignore all lines before the line found in a previous search, and after the line has been found.
-				if (line.getLineNumber() >= findFirstLineNumber[0] && !found) {
+				// Ignore all lines up to and including the line found in a previous search, and after the line has been found.
+				if (line.getLineNumber() > findFirstLineNumber[0] && !found) {
 					// Do we have the substring in the line?
 					if (line.getLine().contains(findString)) {
 						// This is the good line. Mark it as selected.
