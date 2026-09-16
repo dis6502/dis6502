@@ -30,6 +30,7 @@ import com.wudsn.tools.dis6502.model.WorkspaceLogic;
 import com.wudsn.tools.dis6502.model.WorkspaceProperty;
 import com.wudsn.tools.dis6502.ui.DefaultFoldersDialog;
 import com.wudsn.tools.dis6502.ui.EquateDialog;
+import com.wudsn.tools.dis6502.ui.EquateRangeDialog;
 import com.wudsn.tools.dis6502.ui.MainWindow;
 import com.wudsn.tools.dis6502.ui.MRUController;
 import com.wudsn.tools.dis6502.ui.ProfileDialog;
@@ -45,7 +46,8 @@ import com.wudsn.tools.dis6502.ui.UIApplication;
  * / ui/MainFile.cpp, reduced to a first working slice: the main window
  * shell (see {@link MainWindow}) plus workspace New/Open/Save/Save As/Exit,
  * opening/adding an executable file, loading/saving/clearing/exporting/
- * editing equates (see {@link EquateDialog}), the View menu's No
+ * editing equates and defining a user equate address range (see {@link
+ * EquateDialog}/{@link EquateRangeDialog}), the View menu's No
  * Disassembly/Double Font Height toggles and Default Folders/Profile
  * dialogs (see {@link DefaultFoldersDialog}/{@link ProfileDialog}), and
  * Help &gt; About. {@link
@@ -53,10 +55,9 @@ import com.wudsn.tools.dis6502.ui.UIApplication;
  * {@link #updateDisassembly} mirrors {@code Main::UpdateDisassembly},
  * called explicitly after each action instead of through the reactive
  * {@code Main::HandleWorkspaceChanged} dispatcher, which is not ported.
- * Raw/ROM/cassette/disk-image file opening, defining a user equate address
- * range, the memory inspector, and cross-reference view are not wired up
- * yet - see the individual {@code ui} panel classes for what is and isn't
- * ported so far.
+ * Raw/ROM/cassette/disk-image file opening, the memory inspector, and
+ * cross-reference view are not wired up yet - see the individual {@code
+ * ui} panel classes for what is and isn't ported so far.
  *
  * @author Peter Dell
  */
@@ -139,6 +140,7 @@ public final class Dis6502 {
 		mainWindow.mainMenu.displaySystemEquatesMenuItem.addActionListener(e -> performEditEquates(workspace.getSystemEquateList(), false));
 		mainWindow.mainMenu.clearUserEquatesMenuItem.addActionListener(e -> performClearEquates(workspace.getUserEquateList()));
 		mainWindow.mainMenu.editUserEquatesMenuItem.addActionListener(e -> performEditEquates(workspace.getUserEquateList(), true));
+		mainWindow.mainMenu.defineUserAddressRangeMenuItem.addActionListener(e -> performDefineUserAddressRange());
 		mainWindow.mainMenu.openUserEquatesMenuItem.addActionListener(e -> performOpenUserEquates());
 		mainWindow.mainMenu.saveUserEquatesMenuItem.addActionListener(e -> performSaveUserEquates(false));
 		mainWindow.mainMenu.exportUserEquatesMenuItem.addActionListener(e -> performSaveUserEquates(true));
@@ -335,6 +337,14 @@ public final class Dis6502 {
 			workspace.endUpdate();
 		}
 		if (changed) {
+			updateDisassembly(false); // Matches Main::HandleWorkspaceChanged's non-forced refresh on a SYSTEM_EQUATES/USER_EQUATES change.
+		}
+	}
+
+	/** Ported from EquateListController::DefineUserAddressRange. */
+	private void performDefineUserAddressRange() {
+		EquateRangeDialog dialog = new EquateRangeDialog(mainWindow.getFrame());
+		if (dialog.show(workspace.getSystemEquateList(), workspace.getUserEquateList(), "")) {
 			updateDisassembly(false); // Matches Main::HandleWorkspaceChanged's non-forced refresh on a SYSTEM_EQUATES/USER_EQUATES change.
 		}
 	}
