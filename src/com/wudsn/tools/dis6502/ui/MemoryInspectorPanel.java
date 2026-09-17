@@ -83,8 +83,12 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * yet.
  * <p>
  * Inline byte
- * value editing, "guess code"/sprite tools, and comments remain out of
- * scope for now too. Drastically simplified for this first
+ * value editing and "guess code"/sprite tools remain out of scope for
+ * now. {@link #editCommentButton} (from {@code MemoryInspector::AddComment}/
+ * IDM_DUMP_EDIT_COMMENT, ported as {@link CommentDialog}) is wired only
+ * from here rather than also from a plain disassembly-line click with no
+ * byte selection, the C++ version's other trigger path - see {@link
+ * CommentDialog}'s javadoc. Drastically simplified for this first
  * pass, the same way {@link DisassemblyPanel} simplifies the disassembly
  * view: a plain, non-editable text area rather than the C++ version's
  * virtualized/custom-painted grid (so unlike the real ANTIC font, non-
@@ -110,6 +114,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	public final JButton setTypeButton = new JButton("Set Type");
 	public final JButton setUnknownBlockToByteButton = new JButton("Set Unknown Block to Byte");
 	public final JButton copySelectionButton = new JButton("Copy Selection");
+	public final JButton editCommentButton = new JButton("Comment...");
 
 	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("Memory Inspector");
 	private final JTextArea hexDumpArea = new JTextArea();
@@ -144,6 +149,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		toolBar.add(setTypeButton);
 		toolBar.add(setUnknownBlockToByteButton);
 		toolBar.add(copySelectionButton);
+		toolBar.add(editCommentButton);
 		add(toolBar, BorderLayout.NORTH);
 		add(new JScrollPane(hexDumpArea), BorderLayout.CENTER);
 
@@ -414,6 +420,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		setTypeButton.setEnabled(hasSelection);
 		setUnknownBlockToByteButton.setEnabled(hasSelection);
 		copySelectionButton.setEnabled(hasSelection);
+		editCommentButton.setEnabled(hasSelection);
 		splitAtSelectionButton.setEnabled(hasSelection
 				&& memoryInspectorSelection.getWorkspace().getSegmentList().getCount() < SegmentList.MAX_SEGMENTS
 				&& memoryInspectorSelection.getSegment().canSplitAt(memoryInspectorSelection.getBegin()));

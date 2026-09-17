@@ -55,6 +55,7 @@ import com.wudsn.tools.dis6502.model.SegmentListInserter;
 import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogic;
 import com.wudsn.tools.dis6502.model.WorkspaceProperty;
+import com.wudsn.tools.dis6502.ui.CommentDialog;
 import com.wudsn.tools.dis6502.ui.DefaultFoldersDialog;
 import com.wudsn.tools.dis6502.ui.DiskImageExecutableFileDialog;
 import com.wudsn.tools.dis6502.ui.DiskImageSectorsDialog;
@@ -133,7 +134,10 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * wires the Copy Selection button, ported from
  * IDM_DUMP_COPY_SELECTION/{@code MemoryInspector::CopySelection} - see
  * that method's own javadoc for why Delete/Cut/Paste Selection are not
- * ported.
+ * ported. {@link #performEditMemoryInspectorComment} wires the
+ * Comment... button, ported from
+ * IDM_DUMP_EDIT_COMMENT/{@code MainDisassembly::AddComment} via the new
+ * {@link CommentDialog}.
  *
  * @author Peter Dell
  */
@@ -275,6 +279,7 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.setTypeButton.addActionListener(e -> performSetMemoryInspectorType());
 		mainWindow.memoryInspectorPanel.setUnknownBlockToByteButton.addActionListener(e -> performSetUnknownBlockToByte());
 		mainWindow.memoryInspectorPanel.copySelectionButton.addActionListener(e -> performCopyMemoryInspectorSelection());
+		mainWindow.memoryInspectorPanel.editCommentButton.addActionListener(e -> performEditMemoryInspectorComment());
 
 		refreshMRUMenus();
 		updateEquatesMenuState();
@@ -1047,6 +1052,24 @@ public final class Dis6502 {
 			hex.append(String.format("%02X", value & 0xFF));
 		}
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(hex.toString()), null);
+	}
+
+	/**
+	 * Ported from MainDisassembly::AddComment (IDM_DUMP_EDIT_COMMENT),
+	 * simplified to always use the memory inspector's own byte selection -
+	 * see {@link CommentDialog}'s javadoc for why the C++ version's other
+	 * trigger path (a plain disassembly-line click, snapping to the
+	 * enclosing instruction) is not wired here.
+	 */
+	private void performEditMemoryInspectorComment() {
+		if (memoryInspectorSelection.isEmpty()) {
+			return;
+		}
+		CommentDialog dialog = new CommentDialog(mainWindow.getFrame());
+		if (dialog.show(workspace.getSegmentList(), memoryInspectorSelection.getSegmentIndex(), memoryInspectorSelection.getBegin(),
+				memoryInspectorSelection.getSize())) {
+			updateDisassembly(false);
+		}
 	}
 
 	/**
