@@ -119,11 +119,11 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * #performShowSegmentProperties} uses {@link SegmentPropertiesDialog}.
  * {@link #performShowMemoryInspectorFindDialog}/{@link
  * #performMemoryInspectorFindNext} wire {@code
- * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s find buttons to
- * {@link MemoryInspectorFindStringDialog}, ported from the popup menu's
- * IDM_DUMP_FIND/IDM_DUMP_FIND_NEXT commands, and {@link
- * #performSplitAtSelection} wires its Split at Selection button, ported
- * from IDM_DUMP_SPLIT_AT_SELECTION/{@code MemoryInspector::SplitAtSelection}.
+ * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s Find/Find Next popup
+ * menu items to {@link MemoryInspectorFindStringDialog}, ported from the
+ * popup menu's IDM_DUMP_FIND/IDM_DUMP_FIND_NEXT commands, and {@link
+ * #performSplitAtSelection} wires its Split at Selection popup menu item,
+ * ported from IDM_DUMP_SPLIT_AT_SELECTION/{@code MemoryInspector::SplitAtSelection}.
  * {@link #performSaveMemoryInspectorSelection} wires the Save Selection
  * buttons, ported from IDM_DUMP_SAVE_NO_HEADER/IDM_DUMP_SAVE_HEADER/{@code
  * MainMemoryInspector::SaveWithoutHeader}/{@code SaveWithHeader}; the
@@ -304,9 +304,9 @@ public final class Dis6502 {
 				.addActionListener(e -> performDefineAddressRangeForLabel(mainWindow.disassemblyPanel.getRightClickedLabelReference()));
 		mainWindow.xrefPanel.setSelectionListener(this::performXRefSelected);
 
-		mainWindow.memoryInspectorPanel.findButton.addActionListener(e -> performShowMemoryInspectorFindDialog());
-		mainWindow.memoryInspectorPanel.findNextButton.addActionListener(e -> performMemoryInspectorFindNext());
-		mainWindow.memoryInspectorPanel.splitAtSelectionButton.addActionListener(e -> performSplitAtSelection());
+		mainWindow.memoryInspectorPanel.findMenuItem.addActionListener(e -> performShowMemoryInspectorFindDialog());
+		mainWindow.memoryInspectorPanel.findNextMenuItem.addActionListener(e -> performMemoryInspectorFindNext());
+		mainWindow.memoryInspectorPanel.splitAtSelectionMenuItem.addActionListener(e -> performSplitAtSelection());
 		mainWindow.memoryInspectorPanel.selectAllButton.addActionListener(e -> mainWindow.memoryInspectorPanel.selectAll());
 		mainWindow.memoryInspectorPanel.selectNextUnknownBlockButton
 				.addActionListener(e -> mainWindow.memoryInspectorPanel.selectNextUnknownBlock());
