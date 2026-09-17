@@ -96,6 +96,11 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 		scrollRectToVisible(new Rectangle(0, index * cellH, 1, cellH));
 	}
 
+	/** The line index a given Y pixel coordinate (e.g. a mouse event's) falls in - for right-click hit-testing. */
+	public int lineIndexAtY(int y) {
+		return y / (computerFont.getGlyphHeight() * ZOOM);
+	}
+
 	@Override
 	public Dimension getPreferredSize() {
 		if (computerFont == null) {

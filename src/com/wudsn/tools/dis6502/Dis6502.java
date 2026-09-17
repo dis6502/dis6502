@@ -285,6 +285,7 @@ public final class Dis6502 {
 		mainWindow.disassemblyPanel.findButton.addActionListener(e -> performFindInDisassembly());
 		mainWindow.disassemblyPanel.findField.addActionListener(e -> performFindInDisassembly());
 		mainWindow.disassemblyPanel.findNextButton.addActionListener(e -> performFindNextInDisassembly());
+		mainWindow.disassemblyPanel.editCommentMenuItem.addActionListener(e -> performEditDisassemblyComment());
 		mainWindow.xrefPanel.setSelectionListener(this::performXRefSelected);
 
 		mainWindow.memoryInspectorPanel.findButton.addActionListener(e -> performShowMemoryInspectorFindDialog());
@@ -1096,7 +1097,8 @@ public final class Dis6502 {
 	 * simplified to always use the memory inspector's own byte selection -
 	 * see {@link CommentDialog}'s javadoc for why the C++ version's other
 	 * trigger path (a plain disassembly-line click, snapping to the
-	 * enclosing instruction) is not wired here.
+	 * enclosing instruction) uses the clicked line's own offset/size
+	 * directly instead - see {@link #performEditDisassemblyComment}.
 	 */
 	private void performEditMemoryInspectorComment() {
 		if (memoryInspectorSelection.isEmpty()) {
@@ -1105,6 +1107,25 @@ public final class Dis6502 {
 		CommentDialog dialog = new CommentDialog(mainWindow.getFrame());
 		if (dialog.show(workspace.getSegmentList(), memoryInspectorSelection.getSegmentIndex(), memoryInspectorSelection.getBegin(),
 				memoryInspectorSelection.getSize())) {
+			updateDisassembly(false);
+		}
+	}
+
+	/**
+	 * Ported from {@code MainDisassembly::AddComment}, triggered by {@link
+	 * DisassemblyPanel}'s right-click popup menu instead of a plain click
+	 * (see that class's javadoc for why {@code DisassemblyResult::
+	 * FindOffsetAtStartOfInstruction}'s snap-to-enclosing-instruction is not
+	 * ported): uses the right-clicked line's own segment/offset/size
+	 * directly.
+	 */
+	private void performEditDisassemblyComment() {
+		DisassemblyLine line = mainWindow.disassemblyPanel.getRightClickedLine();
+		if (line == null || line.segmentIndex == SegmentList.NO_SEGMENT_INDEX) {
+			return;
+		}
+		CommentDialog dialog = new CommentDialog(mainWindow.getFrame());
+		if (dialog.show(workspace.getSegmentList(), line.segmentIndex, line.offset, line.size)) {
 			updateDisassembly(false);
 		}
 	}
