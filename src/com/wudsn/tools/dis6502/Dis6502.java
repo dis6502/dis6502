@@ -57,6 +57,7 @@ import com.wudsn.tools.dis6502.model.WorkspaceLogic;
 import com.wudsn.tools.dis6502.model.WorkspaceProperty;
 import com.wudsn.tools.dis6502.ui.AssembleDialog;
 import com.wudsn.tools.dis6502.ui.CommentDialog;
+import com.wudsn.tools.dis6502.ui.ComputerFont;
 import com.wudsn.tools.dis6502.ui.DefaultFoldersDialog;
 import com.wudsn.tools.dis6502.ui.DiskImageExecutableFileDialog;
 import com.wudsn.tools.dis6502.ui.DiskImageSectorsDialog;
@@ -227,6 +228,9 @@ public final class Dis6502 {
 			if (properties.contains(WorkspaceProperty.SELECTED_SEGMENT)) {
 				updateMemoryInspectorSegment();
 			}
+			if (properties.contains(WorkspaceProperty.FONT) || properties.contains(WorkspaceProperty.COMPUTER_SYSTEM_TYPE)) {
+				updateMemoryInspectorFont();
+			}
 		});
 
 		mainWindow.getFrame().addWindowListener(new WindowAdapter() {
@@ -301,6 +305,7 @@ public final class Dis6502 {
 
 		refreshMRUMenus();
 		updateEquatesMenuState();
+		updateMemoryInspectorFont();
 		updateMemoryInspectorSegment();
 		updateTitle();
 		mainWindow.setVisible(true);
@@ -310,6 +315,19 @@ public final class Dis6502 {
 	private void updateMemoryInspectorSegment() {
 		memoryInspectorSelection.setSegmentIndex(workspace.getSegmentList().getSelectedIndex());
 		mainWindow.memoryInspectorPanel.segmentChanged(memoryInspectorSelection);
+	}
+
+	/**
+	 * Ported from {@code MemoryInspectorWindow}'s reaction to a {@link
+	 * WorkspaceProperty#COMPUTER_SYSTEM_TYPE}/{@link WorkspaceProperty#FONT}
+	 * change (via {@code WorkspaceFont::GetResizedFont}) - unlike {@link
+	 * #performToggleViewDoubleFontHeight}'s own javadoc, which still applies
+	 * to {@link DisassemblyPanel} (not ported), this now does have a visible
+	 * effect on the memory inspector's hex dump.
+	 */
+	private void updateMemoryInspectorFont() {
+		ComputerFont computerFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
+		mainWindow.memoryInspectorPanel.setComputerFont(computerFont);
 	}
 
 	/** Ported from Main::UpdateMenuState's Equates-menu part (ui/Main.cpp). */
@@ -1148,11 +1166,13 @@ public final class Dis6502 {
 	/**
 	 * Ported from Main::ToggleViewDoubleFontHeight. The font-resizing this
 	 * notification is meant to trigger ({@code Main::SetLayoutFont}/{@code
-	 * layout->Compute}) is not ported - {@link
+	 * layout->Compute}) is only partly ported: {@link
+	 * #updateMemoryInspectorFont} reacts to it (switching {@link
+	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel} between {@link
+	 * ComputerFont#get}'s normal/double-height glyph atlases), but {@link
 	 * com.wudsn.tools.dis6502.ui.DisassemblyPanel} does not yet respond to a
-	 * {@link WorkspaceProperty#FONT} change - so toggling this has no
-	 * visible effect yet; it still updates real, already-ported
-	 * {@link Workspace} state and fires the same notification C++ does.
+	 * {@link WorkspaceProperty#FONT} change, so toggling this still has no
+	 * visible effect there.
 	 */
 	private void performToggleViewDoubleFontHeight() {
 		workspace.setViewDoubleHeight(mainWindow.mainMenu.doubleFontHeightMenuItem.isSelected());

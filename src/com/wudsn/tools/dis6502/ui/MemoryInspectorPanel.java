@@ -6,21 +6,14 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.Rectangle;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.border.TitledBorder;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultHighlighter;
-import javax.swing.text.Highlighter;
 
 import com.wudsn.tools.dis6502.model.FileHeader;
 import com.wudsn.tools.dis6502.model.GuessCodeLogic;
@@ -106,21 +99,25 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * to get its own model-layer class instead of living directly here -
  * see that class's javadoc for what it does and a stale-reference issue
  * found (but only fixed in this port, not the C++ source, which needs
- * an interactive GUI run to confirm) while porting it. Drastically
- * simplified for this first
- * pass, the same way {@link DisassemblyPanel} simplifies the disassembly
- * view: a plain, non-editable text area rather than the C++ version's
- * virtualized/custom-painted grid (so unlike the real ANTIC font, non-
- * printable character codes still show as {@code .} rather than their
- * actual glyph).
+ * an interactive GUI run to confirm) while porting it. The hex dump
+ * itself is {@link MemoryInspectorGridPanel}, a custom-painted, read-only
+ * grid using the real per-computer-system bitmap glyphs from {@link
+ * ComputerFont} - see that class's javadoc for why a real font asset is
+ * needed at all (a plain Java font cannot display ATASCII/PETSCII
+ * characters) and {@link MemoryInspectorGridPanel}'s own javadoc for
+ * exactly which parts of {@code MemoryInspectorControlImpl.cpp}'s custom
+ * control this replicates (the paint routine) and which it does not
+ * (mouse-drag selection, in-place editing - neither existed in this port
+ * before this rewrite either). {@link #setComputerFont} must be called by
+ * {@code Dis6502} whenever the workspace's computer system or double-
+ * font-height setting changes, matching {@code
+ * MemoryInspectorWindow}'s use of {@code WorkspaceFont::GetResizedFont}.
  *
  * @author Peter Dell
  */
 public final class MemoryInspectorPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
-
-	private static final int BYTES_PER_LINE = 16;
 
 	public final JButton findButton = new JButton("Find...");
 	public final JButton findNextButton = new JButton("Find Next");
@@ -139,13 +136,9 @@ public final class MemoryInspectorPanel extends JPanel {
 	public final JButton guessButton = new JButton("Guess Code");
 
 	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("Memory Inspector");
-	private final JTextArea hexDumpArea = new JTextArea();
+	private final MemoryInspectorGridPanel grid = new MemoryInspectorGridPanel();
 
 	private MemoryInspectorSelection memoryInspectorSelection;
-	private Segment currentSegment;
-	private boolean displayAsScreenCode;
-	private int[] byteCharOffsets = new int[0];
-	private Object highlightTag;
 
 	private int findSegmentIndex = SegmentList.NO_SEGMENT_INDEX;
 	private int findOffset;
@@ -156,8 +149,6 @@ public final class MemoryInspectorPanel extends JPanel {
 	public MemoryInspectorPanel() {
 		super(new BorderLayout());
 		setBorder(titledBorder);
-		hexDumpArea.setEditable(false);
-		hexDumpArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 
 		JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		toolBar.add(findButton);
@@ -176,17 +167,14 @@ public final class MemoryInspectorPanel extends JPanel {
 		toolBar.add(assembleButton);
 		toolBar.add(guessButton);
 		add(toolBar, BorderLayout.NORTH);
-		add(new JScrollPane(hexDumpArea), BorderLayout.CENTER);
+		add(new JScrollPane(grid), BorderLayout.CENTER);
 
-		showPlaceholder();
+		updateActionButtonsState();
 	}
 
-	private void showPlaceholder() {
-		hexDumpArea.setText("No segment selected.");
-		currentSegment = null;
-		byteCharOffsets = new int[0];
-		highlightTag = null;
-		updateActionButtonsState();
+	/** Ported from MemoryInspectorWindow's use of WorkspaceFont::GetResizedFont - call whenever the workspace's computer system or double-height setting changes. */
+	public void setComputerFont(ComputerFont computerFont) {
+		grid.setComputerFont(computerFont);
 	}
 
 	/**
@@ -201,8 +189,9 @@ public final class MemoryInspectorPanel extends JPanel {
 		boolean hasData = segment != null && !segment.isHeader(FileHeader.SDX_SYM_DEFINED) && !segment.isSDXRelocBlkWithoutData();
 
 		if (!hasData) {
-			showPlaceholder();
+			grid.setSegment(null);
 			titledBorder.setTitle("Memory Inspector");
+			updateActionButtonsState();
 			revalidate();
 			repaint();
 			return;
@@ -210,59 +199,11 @@ public final class MemoryInspectorPanel extends JPanel {
 
 		titledBorder.setTitle(
 				String.format("Memory Inspector - %s ($%04X-$%04X)", segment.title, segment.wBegin, segment.wEnd));
-		buildHexDump(segment);
+		grid.setSegment(segment);
 		memoryInspectorSelection.clearSelection();
 		updateActionButtonsState();
 		revalidate();
 		repaint();
-	}
-
-	private void buildHexDump(Segment segment) {
-		currentSegment = segment;
-		int size = segment.getSize();
-		byteCharOffsets = new int[size];
-
-		StringBuilder text = new StringBuilder();
-		for (int lineOffset = 0; lineOffset < size; lineOffset += BYTES_PER_LINE) {
-			int lineEnd = Math.min(lineOffset + BYTES_PER_LINE, size);
-			text.append(String.format("%04X: ", segment.wBegin + lineOffset));
-			for (int i = lineOffset; i < lineOffset + BYTES_PER_LINE; i++) {
-				if (i < lineEnd) {
-					byteCharOffsets[i] = text.length();
-					text.append(String.format("%02X ", segment.getData(i)));
-				} else {
-					text.append("   ");
-				}
-			}
-			text.append(' ');
-			for (int i = lineOffset; i < lineEnd; i++) {
-				int value = displayAsScreenCode ? toInternalCode(segment.getData(i)) : segment.getData(i);
-				text.append(value >= 32 && value < 127 ? (char) value : '.');
-			}
-			text.append('\n');
-		}
-		hexDumpArea.setText(text.toString());
-		hexDumpArea.setCaretPosition(0);
-		clearHighlight();
-	}
-
-	/**
-	 * Ported verbatim from {@code MemoryInspectorControlImpl.cpp}'s paint
-	 * routine's {@code bInternal} branch: converts a raw byte to the
-	 * character its Atari internal (ANTIC screen code) representation
-	 * would display as.
-	 */
-	private static int toInternalCode(int value) {
-		if (value < 64) {
-			return value + 32;
-		} else if (value < 96) {
-			return value - 64;
-		} else if (value >= 128 && value < 128 + 64) {
-			return value + 32;
-		} else if (value >= 128 + 64 && value < 128 + 96) {
-			return value - 64;
-		}
-		return value;
 	}
 
 	/**
@@ -273,10 +214,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * there is one.
 	 */
 	public void setDisplayAsScreenCode(boolean displayAsScreenCode) {
-		this.displayAsScreenCode = displayAsScreenCode;
-		if (currentSegment != null) {
-			buildHexDump(currentSegment);
-		}
+		grid.setDisplayAsScreenCode(displayAsScreenCode);
 	}
 
 	/** Ported from MemoryInspector::Select. */
@@ -470,32 +408,11 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	private void highlightRange(int begin, int end) {
-		clearHighlight();
-		if (byteCharOffsets.length == 0 || begin < 0 || begin >= byteCharOffsets.length) {
-			return;
-		}
-		int endIndex = Math.min(end, byteCharOffsets.length - 1);
-		int startOffset = byteCharOffsets[begin];
-		int endOffset = byteCharOffsets[endIndex] + 2; // Each byte is rendered as exactly 2 hex digits.
-
-		Highlighter highlighter = hexDumpArea.getHighlighter();
-		try {
-			highlightTag = highlighter.addHighlight(startOffset, endOffset, new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW));
-			hexDumpArea.setCaretPosition(startOffset);
-			Rectangle rectangle = hexDumpArea.modelToView(startOffset);
-			if (rectangle != null) {
-				hexDumpArea.scrollRectToVisible(rectangle);
-			}
-		} catch (BadLocationException ex) {
-			highlightTag = null;
-		}
+		grid.highlightRange(begin, end);
 	}
 
 	private void clearHighlight() {
-		if (highlightTag != null) {
-			hexDumpArea.getHighlighter().removeHighlight(highlightTag);
-			highlightTag = null;
-		}
+		grid.clearHighlight();
 	}
 
 	/** Ported from MemoryInspector::HasFindString. */
