@@ -229,7 +229,7 @@ public final class Dis6502 {
 				updateMemoryInspectorSegment();
 			}
 			if (properties.contains(WorkspaceProperty.FONT) || properties.contains(WorkspaceProperty.COMPUTER_SYSTEM_TYPE)) {
-				updateMemoryInspectorFont();
+				updateFonts();
 			}
 		});
 
@@ -305,7 +305,7 @@ public final class Dis6502 {
 
 		refreshMRUMenus();
 		updateEquatesMenuState();
-		updateMemoryInspectorFont();
+		updateFonts();
 		updateMemoryInspectorSegment();
 		updateTitle();
 		mainWindow.setVisible(true);
@@ -318,16 +318,17 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from {@code MemoryInspectorWindow}'s reaction to a {@link
-	 * WorkspaceProperty#COMPUTER_SYSTEM_TYPE}/{@link WorkspaceProperty#FONT}
-	 * change (via {@code WorkspaceFont::GetResizedFont}) - unlike {@link
-	 * #performToggleViewDoubleFontHeight}'s own javadoc, which still applies
-	 * to {@link DisassemblyPanel} (not ported), this now does have a visible
-	 * effect on the memory inspector's hex dump.
+	 * Ported from {@code MemoryInspectorWindow}/{@code DisassemblyWindow}'s
+	 * reaction to a {@link WorkspaceProperty#COMPUTER_SYSTEM_TYPE}/{@link
+	 * WorkspaceProperty#FONT} change (via {@code Main::SetLayoutFont}/{@code
+	 * WorkspaceFont::GetResizedFont} - the C++ source shares one font, set
+	 * on a common {@code Layout}, between both controls, matching {@link
+	 * ComputerFont}'s javadoc).
 	 */
-	private void updateMemoryInspectorFont() {
+	private void updateFonts() {
 		ComputerFont computerFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
 		mainWindow.memoryInspectorPanel.setComputerFont(computerFont);
+		mainWindow.disassemblyPanel.setComputerFont(computerFont);
 	}
 
 	/** Ported from Main::UpdateMenuState's Equates-menu part (ui/Main.cpp). */
@@ -1166,13 +1167,10 @@ public final class Dis6502 {
 	/**
 	 * Ported from Main::ToggleViewDoubleFontHeight. The font-resizing this
 	 * notification is meant to trigger ({@code Main::SetLayoutFont}/{@code
-	 * layout->Compute}) is only partly ported: {@link
-	 * #updateMemoryInspectorFont} reacts to it (switching {@link
-	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel} between {@link
-	 * ComputerFont#get}'s normal/double-height glyph atlases), but {@link
-	 * com.wudsn.tools.dis6502.ui.DisassemblyPanel} does not yet respond to a
-	 * {@link WorkspaceProperty#FONT} change, so toggling this still has no
-	 * visible effect there.
+	 * layout->Compute}) is fully ported: {@link #updateFonts} reacts to it,
+	 * switching both {@link com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}
+	 * and {@link com.wudsn.tools.dis6502.ui.DisassemblyPanel} between {@link
+	 * ComputerFont#get}'s normal/double-height glyph atlases.
 	 */
 	private void performToggleViewDoubleFontHeight() {
 		workspace.setViewDoubleHeight(mainWindow.mainMenu.doubleFontHeightMenuItem.isSelected());

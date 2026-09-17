@@ -5,11 +5,14 @@
  */
 package com.wudsn.tools.dis6502.ui;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
@@ -46,6 +49,15 @@ import com.wudsn.tools.dis6502.model.ComputerSystemType;
  * {@link ComputerSystemType#ORIC}/{@link ComputerSystemType#UNKNOWN})
  * currently render identical Atari ATASCII glyphs in both this port and the
  * original - not a porting gap, just the current state of that C++ asset.
+ * <p>
+ * {@link #getTintedGlyph} is the shared building block both {@link
+ * MemoryInspectorGridPanel} and {@link DisassemblyGridPanel} paint their
+ * text with - recoloring a glyph is the one piece of per-character
+ * rendering work both of those custom-painted, byte/character-grid panels
+ * need identically ({@code PrintLine}'s per-{@code MemoryType} hex-byte
+ * color and a disassembly line's plain black text are both just "this
+ * glyph, in this color"), so it lives here rather than being duplicated in
+ * each panel.
  *
  * @author Peter Dell
  */
@@ -60,6 +72,7 @@ public final class ComputerFont {
 	private final BufferedImage atlas;
 	private final int glyphWidth;
 	private final int glyphHeight;
+	private final Map<Long, BufferedImage> tintedGlyphCache = new HashMap<>();
 
 	private ComputerFont(BufferedImage atlas) {
 		this.atlas = atlas;
@@ -115,5 +128,39 @@ public final class ComputerFont {
 		int column = index % COLUMNS;
 		int row = index / COLUMNS;
 		return atlas.getSubimage(column * glyphWidth, row * glyphHeight, glyphWidth, glyphHeight);
+	}
+
+	/**
+	 * Returns byte value {@code value}'s glyph recolored to {@code color}:
+	 * black pixels become {@code color}, white pixels become fully
+	 * transparent (so it can be drawn over any background, including a
+	 * selection highlight, and still show only its foreground strokes).
+	 * Cached per (value, color) pair.
+	 */
+	public BufferedImage getTintedGlyph(int value, Color color) {
+		long key = ((long) (value & 0xFF) << 32) | (color.getRGB() & 0xFFFFFFFFL);
+		return tintedGlyphCache.computeIfAbsent(key, k -> tint(getGlyph(value), color));
+	}
+
+	private static BufferedImage tint(BufferedImage glyph, Color color) {
+		int width = glyph.getWidth();
+		int height = glyph.getHeight();
+		BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		int foreground = color.getRGB() | 0xFF000000;
+		for (int py = 0; py < height; py++) {
+			for (int px = 0; px < width; px++) {
+				int rgb = glyph.getRGB(px, py) & 0xFFFFFF;
+				result.setRGB(px, py, rgb == 0 ? foreground : 0);
+			}
+		}
+		return result;
+	}
+
+	/** Draws {@code text} as a horizontal run of glyphs starting at {@code (x, y)}, each {@code cellWidth}x{@code cellHeight} pixels. */
+	public void drawText(Graphics2D g2, String text, Color color, int x, int y, int cellWidth, int cellHeight) {
+		for (int i = 0; i < text.length(); i++) {
+			BufferedImage tinted = getTintedGlyph(text.charAt(i) & 0xFF, color);
+			g2.drawImage(tinted, x + i * cellWidth, y, cellWidth, cellHeight, null);
+		}
 	}
 }

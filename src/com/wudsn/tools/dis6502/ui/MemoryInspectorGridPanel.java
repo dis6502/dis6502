@@ -13,8 +13,6 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.swing.JPanel;
 import javax.swing.Scrollable;
@@ -79,8 +77,6 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	private boolean displayAsScreenCode;
 	private int highlightBegin = -1;
 	private int highlightEnd = -1;
-
-	private final Map<ComputerFont, Map<Long, BufferedImage>> tintedGlyphCache = new HashMap<>();
 
 	public MemoryInspectorGridPanel() {
 		setBackground(Color.WHITE);
@@ -215,9 +211,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 		// Address, e.g. "0600|".
 		String address = String.format("%04X|", segment.wBegin + lineStart);
-		for (int i = 0; i < address.length(); i++) {
-			drawGlyph(g2, address.charAt(i), Color.BLACK, i * cellW, y, cellW, cellH);
-		}
+		computerFont.drawText(g2, address, Color.BLACK, 0, y, cellW, cellH);
 
 		MemoryType oldType = null;
 		for (int row = 0; row < BYTES_PER_LINE; row++) {
@@ -245,47 +239,20 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 			int value = segment.getData(offset) & 0xFF;
 			String hex = String.format("%02X ", value);
-			for (int i = 0; i < hex.length(); i++) {
-				drawGlyph(g2, hex.charAt(i), color, hexX + i * cellW, y, cellW, cellH);
-			}
+			computerFont.drawText(g2, hex, color, hexX, y, cellW, cellH);
 
 			int displayValue = displayAsScreenCode ? toInternalCode(value) : value;
-			drawGlyph(g2, displayValue, color, charX, y, cellW, cellH);
+			BufferedImage tinted = computerFont.getTintedGlyph(displayValue, color);
+			g2.drawImage(tinted, charX, y, cellW, cellH, null);
 		}
 
 		// Vertical bar separating the hex and ASCII columns.
-		drawGlyph(g2, '|', Color.BLACK, (5 + BYTES_PER_LINE * 3 - 1) * cellW, y, cellW, cellH);
+		computerFont.drawText(g2, "|", Color.BLACK, (5 + BYTES_PER_LINE * 3 - 1) * cellW, y, cellW, cellH);
 	}
 
 	private void drawBlank(Graphics2D g2, int x, int y, int width, int height) {
 		g2.setColor(getBackground());
 		g2.fillRect(x, y, width, height);
-	}
-
-	private void drawGlyph(Graphics2D g2, int value, Color color, int x, int y, int cellW, int cellH) {
-		BufferedImage tinted = getTintedGlyph(value, color);
-		g2.drawImage(tinted, x, y, cellW, cellH, null);
-	}
-
-	private BufferedImage getTintedGlyph(int value, Color color) {
-		Map<Long, BufferedImage> byKey = tintedGlyphCache.computeIfAbsent(computerFont, f -> new HashMap<>());
-		long key = ((long) (value & 0xFF) << 32) | (color.getRGB() & 0xFFFFFFFFL);
-		return byKey.computeIfAbsent(key, k -> tint(computerFont.getGlyph(value), color));
-	}
-
-	/** Recolors a black-on-white glyph bitmap: black pixels become {@code color}, white pixels become transparent. */
-	private static BufferedImage tint(BufferedImage glyph, Color color) {
-		int width = glyph.getWidth();
-		int height = glyph.getHeight();
-		BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-		int foreground = color.getRGB() | 0xFF000000;
-		for (int py = 0; py < height; py++) {
-			for (int px = 0; px < width; px++) {
-				int rgb = glyph.getRGB(px, py) & 0xFFFFFF;
-				result.setRGB(px, py, rgb == 0 ? foreground : 0);
-			}
-		}
-		return result;
 	}
 
 	@Override
