@@ -59,6 +59,7 @@ import com.wudsn.tools.dis6502.ui.AssembleDialog;
 import com.wudsn.tools.dis6502.ui.CommentDialog;
 import com.wudsn.tools.dis6502.ui.ComputerFont;
 import com.wudsn.tools.dis6502.ui.DefaultFoldersDialog;
+import com.wudsn.tools.dis6502.ui.DisassemblyProgressDialog;
 import com.wudsn.tools.dis6502.ui.DiskImageExecutableFileDialog;
 import com.wudsn.tools.dis6502.ui.DiskImageSectorsDialog;
 import com.wudsn.tools.dis6502.ui.EquateDialog;
@@ -1338,7 +1339,10 @@ public final class Dis6502 {
 	 * {@code force=true} except the "No Disassembly" toggle - matching the
 	 * C++ behavior for the actions currently wired: opening/adding a file or
 	 * a workspace always corresponds to a {@code SEGMENTS} change, which C++
-	 * always forces.
+	 * always forces. Runs behind a {@link DisassemblyProgressDialog}, matching
+	 * {@code Main::UpdateDisassembly}'s own {@code DisassemblyProgressDialog}
+	 * use - see that class's javadoc for why it runs the disassembly on a
+	 * background thread instead of the C++ mechanism.
 	 */
 	private void updateDisassembly(boolean force) {
 		if (workspace.getComputerSystem().getType() == ComputerSystemType.UNKNOWN) {
@@ -1351,7 +1355,8 @@ public final class Dis6502 {
 			return;
 		}
 		Disassembly disassembly = new Disassembly();
-		DisassemblyProgressMonitor progressMonitor = new DisassemblyProgressMonitor();
+		DisassemblyProgressDialog progressDialog = new DisassemblyProgressDialog(mainWindow.getFrame());
+		DisassemblyProgressMonitor progressMonitor = progressDialog.getMonitor();
 		disassembly.setWorkspace(workspace);
 		disassembly.setProgressMonitor(progressMonitor);
 		try {
