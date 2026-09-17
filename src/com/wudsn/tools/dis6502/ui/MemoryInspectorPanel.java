@@ -64,19 +64,25 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * re-run the disassembly afterward (see their own javadoc).
  * {@link #copySelectionButton} (from {@code MemoryInspector::CopySelection})
  * copies the selection as a plain hex string, matching {@code
- * DatatypeUtility::ByteArrayToHexString(..., false)}'s format. Delete/Cut/
- * Paste Selection are deliberately NOT ported: {@code
+ * DatatypeUtility::ByteArrayToHexString(..., false)}'s format.
+ * <p>
+ * TODO: Delete/Cut/Paste Selection are deliberately NOT ported: {@code
  * MemoryInspector::DeleteSelection} never actually shrinks the segment's
- * underlying byte/type arrays (its own comment admits as much), which
- * also means its "delete the whole segment if it's now empty" branch
- * can't work, since {@code Segment::IsEmpty}/{@link Segment#isEmpty}
- * check that same never-shrunk allocation; and {@code
- * MemoryInspector::PasteAtSelection} is explicitly broken in the C++
- * source (its own comment says so, and the code that would apply the
- * newly-built buffer back to the segment is commented out). Porting
- * either faithfully would just carry the same brokenness forward, and
- * fixing them needs real segment-buffer resizing, which does not exist
- * in {@link com.wudsn.tools.dis6502.model.MemoryBlock} yet. Inline byte
+ * underlying byte/type arrays (its own comment admits as much, and now
+ * carries a second TODO added while porting this, documenting the
+ * knock-on effect below), which also means its "delete the whole
+ * segment if it's now empty" branch can't work, since {@code
+ * Segment::IsEmpty}/{@link Segment#isEmpty} check that same never-
+ * shrunk allocation; and {@code MemoryInspector::PasteAtSelection} is
+ * explicitly broken in the C++ source (its own comment says so, and the
+ * code that would apply the newly-built buffer back to the segment is
+ * commented out - also now flagged there with a porting-context TODO).
+ * Porting either faithfully would just carry the same brokenness
+ * forward, and fixing them needs real segment-buffer resizing, which
+ * does not exist in {@link com.wudsn.tools.dis6502.model.MemoryBlock}
+ * yet.
+ * <p>
+ * Inline byte
  * value editing, "guess code"/sprite tools, and comments remain out of
  * scope for now too. Drastically simplified for this first
  * pass, the same way {@link DisassemblyPanel} simplifies the disassembly
