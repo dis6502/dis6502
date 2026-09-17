@@ -19,6 +19,16 @@ import javax.swing.SwingUtilities;
  * multi-column, color-coded list view to a plain text area for this first
  * pass - the C++ version's per-entry severity coloring/columns are not
  * ported yet.
+ * <p>
+ * {@link #setComputerFont} is ported from {@code PartWindow::ApplyLayout}'s
+ * blanket {@code SetFont(...)} call - {@code LogListWindow} is a plain
+ * native {@code ListBox} in C++, getting this automatically via {@code
+ * WM_SETFONT}, matching {@link SegmentListPanel}'s own {@code
+ * setComputerFont}: log messages are already-formatted text, not raw byte
+ * values, so {@link ComputerFont#getAwtFont} needs no byte-index shift.
+ * Falls back to a plain monospace font until the first call, the same
+ * placeholder every {@code ComputerFont}-driven panel used before
+ * {@code Dis6502} wired up real fonts.
  *
  * @author Peter Dell
  */
@@ -33,6 +43,11 @@ public final class LogPanel extends JPanel {
 		textArea.setEditable(false);
 		textArea.setFont(new java.awt.Font(java.awt.Font.MONOSPACED, java.awt.Font.PLAIN, 12));
 		add(new JScrollPane(textArea), BorderLayout.CENTER);
+	}
+
+	/** Ported from PartWindow::ApplyLayout's SetFont(partLayout->GetLayout()->GetFont()) - call whenever the workspace's computer system or double-height setting changes. */
+	public void setComputerFont(ComputerFont computerFont) {
+		textArea.setFont(computerFont.getAwtFont());
 	}
 
 	/** May be called from any thread. */

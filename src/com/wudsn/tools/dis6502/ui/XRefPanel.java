@@ -24,6 +24,14 @@ import javax.swing.border.TitledBorder;
  * {@code MainXRef::HandleSelectionChanged}'s memory inspector byte-range
  * sync is not wired up yet - the segment/disassembly-line sync it also
  * does is, see {@code Dis6502.performXRefSelected}.
+ * <p>
+ * {@link #setComputerFont} is ported from {@code PartWindow::ApplyLayout}'s
+ * blanket {@code SetFont(...)} call - {@code XRefListWindow} is a plain
+ * native {@code ListBox} in C++, getting this automatically via {@code
+ * WM_SETFONT}, matching {@link SegmentListPanel}'s own {@code
+ * setComputerFont}: this list only ever shows already-formatted
+ * disassembly line text, not raw byte values, so {@link
+ * ComputerFont#getAwtFont} needs no byte-index shift.
  *
  * @author Peter Dell
  */
@@ -54,6 +62,11 @@ public final class XRefPanel extends JPanel {
 
 	public void setSelectionListener(XRefSelectionListener selectionListener) {
 		this.selectionListener = selectionListener;
+	}
+
+	/** Ported from PartWindow::ApplyLayout's SetFont(partLayout->GetLayout()->GetFont()) - call whenever the workspace's computer system or double-height setting changes. */
+	public void setComputerFont(ComputerFont computerFont) {
+		list.setFont(computerFont.getAwtFont());
 	}
 
 	/**

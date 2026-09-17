@@ -339,15 +339,14 @@ public final class Dis6502 {
 	 * WorkspaceProperty#COMPUTER_SYSTEM_TYPE}/{@link WorkspaceProperty#FONT}
 	 * change (via {@code Main::SetLayoutFont}/{@code
 	 * WorkspaceFont::GetResizedFont}) - every part window shares one font set
-	 * on a common {@code Layout}, matching {@link ComputerFont}'s javadoc);
-	 * {@link com.wudsn.tools.dis6502.ui.XRefPanel}/{@link
-	 * com.wudsn.tools.dis6502.ui.LogPanel} are two more C++ part windows that
-	 * get this same font but are not wired here yet.
+	 * on a common {@code Layout}, matching {@link ComputerFont}'s javadoc.
 	 */
 	private void updateFonts() {
 		ComputerFont computerFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
 		mainWindow.memoryInspectorPanel.setComputerFont(computerFont);
 		mainWindow.disassemblyPanel.setComputerFont(computerFont);
+		mainWindow.xrefPanel.setComputerFont(computerFont);
+		mainWindow.logPanel.setComputerFont(computerFont);
 		mainWindow.segmentListPanel.setComputerFont(computerFont);
 	}
 
