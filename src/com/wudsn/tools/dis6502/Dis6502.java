@@ -69,6 +69,7 @@ import com.wudsn.tools.dis6502.ui.MRUController;
 import com.wudsn.tools.dis6502.ui.ProfileDialog;
 import com.wudsn.tools.dis6502.ui.RawFileDialog;
 import com.wudsn.tools.dis6502.ui.SegmentPropertiesDialog;
+import com.wudsn.tools.dis6502.ui.SelectSpritesDialog;
 import com.wudsn.tools.dis6502.ui.UIApplication;
 import com.wudsn.tools.dis6502.ui.WorkspaceDialog;
 import com.wudsn.tools.dis6502.ui.XRefPanel;
@@ -145,6 +146,10 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * Code button, ported from
  * IDM_DUMP_START_CODE_TRACE/{@code MemoryInspector::Guess} via the new
  * {@code com.wudsn.tools.dis6502.model.GuessCodeLogic}.
+ * {@link #performShowSelectSpritesDialog} wires the Select Sprites...
+ * button, ported from
+ * IDM_DUMP_SELECT_SPRITES/{@code MemoryInspector::ShowSelectSpritesDialog}
+ * via the new {@link SelectSpritesDialog}.
  *
  * @author Peter Dell
  */
@@ -281,6 +286,7 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.selectAllButton.addActionListener(e -> mainWindow.memoryInspectorPanel.selectAll());
 		mainWindow.memoryInspectorPanel.selectNextUnknownBlockButton
 				.addActionListener(e -> mainWindow.memoryInspectorPanel.selectNextUnknownBlock());
+		mainWindow.memoryInspectorPanel.selectSpritesButton.addActionListener(e -> performShowSelectSpritesDialog());
 		mainWindow.memoryInspectorPanel.saveSelectionNoHeaderButton.addActionListener(e -> performSaveMemoryInspectorSelection(false));
 		mainWindow.memoryInspectorPanel.saveSelectionHeaderButton.addActionListener(e -> performSaveMemoryInspectorSelection(true));
 		mainWindow.memoryInspectorPanel.setTypeButton.addActionListener(e -> performSetMemoryInspectorType());
@@ -1101,6 +1107,23 @@ public final class Dis6502 {
 	private void performGuessCode() {
 		mainWindow.memoryInspectorPanel.guess();
 		updateDisassembly(false);
+	}
+
+	/**
+	 * Ported from MemoryInspector::ShowSelectSpritesDialog
+	 * (IDM_DUMP_SELECT_SPRITES): non-mutating, unlike its neighbors above -
+	 * just ends in the same {@link
+	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#select} every other
+	 * Select* action uses, so no {@link #updateDisassembly} call follows.
+	 */
+	private void performShowSelectSpritesDialog() {
+		if (!memoryInspectorSelection.hasSegment()) {
+			return;
+		}
+		SelectSpritesDialog dialog = new SelectSpritesDialog(mainWindow.getFrame());
+		if (dialog.show(memoryInspectorSelection)) {
+			mainWindow.memoryInspectorPanel.select(dialog.getBegin(), dialog.getEnd());
+		}
 	}
 
 	/**

@@ -83,7 +83,12 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * does not exist in {@link com.wudsn.tools.dis6502.model.MemoryBlock}
  * yet.
  * <p>
- * Sprite tools remain out of scope for now. {@link
+ * {@link #selectSpritesButton} (from {@code
+ * MemoryInspector::ShowSelectSpritesDialog}/IDM_DUMP_SELECT_SPRITES,
+ * ported as {@link SelectSpritesDialog}/{@link SpritePanel}/{@link
+ * SpriteMode}) is non-mutating like the other Select* buttons - it just
+ * ends in a call to {@link #select}, {@link
+ * SelectSpritesDialog}'s own javadoc has the details. {@link
  * #editCommentButton} (from {@code MemoryInspector::AddComment}/
  * IDM_DUMP_EDIT_COMMENT, ported as {@link CommentDialog}) is wired only
  * from here rather than also from a plain disassembly-line click with no
@@ -122,6 +127,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	public final JButton splitAtSelectionButton = new JButton("Split at Selection");
 	public final JButton selectAllButton = new JButton("Select All");
 	public final JButton selectNextUnknownBlockButton = new JButton("Select Next Unknown Block");
+	public final JButton selectSpritesButton = new JButton("Select Sprites...");
 	public final JButton saveSelectionNoHeaderButton = new JButton("Save Selection (No Header)...");
 	public final JButton saveSelectionHeaderButton = new JButton("Save Selection (With Header)...");
 	public final JComboBox<MemoryType> setTypeComboBox = new JComboBox<>(MemoryType.VALUES);
@@ -159,6 +165,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		toolBar.add(splitAtSelectionButton);
 		toolBar.add(selectAllButton);
 		toolBar.add(selectNextUnknownBlockButton);
+		toolBar.add(selectSpritesButton);
 		toolBar.add(saveSelectionNoHeaderButton);
 		toolBar.add(saveSelectionHeaderButton);
 		toolBar.add(setTypeComboBox);
@@ -445,6 +452,7 @@ public final class MemoryInspectorPanel extends JPanel {
 				&& !memoryInspectorSelection.getSegment().isEmpty();
 		selectAllButton.setEnabled(hasSegment);
 		selectNextUnknownBlockButton.setEnabled(hasSegment);
+		selectSpritesButton.setEnabled(hasSegment);
 
 		boolean hasSelection = memoryInspectorSelection != null && memoryInspectorSelection.hasSelection();
 		saveSelectionNoHeaderButton.setEnabled(hasSelection);
