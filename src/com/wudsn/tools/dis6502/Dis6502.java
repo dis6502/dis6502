@@ -141,7 +141,10 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * {@link CommentDialog}. {@link #performShowAssembleDialog} wires the
  * Assemble... button, ported from
  * IDM_DUMP_ASSEMBLE/{@code MainMemoryInspector::PerformCommands} via the
- * new {@link AssembleDialog}.
+ * new {@link AssembleDialog}. {@link #performGuessCode} wires the Guess
+ * Code button, ported from
+ * IDM_DUMP_START_CODE_TRACE/{@code MemoryInspector::Guess} via the new
+ * {@code com.wudsn.tools.dis6502.model.GuessCodeLogic}.
  *
  * @author Peter Dell
  */
@@ -285,6 +288,7 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.copySelectionButton.addActionListener(e -> performCopyMemoryInspectorSelection());
 		mainWindow.memoryInspectorPanel.editCommentButton.addActionListener(e -> performEditMemoryInspectorComment());
 		mainWindow.memoryInspectorPanel.assembleButton.addActionListener(e -> performShowAssembleDialog());
+		mainWindow.memoryInspectorPanel.guessButton.addActionListener(e -> performGuessCode());
 
 		refreshMRUMenus();
 		updateEquatesMenuState();
@@ -1090,6 +1094,12 @@ public final class Dis6502 {
 		}
 		new AssembleDialog(mainWindow.getFrame()).show(workspace, memoryInspectorSelection.getSegment(), memoryInspectorSelection,
 				mainWindow.memoryInspectorPanel);
+		updateDisassembly(false);
+	}
+
+	/** Ported from MemoryInspector::Guess (IDM_DUMP_START_CODE_TRACE). */
+	private void performGuessCode() {
+		mainWindow.memoryInspectorPanel.guess();
 		updateDisassembly(false);
 	}
 

@@ -23,6 +23,7 @@ import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
 
 import com.wudsn.tools.dis6502.model.FileHeader;
+import com.wudsn.tools.dis6502.model.GuessCodeLogic;
 import com.wudsn.tools.dis6502.model.MemoryInspectorSelection;
 import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.Segment;
@@ -82,7 +83,7 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * does not exist in {@link com.wudsn.tools.dis6502.model.MemoryBlock}
  * yet.
  * <p>
- * "Guess code"/sprite tools remain out of scope for now. {@link
+ * Sprite tools remain out of scope for now. {@link
  * #editCommentButton} (from {@code MemoryInspector::AddComment}/
  * IDM_DUMP_EDIT_COMMENT, ported as {@link CommentDialog}) is wired only
  * from here rather than also from a plain disassembly-line click with no
@@ -94,7 +95,14 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * into), but typing 6502 instructions to assemble in place, which is
  * the C++ version's own primary editing tool for binary segments; see
  * {@link AssembleDialog}'s javadoc for a dialog-closing bug found and
- * fixed while porting it. Drastically simplified for this first
+ * fixed while porting it. {@link #guessButton} (from {@code
+ * MemoryInspector::Guess}/IDM_DUMP_START_CODE_TRACE) runs {@link
+ * GuessCodeLogic}, a large enough, UI-independent enough piece of logic
+ * to get its own model-layer class instead of living directly here -
+ * see that class's javadoc for what it does and a stale-reference issue
+ * found (but only fixed in this port, not the C++ source, which needs
+ * an interactive GUI run to confirm) while porting it. Drastically
+ * simplified for this first
  * pass, the same way {@link DisassemblyPanel} simplifies the disassembly
  * view: a plain, non-editable text area rather than the C++ version's
  * virtualized/custom-painted grid (so unlike the real ANTIC font, non-
@@ -122,6 +130,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	public final JButton copySelectionButton = new JButton("Copy Selection");
 	public final JButton editCommentButton = new JButton("Comment...");
 	public final JButton assembleButton = new JButton("Assemble...");
+	public final JButton guessButton = new JButton("Guess Code");
 
 	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("Memory Inspector");
 	private final JTextArea hexDumpArea = new JTextArea();
@@ -158,6 +167,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		toolBar.add(copySelectionButton);
 		toolBar.add(editCommentButton);
 		toolBar.add(assembleButton);
+		toolBar.add(guessButton);
 		add(toolBar, BorderLayout.NORTH);
 		add(new JScrollPane(hexDumpArea), BorderLayout.CENTER);
 
@@ -407,6 +417,20 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
+	 * Ported from MemoryInspector::Guess (IDM_DUMP_START_CODE_TRACE): runs
+	 * {@link GuessCodeLogic} starting from the selection's first byte.
+	 * Like {@link #setType}/{@link #setUnknownBlockToByte}, the caller is
+	 * responsible for re-running the disassembly afterward.
+	 */
+	public void guess() {
+		if (memoryInspectorSelection == null || !memoryInspectorSelection.hasSelection()) {
+			return;
+		}
+		new GuessCodeLogic(memoryInspectorSelection.getWorkspace()).guess(memoryInspectorSelection.getSegment(),
+				memoryInspectorSelection.getBegin());
+	}
+
+	/**
 	 * Ported from the enablement logic in MemoryInspectorPopupMenu::Update
 	 * for IDM_DUMP_FIND/IDM_DUMP_FIND_NEXT/IDM_DUMP_SELECT_ALL/
 	 * IDM_DUMP_SELECT_NEXT_UNKNOWN_BLOCK/IDM_DUMP_SAVE_NO_HEADER/
@@ -430,6 +454,8 @@ public final class MemoryInspectorPanel extends JPanel {
 		copySelectionButton.setEnabled(hasSelection);
 		editCommentButton.setEnabled(hasSelection);
 		assembleButton.setEnabled(hasSelection);
+		guessButton.setEnabled(
+				hasSelection && memoryInspectorSelection.getSegment().isType(memoryInspectorSelection.getBegin(), MemoryType.UNKNOWN));
 		splitAtSelectionButton.setEnabled(hasSelection
 				&& memoryInspectorSelection.getWorkspace().getSegmentList().getCount() < SegmentList.MAX_SEGMENTS
 				&& memoryInspectorSelection.getSegment().canSplitAt(memoryInspectorSelection.getBegin()));

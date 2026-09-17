@@ -9,8 +9,11 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 /**
- * A "back" navigation stack of addresses, used when jumping to a label's
- * definition so the memory inspector can return to where it came from.
+ * A work list of addresses still to be traced, used by {@link
+ * GuessCodeLogic} to walk a program's flow of control (its only real use
+ * in the C++ source, despite the generic name: every push/pop is inside
+ * {@code MemoryInspector::Guess}/{@code GuessCode} - it is not used for
+ * anything like "jump to label, then go back").
  * <p>
  * Ported from MemoryInspectorStack.h / MemoryInspectorStack.cpp. The C++
  * version hand-rolls a linked list of fixed-size (1024 entry) chunks to
