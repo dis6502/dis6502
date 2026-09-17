@@ -6,6 +6,8 @@
 package com.wudsn.tools.dis6502;
 
 import java.awt.EventQueue;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.ByteArrayInputStream;
@@ -127,7 +129,11 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * IDM_DUMP_SET_UNKNOWN_BLOCK_TO_BYTE/{@code SetUnknownBlockToByte} - the
  * first commands ported here that mutate a segment's byte types, calling
  * {@link #updateDisassembly} afterward to reflect the change, the same
- * way editing equates already does.
+ * way editing equates already does. {@link #performCopyMemoryInspectorSelection}
+ * wires the Copy Selection button, ported from
+ * IDM_DUMP_COPY_SELECTION/{@code MemoryInspector::CopySelection} - see
+ * that method's own javadoc for why Delete/Cut/Paste Selection are not
+ * ported.
  *
  * @author Peter Dell
  */
@@ -268,6 +274,7 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.saveSelectionHeaderButton.addActionListener(e -> performSaveMemoryInspectorSelection(true));
 		mainWindow.memoryInspectorPanel.setTypeButton.addActionListener(e -> performSetMemoryInspectorType());
 		mainWindow.memoryInspectorPanel.setUnknownBlockToByteButton.addActionListener(e -> performSetUnknownBlockToByte());
+		mainWindow.memoryInspectorPanel.copySelectionButton.addActionListener(e -> performCopyMemoryInspectorSelection());
 
 		refreshMRUMenus();
 		updateEquatesMenuState();
@@ -1018,6 +1025,28 @@ public final class Dis6502 {
 	private void performSetUnknownBlockToByte() {
 		mainWindow.memoryInspectorPanel.setUnknownBlockToByte();
 		updateDisassembly(false);
+	}
+
+	/**
+	 * Ported from MemoryInspector::CopySelection (IDM_DUMP_COPY_SELECTION):
+	 * copies the memory inspector's current byte selection to the system
+	 * clipboard as a plain uppercase hex string with no separators or
+	 * prefix, matching {@code DatatypeUtility::ByteArrayToHexString(...,
+	 * false)}. Unlike the C++ version, which has no portable clipboard
+	 * API and so leaves {@code UIApplication::SetClipboardText} Win32-only
+	 * (see that class's javadoc), {@link java.awt.datatransfer.Clipboard}
+	 * is a real, standard Java equivalent, used directly here rather than
+	 * through {@link UIApplication}.
+	 */
+	private void performCopyMemoryInspectorSelection() {
+		if (memoryInspectorSelection.isEmpty()) {
+			return;
+		}
+		StringBuilder hex = new StringBuilder();
+		for (byte value : memoryInspectorSelection.getByteSequence()) {
+			hex.append(String.format("%02X", value & 0xFF));
+		}
+		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(hex.toString()), null);
 	}
 
 	/**

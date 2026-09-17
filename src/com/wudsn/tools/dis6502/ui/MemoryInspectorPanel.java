@@ -61,9 +61,24 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * MemoryInspector::SetType}/{@code SetUnknownBlockToByte}) do mutate a
  * segment's understanding of its bytes' types, and are the first such
  * commands ported here - unlike the rest of this class, callers must
- * re-run the disassembly afterward (see their own javadoc). Inline byte
- * value editing, cut/copy/paste, "guess code"/sprite tools, and comments
- * remain out of scope for now. Drastically simplified for this first
+ * re-run the disassembly afterward (see their own javadoc).
+ * {@link #copySelectionButton} (from {@code MemoryInspector::CopySelection})
+ * copies the selection as a plain hex string, matching {@code
+ * DatatypeUtility::ByteArrayToHexString(..., false)}'s format. Delete/Cut/
+ * Paste Selection are deliberately NOT ported: {@code
+ * MemoryInspector::DeleteSelection} never actually shrinks the segment's
+ * underlying byte/type arrays (its own comment admits as much), which
+ * also means its "delete the whole segment if it's now empty" branch
+ * can't work, since {@code Segment::IsEmpty}/{@link Segment#isEmpty}
+ * check that same never-shrunk allocation; and {@code
+ * MemoryInspector::PasteAtSelection} is explicitly broken in the C++
+ * source (its own comment says so, and the code that would apply the
+ * newly-built buffer back to the segment is commented out). Porting
+ * either faithfully would just carry the same brokenness forward, and
+ * fixing them needs real segment-buffer resizing, which does not exist
+ * in {@link com.wudsn.tools.dis6502.model.MemoryBlock} yet. Inline byte
+ * value editing, "guess code"/sprite tools, and comments remain out of
+ * scope for now too. Drastically simplified for this first
  * pass, the same way {@link DisassemblyPanel} simplifies the disassembly
  * view: a plain, non-editable text area rather than the C++ version's
  * virtualized/custom-painted grid (so unlike the real ANTIC font, non-
@@ -88,6 +103,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	public final JComboBox<MemoryType> setTypeComboBox = new JComboBox<>(MemoryType.VALUES);
 	public final JButton setTypeButton = new JButton("Set Type");
 	public final JButton setUnknownBlockToByteButton = new JButton("Set Unknown Block to Byte");
+	public final JButton copySelectionButton = new JButton("Copy Selection");
 
 	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("Memory Inspector");
 	private final JTextArea hexDumpArea = new JTextArea();
@@ -121,6 +137,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		toolBar.add(setTypeComboBox);
 		toolBar.add(setTypeButton);
 		toolBar.add(setUnknownBlockToByteButton);
+		toolBar.add(copySelectionButton);
 		add(toolBar, BorderLayout.NORTH);
 		add(new JScrollPane(hexDumpArea), BorderLayout.CENTER);
 
@@ -390,6 +407,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		saveSelectionHeaderButton.setEnabled(hasSelection);
 		setTypeButton.setEnabled(hasSelection);
 		setUnknownBlockToByteButton.setEnabled(hasSelection);
+		copySelectionButton.setEnabled(hasSelection);
 		splitAtSelectionButton.setEnabled(hasSelection
 				&& memoryInspectorSelection.getWorkspace().getSegmentList().getCount() < SegmentList.MAX_SEGMENTS
 				&& memoryInspectorSelection.getSegment().canSplitAt(memoryInspectorSelection.getBegin()));

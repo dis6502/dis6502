@@ -16,10 +16,13 @@ import com.wudsn.tools.dis6502.Application;
  * base {@link Application} leaves for a subclass to add: {@code
  * GetModuleFilePath}/{@code GetSettingsSection} are already concrete in the
  * base class (see its javadoc), so only the log-routing responsibility
- * ({@code SetLogListWindow} in C++) is left here. {@code
- * GetInstanceHandle}/{@code SetClipboardText} are Win32-specific (an
- * {@code HINSTANCE}, the Win32 clipboard API) with no Java equivalent
- * need.
+ * ({@code SetLogListWindow} in C++) is left here. {@code GetInstanceHandle}
+ * is Win32-specific (an {@code HINSTANCE}) with no Java equivalent need.
+ * {@code SetClipboardText} does have a real Java equivalent -
+ * {@link java.awt.datatransfer.Clipboard} - but it is used directly where
+ * needed (see {@code Dis6502#performCopyMemoryInspectorSelection}) rather
+ * than through this class, since Swing/AWT clipboard access needs
+ * nothing {@link Application} provides.
  *
  * @author Peter Dell
  */
