@@ -37,6 +37,7 @@ import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
 import com.wudsn.tools.dis6502.model.DisassemblyResult;
 import com.wudsn.tools.dis6502.model.DisassemblyResultFile;
 import com.wudsn.tools.dis6502.model.DiskImage;
+import com.wudsn.tools.dis6502.model.Equate;
 import com.wudsn.tools.dis6502.model.EquateList;
 import com.wudsn.tools.dis6502.model.EquateListLogic;
 import com.wudsn.tools.dis6502.model.FileHeader;
@@ -287,6 +288,20 @@ public final class Dis6502 {
 		mainWindow.disassemblyPanel.findField.addActionListener(e -> performFindInDisassembly());
 		mainWindow.disassemblyPanel.findNextButton.addActionListener(e -> performFindNextInDisassembly());
 		mainWindow.disassemblyPanel.editCommentMenuItem.addActionListener(e -> performEditDisassemblyComment());
+		mainWindow.disassemblyPanel.findDefMenuItem
+				.addActionListener(e -> performFindDisassemblyLabelDefinition(mainWindow.disassemblyPanel.getRightClickedLabelReference()));
+		mainWindow.disassemblyPanel.findRef1MenuItem
+				.addActionListener(e -> performFindDisassemblyReferences(mainWindow.disassemblyPanel.getRightClickedLabelReference()));
+		mainWindow.disassemblyPanel.findRef2MenuItem
+				.addActionListener(e -> performFindDisassemblyReferences(mainWindow.disassemblyPanel.getRightClickedLabelDefinition()));
+		mainWindow.disassemblyPanel.renameDefMenuItem
+				.addActionListener(e -> performRenameDisassemblyLabel(mainWindow.disassemblyPanel.getRightClickedLabelDefinition()));
+		mainWindow.disassemblyPanel.renameRefMenuItem
+				.addActionListener(e -> performRenameDisassemblyLabel(mainWindow.disassemblyPanel.getRightClickedLabelReference()));
+		mainWindow.disassemblyPanel.addrRangeDefMenuItem
+				.addActionListener(e -> performDefineAddressRangeForLabel(mainWindow.disassemblyPanel.getRightClickedLabelDefinition()));
+		mainWindow.disassemblyPanel.addrRangeRefMenuItem
+				.addActionListener(e -> performDefineAddressRangeForLabel(mainWindow.disassemblyPanel.getRightClickedLabelReference()));
 		mainWindow.xrefPanel.setSelectionListener(this::performXRefSelected);
 
 		mainWindow.memoryInspectorPanel.findButton.addActionListener(e -> performShowMemoryInspectorFindDialog());
@@ -1127,6 +1142,72 @@ public final class Dis6502 {
 		}
 		CommentDialog dialog = new CommentDialog(mainWindow.getFrame());
 		if (dialog.show(workspace.getSegmentList(), line.segmentIndex, line.offset, line.size)) {
+			updateDisassembly(false);
+		}
+	}
+
+	/** Ported from MainDisassembly::FindDef, minus the navigation-history save (Back in History is not ported). */
+	private void performFindDisassemblyLabelDefinition(String label) {
+		if (label.isEmpty()) {
+			return;
+		}
+		int lineNumber = workspace.getDisassemblyResult().findDefinitionLineNumber(label);
+		if (lineNumber != 0) {
+			mainWindow.disassemblyPanel.navigateToLine(lineNumber);
+		}
+	}
+
+	/**
+	 * Ported from MainDisassembly::FindRef1/FindRef2 (both just call this
+	 * with a different label) - the same find-and-populate-XRef shape as
+	 * {@link #performFindInDisassembly}, but keyed to a label instead of the
+	 * find field's text, and using a fresh, local line-number holder so it
+	 * does not disturb the ongoing Find/Find Next search state, matching how
+	 * the C++ version's {@code SelectAllReferences}/{@code RefreshXRef} never
+	 * touch {@code findString}/{@code findFirstLineNumber} either.
+	 */
+	private void performFindDisassemblyReferences(String label) {
+		if (label.isEmpty()) {
+			return;
+		}
+		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
+		int[] firstLineNumber = { 0 };
+		boolean found = disassemblyResult.findAndSelectLines(true, firstLineNumber, label);
+
+		List<XRefPanel.Entry> entries = new ArrayList<>();
+		for (DisassemblyResult.LineIterator i = disassemblyResult.createLineIterator(); i.hasNext();) {
+			DisassemblyLine line = i.next();
+			if (line.xrefLineNumber != 0) {
+				entries.add(new XRefPanel.Entry(line.xrefLineNumber, line.getLine()));
+			}
+		}
+		mainWindow.xrefPanel.updateList(label, entries);
+
+		if (found) {
+			mainWindow.disassemblyPanel.navigateToLine(firstLineNumber[0]);
+		}
+	}
+
+	/** Ported from MainDisassembly::RenameDef/RenameRef (both just call this with a different label), via EquateListController::Edit. */
+	private void performRenameDisassemblyLabel(String label) {
+		String address = Equate.extractAddress(label);
+		if (address.isEmpty()) {
+			return;
+		}
+		EquateDialog dialog = new EquateDialog(mainWindow.getFrame());
+		if (dialog.show(workspace.getUserEquateList(), true, address)) {
+			updateDisassembly(false);
+		}
+	}
+
+	/** Ported from MainDisassembly::AddrRangeDef/AddrRangeRef (both just call this with a different label), via EquateListController::DefineUserAddressRange. */
+	private void performDefineAddressRangeForLabel(String label) {
+		String address = Equate.extractAddress(label);
+		if (address.isEmpty()) {
+			return;
+		}
+		EquateRangeDialog dialog = new EquateRangeDialog(mainWindow.getFrame());
+		if (dialog.show(workspace.getSystemEquateList(), workspace.getUserEquateList(), address)) {
 			updateDisassembly(false);
 		}
 	}

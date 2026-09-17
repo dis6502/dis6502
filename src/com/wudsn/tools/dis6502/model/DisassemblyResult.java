@@ -222,6 +222,25 @@ public final class DisassemblyResult {
 	}
 
 	/**
+	 * Returns the line number of the line that defines {@code label} (its own
+	 * text starts with the label immediately followed by a space or colon),
+	 * or 0 if no line does. Ported from {@code
+	 * DisassemblyControlImpl::SelectDefinition}, minus its UI selection/scroll
+	 * side effects, left to the caller.
+	 */
+	public int findDefinitionLineNumber(String label) {
+		for (LineIterator i = createLineIterator(); i.hasNext();) {
+			DisassemblyLine line = i.next();
+			String text = line.getLine();
+			if (text.startsWith(label)
+					&& (text.length() == label.length() || text.charAt(label.length()) == ' ' || text.charAt(label.length()) == ':')) {
+				return line.getLineNumber();
+			}
+		}
+		return 0;
+	}
+
+	/**
 	 * Finds the offset/size of the CODE_LINES instruction in
 	 * {@code segmentIndex} that spans offset 0, writing them to
 	 * {@code offset[0]}/{@code size[0]} (both reset to 0 first, and left at 0
