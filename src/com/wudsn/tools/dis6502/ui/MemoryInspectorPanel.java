@@ -13,6 +13,7 @@ import java.awt.Rectangle;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -23,6 +24,7 @@ import javax.swing.text.Highlighter;
 
 import com.wudsn.tools.dis6502.model.FileHeader;
 import com.wudsn.tools.dis6502.model.MemoryInspectorSelection;
+import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentList;
 
@@ -45,26 +47,28 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * FindNextString}/{@code CanFind}, triggered from {@link #findButton}/
  * {@link #findNextButton} (public fields wired up by {@code Dis6502}, the
  * same way {@link DisassemblyPanel#findButton} is) rather than the C++
- * version's popup menu (ui/MemoryInspectorPopupMenu.h/.cpp) commands -
- * that menu's many other commands (inline byte-type editing, cut/copy/
- * paste, "guess code"/sprite tools) mutate the disassembly's
- * understanding of the data and are out of scope here - {@link
- * #splitAtSelectionButton} (from {@code MemoryInspector::SplitAtSelection}/
- * IDM_DUMP_SPLIT_AT_SELECTION) is a structural exception, since it only
- * splits the segment list the same way {@code
- * com.wudsn.tools.dis6502.ui.SegmentListPanel}'s Move Up/Down/Merge/
- * Delete already do, without reinterpreting any byte's type, and {@link
- * #selectAll}/{@link #selectNextUnknownBlock}/{@link
+ * version's popup menu (ui/MemoryInspectorPopupMenu.h/.cpp) commands.
+ * {@link #splitAtSelectionButton} (from {@code MemoryInspector::SplitAtSelection}/
+ * IDM_DUMP_SPLIT_AT_SELECTION) only splits the segment list the same way
+ * {@code com.wudsn.tools.dis6502.ui.SegmentListPanel}'s Move Up/Down/
+ * Merge/Delete already do, without reinterpreting any byte's type, and
+ * {@link #selectAll}/{@link #selectNextUnknownBlock}/{@link
  * #saveSelectionNoHeaderButton}/{@link #saveSelectionHeaderButton} (from
  * {@code MemoryInspector::SelectAll}/{@code SelectNextUnknownBlock} and
  * {@code MainMemoryInspector::SaveWithoutHeader}/{@code SaveWithHeader})
  * are non-mutating too - selecting, and writing out, bytes that already
- * exist. Drastically
- * simplified for this first pass, the same way {@link DisassemblyPanel}
- * simplifies the disassembly view: a plain, non-editable text area rather
- * than the C++ version's virtualized/custom-painted grid (so unlike the
- * real ANTIC font, non-printable character codes still show as {@code .}
- * rather than their actual glyph).
+ * exist. {@link #setType}/{@link #setUnknownBlockToByte} (from {@code
+ * MemoryInspector::SetType}/{@code SetUnknownBlockToByte}) do mutate a
+ * segment's understanding of its bytes' types, and are the first such
+ * commands ported here - unlike the rest of this class, callers must
+ * re-run the disassembly afterward (see their own javadoc). Inline byte
+ * value editing, cut/copy/paste, "guess code"/sprite tools, and comments
+ * remain out of scope for now. Drastically simplified for this first
+ * pass, the same way {@link DisassemblyPanel} simplifies the disassembly
+ * view: a plain, non-editable text area rather than the C++ version's
+ * virtualized/custom-painted grid (so unlike the real ANTIC font, non-
+ * printable character codes still show as {@code .} rather than their
+ * actual glyph).
  *
  * @author Peter Dell
  */
@@ -81,6 +85,9 @@ public final class MemoryInspectorPanel extends JPanel {
 	public final JButton selectNextUnknownBlockButton = new JButton("Select Next Unknown Block");
 	public final JButton saveSelectionNoHeaderButton = new JButton("Save Selection (No Header)...");
 	public final JButton saveSelectionHeaderButton = new JButton("Save Selection (With Header)...");
+	public final JComboBox<MemoryType> setTypeComboBox = new JComboBox<>(MemoryType.VALUES);
+	public final JButton setTypeButton = new JButton("Set Type");
+	public final JButton setUnknownBlockToByteButton = new JButton("Set Unknown Block to Byte");
 
 	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("Memory Inspector");
 	private final JTextArea hexDumpArea = new JTextArea();
@@ -111,6 +118,9 @@ public final class MemoryInspectorPanel extends JPanel {
 		toolBar.add(selectNextUnknownBlockButton);
 		toolBar.add(saveSelectionNoHeaderButton);
 		toolBar.add(saveSelectionHeaderButton);
+		toolBar.add(setTypeComboBox);
+		toolBar.add(setTypeButton);
+		toolBar.add(setUnknownBlockToByteButton);
 		add(toolBar, BorderLayout.NORTH);
 		add(new JScrollPane(hexDumpArea), BorderLayout.CENTER);
 
@@ -297,10 +307,74 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
+	 * Ported from the non-LOBYTE/HIBYTE branch of {@code
+	 * MemoryInspector::SetType} - the LOBYTE/HIBYTE case needs a dialog
+	 * ({@link LowHighByteDialog}) to ask for the other, unknown half of
+	 * the "assumed word", and stricter validation (a single-byte
+	 * selection, not at offset 0, on an immediate-mode instruction's
+	 * operand), so {@code Dis6502} handles that case directly instead of
+	 * calling this method - see {@code Dis6502#performSetMemoryInspectorType}.
+	 * The caller is responsible for re-running the disassembly afterward
+	 * (matching {@code Refresh()}'s {@code UpdateDisassembly} call), since
+	 * this panel does not trigger that itself - see {@link DisassemblyPanel}.
+	 */
+	public void setType(MemoryType type) {
+		if (memoryInspectorSelection == null || !memoryInspectorSelection.hasSelection()) {
+			return;
+		}
+		Segment segment = memoryInspectorSelection.getSegment();
+		if (!segment.bBinary) {
+			return;
+		}
+		int begin = memoryInspectorSelection.getBegin();
+		int size = memoryInspectorSelection.getSize();
+
+		if (begin > 0) {
+			if (segment.isType(begin - 1, MemoryType.LOBYTE) || segment.isType(begin - 1, MemoryType.HIBYTE)) {
+				segment.setType(begin - 1, MemoryType.CODE);
+			}
+			if ((segment.isType(begin + size - 1, MemoryType.LOBYTE) || segment.isType(begin + size - 1, MemoryType.HIBYTE))
+					&& begin + size < segment.getSize()) {
+				segment.setType(begin + size, MemoryType.CODE);
+			}
+		}
+		segment.setType(begin, type, size);
+	}
+
+	/**
+	 * Ported from MemoryInspector::SetUnknownBlockToByte
+	 * (IDM_DUMP_SET_UNKNOWN_BLOCK_TO_BYTE): reclassifies every byte in the
+	 * selection that is still {@link MemoryType#UNKNOWN} - and not the
+	 * repurposed type slot right after a {@link MemoryType#LOBYTE}/{@link
+	 * MemoryType#HIBYTE} byte (see {@link MemoryType}'s javadoc) - as
+	 * {@link MemoryType#BYTE}. Like {@link #setType}, the caller is
+	 * responsible for re-running the disassembly afterward.
+	 */
+	public void setUnknownBlockToByte() {
+		if (memoryInspectorSelection == null || !memoryInspectorSelection.hasSelection()) {
+			return;
+		}
+		Segment segment = memoryInspectorSelection.getSegment();
+		if (!segment.bBinary) {
+			return;
+		}
+		int begin = memoryInspectorSelection.getBegin();
+		int size = memoryInspectorSelection.getSize();
+
+		for (int offset = begin; offset < begin + size; offset++) {
+			if (segment.isType(offset, MemoryType.UNKNOWN)
+					&& (offset == 0 || (!segment.isType(offset - 1, MemoryType.LOBYTE) && !segment.isType(offset - 1, MemoryType.HIBYTE)))) {
+				segment.setType(offset, MemoryType.BYTE);
+			}
+		}
+	}
+
+	/**
 	 * Ported from the enablement logic in MemoryInspectorPopupMenu::Update
 	 * for IDM_DUMP_FIND/IDM_DUMP_FIND_NEXT/IDM_DUMP_SELECT_ALL/
 	 * IDM_DUMP_SELECT_NEXT_UNKNOWN_BLOCK/IDM_DUMP_SAVE_NO_HEADER/
-	 * IDM_DUMP_SAVE_HEADER/IDM_DUMP_SPLIT_AT_SELECTION.
+	 * IDM_DUMP_SAVE_HEADER/IDM_DUMP_SPLIT_AT_SELECTION/
+	 * IDM_DUMP_SET_UNKNOWN_BLOCK_TO_BYTE and the type submenu's enablement.
 	 */
 	private void updateActionButtonsState() {
 		findButton.setEnabled(canFind(true));
@@ -314,6 +388,8 @@ public final class MemoryInspectorPanel extends JPanel {
 		boolean hasSelection = memoryInspectorSelection != null && memoryInspectorSelection.hasSelection();
 		saveSelectionNoHeaderButton.setEnabled(hasSelection);
 		saveSelectionHeaderButton.setEnabled(hasSelection);
+		setTypeButton.setEnabled(hasSelection);
+		setUnknownBlockToByteButton.setEnabled(hasSelection);
 		splitAtSelectionButton.setEnabled(hasSelection
 				&& memoryInspectorSelection.getWorkspace().getSegmentList().getCount() < SegmentList.MAX_SEGMENTS
 				&& memoryInspectorSelection.getSegment().canSplitAt(memoryInspectorSelection.getBegin()));

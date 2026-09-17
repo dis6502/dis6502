@@ -41,8 +41,11 @@ import com.wudsn.tools.dis6502.model.FileHeader;
 import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.ImgInfo;
 import com.wudsn.tools.dis6502.model.ImgRWPacket;
+import com.wudsn.tools.dis6502.model.InstructionSet;
 import com.wudsn.tools.dis6502.model.MRUEntry;
 import com.wudsn.tools.dis6502.model.MemoryInspectorSelection;
+import com.wudsn.tools.dis6502.model.MemoryType;
+import com.wudsn.tools.dis6502.model.OperandMode;
 import com.wudsn.tools.dis6502.model.ProfileLogic;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentList;
@@ -55,6 +58,7 @@ import com.wudsn.tools.dis6502.ui.DiskImageExecutableFileDialog;
 import com.wudsn.tools.dis6502.ui.DiskImageSectorsDialog;
 import com.wudsn.tools.dis6502.ui.EquateDialog;
 import com.wudsn.tools.dis6502.ui.EquateRangeDialog;
+import com.wudsn.tools.dis6502.ui.LowHighByteDialog;
 import com.wudsn.tools.dis6502.ui.MainWindow;
 import com.wudsn.tools.dis6502.ui.MemoryInspectorFindStringDialog;
 import com.wudsn.tools.dis6502.ui.MRUController;
@@ -115,7 +119,15 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * MainMemoryInspector::SaveWithoutHeader}/{@code SaveWithHeader}; the
  * Select All/Select Next Unknown Block buttons just call {@code
  * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#selectAll}/{@code
- * #selectNextUnknownBlock} directly.
+ * #selectNextUnknownBlock} directly. {@link #performSetMemoryInspectorType}/
+ * {@link #performSetMemoryInspectorLoHiType}/{@link
+ * #performSetUnknownBlockToByte} wire the Set Type combo/button and Set
+ * Unknown Block to Byte button, ported from the type submenu's
+ * IDM_DUMP_SET_TYPE_&#42;/{@code MemoryInspector::SetType} and
+ * IDM_DUMP_SET_UNKNOWN_BLOCK_TO_BYTE/{@code SetUnknownBlockToByte} - the
+ * first commands ported here that mutate a segment's byte types, calling
+ * {@link #updateDisassembly} afterward to reflect the change, the same
+ * way editing equates already does.
  *
  * @author Peter Dell
  */
@@ -254,6 +266,8 @@ public final class Dis6502 {
 				.addActionListener(e -> mainWindow.memoryInspectorPanel.selectNextUnknownBlock());
 		mainWindow.memoryInspectorPanel.saveSelectionNoHeaderButton.addActionListener(e -> performSaveMemoryInspectorSelection(false));
 		mainWindow.memoryInspectorPanel.saveSelectionHeaderButton.addActionListener(e -> performSaveMemoryInspectorSelection(true));
+		mainWindow.memoryInspectorPanel.setTypeButton.addActionListener(e -> performSetMemoryInspectorType());
+		mainWindow.memoryInspectorPanel.setUnknownBlockToByteButton.addActionListener(e -> performSetUnknownBlockToByte());
 
 		refreshMRUMenus();
 		updateEquatesMenuState();
@@ -934,6 +948,76 @@ public final class Dis6502 {
 	private static void writeWordLE(FileOutputStream outputStream, int value) throws IOException {
 		outputStream.write(value & 0xFF);
 		outputStream.write((value >> 8) & 0xFF);
+	}
+
+	/**
+	 * Ported from the type submenu's commands (IDM_DUMP_SET_TYPE_*), which
+	 * all funnel into {@code MemoryInspector::SetType}. Routes the
+	 * LOBYTE/HIBYTE case to {@link #performSetMemoryInspectorLoHiType},
+	 * since it needs {@link LowHighByteDialog} and stricter validation;
+	 * every other type goes straight through {@link
+	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#setType}.
+	 */
+	private void performSetMemoryInspectorType() {
+		MemoryType type = (MemoryType) mainWindow.memoryInspectorPanel.setTypeComboBox.getSelectedItem();
+		if (type == MemoryType.LOBYTE || type == MemoryType.HIBYTE) {
+			performSetMemoryInspectorLoHiType(type);
+			return;
+		}
+		mainWindow.memoryInspectorPanel.setType(type);
+		updateDisassembly(false);
+	}
+
+	/**
+	 * Ported from the LOBYTE/HIBYTE branch of MemoryInspector::SetType: the
+	 * marked byte must be alone at the start of an immediate-mode
+	 * instruction's operand, one byte after the opcode - {@link
+	 * LowHighByteDialog} then asks for the other, unknown half of the
+	 * "assumed word", whose raw value is stored directly in the operand
+	 * byte's type slot (see {@link MemoryType}'s javadoc on why {@code
+	 * segment.memoryBlock.getType()} is written directly here instead of
+	 * through {@link Segment#setType}, which only accepts a real {@link
+	 * MemoryType} constant).
+	 */
+	private void performSetMemoryInspectorLoHiType(MemoryType type) {
+		if (memoryInspectorSelection.isEmpty()) {
+			return;
+		}
+		Segment segment = memoryInspectorSelection.getSegment();
+		int begin = memoryInspectorSelection.getBegin();
+		int size = memoryInspectorSelection.getSize();
+
+		if (begin == 0) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Text.IDS_ERR_LOHI_FIRST, "Set Type", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		if (size != 1) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Text.IDS_ERR_MULTI_LOHI, "Set Type", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		int previousOpcode = segment.getData(begin - 1);
+		InstructionSet instructionSet = workspace.getInstructionSet(segment.processorType);
+		if (instructionSet.getInstruction(previousOpcode).getOperandMode() != OperandMode.Immediate) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Text.IDS_ERR_BAD_MODE_FOR_LOHI, "Set Type", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		LowHighByteDialog dialog = new LowHighByteDialog(mainWindow.getFrame());
+		if (!dialog.show(type, segment.getData(begin))) {
+			return;
+		}
+
+		segment.setType(begin - 1, type);
+		segment.memoryBlock.getType()[begin] = (byte) dialog.getUnknownByte();
+
+		updateDisassembly(false);
+	}
+
+	/** Ported from MemoryInspector::SetUnknownBlockToByte (IDM_DUMP_SET_UNKNOWN_BLOCK_TO_BYTE). */
+	private void performSetUnknownBlockToByte() {
+		mainWindow.memoryInspectorPanel.setUnknownBlockToByte();
+		updateDisassembly(false);
 	}
 
 	/**
