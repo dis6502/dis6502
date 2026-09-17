@@ -7,7 +7,6 @@ package com.wudsn.tools.dis6502.ui;
 
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
 import javax.swing.WindowConstants;
 
 /**
@@ -19,8 +18,19 @@ import javax.swing.WindowConstants;
  * Ported from ui/MainWindow.h / MainWindow.cpp and ui/Layout.h / Layout.cpp,
  * simplified for this first pass: the C++ version computes exact pixel
  * layout from the current font metrics ({@code Layout::Compute}); this
- * just nests {@link JSplitPane}s with reasonable proportions and lets
- * Swing handle resizing.
+ * just nests {@link JSplitPane}s with reasonable proportions (not
+ * font-metric-derived pixel sizes) and lets Swing handle resizing. The
+ * arrangement itself matches {@code Layout::Compute}'s: {@link
+ * #segmentListPanel} stacked above {@link #memoryInspectorPanel} in a
+ * narrow left column (a small segment list over a much taller memory
+ * inspector, matching {@code segmentHeight}/{@code memoryInspectorHeight}),
+ * {@link #disassemblyPanel} stacked above {@link #xrefPanel} in the
+ * remaining width (a tall disassembly view over a short cross-reference
+ * list, matching {@code disHeight}/{@code xrefHeight}), and {@link
+ * #logPanel} spanning the full width at the bottom - not a {@link
+ * javax.swing.JTabbedPane} pairing the memory inspector with the
+ * cross-reference list, which the C++ layout never does (they occupy
+ * different corners, both always visible at once).
  *
  * @author Peter Dell
  */
@@ -44,19 +54,22 @@ public final class MainWindow {
 	}
 
 	private JSplitPane createContentPane() {
-		JTabbedPane rightTabs = new JTabbedPane();
-		rightTabs.addTab("Memory Inspector", memoryInspectorPanel);
-		rightTabs.addTab("Cross Reference", xrefPanel);
+		JSplitPane leftSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, segmentListPanel, memoryInspectorPanel);
+		leftSplit.setResizeWeight(0.2);
+		leftSplit.setDividerLocation(160);
 
-		JSplitPane topSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, disassemblyPanel, rightTabs);
-		topSplit.setResizeWeight(0.7);
+		JSplitPane rightSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, disassemblyPanel, xrefPanel);
+		rightSplit.setResizeWeight(0.8);
+		rightSplit.setDividerLocation(500);
 
-		JSplitPane centerSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, topSplit, logPanel);
+		JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftSplit, rightSplit);
+		mainSplit.setResizeWeight(0.25);
+		mainSplit.setDividerLocation(320);
+
+		JSplitPane centerSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, mainSplit, logPanel);
 		centerSplit.setResizeWeight(0.85);
-
-		JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, segmentListPanel, centerSplit);
-		mainSplit.setResizeWeight(0.2);
-		return mainSplit;
+		centerSplit.setDividerLocation(600);
+		return centerSplit;
 	}
 
 	public JFrame getFrame() {
