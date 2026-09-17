@@ -7,11 +7,17 @@ package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.border.TitledBorder;
 
@@ -112,6 +118,24 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * {@code Dis6502} whenever the workspace's computer system or double-
  * font-height setting changes, matching {@code
  * MemoryInspectorWindow}'s use of {@code WorkspaceFont::GetResizedFont}.
+ * <p>
+ * The right-click popup menu ({@link #maybeShowPopup}, attached to the
+ * grid) is ported from ui/MemoryInspectorPopupMenu.h/.cpp's {@code
+ * MEMORY_INSPECTOR_POPUP_MENU} resource, following {@link
+ * SegmentListPanel}'s pattern - but since every item here corresponds to
+ * an already-wired toolbar button/combo box, its menu items are private
+ * and simply {@code doClick()} the matching button (the Set Type
+ * submenu's items set {@link #setTypeComboBox} then {@code doClick()}
+ * {@link #setTypeButton}) rather than being separate public fields {@code
+ * Dis6502} would need to wire up itself. The submenu's checkmarks are
+ * ported from {@code TypeSubMenu::Update} - which type(s) are actually
+ * present across the selection, including its LOBYTE/HIBYTE-adjacency
+ * lookback for a byte whose own stored type is unknown/invalid. "Edit
+ * bytes at selection", Cut, Paste (before/after selection), and Delete
+ * are not in this menu, matching this class's own note above on why
+ * Delete/Cut/Paste Selection are not ported, plus the general absence of
+ * any in-place hex-editing mode in this port (see {@link
+ * MemoryInspectorGridPanel}'s javadoc).
  *
  * @author Peter Dell
  */
@@ -135,8 +159,31 @@ public final class MemoryInspectorPanel extends JPanel {
 	public final JButton assembleButton = new JButton("Assemble...");
 	public final JButton guessButton = new JButton("Guess Code");
 
+	/** Ported from the type submenu's entries in MEMORY_INSPECTOR_POPUP_MENU, in their .rc order. */
+	private static final MemoryType[] TYPE_SUBMENU_ORDER = { MemoryType.CODE, MemoryType.LOBYTE, MemoryType.HIBYTE, MemoryType.BYTE,
+			MemoryType.WORD, MemoryType.LABEL, MemoryType.SYMBOL, MemoryType.FIXUP, MemoryType.STRING, MemoryType.SBYTE,
+			MemoryType.DLIST, MemoryType.STORE, MemoryType.UNKNOWN };
+	private static final String[] TYPE_SUBMENU_LABELS = { "Code", "Code with Low Byte", "Code with High Byte", "Byte", "Word", "Label",
+			"SpartaDos X Label", "SpartaDos X Address Fix-Up", "String", "Screen Byte", "Display List", "Data Store", "Unknown" };
+
 	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("Memory Inspector");
 	private final MemoryInspectorGridPanel grid = new MemoryInspectorGridPanel();
+
+	private final JPopupMenu popupMenu = new JPopupMenu();
+	private final JMenuItem startCodeTraceMenuItem = new JMenuItem("Start code trace at selection");
+	private final JCheckBoxMenuItem[] typeMenuItems = new JCheckBoxMenuItem[TYPE_SUBMENU_ORDER.length];
+	private final JMenuItem popupSetUnknownBlockToByteMenuItem = new JMenuItem("Set current block of Unknown type to Byte");
+	private final JMenuItem popupEditCommentMenuItem = new JMenuItem("Add/Edit comment...");
+	private final JMenuItem popupAssembleMenuItem = new JMenuItem("Assemble at selection...");
+	private final JMenuItem popupCopySelectionMenuItem = new JMenuItem("Copy");
+	private final JMenuItem popupSplitAtSelectionMenuItem = new JMenuItem("Split at selection");
+	private final JMenuItem popupFindMenuItem = new JMenuItem("Find...");
+	private final JMenuItem popupFindNextMenuItem = new JMenuItem("Find next");
+	private final JMenuItem popupSelectNextUnknownBlockMenuItem = new JMenuItem("Select next block of Unknown type");
+	private final JMenuItem popupSelectSpritesMenuItem = new JMenuItem("Select Sprites...");
+	private final JMenuItem popupSelectAllMenuItem = new JMenuItem("Select all");
+	private final JMenuItem popupSaveSelectionNoHeaderMenuItem = new JMenuItem("Save selection without header...");
+	private final JMenuItem popupSaveSelectionHeaderMenuItem = new JMenuItem("Save selection with header...");
 
 	private MemoryInspectorSelection memoryInspectorSelection;
 
@@ -169,7 +216,141 @@ public final class MemoryInspectorPanel extends JPanel {
 		add(toolBar, BorderLayout.NORTH);
 		add(new JScrollPane(grid), BorderLayout.CENTER);
 
+		buildPopupMenu();
+		grid.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				maybeShowPopup(e);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				maybeShowPopup(e);
+			}
+		});
+
 		updateActionButtonsState();
+	}
+
+	private void buildPopupMenu() {
+		popupMenu.add(startCodeTraceMenuItem);
+		startCodeTraceMenuItem.addActionListener(e -> guessButton.doClick());
+
+		JMenu changeTypeMenu = new JMenu("Change type of selected bytes to");
+		for (int i = 0; i < TYPE_SUBMENU_ORDER.length; i++) {
+			MemoryType type = TYPE_SUBMENU_ORDER[i];
+			JCheckBoxMenuItem item = new JCheckBoxMenuItem(TYPE_SUBMENU_LABELS[i]);
+			item.addActionListener(e -> {
+				setTypeComboBox.setSelectedItem(type);
+				setTypeButton.doClick();
+			});
+			typeMenuItems[i] = item;
+			if (type == MemoryType.UNKNOWN) {
+				changeTypeMenu.addSeparator();
+			}
+			changeTypeMenu.add(item);
+		}
+		popupMenu.add(changeTypeMenu);
+
+		popupMenu.addSeparator();
+		popupMenu.add(popupSetUnknownBlockToByteMenuItem);
+		popupSetUnknownBlockToByteMenuItem.addActionListener(e -> setUnknownBlockToByteButton.doClick());
+
+		popupMenu.addSeparator();
+		popupMenu.add(popupEditCommentMenuItem);
+		popupEditCommentMenuItem.addActionListener(e -> editCommentButton.doClick());
+		popupMenu.add(popupAssembleMenuItem);
+		popupAssembleMenuItem.addActionListener(e -> assembleButton.doClick());
+		popupMenu.add(popupCopySelectionMenuItem);
+		popupCopySelectionMenuItem.addActionListener(e -> copySelectionButton.doClick());
+		popupMenu.add(popupSplitAtSelectionMenuItem);
+		popupSplitAtSelectionMenuItem.addActionListener(e -> splitAtSelectionButton.doClick());
+
+		popupMenu.addSeparator();
+		popupMenu.add(popupFindMenuItem);
+		popupFindMenuItem.addActionListener(e -> findButton.doClick());
+		popupMenu.add(popupFindNextMenuItem);
+		popupFindNextMenuItem.addActionListener(e -> findNextButton.doClick());
+
+		popupMenu.addSeparator();
+		popupMenu.add(popupSelectNextUnknownBlockMenuItem);
+		popupSelectNextUnknownBlockMenuItem.addActionListener(e -> selectNextUnknownBlockButton.doClick());
+		popupMenu.add(popupSelectSpritesMenuItem);
+		popupSelectSpritesMenuItem.addActionListener(e -> selectSpritesButton.doClick());
+		popupMenu.add(popupSelectAllMenuItem);
+		popupSelectAllMenuItem.addActionListener(e -> selectAllButton.doClick());
+
+		popupMenu.addSeparator();
+		popupMenu.add(popupSaveSelectionNoHeaderMenuItem);
+		popupSaveSelectionNoHeaderMenuItem.addActionListener(e -> saveSelectionNoHeaderButton.doClick());
+		popupMenu.add(popupSaveSelectionHeaderMenuItem);
+		popupSaveSelectionHeaderMenuItem.addActionListener(e -> saveSelectionHeaderButton.doClick());
+	}
+
+	/** Ported from MemoryInspectorControlImpl::RButtonDown's notification, handled by MainMemoryInspector to show MemoryInspectorPopupMenu. */
+	private void maybeShowPopup(MouseEvent e) {
+		if (!e.isPopupTrigger() || memoryInspectorSelection == null || !memoryInspectorSelection.hasSegment()) {
+			return;
+		}
+		updateActionButtonsState();
+		syncPopupMenuState();
+		popupMenu.show(grid, e.getX(), e.getY());
+	}
+
+	/**
+	 * Mirrors each popup item's enabled state from its already-updated
+	 * toolbar counterpart, and ports {@code TypeSubMenu::Update}'s
+	 * enabled/checked logic for the Set Type submenu.
+	 */
+	private void syncPopupMenuState() {
+		startCodeTraceMenuItem.setEnabled(guessButton.isEnabled());
+		popupSetUnknownBlockToByteMenuItem.setEnabled(setUnknownBlockToByteButton.isEnabled());
+		popupEditCommentMenuItem.setEnabled(editCommentButton.isEnabled());
+		popupAssembleMenuItem.setEnabled(assembleButton.isEnabled());
+		popupCopySelectionMenuItem.setEnabled(copySelectionButton.isEnabled());
+		popupSplitAtSelectionMenuItem.setEnabled(splitAtSelectionButton.isEnabled());
+		popupFindMenuItem.setEnabled(findButton.isEnabled());
+		popupFindNextMenuItem.setEnabled(findNextButton.isEnabled());
+		popupSelectNextUnknownBlockMenuItem.setEnabled(selectNextUnknownBlockButton.isEnabled());
+		popupSelectSpritesMenuItem.setEnabled(selectSpritesButton.isEnabled());
+		popupSelectAllMenuItem.setEnabled(selectAllButton.isEnabled());
+		popupSaveSelectionNoHeaderMenuItem.setEnabled(saveSelectionNoHeaderButton.isEnabled());
+		popupSaveSelectionHeaderMenuItem.setEnabled(saveSelectionHeaderButton.isEnabled());
+
+		boolean hasSelection = memoryInspectorSelection != null && memoryInspectorSelection.hasSelection();
+		boolean[] present = new boolean[TYPE_SUBMENU_ORDER.length];
+		if (hasSelection) {
+			Segment segment = memoryInspectorSelection.getSegment();
+			int begin = memoryInspectorSelection.getBegin();
+			int end = memoryInspectorSelection.getEnd();
+			for (int offset = begin; offset <= end; offset++) {
+				MemoryType type = segment.getType(offset);
+				if (type == MemoryType.UNKNOWN) {
+					if (offset == 0) {
+						type = MemoryType.UNKNOWN;
+					} else if (segment.isType(offset - 1, MemoryType.LOBYTE)) {
+						type = MemoryType.LOBYTE;
+					} else if (segment.isType(offset - 1, MemoryType.HIBYTE)) {
+						type = MemoryType.HIBYTE;
+					} else {
+						type = MemoryType.UNKNOWN;
+					}
+				}
+				for (int i = 0; i < TYPE_SUBMENU_ORDER.length; i++) {
+					if (TYPE_SUBMENU_ORDER[i] == type) {
+						present[i] = true;
+					}
+				}
+			}
+		}
+		for (int i = 0; i < TYPE_SUBMENU_ORDER.length; i++) {
+			boolean enabled = hasSelection;
+			if (enabled && (TYPE_SUBMENU_ORDER[i] == MemoryType.LOBYTE || TYPE_SUBMENU_ORDER[i] == MemoryType.HIBYTE)) {
+				enabled = memoryInspectorSelection.getBegin() > 0;
+			}
+			typeMenuItems[i].setEnabled(enabled);
+			typeMenuItems[i].setState(present[i]);
+		}
 	}
 
 	/** Ported from MemoryInspectorWindow's use of WorkspaceFont::GetResizedFont - call whenever the workspace's computer system or double-height setting changes. */
