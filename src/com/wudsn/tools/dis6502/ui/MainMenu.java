@@ -60,6 +60,7 @@ public final class MainMenu {
 	public final JMenuItem saveWorkspaceMenuItem = new JMenuItem("Save Workspace");
 	public final JMenuItem saveWorkspaceAsMenuItem = new JMenuItem("Save Workspace As...");
 	public final JMenuItem saveDisassemblyFilesMenuItem = new JMenuItem("Save Disassembly Files...");
+	public final JMenuItem writeBootDiskMenuItem = new JMenuItem("Write Boot Disk...");
 	public final JMenu recentWorkspacesMenu = new JMenu("Recent Workspaces");
 	public final JMenu recentFilesMenu = new JMenu("Recent Files");
 	public final JMenuItem exitMenuItem = new JMenuItem("Exit");
@@ -126,6 +127,7 @@ public final class MainMenu {
 		menu.add(saveWorkspaceMenuItem);
 		menu.add(saveWorkspaceAsMenuItem);
 		menu.add(saveDisassemblyFilesMenuItem);
+		menu.add(writeBootDiskMenuItem);
 		menu.addSeparator();
 
 		recentWorkspacesMenu.setEnabled(false);

@@ -69,6 +69,7 @@ import com.wudsn.tools.dis6502.ui.MRUController;
 import com.wudsn.tools.dis6502.ui.ProfileDialog;
 import com.wudsn.tools.dis6502.ui.RawFileDialog;
 import com.wudsn.tools.dis6502.ui.SegmentPropertiesDialog;
+import com.wudsn.tools.dis6502.ui.SegmentWriteBootDiskDialog;
 import com.wudsn.tools.dis6502.ui.SelectSpritesDialog;
 import com.wudsn.tools.dis6502.ui.UIApplication;
 import com.wudsn.tools.dis6502.ui.WorkspaceDialog;
@@ -84,8 +85,9 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * / ui/MainFile.cpp / ui/MainMenu.cpp, reduced to a first working slice: the
  * main window shell (see {@link MainWindow}) plus workspace New (see {@link
  * #performNewWorkspace}/{@link WorkspaceDialog})/Open/Save/Save As/Save
- * Disassembly Files (see {@link #performSaveDisassemblyFiles})/Exit,
- * opening/adding an executable, ROM image, cassette image, raw, disk image
+ * Disassembly Files (see {@link #performSaveDisassemblyFiles})/Write Boot
+ * Disk (see {@link #performWriteBootDisk}/{@link SegmentWriteBootDiskDialog})/
+ * Exit, opening/adding an executable, ROM image, cassette image, raw, disk image
  * executable, disk image boot sectors, or disk image sectors file (see
  * {@link RawFileDialog}/{@link DiskImageExecutableFileDialog}/{@link
  * #performOpenDiskImageBootSectors}/{@link DiskImageSectorsDialog}),
@@ -253,6 +255,7 @@ public final class Dis6502 {
 		mainWindow.mainMenu.saveWorkspaceMenuItem.addActionListener(e -> performSaveWorkspace());
 		mainWindow.mainMenu.saveWorkspaceAsMenuItem.addActionListener(e -> performSaveWorkspaceAs());
 		mainWindow.mainMenu.saveDisassemblyFilesMenuItem.addActionListener(e -> performSaveDisassemblyFiles());
+		mainWindow.mainMenu.writeBootDiskMenuItem.addActionListener(e -> performWriteBootDisk());
 		mainWindow.mainMenu.exitMenuItem.addActionListener(e -> performExit());
 
 		mainWindow.mainMenu.clearSystemEquatesMenuItem.addActionListener(e -> performClearEquates(workspace.getSystemEquateList()));
@@ -1254,6 +1257,36 @@ public final class Dis6502 {
 		} catch (IOException ex) {
 			application.sendErrorMessage(ex);
 		}
+	}
+
+	/**
+	 * Turns the memory inspector's currently-selected segment into a bootable
+	 * Atari DOS disk, via {@link SegmentWriteBootDiskDialog}. Ported from the
+	 * {@code ID_FILE_SAVE_DISK_IMAGE_BOOT_SECTORS} case in {@code
+	 * MainMenu::ProcessCommand} - including its own {@code // TODO Move to
+	 * segment context menu} comment (never acted on in the C++ source, so this
+	 * stays a File menu action here too) and its {@code $02E0} run-address scan
+	 * ({@code // TODO: This is Atari specific} in the original).
+	 */
+	private void performWriteBootDisk() {
+		Segment segment = memoryInspectorSelection.getSegment();
+		if (segment == null) {
+			application.sendErrorMessage(Text.IDS_ERR_NO_SEGMENT);
+			return;
+		}
+
+		boolean withRunAddress = false;
+		int runAddress = 0;
+		SegmentList segmentList = workspace.getSegmentList();
+		for (int segmentIndex = 0; segmentIndex < segmentList.getCount(); segmentIndex++) {
+			Segment candidate = segmentList.getSegment(segmentIndex);
+			if (candidate.wBegin == 0x02E0) { // TODO: This is Atari specific.
+				withRunAddress = true;
+				runAddress = candidate.getWord(0);
+			}
+		}
+
+		new SegmentWriteBootDiskDialog(mainWindow.getFrame()).show(segment, withRunAddress, runAddress);
 	}
 
 	/**

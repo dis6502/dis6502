@@ -11,13 +11,21 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 
 /**
- * Low-level API to read sectors from an Atari .atr/.xfd disk image, by
+ * Low-level API to read/write sectors of an Atari .atr/.xfd disk image, by
  * sector number (1-based).
  * <p>
- * Ported from DiskImage.h / DiskImage.cpp, read-only: {@code WriteSector}/
- * {@code Write} are not ported - nothing needing them is wired up yet (only
- * {@code AtariDiskImage::WriteAbsoluteSector} calls them in C++, and that
- * in turn has no caller anywhere in the codebase).
+ * Ported from DiskImage.h / DiskImage.cpp. {@link #writeAbsoluteSector} also
+ * folds in {@code AtariDiskImage::WriteAbsoluteSector} (used by {@link
+ * com.wudsn.tools.dis6502.ui.SegmentWriteBootDiskDialog}), the same way
+ * {@link #readAbsoluteSector} already folds in {@code
+ * AtariDiskImage::ReadAbsoluteSector}.
+ * <p>
+ * {@link #write} checks {@link ImgInfo#writeProtect} up front instead of
+ * opening the file and inspecting the resulting exception for an
+ * access-denied error, unlike the C++ version's {@code Write} (which opens
+ * with {@code "r+b"} and maps an {@code EACCES} failure to {@code
+ * ImgError.WRITE_PROTECT}) - the two ways of detecting the same condition
+ * produce the same {@link ImgError}.
  * <p>
  * {@link #readSector} reads {@link ImgInfo#density} bytes starting at the
  * seek position computed for the sector - for sector numbers 1-3 on a
@@ -131,6 +139,75 @@ public final class DiskImage {
 
 		if (!isError(sector.result)) {
 			size[0] = sectorNumber <= 3 ? 128 : sector.sectorSize;
+		}
+	}
+
+	/** Writes {@code sector.sectorData} to {@code sector.sectorNumber}, setting {@code sector.result}. */
+	public static void writeSector(ImgRWPacket sector) {
+		ImgInfo info = new ImgInfo();
+		getInfo(sector.filePath, info);
+
+		if (isError(info.result)) {
+			sector.result = info.result;
+		} else {
+			sector.result = write(info, sector);
+		}
+	}
+
+	/**
+	 * Writes {@code sectorData} (up to {@link ImgInfo#density} bytes, zero-padded)
+	 * to sector {@code sectorNumber} of {@code filePath}. Ported from {@code
+	 * AtariDiskImage::WriteAbsoluteSector}, merged into {@link DiskImage} the same
+	 * way {@link #readAbsoluteSector} already is - see this class's javadoc.
+	 * <p>
+	 * Like the C++ version, a failure to determine the disk image's info (a
+	 * missing/corrupt file) is silently ignored rather than reported back to the
+	 * caller - {@code AtariDiskImage::WriteAbsoluteSector} is {@code void} and
+	 * never surfaces {@code DiskImage::WriteSector}'s result either.
+	 */
+	public static void writeAbsoluteSector(String filePath, int sectorNumber, byte[] sectorData) {
+		ImgInfo info = new ImgInfo();
+		getInfo(filePath, info);
+		if (isError(info.result)) {
+			return;
+		}
+
+		ImgRWPacket sector = new ImgRWPacket();
+		sector.filePath = filePath;
+		sector.sectorNumber = sectorNumber;
+		sector.sectorSize = info.density;
+		System.arraycopy(sectorData, 0, sector.sectorData, 0, Math.min(sectorData.length, sector.sectorData.length));
+
+		writeSector(sector);
+	}
+
+	private static ImgError write(ImgInfo info, ImgRWPacket sector) {
+		if (sector.sectorNumber < 1 || sector.sectorNumber > info.sectors) {
+			return ImgError.OUT_OF_RANGE;
+		}
+		if (info.writeProtect) {
+			return ImgError.WRITE_PROTECT;
+		}
+
+		int seekDensity = (info.density == 256 && sector.sectorNumber <= 3) ? 128 : info.density;
+		long offset;
+		switch (info.result) {
+		case XFD:
+			offset = (long) (sector.sectorNumber - 1) * seekDensity;
+			break;
+		case ATR:
+			offset = ATR_HEADER_SIZE + (long) (sector.sectorNumber - 1) * seekDensity;
+			break;
+		default:
+			return ImgError.DISK_ERROR;
+		}
+
+		try (RandomAccessFile file = new RandomAccessFile(sector.filePath, "rw")) {
+			file.seek(offset);
+			file.write(sector.sectorData, 0, info.density);
+			return info.result;
+		} catch (IOException ex) {
+			return ImgError.DISK_ERROR;
 		}
 	}
 
