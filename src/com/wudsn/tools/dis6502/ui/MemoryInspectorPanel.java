@@ -46,8 +46,12 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * #canFind} from {@code MemoryInspector::FindString}/{@code
  * FindNextString}/{@code CanFind}, triggered from {@link #findButton}/
  * {@link #findNextButton} (public fields wired up by {@code Dis6502}, the
- * same way {@link DisassemblyPanel#findButton} is) rather than the C++
- * version's popup menu (ui/MemoryInspectorPopupMenu.h/.cpp) commands.
+ * same way {@link DisassemblyPanel#findButton} is). Like the C++ version's
+ * popup menu (ui/MemoryInspectorPopupMenu.h/.cpp), {@link #findButton},
+ * {@link #findNextButton} and {@link #splitAtSelectionButton} are only
+ * reachable from the popup menu, not the toolbar - they remain regular
+ * fields, wired up the same way, so the popup menu items can still trigger
+ * them via {@code doClick()}, they are just never added to {@code toolBar}.
  * {@link #splitAtSelectionButton} (from {@code MemoryInspector::SplitAtSelection}/
  * IDM_DUMP_SPLIT_AT_SELECTION) only splits the segment list the same way
  * {@code com.wudsn.tools.dis6502.ui.SegmentListPanel}'s Move Up/Down/
@@ -198,9 +202,6 @@ public final class MemoryInspectorPanel extends JPanel {
 		setBorder(titledBorder);
 
 		JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		toolBar.add(findButton);
-		toolBar.add(findNextButton);
-		toolBar.add(splitAtSelectionButton);
 		toolBar.add(selectAllButton);
 		toolBar.add(selectNextUnknownBlockButton);
 		toolBar.add(selectSpritesButton);

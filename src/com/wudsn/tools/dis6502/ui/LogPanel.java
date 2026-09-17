@@ -6,6 +6,7 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.RenderingHints;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -28,7 +29,15 @@ import javax.swing.SwingUtilities;
  * values, so {@link ComputerFont#getAwtFont} needs no byte-index shift.
  * Falls back to a plain monospace font until the first call, the same
  * placeholder every {@code ComputerFont}-driven panel used before
- * {@code Dis6502} wired up real fonts.
+ * {@code Dis6502} wired up real fonts. The {@code
+ * RenderingHints.KEY_TEXT_ANTIALIASING} client property forces the same
+ * antialiasing-off rendering {@link ComputerFont#drawText} uses explicitly
+ * elsewhere - without it, real on-screen Windows ClearType antialiasing
+ * blurs this pixel-art font illegible (see {@link SegmentListPanel}'s class
+ * comment); unlike {@code JTable}/{@code JList}, {@code JTextArea} paints
+ * its own text directly rather than delegating to a per-cell renderer
+ * component, so this client property - which Swing's text painting reads
+ * from the component itself - is enough on its own.
  *
  * @author Peter Dell
  */
@@ -42,6 +51,7 @@ public final class LogPanel extends JPanel {
 		super(new BorderLayout());
 		textArea.setEditable(false);
 		textArea.setFont(new java.awt.Font(java.awt.Font.MONOSPACED, java.awt.Font.PLAIN, 12));
+		textArea.putClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
 		add(new JScrollPane(textArea), BorderLayout.CENTER);
 	}
 

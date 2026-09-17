@@ -6,10 +6,15 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
+import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -17,6 +22,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentList;
@@ -46,13 +52,19 @@ import com.wudsn.tools.dis6502.model.WorkspaceProperty;
  * blanket {@code SetFont(partLayout->GetLayout()->GetFont())} call, which
  * every part window gets, not just the memory inspector/disassembly
  * listing - {@code SegmentListWindow} is a plain native {@code ListBox}, so
- * in C++ this happens automatically via {@code WM_SETFONT}. Unlike {@link
- * MemoryInspectorGridPanel}/{@link DisassemblyGridPanel}, which draw raw
- * byte values and need {@link ComputerFont}'s byte-indexed glyph lookup,
- * this table only ever shows already-formatted metadata text (titles, hex
- * addresses) - normal Unicode text {@link ComputerFont#getAwtFont} already
- * renders correctly with no byte-index shift needed - so this can just be
- * {@code table.setFont(...)}, the standard Swing way.
+ * in C++ this happens automatically via {@code WM_SETFONT}. This table only
+ * ever shows already-formatted metadata text (titles, hex addresses), not
+ * raw byte values, so it needs none of {@link ComputerFont}'s byte-indexed
+ * glyph lookup - but it still cannot just be {@code table.setFont(...)} plus
+ * JTable's default cell renderer: on real screen output (unlike the
+ * offscreen renders used to develop this font support), Windows applies its
+ * own ClearType/subpixel text antialiasing to ordinary Swing text painting,
+ * which blurs this small pixel-art font into illegible dots. Every other
+ * {@code ComputerFont}-driven panel avoids this because {@link
+ * ComputerFont#drawText} explicitly disables antialiasing before drawing;
+ * {@link ComputerFontTableCellRenderer} gives this table the same explicit
+ * control by painting cell text through {@code drawText} itself instead of
+ * relying on the default renderer's {@code g.drawString}.
  *
  * @author Peter Dell
  */
@@ -72,12 +84,14 @@ public final class SegmentListPanel extends JPanel {
 	private final JPopupMenu popupMenu = new JPopupMenu();
 	private final Model model = new Model();
 	private final JTable table = new JTable(model);
+	private final ComputerFontTableCellRenderer cellRenderer = new ComputerFontTableCellRenderer();
 	private Workspace workspace;
 	private boolean updating;
 
 	public SegmentListPanel() {
 		super(new BorderLayout());
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		table.setDefaultRenderer(Object.class, cellRenderer);
 		table.getSelectionModel().addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting() && !updating) {
 				selected();
@@ -114,6 +128,7 @@ public final class SegmentListPanel extends JPanel {
 	public void setComputerFont(ComputerFont computerFont) {
 		table.setFont(computerFont.getAwtFont());
 		table.setRowHeight(computerFont.getGlyphHeight() + 2);
+		cellRenderer.setComputerFont(computerFont);
 	}
 
 	/** Ported from MainSegment::RButtonDownProc (the "no edit mode" branch - there is no memory inspector edit mode to check here yet). */
@@ -221,6 +236,51 @@ public final class SegmentListPanel extends JPanel {
 				return segment.bBinary;
 			default:
 				return "";
+			}
+		}
+	}
+
+	/**
+	 * Paints cell text via {@link ComputerFont#drawText} instead of {@code
+	 * JLabel}'s own {@code g.drawString}, so the same explicit
+	 * antialiasing-off control every other {@code ComputerFont}-driven panel
+	 * relies on also applies here - see the class comment for why plain
+	 * {@code table.setFont(...)} is not enough on real screen output.
+	 */
+	private static final class ComputerFontTableCellRenderer extends JComponent implements TableCellRenderer {
+
+		private static final long serialVersionUID = 1L;
+
+		private ComputerFont computerFont;
+		private String text = "";
+		private Color foreground = Color.BLACK;
+		private Color background = Color.WHITE;
+
+		ComputerFontTableCellRenderer() {
+			setOpaque(true);
+		}
+
+		void setComputerFont(ComputerFont computerFont) {
+			this.computerFont = computerFont;
+		}
+
+		@Override
+		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+			text = value == null ? "" : String.valueOf(value);
+			background = isSelected ? table.getSelectionBackground() : table.getBackground();
+			foreground = isSelected ? table.getSelectionForeground() : table.getForeground();
+			return this;
+		}
+
+		@Override
+		protected void paintComponent(Graphics g) {
+			g.setColor(background);
+			g.fillRect(0, 0, getWidth(), getHeight());
+			if (computerFont != null) {
+				computerFont.drawText((Graphics2D) g, text, foreground, 2, 1);
+			} else {
+				g.setColor(foreground);
+				g.drawString(text, 2, g.getFontMetrics().getAscent() + 1);
 			}
 		}
 	}
