@@ -40,14 +40,17 @@ import com.wudsn.tools.dis6502.model.ComputerSystemType;
  * line, all in black - unlike the memory inspector's grid, a disassembly
  * line has no per-character {@code MemoryType} coloring): virtualized
  * scrolling relies on Swing's clip-rect-based repaint the same way {@link
- * MemoryInspectorGridPanel} does, and mouse selection/inline editing/the
- * popup menu are not ported - {@link DisassemblyPanel} predates this class
- * and never had them either; only {@link #highlightLine}/{@link
- * #scrollLineToVisible} (search-result/cross-reference navigation) carry
- * over from it. Cell dimensions come straight from {@link
- * ComputerFont#getGlyphWidth}/{@link ComputerFont#getGlyphHeight} - already
- * scaled for on-screen legibility, see that class's javadoc - rather than
- * this class applying its own zoom factor.
+ * MemoryInspectorGridPanel} does, and inline editing/the full popup menu
+ * are not ported - {@link DisassemblyPanel} predates this class and never
+ * had them either; {@link #highlightLine}/{@link #scrollLineToVisible}
+ * carry over from it, used for both search-result/cross-reference
+ * navigation and (new here) click/drag line selection, and {@link
+ * #lineIndexAtY} is the pixel-to-line half of that selection mapping, used
+ * by {@link DisassemblyPanel}'s own mouse handling. Cell dimensions come straight
+ * from {@link ComputerFont#getGlyphWidth}/{@link
+ * ComputerFont#getGlyphHeight} - already scaled for on-screen legibility,
+ * see that class's javadoc - rather than this class applying its own zoom
+ * factor.
  *
  * @author Peter Dell
  */

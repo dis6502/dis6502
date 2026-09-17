@@ -33,14 +33,19 @@ import com.wudsn.tools.dis6502.model.Segment;
  * the segment as one plain (if tall) component inside a {@link
  * javax.swing.JScrollPane}, relying on Swing's own clip-rect-based repaint
  * for virtualization instead of {@code PrintLine}/{@code ScrollUp}/{@code
- * ScrollDown}'s manual line-range/{@code BitBlt} scrolling; and mouse-drag
- * selection ({@code LButtonDown}/{@code MouseMove}/{@code SetEndOfSelection})
- * and in-place hex/ASCII editing ({@code Char}/{@code KeyDown}'s edit mode,
- * with its blinking-cursor {@code WM_TIMER}) are not ported - {@link
- * MemoryInspectorPanel} predates this class and never had either (selection
- * is programmatic only, via {@link #highlightRange}; editing goes through
- * {@link AssembleDialog} instead), and this rewrite only replaces how the
- * existing byte grid is drawn, not how it is interacted with.
+ * ScrollDown}'s manual line-range/{@code BitBlt} scrolling. {@link
+ * #offsetAtPoint} ports {@code LButtonDown}/{@code SetEndOfSelection}'s
+ * pixel-to-byte mapping (the non-edit-mode case only), letting {@link
+ * MemoryInspectorPanel} implement click/drag selection the idiomatic Swing
+ * way, with {@link java.awt.event.MouseListener}/{@link
+ * java.awt.event.MouseMotionListener} instead of mouse capture and manual
+ * {@code SetCapture}/{@code ReleaseCapture} bookkeeping; in-place hex/ASCII
+ * editing ({@code Char}/{@code KeyDown}'s edit mode, with its blinking-
+ * cursor {@code WM_TIMER}) is not ported - {@link MemoryInspectorPanel}
+ * predates this class and never had it (editing goes through {@link
+ * AssembleDialog} instead), and this rewrite only replaces how the
+ * existing byte grid is drawn and how its selection is set, not how bytes
+ * are edited.
  * <p>
  * {@code PrintLine}'s hex-byte/ASCII-column color, including its LOBYTE/
  * HIBYTE-adjacency-to-CODE-color rule, is ported verbatim (see {@link
@@ -116,6 +121,43 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	private void scrollLineToVisible(int line) {
 		int cellH = computerFont.getGlyphHeight();
 		scrollRectToVisible(new Rectangle(0, line * cellH, 1, cellH));
+	}
+
+	/**
+	 * Maps a point within this grid to the byte offset under it, ported from
+	 * {@code MemoryInspectorControlImpl::LButtonDown}/{@code
+	 * SetEndOfSelection}'s pixel-to-line/row mapping (the non-edit-mode
+	 * case only - this port has no in-place hex editing) - clicking left of
+	 * the hex pane (the address gutter) maps to row 0, matching the C++
+	 * source, and a point past the last line/row clamps to the nearest
+	 * valid one rather than returning no match, so a drag that leaves the
+	 * grid still extends the selection sensibly. Returns -1 if there is no
+	 * segment displayed or it has no bytes.
+	 */
+	public int offsetAtPoint(int x, int y) {
+		if (segment == null || computerFont == null) {
+			return -1;
+		}
+		int lines = lineCount();
+		if (lines == 0) {
+			return -1;
+		}
+		int cellW = computerFont.getGlyphWidth();
+		int cellH = computerFont.getGlyphHeight();
+		int line = Math.max(0, Math.min(lines - 1, y / cellH));
+		int column = Math.max(0, x / cellW);
+
+		int row;
+		if (column < 5) {
+			row = 0;
+		} else if (column >= 5 + BYTES_PER_LINE * 3) {
+			row = column - (5 + BYTES_PER_LINE * 3);
+		} else {
+			row = (column - 5) / 3;
+		}
+		row = Math.max(0, Math.min(BYTES_PER_LINE - 1, row));
+
+		return line * BYTES_PER_LINE + row;
 	}
 
 	/** Ported from PrintLine's cType computation (the LOBYTE/HIBYTE-adjacency-to-CODE-color rule). */

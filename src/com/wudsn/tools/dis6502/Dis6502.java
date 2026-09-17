@@ -324,6 +324,7 @@ public final class Dis6502 {
 				.addActionListener(e -> performDefineAddressRangeForLabel(mainWindow.disassemblyPanel.getRightClickedLabelDefinition()));
 		mainWindow.disassemblyPanel.addrRangeRefMenuItem
 				.addActionListener(e -> performDefineAddressRangeForLabel(mainWindow.disassemblyPanel.getRightClickedLabelReference()));
+		mainWindow.disassemblyPanel.setLineSelectionListener(this::performDisassemblyLineSelected);
 		mainWindow.xrefPanel.setSelectionListener(this::performXRefSelected);
 
 		mainWindow.memoryInspectorPanel.findMenuItem.addActionListener(e -> performShowMemoryInspectorFindDialog());
@@ -1553,6 +1554,35 @@ public final class Dis6502 {
 				mainWindow.disassemblyPanel.navigateToLine(line.getLineNumber());
 				return;
 			}
+		}
+	}
+
+	/**
+	 * Ported from the per-line click handling in {@code
+	 * DisassemblyControlImpl::MouseMove}/{@code MainDisassembly::Proc}'s
+	 * DIS_LBUTTONDOWN and DIS_XREF cases, reached here via {@link
+	 * com.wudsn.tools.dis6502.ui.DisassemblyPanel#setLineSelectionListener}
+	 * - {@code label} is already resolved to the clicked line's referenced
+	 * label, or its defined one if it has no reference, matching DIS_XREF's
+	 * {@code label = GetLabelReference(); if empty, label =
+	 * GetLabelDefinition()}. Unlike {@link #performXRefSelected}, a line
+	 * with no byte size (a label/equate-only line) leaves the memory
+	 * inspector's selection alone rather than clearing it, matching
+	 * DIS_LBUTTONDOWN's own {@code if (pDis->size != 0)} guard exactly.
+	 */
+	private void performDisassemblyLineSelected(DisassemblyLine line, String label) {
+		if (line.segmentIndex != SegmentList.NO_SEGMENT_INDEX && line.segmentIndex < workspace.getSegmentList().getCount()) {
+			// Selecting the segment refreshes the memory inspector's own hex
+			// dump (via updateMemoryInspectorSegment, on the SELECTED_SEGMENT
+			// listener) before the explicit select() below.
+			workspace.getSegmentList().setSelectedIndex(line.segmentIndex);
+			if (line.size != 0) {
+				mainWindow.memoryInspectorPanel.select(line.offset, line.offset + line.size - 1);
+			}
+		}
+
+		if (!label.isEmpty()) {
+			performFindDisassemblyReferences(label);
 		}
 	}
 

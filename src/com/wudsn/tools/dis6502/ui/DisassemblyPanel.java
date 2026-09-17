@@ -20,6 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblyResult;
@@ -44,13 +45,18 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * font as the memory inspector, not a plain system font) and {@link
  * DisassemblyGridPanel}'s own javadoc for exactly which parts of {@code
  * DisassemblyControlImpl.cpp} this replicates (plain text layout,
- * virtualized via Swing's clip-rect repaint) and which it does not (mouse
- * selection, inline editing, the popup menu - none of these existed in
- * this port before this rewrite either). {@link #navigateToLine} (scrolling
- * to and highlighting a line) is the one piece of the C++ control's
- * selection behavior this port implements, since {@link XRefPanel} needs
- * it. {@link #setComputerFont} must be called by {@code Dis6502} whenever
- * the workspace's computer system or double-font-height setting changes,
+ * virtualized via Swing's clip-rect repaint) and which it does not (inline
+ * editing, the full popup menu - neither existed in this port before this
+ * rewrite either). {@link #navigateToLine} (scrolling to and highlighting
+ * a line, used by both Find/XRef navigation and {@link #selectLineAt})
+ * and {@link #selectLineAt} itself (clicking or dragging in the listing to
+ * select a line, reported to {@code Dis6502} via {@link
+ * #setLineSelectionListener} - ported from {@code
+ * DisassemblyControlImpl::MouseMove}'s per-line click handling, see that
+ * method's javadoc for the {@code dwLastLine} correspondence) are the
+ * pieces of the C++ control's selection behavior this port implements.
+ * {@link #setComputerFont} must be called by {@code Dis6502} whenever the
+ * workspace's computer system or double-font-height setting changes,
  * matching {@code DisassemblyWindow}'s use of {@code
  * WorkspaceFont::GetResizedFont}.
  * <p>
@@ -120,6 +126,8 @@ public final class DisassemblyPanel extends JPanel {
 	private DisassemblyLine rightClickedLine;
 	private String rightClickedLabelDefinition = "";
 	private String rightClickedLabelReference = "";
+	private LineSelectionListener lineSelectionListener;
+	private int lastSelectedLineIndex = -1;
 
 	public DisassemblyPanel() {
 		super(new BorderLayout());
@@ -138,17 +146,65 @@ public final class DisassemblyPanel extends JPanel {
 		popupFindMenuItem.addActionListener(e -> findButton.doClick());
 		popupFindNextMenuItem.addActionListener(e -> findNextButton.doClick());
 
-		grid.addMouseListener(new MouseAdapter() {
+		MouseAdapter mouseHandler = new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				maybeShowPopup(e);
+				if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger()) {
+					lastSelectedLineIndex = -1;
+					selectLineAt(e);
+				}
+			}
+
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				if (SwingUtilities.isLeftMouseButton(e)) {
+					selectLineAt(e);
+				}
 			}
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				maybeShowPopup(e);
 			}
-		});
+		};
+		grid.addMouseListener(mouseHandler);
+		grid.addMouseMotionListener(mouseHandler);
+	}
+
+	/**
+	 * Ported from the per-line click handling in {@code
+	 * DisassemblyControlImpl::MouseMove} (reached here through a single
+	 * click/drag rather than continuous mouse-capture tracking, since
+	 * that's the idiomatic Swing shape for this - {@link
+	 * #lastSelectedLineIndex} plays the same role as the C++ source's
+	 * {@code dwLastLine}, only re-notifying {@link #lineSelectionListener}
+	 * when the line under the cursor actually changes): highlights the
+	 * clicked line and reports it - along with the label its operand
+	 * references, or the one it defines if it has no reference (matching
+	 * {@code MainDisassembly::Proc}'s DIS_XREF handler: {@code label =
+	 * GetLabelReference(); if empty, label = GetLabelDefinition()}) - to
+	 * {@link #lineSelectionListener}.
+	 */
+	private void selectLineAt(MouseEvent e) {
+		int index = grid.lineIndexAtY(e.getY());
+		if (index < 0 || index >= disassemblyLines.size() || index == lastSelectedLineIndex) {
+			return;
+		}
+		lastSelectedLineIndex = index;
+		grid.highlightLine(index);
+
+		if (lineSelectionListener != null) {
+			DisassemblyLine line = disassemblyLines.get(index);
+			String[] labels = findLabelInLine(line.getLine());
+			String label = !labels[1].isEmpty() ? labels[1] : labels[0];
+			lineSelectionListener.onLineSelected(line, label);
+		}
+	}
+
+	/** Reports the line the user clicked or dragged to in the listing, and the label it defines/references - see {@link #selectLineAt}. */
+	public void setLineSelectionListener(LineSelectionListener lineSelectionListener) {
+		this.lineSelectionListener = lineSelectionListener;
 	}
 
 	/**
@@ -332,6 +388,7 @@ public final class DisassemblyPanel extends JPanel {
 	public void refresh(DisassemblyResult disassemblyResult) {
 		lineNumberToIndex.clear();
 		rightClickedLine = null;
+		lastSelectedLineIndex = -1;
 
 		if (disassemblyResult == null || disassemblyResult.getLineCount() == 0) {
 			disassemblyLines = Collections.emptyList();
@@ -365,5 +422,10 @@ public final class DisassemblyPanel extends JPanel {
 		}
 		grid.highlightLine(index);
 		return true;
+	}
+
+	/** Reports a line the user clicked or dragged to - see {@link #selectLineAt}. */
+	public interface LineSelectionListener {
+		void onLineSelected(DisassemblyLine line, String label);
 	}
 }
