@@ -335,17 +335,20 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from {@code MemoryInspectorWindow}/{@code DisassemblyWindow}'s
-	 * reaction to a {@link WorkspaceProperty#COMPUTER_SYSTEM_TYPE}/{@link
-	 * WorkspaceProperty#FONT} change (via {@code Main::SetLayoutFont}/{@code
-	 * WorkspaceFont::GetResizedFont} - the C++ source shares one font, set
-	 * on a common {@code Layout}, between both controls, matching {@link
-	 * ComputerFont}'s javadoc).
+	 * Ported from {@code PartWindow::ApplyLayout}'s reaction to a {@link
+	 * WorkspaceProperty#COMPUTER_SYSTEM_TYPE}/{@link WorkspaceProperty#FONT}
+	 * change (via {@code Main::SetLayoutFont}/{@code
+	 * WorkspaceFont::GetResizedFont}) - every part window shares one font set
+	 * on a common {@code Layout}, matching {@link ComputerFont}'s javadoc);
+	 * {@link com.wudsn.tools.dis6502.ui.XRefPanel}/{@link
+	 * com.wudsn.tools.dis6502.ui.LogPanel} are two more C++ part windows that
+	 * get this same font but are not wired here yet.
 	 */
 	private void updateFonts() {
 		ComputerFont computerFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
 		mainWindow.memoryInspectorPanel.setComputerFont(computerFont);
 		mainWindow.disassemblyPanel.setComputerFont(computerFont);
+		mainWindow.segmentListPanel.setComputerFont(computerFont);
 	}
 
 	/** Ported from Main::UpdateMenuState's Equates-menu part (ui/Main.cpp). */

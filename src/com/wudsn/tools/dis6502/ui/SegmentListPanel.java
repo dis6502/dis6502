@@ -41,6 +41,18 @@ import com.wudsn.tools.dis6502.model.WorkspaceProperty;
  * MainMenu}'s items are, since running them (saving files, editing a
  * segment) needs things ({@code Application}, a parent {@link
  * java.awt.Frame}) this panel does not otherwise have.
+ * <p>
+ * {@link #setComputerFont} is ported from {@code PartWindow::ApplyLayout}'s
+ * blanket {@code SetFont(partLayout->GetLayout()->GetFont())} call, which
+ * every part window gets, not just the memory inspector/disassembly
+ * listing - {@code SegmentListWindow} is a plain native {@code ListBox}, so
+ * in C++ this happens automatically via {@code WM_SETFONT}. Unlike {@link
+ * MemoryInspectorGridPanel}/{@link DisassemblyGridPanel}, which draw raw
+ * byte values and need {@link ComputerFont}'s byte-indexed glyph lookup,
+ * this table only ever shows already-formatted metadata text (titles, hex
+ * addresses) - normal Unicode text {@link ComputerFont#getAwtFont} already
+ * renders correctly with no byte-index shift needed - so this can just be
+ * {@code table.setFont(...)}, the standard Swing way.
  *
  * @author Peter Dell
  */
@@ -96,6 +108,12 @@ public final class SegmentListPanel extends JPanel {
 		});
 
 		add(new JScrollPane(table), BorderLayout.CENTER);
+	}
+
+	/** Ported from PartWindow::ApplyLayout's SetFont(partLayout->GetLayout()->GetFont()) - call whenever the workspace's computer system or double-height setting changes. */
+	public void setComputerFont(ComputerFont computerFont) {
+		table.setFont(computerFont.getAwtFont());
+		table.setRowHeight(computerFont.getGlyphHeight() + 2);
 	}
 
 	/** Ported from MainSegment::RButtonDownProc (the "no edit mode" branch - there is no memory inspector edit mode to check here yet). */

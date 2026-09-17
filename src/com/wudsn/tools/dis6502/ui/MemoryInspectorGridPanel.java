@@ -11,23 +11,21 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
 
 import javax.swing.JPanel;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 
+import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.Segment;
 
 /**
  * A read-only, custom-painted hex/ASCII dump of a segment's bytes, drawn
- * with the real per-computer-system bitmap glyphs from {@link
- * ComputerFont} instead of a Java system font - so every byte value (not
- * just the ones that happen to coincide with printable ASCII) renders as
- * its actual Atari ATASCII/C64 PETSCII character, matching what dis6502.exe
- * itself shows.
+ * with the real per-computer-system font from {@link ComputerFont} instead
+ * of a Java system font - so every byte value (not just the ones that
+ * happen to coincide with printable ASCII) renders as its actual Atari
+ * ATASCII/C64 PETSCII character, matching what dis6502.exe itself shows.
  * <p>
  * Ported from ui/MemoryInspectorControlImpl.cpp's {@code PrintLine}
  * (address, hex bytes color-coded by {@link MemoryType}, and the ASCII/
@@ -52,9 +50,10 @@ import com.wudsn.tools.dis6502.model.Segment;
  * {@code oldType} at the start of each line's row loop here too, the same
  * scope {@code PrintLine} has (it is called once per line).
  * <p>
- * Glyphs are scaled up {@link #ZOOM}x for on-screen legibility, the same
- * "native pixels are too small for a modern display" adjustment {@link
- * SpritePanel} already makes.
+ * Cell dimensions come straight from {@link ComputerFont#getGlyphWidth}/
+ * {@link ComputerFont#getGlyphHeight} - already scaled for on-screen
+ * legibility, see that class's javadoc - rather than this class applying
+ * its own zoom factor.
  *
  * @author Peter Dell
  */
@@ -63,7 +62,6 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	private static final long serialVersionUID = 1L;
 
 	public static final int BYTES_PER_LINE = 16;
-	private static final int ZOOM = 2;
 
 	/** Matches dwMemoryInspectorColor[], indexed by MemoryType.ordinal(). */
 	private static final Color[] TYPE_COLORS = { new Color(0, 0, 0), new Color(192, 192, 192), new Color(128, 128, 128),
@@ -80,7 +78,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 	public MemoryInspectorGridPanel() {
 		setBackground(Color.WHITE);
-		setComputerFont(ComputerFont.get(com.wudsn.tools.dis6502.model.ComputerSystemType.ATARI800, false));
+		setComputerFont(ComputerFont.get(ComputerSystemType.ATARI800, false));
 	}
 
 	public void setComputerFont(ComputerFont computerFont) {
@@ -116,9 +114,8 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	}
 
 	private void scrollLineToVisible(int line) {
-		int cellH = computerFont.getGlyphHeight() * ZOOM;
-		Rectangle rectangle = new Rectangle(0, line * cellH, 1, cellH);
-		scrollRectToVisible(rectangle);
+		int cellH = computerFont.getGlyphHeight();
+		scrollRectToVisible(new Rectangle(0, line * cellH, 1, cellH));
 	}
 
 	/** Ported from PrintLine's cType computation (the LOBYTE/HIBYTE-adjacency-to-CODE-color rule). */
@@ -170,10 +167,8 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 		if (computerFont == null) {
 			return super.getPreferredSize();
 		}
-		int cellW = computerFont.getGlyphWidth() * ZOOM;
-		int cellH = computerFont.getGlyphHeight() * ZOOM;
 		int lines = Math.max(lineCount(), 1);
-		return new Dimension(totalUnits() * cellW, lines * cellH);
+		return new Dimension(totalUnits() * computerFont.getGlyphWidth(), lines * computerFont.getGlyphHeight());
 	}
 
 	@Override
@@ -187,10 +182,9 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 		}
 
 		Graphics2D g2 = (Graphics2D) g;
-		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
-		int cellW = computerFont.getGlyphWidth() * ZOOM;
-		int cellH = computerFont.getGlyphHeight() * ZOOM;
+		int cellW = computerFont.getGlyphWidth();
+		int cellH = computerFont.getGlyphHeight();
 		int size = segment.getSize();
 		int lines = lineCount();
 
@@ -211,7 +205,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 		// Address, e.g. "0600|".
 		String address = String.format("%04X|", segment.wBegin + lineStart);
-		computerFont.drawText(g2, address, Color.BLACK, 0, y, cellW, cellH);
+		computerFont.drawText(g2, address, Color.BLACK, 0, y);
 
 		MemoryType oldType = null;
 		for (int row = 0; row < BYTES_PER_LINE; row++) {
@@ -239,15 +233,14 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 			int value = segment.getData(offset) & 0xFF;
 			String hex = String.format("%02X ", value);
-			computerFont.drawText(g2, hex, color, hexX, y, cellW, cellH);
+			computerFont.drawText(g2, hex, color, hexX, y);
 
 			int displayValue = displayAsScreenCode ? toInternalCode(value) : value;
-			BufferedImage tinted = computerFont.getTintedGlyph(displayValue, color);
-			g2.drawImage(tinted, charX, y, cellW, cellH, null);
+			computerFont.drawGlyph(g2, displayValue, color, charX, y);
 		}
 
 		// Vertical bar separating the hex and ASCII columns.
-		computerFont.drawText(g2, "|", Color.BLACK, (5 + BYTES_PER_LINE * 3 - 1) * cellW, y, cellW, cellH);
+		computerFont.drawText(g2, "|", Color.BLACK, (5 + BYTES_PER_LINE * 3 - 1) * cellW, y);
 	}
 
 	private void drawBlank(Graphics2D g2, int x, int y, int width, int height) {
@@ -262,7 +255,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 	@Override
 	public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-		return computerFont == null ? 16 : computerFont.getGlyphHeight() * ZOOM;
+		return computerFont == null ? 16 : computerFont.getGlyphHeight();
 	}
 
 	@Override

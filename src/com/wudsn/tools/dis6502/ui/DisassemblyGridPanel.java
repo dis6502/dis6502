@@ -11,7 +11,6 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,13 +18,15 @@ import javax.swing.JPanel;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 
+import com.wudsn.tools.dis6502.model.ComputerSystemType;
+
 /**
  * A read-only, custom-painted list of disassembly listing lines, drawn with
- * the real per-computer-system bitmap glyphs from {@link ComputerFont} -
- * the same reason {@link MemoryInspectorGridPanel} needs them (see that
- * class's/{@link ComputerFont}'s javadoc): the C++ source draws the
- * disassembly listing with the very same {@code ComputerFont}-derived font
- * as the memory inspector ({@code DisassemblyWindow.cpp}'s {@code
+ * the real per-computer-system font from {@link ComputerFont} - the same
+ * reason {@link MemoryInspectorGridPanel} needs it (see that class's/{@link
+ * ComputerFont}'s javadoc): the C++ source draws the disassembly listing
+ * with the very same {@code ComputerFont}-derived font as the memory
+ * inspector ({@code DisassemblyWindow.cpp}'s {@code
  * disassemblyControl->SetFont(partLayout->GetLayout()->GetFont())} uses the
  * same shared {@code Layout} font {@code Main::SetLayoutFont}/{@code
  * WorkspaceFont::GetResizedFont} sets for the whole window), not a plain
@@ -43,15 +44,16 @@ import javax.swing.SwingConstants;
  * popup menu are not ported - {@link DisassemblyPanel} predates this class
  * and never had them either; only {@link #highlightLine}/{@link
  * #scrollLineToVisible} (search-result/cross-reference navigation) carry
- * over from it.
+ * over from it. Cell dimensions come straight from {@link
+ * ComputerFont#getGlyphWidth}/{@link ComputerFont#getGlyphHeight} - already
+ * scaled for on-screen legibility, see that class's javadoc - rather than
+ * this class applying its own zoom factor.
  *
  * @author Peter Dell
  */
 public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 
 	private static final long serialVersionUID = 1L;
-
-	private static final int ZOOM = 2;
 
 	private List<String> lines = Collections.emptyList();
 	private ComputerFont computerFont;
@@ -60,7 +62,7 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 
 	public DisassemblyGridPanel() {
 		setBackground(Color.WHITE);
-		setComputerFont(ComputerFont.get(com.wudsn.tools.dis6502.model.ComputerSystemType.ATARI800, false));
+		setComputerFont(ComputerFont.get(ComputerSystemType.ATARI800, false));
 	}
 
 	public void setComputerFont(ComputerFont computerFont) {
@@ -92,13 +94,13 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 	}
 
 	public void scrollLineToVisible(int index) {
-		int cellH = computerFont.getGlyphHeight() * ZOOM;
+		int cellH = computerFont.getGlyphHeight();
 		scrollRectToVisible(new Rectangle(0, index * cellH, 1, cellH));
 	}
 
 	/** The line index a given Y pixel coordinate (e.g. a mouse event's) falls in - for right-click hit-testing. */
 	public int lineIndexAtY(int y) {
-		return y / (computerFont.getGlyphHeight() * ZOOM);
+		return y / computerFont.getGlyphHeight();
 	}
 
 	@Override
@@ -106,10 +108,8 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 		if (computerFont == null) {
 			return super.getPreferredSize();
 		}
-		int cellW = computerFont.getGlyphWidth() * ZOOM;
-		int cellH = computerFont.getGlyphHeight() * ZOOM;
 		int lineCount = Math.max(lines.size(), 1);
-		return new Dimension(maxLineLength * cellW, lineCount * cellH);
+		return new Dimension(maxLineLength * computerFont.getGlyphWidth(), lineCount * computerFont.getGlyphHeight());
 	}
 
 	@Override
@@ -123,10 +123,8 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 		}
 
 		Graphics2D g2 = (Graphics2D) g;
-		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
-		int cellW = computerFont.getGlyphWidth() * ZOOM;
-		int cellH = computerFont.getGlyphHeight() * ZOOM;
+		int cellH = computerFont.getGlyphHeight();
 
 		Rectangle clip = g2.getClipBounds();
 		int firstLine = clip == null ? 0 : Math.max(0, clip.y / cellH);
@@ -138,7 +136,7 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 				g2.setColor(Color.YELLOW);
 				g2.fillRect(0, y, getWidth(), cellH);
 			}
-			computerFont.drawText(g2, lines.get(index), Color.BLACK, 0, y, cellW, cellH);
+			computerFont.drawText(g2, lines.get(index), Color.BLACK, 0, y);
 		}
 	}
 
@@ -149,7 +147,7 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 
 	@Override
 	public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-		return computerFont == null ? 16 : computerFont.getGlyphHeight() * ZOOM;
+		return computerFont == null ? 16 : computerFont.getGlyphHeight();
 	}
 
 	@Override
