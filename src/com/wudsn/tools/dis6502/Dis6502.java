@@ -55,6 +55,7 @@ import com.wudsn.tools.dis6502.model.SegmentListInserter;
 import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogic;
 import com.wudsn.tools.dis6502.model.WorkspaceProperty;
+import com.wudsn.tools.dis6502.ui.AssembleDialog;
 import com.wudsn.tools.dis6502.ui.CommentDialog;
 import com.wudsn.tools.dis6502.ui.DefaultFoldersDialog;
 import com.wudsn.tools.dis6502.ui.DiskImageExecutableFileDialog;
@@ -137,7 +138,10 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * ported. {@link #performEditMemoryInspectorComment} wires the
  * Comment... button, ported from
  * IDM_DUMP_EDIT_COMMENT/{@code MainDisassembly::AddComment} via the new
- * {@link CommentDialog}.
+ * {@link CommentDialog}. {@link #performShowAssembleDialog} wires the
+ * Assemble... button, ported from
+ * IDM_DUMP_ASSEMBLE/{@code MainMemoryInspector::PerformCommands} via the
+ * new {@link AssembleDialog}.
  *
  * @author Peter Dell
  */
@@ -280,6 +284,7 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.setUnknownBlockToByteButton.addActionListener(e -> performSetUnknownBlockToByte());
 		mainWindow.memoryInspectorPanel.copySelectionButton.addActionListener(e -> performCopyMemoryInspectorSelection());
 		mainWindow.memoryInspectorPanel.editCommentButton.addActionListener(e -> performEditMemoryInspectorComment());
+		mainWindow.memoryInspectorPanel.assembleButton.addActionListener(e -> performShowAssembleDialog());
 
 		refreshMRUMenus();
 		updateEquatesMenuState();
@@ -1070,6 +1075,22 @@ public final class Dis6502 {
 				memoryInspectorSelection.getSize())) {
 			updateDisassembly(false);
 		}
+	}
+
+	/**
+	 * Ported from MainMemoryInspector::PerformCommands's IDM_DUMP_ASSEMBLE
+	 * case: unlike every other memory inspector action wired in this
+	 * class, this calls {@link #updateDisassembly} unconditionally once
+	 * the dialog closes, matching the C++ call site, which does not check
+	 * {@code AssembleDialog::Show}'s return value either.
+	 */
+	private void performShowAssembleDialog() {
+		if (memoryInspectorSelection.isEmpty()) {
+			return;
+		}
+		new AssembleDialog(mainWindow.getFrame()).show(workspace, memoryInspectorSelection.getSegment(), memoryInspectorSelection,
+				mainWindow.memoryInspectorPanel);
+		updateDisassembly(false);
 	}
 
 	/**

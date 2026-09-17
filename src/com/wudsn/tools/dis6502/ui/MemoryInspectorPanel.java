@@ -82,13 +82,19 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * does not exist in {@link com.wudsn.tools.dis6502.model.MemoryBlock}
  * yet.
  * <p>
- * Inline byte
- * value editing and "guess code"/sprite tools remain out of scope for
- * now. {@link #editCommentButton} (from {@code MemoryInspector::AddComment}/
+ * "Guess code"/sprite tools remain out of scope for now. {@link
+ * #editCommentButton} (from {@code MemoryInspector::AddComment}/
  * IDM_DUMP_EDIT_COMMENT, ported as {@link CommentDialog}) is wired only
  * from here rather than also from a plain disassembly-line click with no
  * byte selection, the C++ version's other trigger path - see {@link
- * CommentDialog}'s javadoc. Drastically simplified for this first
+ * CommentDialog}'s javadoc. {@link #assembleButton} (from {@code
+ * MemoryInspector::Assemble}/IDM_DUMP_ASSEMBLE, ported as {@link
+ * AssembleDialog}) is this port's one piece of direct byte-level
+ * editing - not raw hex digit entry (there is no grid cell to type
+ * into), but typing 6502 instructions to assemble in place, which is
+ * the C++ version's own primary editing tool for binary segments; see
+ * {@link AssembleDialog}'s javadoc for a dialog-closing bug found and
+ * fixed while porting it. Drastically simplified for this first
  * pass, the same way {@link DisassemblyPanel} simplifies the disassembly
  * view: a plain, non-editable text area rather than the C++ version's
  * virtualized/custom-painted grid (so unlike the real ANTIC font, non-
@@ -115,6 +121,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	public final JButton setUnknownBlockToByteButton = new JButton("Set Unknown Block to Byte");
 	public final JButton copySelectionButton = new JButton("Copy Selection");
 	public final JButton editCommentButton = new JButton("Comment...");
+	public final JButton assembleButton = new JButton("Assemble...");
 
 	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("Memory Inspector");
 	private final JTextArea hexDumpArea = new JTextArea();
@@ -150,6 +157,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		toolBar.add(setUnknownBlockToByteButton);
 		toolBar.add(copySelectionButton);
 		toolBar.add(editCommentButton);
+		toolBar.add(assembleButton);
 		add(toolBar, BorderLayout.NORTH);
 		add(new JScrollPane(hexDumpArea), BorderLayout.CENTER);
 
@@ -421,6 +429,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		setUnknownBlockToByteButton.setEnabled(hasSelection);
 		copySelectionButton.setEnabled(hasSelection);
 		editCommentButton.setEnabled(hasSelection);
+		assembleButton.setEnabled(hasSelection);
 		splitAtSelectionButton.setEnabled(hasSelection
 				&& memoryInspectorSelection.getWorkspace().getSegmentList().getCount() < SegmentList.MAX_SEGMENTS
 				&& memoryInspectorSelection.getSegment().canSplitAt(memoryInspectorSelection.getBegin()));
