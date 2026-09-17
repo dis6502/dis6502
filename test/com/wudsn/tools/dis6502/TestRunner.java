@@ -6,12 +6,14 @@
 package com.wudsn.tools.dis6502;
 
 import com.wudsn.tools.dis6502.model.AssemblerTest;
+import com.wudsn.tools.dis6502.model.AtariDiskImageTest;
 import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.ComputerSystemTest;
 import com.wudsn.tools.dis6502.model.DisassemblyResultFileTest;
 import com.wudsn.tools.dis6502.model.DisassemblyResultTest;
 import com.wudsn.tools.dis6502.model.EquateListLogicTest;
 import com.wudsn.tools.dis6502.model.EquateTest;
+import com.wudsn.tools.dis6502.model.MemoryInspectorTest;
 import com.wudsn.tools.dis6502.model.Profile1XTest;
 import com.wudsn.tools.dis6502.model.SegmentTest;
 import com.wudsn.tools.dis6502.model.Workspace;
@@ -28,7 +30,15 @@ import com.wudsn.tools.dis6502.model.Workspace;
  * classes: {@link AssemblerTest}, {@link EquateTest}, {@link SegmentTest},
  * {@link DisassemblyResultTest}, {@link DisassemblyResultFileTest}, {@link
  * ComputerSystemTest} (which in turn covers {@code Atari800Test} and the
- * C64 system), {@link Profile1XTest}, and {@link EquateListLogicTest}.
+ * C64 system), {@link Profile1XTest}, {@link EquateListLogicTest}, {@link
+ * MemoryInspectorTest}, and {@link AtariDiskImageTest} (the last two ported
+ * from C++ test helpers with no independent entry point of their own - see
+ * their own javadoc for how their concrete assertions were recovered from
+ * {@code MainTest.cpp}). {@code CommonTest}/{@code FileIOTest}/{@code
+ * StreamTest} are not ported for the same "only called from MainTest"
+ * reason and additionally only test C++-specific infrastructure classes
+ * ({@code ByteArray}, {@code DatatypeUtility}, a custom {@code FileIO}
+ * wrapper) this port does not have.
  * <p>
  * There is no JUnit (or other) test framework dependency: the offline Maven
  * repository this project builds against is missing the pieces Surefire
@@ -70,6 +80,8 @@ public final class TestRunner {
 		runTest("ComputerSystemTest", () -> ComputerSystemTest.testSystems(new ComputerSystemFactory()));
 		runTest("Profile1XTest", Profile1XTest::testProfile1X);
 		runTest("EquateListLogicTest", EquateListLogicTest::testEquateListLogic);
+		runTest("MemoryInspectorTest", MemoryInspectorTest::testMemoryInspectorType);
+		runTest("AtariDiskImageTest", AtariDiskImageTest::testAtariDiskImage);
 
 		if (failedCount == 0) {
 			log("INFO: All " + totalCount + " unit tests were successful.");
