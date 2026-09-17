@@ -154,7 +154,17 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * {@link #performShowSelectSpritesDialog} wires the Select Sprites...
  * button, ported from
  * IDM_DUMP_SELECT_SPRITES/{@code MemoryInspector::ShowSelectSpritesDialog}
- * via the new {@link SelectSpritesDialog}.
+ * via the new {@link SelectSpritesDialog}. Every one of these toolbar
+ * buttons has a popup menu counterpart in {@code
+ * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel} too, wired here with
+ * the very same listener as its button, right next to it, rather than
+ * routed through the button via {@code doClick()} - see that class's
+ * javadoc and {@code findMenuItem}'s field comment for why. The popup's
+ * Change Type submenu is the one case that cannot just reuse the button's
+ * listener (each item already knows its own type, unlike the toolbar's
+ * combo-box-driven button), so it is wired instead via {@link
+ * #performSetMemoryInspectorType(MemoryType)} and {@code
+ * MemoryInspectorPanel#setTypeSelectionListener}.
  *
  * @author Peter Dell
  */
@@ -308,17 +318,29 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.findNextMenuItem.addActionListener(e -> performMemoryInspectorFindNext());
 		mainWindow.memoryInspectorPanel.splitAtSelectionMenuItem.addActionListener(e -> performSplitAtSelection());
 		mainWindow.memoryInspectorPanel.selectAllButton.addActionListener(e -> mainWindow.memoryInspectorPanel.selectAll());
+		mainWindow.memoryInspectorPanel.selectAllMenuItem.addActionListener(e -> mainWindow.memoryInspectorPanel.selectAll());
 		mainWindow.memoryInspectorPanel.selectNextUnknownBlockButton
 				.addActionListener(e -> mainWindow.memoryInspectorPanel.selectNextUnknownBlock());
+		mainWindow.memoryInspectorPanel.selectNextUnknownBlockMenuItem
+				.addActionListener(e -> mainWindow.memoryInspectorPanel.selectNextUnknownBlock());
 		mainWindow.memoryInspectorPanel.selectSpritesButton.addActionListener(e -> performShowSelectSpritesDialog());
+		mainWindow.memoryInspectorPanel.selectSpritesMenuItem.addActionListener(e -> performShowSelectSpritesDialog());
 		mainWindow.memoryInspectorPanel.saveSelectionNoHeaderButton.addActionListener(e -> performSaveMemoryInspectorSelection(false));
+		mainWindow.memoryInspectorPanel.saveSelectionNoHeaderMenuItem.addActionListener(e -> performSaveMemoryInspectorSelection(false));
 		mainWindow.memoryInspectorPanel.saveSelectionHeaderButton.addActionListener(e -> performSaveMemoryInspectorSelection(true));
+		mainWindow.memoryInspectorPanel.saveSelectionHeaderMenuItem.addActionListener(e -> performSaveMemoryInspectorSelection(true));
 		mainWindow.memoryInspectorPanel.setTypeButton.addActionListener(e -> performSetMemoryInspectorType());
+		mainWindow.memoryInspectorPanel.setTypeSelectionListener(this::performSetMemoryInspectorType);
 		mainWindow.memoryInspectorPanel.setUnknownBlockToByteButton.addActionListener(e -> performSetUnknownBlockToByte());
+		mainWindow.memoryInspectorPanel.setUnknownBlockToByteMenuItem.addActionListener(e -> performSetUnknownBlockToByte());
 		mainWindow.memoryInspectorPanel.copySelectionButton.addActionListener(e -> performCopyMemoryInspectorSelection());
+		mainWindow.memoryInspectorPanel.copySelectionMenuItem.addActionListener(e -> performCopyMemoryInspectorSelection());
 		mainWindow.memoryInspectorPanel.editCommentButton.addActionListener(e -> performEditMemoryInspectorComment());
+		mainWindow.memoryInspectorPanel.editCommentMenuItem.addActionListener(e -> performEditMemoryInspectorComment());
 		mainWindow.memoryInspectorPanel.assembleButton.addActionListener(e -> performShowAssembleDialog());
+		mainWindow.memoryInspectorPanel.assembleMenuItem.addActionListener(e -> performShowAssembleDialog());
 		mainWindow.memoryInspectorPanel.guessButton.addActionListener(e -> performGuessCode());
+		mainWindow.memoryInspectorPanel.startCodeTraceMenuItem.addActionListener(e -> performGuessCode());
 
 		refreshMRUMenus();
 		updateEquatesMenuState();
@@ -1018,16 +1040,24 @@ public final class Dis6502 {
 		outputStream.write((value >> 8) & 0xFF);
 	}
 
+	/** Reads the toolbar's Set Type combo box and applies its selected type, ported from the Set Type button's command. */
+	private void performSetMemoryInspectorType() {
+		performSetMemoryInspectorType((MemoryType) mainWindow.memoryInspectorPanel.setTypeComboBox.getSelectedItem());
+	}
+
 	/**
 	 * Ported from the type submenu's commands (IDM_DUMP_SET_TYPE_*), which
 	 * all funnel into {@code MemoryInspector::SetType}. Routes the
 	 * LOBYTE/HIBYTE case to {@link #performSetMemoryInspectorLoHiType},
 	 * since it needs {@link LowHighByteDialog} and stricter validation;
 	 * every other type goes straight through {@link
-	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#setType}.
+	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#setType}. Shared by
+	 * the toolbar's Set Type button (via the no-arg overload, which reads
+	 * {@code setTypeComboBox}) and the popup menu's Change Type submenu
+	 * (wired directly to this overload via {@code setTypeSelectionListener},
+	 * since each submenu item already knows its own type).
 	 */
-	private void performSetMemoryInspectorType() {
-		MemoryType type = (MemoryType) mainWindow.memoryInspectorPanel.setTypeComboBox.getSelectedItem();
+	private void performSetMemoryInspectorType(MemoryType type) {
 		if (type == MemoryType.LOBYTE || type == MemoryType.HIBYTE) {
 			performSetMemoryInspectorLoHiType(type);
 			return;
