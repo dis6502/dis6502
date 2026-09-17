@@ -6,14 +6,11 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComboBox;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -45,30 +42,33 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * replicates - and {@link #findString}/{@link #findNextString}/{@link
  * #canFind} from {@code MemoryInspector::FindString}/{@code
  * FindNextString}/{@code CanFind}, triggered from {@link #findMenuItem}/
- * {@link #findNextMenuItem} (public fields wired up by {@code Dis6502}).
- * Unlike this class's other, toolbar-backed popup items, {@link
- * #findMenuItem}, {@link #findNextMenuItem} and {@link
- * #splitAtSelectionMenuItem} have no toolbar button - matching the C++
- * version's popup menu (ui/MemoryInspectorPopupMenu.h/.cpp), they are only
- * reachable from here - so they are public {@code JMenuItem} fields wired
- * directly by {@code Dis6502}, the same way {@link DisassemblyPanel}'s
- * label-navigation popup items are, rather than a hidden {@code JButton}
- * kept around only to be {@code doClick()}d.
+ * {@link #findNextMenuItem}.
+ * <p>
+ * This panel has no toolbar - every command is reachable only from the
+ * right-click popup menu ({@link #maybeShowPopup}, attached to the grid),
+ * ported from ui/MemoryInspectorPopupMenu.h/.cpp's {@code
+ * MEMORY_INSPECTOR_POPUP_MENU} resource and following {@link
+ * SegmentListPanel}'s pattern: every item is a public {@code JMenuItem}
+ * field wired directly by {@code Dis6502}, never a hidden {@code JButton}
+ * kept around only to be {@code doClick()}d - this panel used to also
+ * have a toolbar with a button per command, each popup item {@code
+ * doClick()}ing its button, until both the redundant toolbar and that
+ * indirection were removed.
  * {@link #splitAtSelectionMenuItem} (from {@code MemoryInspector::SplitAtSelection}/
  * IDM_DUMP_SPLIT_AT_SELECTION) only splits the segment list the same way
  * {@code com.wudsn.tools.dis6502.ui.SegmentListPanel}'s Move Up/Down/
  * Merge/Delete already do, without reinterpreting any byte's type, and
  * {@link #selectAll}/{@link #selectNextUnknownBlock}/{@link
- * #saveSelectionNoHeaderButton}/{@link #saveSelectionHeaderButton} (from
- * {@code MemoryInspector::SelectAll}/{@code SelectNextUnknownBlock} and
- * {@code MainMemoryInspector::SaveWithoutHeader}/{@code SaveWithHeader})
+ * #saveSelectionNoHeaderMenuItem}/{@link #saveSelectionHeaderMenuItem}
+ * (from {@code MemoryInspector::SelectAll}/{@code SelectNextUnknownBlock}
+ * and {@code MainMemoryInspector::SaveWithoutHeader}/{@code SaveWithHeader})
  * are non-mutating too - selecting, and writing out, bytes that already
  * exist. {@link #setType}/{@link #setUnknownBlockToByte} (from {@code
  * MemoryInspector::SetType}/{@code SetUnknownBlockToByte}) do mutate a
  * segment's understanding of its bytes' types, and are the first such
  * commands ported here - unlike the rest of this class, callers must
  * re-run the disassembly afterward (see their own javadoc).
- * {@link #copySelectionButton} (from {@code MemoryInspector::CopySelection})
+ * {@link #copySelectionMenuItem} (from {@code MemoryInspector::CopySelection})
  * copies the selection as a plain hex string, matching {@code
  * DatatypeUtility::ByteArrayToHexString(..., false)}'s format.
  * <p>
@@ -88,24 +88,24 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * does not exist in {@link com.wudsn.tools.dis6502.model.MemoryBlock}
  * yet.
  * <p>
- * {@link #selectSpritesButton} (from {@code
+ * {@link #selectSpritesMenuItem} (from {@code
  * MemoryInspector::ShowSelectSpritesDialog}/IDM_DUMP_SELECT_SPRITES,
  * ported as {@link SelectSpritesDialog}/{@link SpritePanel}/{@link
- * SpriteMode}) is non-mutating like the other Select* buttons - it just
+ * SpriteMode}) is non-mutating like the other Select* items - it just
  * ends in a call to {@link #select}, {@link
  * SelectSpritesDialog}'s own javadoc has the details. {@link
- * #editCommentButton} (from {@code MemoryInspector::AddComment}/
+ * #editCommentMenuItem} (from {@code MemoryInspector::AddComment}/
  * IDM_DUMP_EDIT_COMMENT, ported as {@link CommentDialog}) is wired only
  * from here rather than also from a plain disassembly-line click with no
  * byte selection, the C++ version's other trigger path - see {@link
- * CommentDialog}'s javadoc. {@link #assembleButton} (from {@code
+ * CommentDialog}'s javadoc. {@link #assembleMenuItem} (from {@code
  * MemoryInspector::Assemble}/IDM_DUMP_ASSEMBLE, ported as {@link
  * AssembleDialog}) is this port's one piece of direct byte-level
  * editing - not raw hex digit entry (there is no grid cell to type
  * into), but typing 6502 instructions to assemble in place, which is
  * the C++ version's own primary editing tool for binary segments; see
  * {@link AssembleDialog}'s javadoc for a dialog-closing bug found and
- * fixed while porting it. {@link #guessButton} (from {@code
+ * fixed while porting it. {@link #startCodeTraceMenuItem} (from {@code
  * MemoryInspector::Guess}/IDM_DUMP_START_CODE_TRACE) runs {@link
  * GuessCodeLogic}, a large enough, UI-independent enough piece of logic
  * to get its own model-layer class instead of living directly here -
@@ -125,26 +125,20 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * font-height setting changes, matching {@code
  * MemoryInspectorWindow}'s use of {@code WorkspaceFont::GetResizedFont}.
  * <p>
- * The right-click popup menu ({@link #maybeShowPopup}, attached to the
- * grid) is ported from ui/MemoryInspectorPopupMenu.h/.cpp's {@code
- * MEMORY_INSPECTOR_POPUP_MENU} resource, following {@link
- * SegmentListPanel}'s pattern - most items here correspond to an already-
- * wired toolbar button/combo box, and are public fields {@code Dis6502}
- * wires with the very same listener as that button (see {@link
- * #findMenuItem}'s field comment for why not {@code doClick()} on the
- * button instead). The Set Type submenu is the one exception: since each
- * of its items already knows exactly which type it means, routing that
- * through {@link #setTypeComboBox}/{@link #setTypeButton} the way the
- * toolbar does would be backwards - instead its items report the chosen
- * type via {@link #setTypeSelectionListener}, matching {@link
- * XRefPanel}'s {@code XRefSelectionListener} pattern. The submenu's
- * checkmarks are ported from {@code TypeSubMenu::Update} - which type(s)
- * are actually present across the selection, including its LOBYTE/HIBYTE-
- * adjacency lookback for a byte whose own stored type is unknown/invalid.
- * "Edit bytes at selection", Cut, Paste (before/after selection), and
- * Delete are not in this menu, matching this class's own note above on
- * why Delete/Cut/Paste Selection are not ported, plus the general absence
- * of any in-place hex-editing mode in this port (see {@link
+ * The Change Type submenu is the one popup item that is not a single
+ * {@code JMenuItem} field: with thirteen items, each already knowing
+ * exactly which {@link MemoryType} it means, a public field per item
+ * (or worse, a shared field driven by some now-deleted toolbar combo
+ * box) would be backwards - instead its items report the chosen type via
+ * {@link #setTypeSelectionListener}, matching {@link XRefPanel}'s {@code
+ * XRefSelectionListener} pattern. The submenu's checkmarks are ported
+ * from {@code TypeSubMenu::Update} - which type(s) are actually present
+ * across the selection, including its LOBYTE/HIBYTE-adjacency lookback
+ * for a byte whose own stored type is unknown/invalid. "Edit bytes at
+ * selection", Cut, Paste (before/after selection), and Delete are not in
+ * this menu, matching this class's own note above on why Delete/Cut/
+ * Paste Selection are not ported, plus the general absence of any
+ * in-place hex-editing mode in this port (see {@link
  * MemoryInspectorGridPanel}'s javadoc).
  *
  * @author Peter Dell
@@ -152,19 +146,6 @@ import com.wudsn.tools.dis6502.model.SegmentList;
 public final class MemoryInspectorPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
-
-	public final JButton selectAllButton = new JButton("Select All");
-	public final JButton selectNextUnknownBlockButton = new JButton("Select Next Unknown Block");
-	public final JButton selectSpritesButton = new JButton("Select Sprites...");
-	public final JButton saveSelectionNoHeaderButton = new JButton("Save Selection (No Header)...");
-	public final JButton saveSelectionHeaderButton = new JButton("Save Selection (With Header)...");
-	public final JComboBox<MemoryType> setTypeComboBox = new JComboBox<>(MemoryType.VALUES);
-	public final JButton setTypeButton = new JButton("Set Type");
-	public final JButton setUnknownBlockToByteButton = new JButton("Set Unknown Block to Byte");
-	public final JButton copySelectionButton = new JButton("Copy Selection");
-	public final JButton editCommentButton = new JButton("Comment...");
-	public final JButton assembleButton = new JButton("Assemble...");
-	public final JButton guessButton = new JButton("Guess Code");
 
 	/** Ported from the type submenu's entries in MEMORY_INSPECTOR_POPUP_MENU, in their .rc order. */
 	private static final MemoryType[] TYPE_SUBMENU_ORDER = { MemoryType.CODE, MemoryType.LOBYTE, MemoryType.HIBYTE, MemoryType.BYTE,
@@ -177,27 +158,18 @@ public final class MemoryInspectorPanel extends JPanel {
 	private final MemoryInspectorGridPanel grid = new MemoryInspectorGridPanel();
 
 	/**
-	 * Find/Find Next/Split at Selection have no toolbar button - unlike
-	 * every other popup item here, which {@code doClick()}s an already-
-	 * wired, visible toolbar button, these three are only ever reachable
-	 * from this popup menu, so they are public fields wired directly by
-	 * {@code Dis6502}, the same way {@link DisassemblyPanel#findButton} is
-	 * - a hidden {@code JButton} kept around only to be {@code doClick()}d
-	 * would be a pointless layer of indirection.
+	 * Every popup menu item is a public field wired directly by {@code
+	 * Dis6502}, the same way {@link DisassemblyPanel}'s label-navigation
+	 * popup items are - a hidden {@code JButton} kept around only to be
+	 * {@code doClick()}d would be a pointless layer of indirection. The
+	 * Change Type submenu is the one exception: with thirteen items, each
+	 * already knowing its own type, a public field per item would be
+	 * backwards - its items report the type the user picked through
+	 * {@link #setTypeSelectionListener} instead.
 	 */
 	public final JMenuItem findMenuItem = new JMenuItem("Find...");
 	public final JMenuItem findNextMenuItem = new JMenuItem("Find next");
 	public final JMenuItem splitAtSelectionMenuItem = new JMenuItem("Split at selection");
-
-	/**
-	 * The rest of the popup menu's items each have a toolbar counterpart
-	 * too, but are public fields wired directly by {@code Dis6502}, the
-	 * same way its toolbar button is, rather than {@code doClick()}ing that
-	 * button - see {@link #findMenuItem}'s field comment for why. The type
-	 * submenu is the one exception: with no single fixed type to wire up
-	 * front, its items report the type the user picked through {@link
-	 * #setTypeSelectionListener} instead.
-	 */
 	public final JMenuItem startCodeTraceMenuItem = new JMenuItem("Start code trace at selection");
 	public final JMenuItem setUnknownBlockToByteMenuItem = new JMenuItem("Set current block of Unknown type to Byte");
 	public final JMenuItem editCommentMenuItem = new JMenuItem("Add/Edit comment...");
@@ -225,20 +197,6 @@ public final class MemoryInspectorPanel extends JPanel {
 		super(new BorderLayout());
 		setBorder(titledBorder);
 
-		JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		toolBar.add(selectAllButton);
-		toolBar.add(selectNextUnknownBlockButton);
-		toolBar.add(selectSpritesButton);
-		toolBar.add(saveSelectionNoHeaderButton);
-		toolBar.add(saveSelectionHeaderButton);
-		toolBar.add(setTypeComboBox);
-		toolBar.add(setTypeButton);
-		toolBar.add(setUnknownBlockToByteButton);
-		toolBar.add(copySelectionButton);
-		toolBar.add(editCommentButton);
-		toolBar.add(assembleButton);
-		toolBar.add(guessButton);
-		add(toolBar, BorderLayout.NORTH);
 		add(new JScrollPane(grid), BorderLayout.CENTER);
 
 		buildPopupMenu();
@@ -254,7 +212,7 @@ public final class MemoryInspectorPanel extends JPanel {
 			}
 		});
 
-		updateActionButtonsState();
+		updatePopupMenuItemsState();
 	}
 
 	private void buildPopupMenu() {
@@ -305,12 +263,12 @@ public final class MemoryInspectorPanel extends JPanel {
 		if (!e.isPopupTrigger() || memoryInspectorSelection == null || !memoryInspectorSelection.hasSegment()) {
 			return;
 		}
-		updateActionButtonsState();
+		updatePopupMenuItemsState();
 		syncPopupMenuState();
 		popupMenu.show(grid, e.getX(), e.getY());
 	}
 
-	/** Ports {@code TypeSubMenu::Update}'s enabled/checked logic for the Set Type submenu - every other popup item's enabled state is set directly in {@link #updateActionButtonsState}, alongside its toolbar counterpart. */
+	/** Ports {@code TypeSubMenu::Update}'s enabled/checked logic for the Set Type submenu - every other popup item's enabled state is set directly in {@link #updatePopupMenuItemsState}. */
 	private void syncPopupMenuState() {
 		boolean hasSelection = memoryInspectorSelection != null && memoryInspectorSelection.hasSelection();
 		boolean[] present = new boolean[TYPE_SUBMENU_ORDER.length];
@@ -372,7 +330,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		if (!hasData) {
 			grid.setSegment(null);
 			titledBorder.setTitle("Memory Inspector");
-			updateActionButtonsState();
+			updatePopupMenuItemsState();
 			revalidate();
 			repaint();
 			return;
@@ -382,7 +340,7 @@ public final class MemoryInspectorPanel extends JPanel {
 				String.format("Memory Inspector - %s ($%04X-$%04X)", segment.title, segment.wBegin, segment.wEnd));
 		grid.setSegment(segment);
 		memoryInspectorSelection.clearSelection();
-		updateActionButtonsState();
+		updatePopupMenuItemsState();
 		revalidate();
 		repaint();
 	}
@@ -406,7 +364,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		}
 		memoryInspectorSelection.setSelection(begin, end);
 		highlightRange(memoryInspectorSelection.getBegin(), memoryInspectorSelection.getEnd());
-		updateActionButtonsState();
+		updatePopupMenuItemsState();
 	}
 
 	/** Ported from MemoryInspector::ClearSelection. */
@@ -415,7 +373,7 @@ public final class MemoryInspectorPanel extends JPanel {
 			memoryInspectorSelection.clearSelection();
 		}
 		clearHighlight();
-		updateActionButtonsState();
+		updatePopupMenuItemsState();
 	}
 
 	/**
@@ -563,37 +521,25 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * IDM_DUMP_SAVE_HEADER/IDM_DUMP_SPLIT_AT_SELECTION/
 	 * IDM_DUMP_SET_UNKNOWN_BLOCK_TO_BYTE and the type submenu's enablement.
 	 */
-	private void updateActionButtonsState() {
+	private void updatePopupMenuItemsState() {
 		findMenuItem.setEnabled(canFind(true));
 		findNextMenuItem.setEnabled(canFind(false));
 
 		boolean hasSegment = memoryInspectorSelection != null && memoryInspectorSelection.hasSegment()
 				&& !memoryInspectorSelection.getSegment().isEmpty();
-		selectAllButton.setEnabled(hasSegment);
 		selectAllMenuItem.setEnabled(hasSegment);
-		selectNextUnknownBlockButton.setEnabled(hasSegment);
 		selectNextUnknownBlockMenuItem.setEnabled(hasSegment);
-		selectSpritesButton.setEnabled(hasSegment);
 		selectSpritesMenuItem.setEnabled(hasSegment);
 
 		boolean hasSelection = memoryInspectorSelection != null && memoryInspectorSelection.hasSelection();
-		saveSelectionNoHeaderButton.setEnabled(hasSelection);
 		saveSelectionNoHeaderMenuItem.setEnabled(hasSelection);
-		saveSelectionHeaderButton.setEnabled(hasSelection);
 		saveSelectionHeaderMenuItem.setEnabled(hasSelection);
-		setTypeButton.setEnabled(hasSelection);
-		setUnknownBlockToByteButton.setEnabled(hasSelection);
 		setUnknownBlockToByteMenuItem.setEnabled(hasSelection);
-		copySelectionButton.setEnabled(hasSelection);
 		copySelectionMenuItem.setEnabled(hasSelection);
-		editCommentButton.setEnabled(hasSelection);
 		editCommentMenuItem.setEnabled(hasSelection);
-		assembleButton.setEnabled(hasSelection);
 		assembleMenuItem.setEnabled(hasSelection);
-		boolean canGuess = hasSelection
-				&& memoryInspectorSelection.getSegment().isType(memoryInspectorSelection.getBegin(), MemoryType.UNKNOWN);
-		guessButton.setEnabled(canGuess);
-		startCodeTraceMenuItem.setEnabled(canGuess);
+		startCodeTraceMenuItem.setEnabled(hasSelection
+				&& memoryInspectorSelection.getSegment().isType(memoryInspectorSelection.getBegin(), MemoryType.UNKNOWN));
 		splitAtSelectionMenuItem.setEnabled(hasSelection
 				&& memoryInspectorSelection.getWorkspace().getSegmentList().getCount() < SegmentList.MAX_SEGMENTS
 				&& memoryInspectorSelection.getSegment().canSplitAt(memoryInspectorSelection.getBegin()));
@@ -665,7 +611,7 @@ public final class MemoryInspectorPanel extends JPanel {
 				findOffset = 0;
 			}
 		}
-		updateActionButtonsState();
+		updatePopupMenuItemsState();
 		return false;
 	}
 
