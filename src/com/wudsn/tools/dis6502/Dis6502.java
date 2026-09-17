@@ -21,6 +21,7 @@ import java.util.List;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.wudsn.tools.dis6502.model.AtariDisk;
@@ -194,12 +195,30 @@ public final class Dis6502 {
 			@Override
 			public void run() {
 
+				setNativeLookAndFeel();
+
 				com.wudsn.tools.base.common.Application.createInstance(
 						"https://www.wudsn.com/tools/dis6502/dis6502.zip", "dis6502.jar", Dis6502.class);
 				instance = new Dis6502();
 				instance.run(args);
 			}
 		});
+	}
+
+	/**
+	 * Switches from Swing's default cross-platform "Metal" look and feel to
+	 * the host OS's native one (Windows, in the C++ version's case, which
+	 * always used real Win32 controls) - failures are swallowed and left at
+	 * the cross-platform default, matching {@link
+	 * javax.swing.UIManager}'s own documented fallback behavior for a
+	 * look and feel that cannot be instantiated on the current platform.
+	 */
+	private static void setNativeLookAndFeel() {
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception ex) {
+			// Ignore: keep whatever look and feel Swing already selected.
+		}
 	}
 
 	Dis6502() {
