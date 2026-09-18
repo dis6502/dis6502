@@ -15,9 +15,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -236,6 +239,14 @@ public final class Dis6502 {
 
 		mainWindow = new MainWindow();
 		application.setLogPanel(mainWindow.logPanel);
+		// Ported from Main::Init's startup IDS_LOG_BETA_MESSAGE, sent as soon as
+		// the log panel exists to log it - the only thing that appears in the
+		// C++ version's Log panel before the user does anything. C++ passes its
+		// own build's __DATE__/__TIME__ compile-time macros here; Java has no
+		// equivalent, so the current date/time is used instead.
+		LocalDateTime now = LocalDateTime.now();
+		application.sendInfoMessage(Text.IDS_LOG_BETA_MESSAGE, now.format(DateTimeFormatter.ofPattern("MMM d yyyy", Locale.US)),
+				now.format(DateTimeFormatter.ofPattern("HH:mm:ss", Locale.US)));
 		mainWindow.segmentListPanel.setWorkspace(workspace);
 		mainWindow.segmentListPanel.moveUpMenuItem.addActionListener(e -> workspace.getSegmentList().moveSelectedSegmentUp());
 		mainWindow.segmentListPanel.moveDownMenuItem.addActionListener(e -> workspace.getSegmentList().moveSelectedSegmentDown());
