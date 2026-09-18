@@ -88,7 +88,7 @@ import com.wudsn.tools.dis6502.model.ComputerSystemType;
  */
 public final class ComputerFont {
 
-	private static final int ZOOM = 2;
+	private static final int ZOOM = 1;
 	private static final int NATIVE_HEIGHT = 8; // Pixels, matching the original 8px raster cell height.
 
 	private static final Map<ComputerSystemType, ComputerFont> NORMAL_INSTANCES = new EnumMap<>(ComputerSystemType.class);
