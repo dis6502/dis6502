@@ -161,7 +161,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	private static final String[] TYPE_SUBMENU_LABELS = { "Code", "Code with Low Byte", "Code with High Byte", "Byte", "Word", "Label",
 			"SpartaDos X Label", "SpartaDos X Address Fix-Up", "String", "Screen Byte", "Display List", "Data Store", "Unknown" };
 
-	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("Memory Inspector");
+	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("No segment selected.");
 	private final MemoryInspectorGridPanel grid = new MemoryInspectorGridPanel();
 
 	/**
@@ -371,29 +371,62 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * Ported from MemoryInspector::SegmentChanged. Some segments (an SDX
 	 * symbol-table header, or an SDX relocation block with no data of its
 	 * own) have nothing to display, matching the C++ version's {@code
-	 * hasData} check.
+	 * hasData} check - the title is still shown for these (the segment
+	 * itself is genuinely selected, just not byte-displayable), matching
+	 * {@link #updateTitle}'s own C++ source, which only special-cases a
+	 * null segment, not this narrower {@code hasData} condition.
 	 */
 	public void segmentChanged(MemoryInspectorSelection memoryInspectorSelection) {
 		this.memoryInspectorSelection = memoryInspectorSelection;
 		Segment segment = memoryInspectorSelection.getSegment();
 		boolean hasData = segment != null && !segment.isHeader(FileHeader.SDX_SYM_DEFINED) && !segment.isSDXRelocBlkWithoutData();
 
-		if (!hasData) {
-			grid.setSegment(null);
-			titledBorder.setTitle("Memory Inspector");
-			updatePopupMenuItemsState();
-			revalidate();
-			repaint();
-			return;
-		}
-
-		titledBorder.setTitle(
-				String.format("Memory Inspector - %s ($%04X-$%04X)", segment.title, segment.wBegin, segment.wEnd));
-		grid.setSegment(segment);
+		grid.setSegment(hasData ? segment : null);
 		memoryInspectorSelection.clearSelection();
+		updateTitle();
 		updatePopupMenuItemsState();
 		revalidate();
 		repaint();
+	}
+
+	/**
+	 * Ported from {@code Main}'s {@code WM_PAINT} handler's "Print memory
+	 * inspector window title" block (IDS_DUMP_TITLE_SEGMENT/{@code
+	 * IDS_DUMP_TITLE_SELECTION}/{@code
+	 * IDS_DUMP_TITLE_SEGMENT_NO_SEGMENT_SELECTED}): the selected segment's
+	 * 1-based number, address range and size in hex and decimal - or, once
+	 * a byte range within it is marked, the same for that selection
+	 * instead (absolute addresses, {@code segment.wBegin}-relative).
+	 * Unlike the C++ source, which repaints this from scratch on every
+	 * {@code WM_PAINT} using whatever the selection happens to be at that
+	 * moment, this is called explicitly wherever the segment or selection
+	 * changes ({@link #segmentChanged}, {@link #select}, {@link
+	 * #clearSelection}).
+	 */
+	private void updateTitle() {
+		Segment segment = memoryInspectorSelection == null ? null : memoryInspectorSelection.getSegment();
+		if (segment == null) {
+			titledBorder.setTitle("No segment selected.");
+			return;
+		}
+
+		int segmentNumber = memoryInspectorSelection.getSegmentIndex() + 1;
+		String prefix;
+		int begin;
+		int end;
+		int size;
+		if (memoryInspectorSelection.hasSelection()) {
+			prefix = "Selection";
+			begin = segment.wBegin + memoryInspectorSelection.getBegin();
+			end = segment.wBegin + memoryInspectorSelection.getEnd();
+			size = memoryInspectorSelection.getSize();
+		} else {
+			prefix = "Segment";
+			begin = segment.wBegin;
+			end = segment.wEnd;
+			size = segment.getSize();
+		}
+		titledBorder.setTitle(String.format("%s %d: $%04X-$%04X:$%04X / %d", prefix, segmentNumber, begin, end, size, size));
 	}
 
 	/**
@@ -415,6 +448,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		}
 		memoryInspectorSelection.setSelection(begin, end);
 		highlightRange(memoryInspectorSelection.getBegin(), memoryInspectorSelection.getEnd());
+		updateTitle();
 		updatePopupMenuItemsState();
 	}
 
@@ -424,6 +458,7 @@ public final class MemoryInspectorPanel extends JPanel {
 			memoryInspectorSelection.clearSelection();
 		}
 		clearHighlight();
+		updateTitle();
 		updatePopupMenuItemsState();
 	}
 
