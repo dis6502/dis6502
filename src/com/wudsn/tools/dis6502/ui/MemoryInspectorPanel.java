@@ -191,6 +191,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	private final JPopupMenu popupMenu = new JPopupMenu();
 	private final JCheckBoxMenuItem[] typeMenuItems = new JCheckBoxMenuItem[TYPE_SUBMENU_ORDER.length];
 	private TypeSelectionListener typeSelectionListener;
+	private SelectionChangedListener selectionChangedListener;
 
 	private MemoryInspectorSelection memoryInspectorSelection;
 	private int selectionAnchorOffset = -1;
@@ -227,6 +228,12 @@ public final class MemoryInspectorPanel extends JPanel {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				maybeShowPopup(e);
+				if (SwingUtilities.isLeftMouseButton(e) && selectionAnchorOffset >= 0) {
+					selectionAnchorOffset = -1;
+					if (selectionChangedListener != null) {
+						selectionChangedListener.onSelectionChanged();
+					}
+				}
 			}
 		};
 		grid.addMouseListener(mouseHandler);
@@ -368,6 +375,19 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
+	 * Reports that a mouse-driven byte selection just finished - ported
+	 * from {@code MemoryInspectorControlImpl::LButtonUp}'s
+	 * {@code SELECTION_CHANGED} notification, which fires only once the
+	 * mouse button is released, not on every intermediate {@code
+	 * MouseMove} while dragging. {@code Dis6502} uses this to sync the
+	 * disassembly listing to the selection, matching {@code
+	 * MemoryInspector::SelectionChanged}.
+	 */
+	public void setSelectionChangedListener(SelectionChangedListener selectionChangedListener) {
+		this.selectionChangedListener = selectionChangedListener;
+	}
+
+	/**
 	 * Ported from MemoryInspector::SegmentChanged. Some segments (an SDX
 	 * symbol-table header, or an SDX relocation block with no data of its
 	 * own) have nothing to display, matching the C++ version's {@code
@@ -450,6 +470,10 @@ public final class MemoryInspectorPanel extends JPanel {
 		highlightRange(memoryInspectorSelection.getBegin(), memoryInspectorSelection.getEnd());
 		updateTitle();
 		updatePopupMenuItemsState();
+		// highlightRange only repaints the grid, a child component - the
+		// titled border's text is painted by this panel itself, so it needs
+		// its own repaint to actually show the new title on screen.
+		repaint();
 	}
 
 	/** Ported from MemoryInspector::ClearSelection. */
@@ -460,6 +484,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		clearHighlight();
 		updateTitle();
 		updatePopupMenuItemsState();
+		repaint();
 	}
 
 	/**
@@ -732,6 +757,11 @@ public final class MemoryInspectorPanel extends JPanel {
 			}
 		}
 		return true;
+	}
+
+	/** Reports that a mouse-driven byte selection finished - see {@link #setSelectionChangedListener}. */
+	public interface SelectionChangedListener {
+		void onSelectionChanged();
 	}
 
 	/** Reports a type picked from the popup menu's Change Type submenu, matching {@link XRefPanel.XRefSelectionListener}'s pattern. */

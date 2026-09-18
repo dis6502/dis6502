@@ -337,6 +337,7 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.saveSelectionNoHeaderMenuItem.addActionListener(e -> performSaveMemoryInspectorSelection(false));
 		mainWindow.memoryInspectorPanel.saveSelectionHeaderMenuItem.addActionListener(e -> performSaveMemoryInspectorSelection(true));
 		mainWindow.memoryInspectorPanel.setTypeSelectionListener(this::performSetMemoryInspectorType);
+		mainWindow.memoryInspectorPanel.setSelectionChangedListener(this::performMemoryInspectorSelectionChanged);
 		mainWindow.memoryInspectorPanel.setUnknownBlockToByteMenuItem.addActionListener(e -> performSetUnknownBlockToByte());
 		mainWindow.memoryInspectorPanel.copySelectionMenuItem.addActionListener(e -> performCopyMemoryInspectorSelection());
 		mainWindow.memoryInspectorPanel.editCommentMenuItem.addActionListener(e -> performEditMemoryInspectorComment());
@@ -1583,6 +1584,38 @@ public final class Dis6502 {
 
 		if (!label.isEmpty()) {
 			performFindDisassemblyReferences(label);
+		}
+	}
+
+	/**
+	 * Ported from {@code MemoryInspector::SelectionChanged}, reached here
+	 * via {@link
+	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#setSelectionChangedListener}
+	 * after a mouse-driven memory inspector selection: not every byte
+	 * offset starts its own disassembly line (mid-instruction bytes don't),
+	 * so this walks backward from the selection's first byte, one offset
+	 * at a time, until {@link DisassemblyResult#selectLine(int, int)} finds
+	 * a line that actually starts there, then navigates to it - matching
+	 * the C++ source's own backward-counting loop exactly, ExtendSelectionTo's
+	 * highlighting the disassembly lines up to the selection's end offset
+	 * is not ported, since {@code DisassemblyGridPanel} only ever tracks a
+	 * single highlighted line, not a range (see that class's javadoc).
+	 */
+	private void performMemoryInspectorSelectionChanged() {
+		if (!memoryInspectorSelection.hasSelection()) {
+			return;
+		}
+		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
+		if (disassemblyResult == null) {
+			return;
+		}
+		int segmentIndex = memoryInspectorSelection.getSegmentIndex();
+		int lineNumber = 0;
+		for (int offset = memoryInspectorSelection.getBegin(); offset >= 0 && lineNumber == 0; offset--) {
+			lineNumber = disassemblyResult.selectLine(segmentIndex, offset);
+		}
+		if (lineNumber != 0) {
+			mainWindow.disassemblyPanel.navigateToLine(lineNumber);
 		}
 	}
 
