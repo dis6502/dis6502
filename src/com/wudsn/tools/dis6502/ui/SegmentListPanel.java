@@ -72,7 +72,8 @@ public final class SegmentListPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
-	public final JMenuItem moveUpMenuItem = new JMenuItem("Move Up");
+   // TODO Use Actions (either Swing or WUDSN)
+	public final JMenuItem moveUpMenuItem = new JMenuItem( "Move Up");
 	public final JMenuItem moveDownMenuItem = new JMenuItem("Move Down");
 	public final JMenuItem mergeMenuItem = new JMenuItem("Merge Segments");
 	public final JMenuItem deleteMenuItem = new JMenuItem("Delete");

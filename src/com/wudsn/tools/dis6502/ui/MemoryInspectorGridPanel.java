@@ -21,44 +21,44 @@ import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.Segment;
 
 /**
- * A read-only, custom-painted hex/ASCII dump of a segment's bytes, drawn
- * with the real per-computer-system font from {@link ComputerFont} instead
- * of a Java system font - so every byte value (not just the ones that
- * happen to coincide with printable ASCII) renders as its actual Atari
- * ATASCII/C64 PETSCII character, matching what dis6502.exe itself shows.
+ * A read-only, custom-painted hex/ASCII dump of a segment's bytes, drawn with
+ * the real per-computer-system font from {@link ComputerFont} instead of a Java
+ * system font - so every byte value (not just the ones that happen to coincide
+ * with printable ASCII) renders as its actual Atari ATASCII/C64 PETSCII
+ * character, matching what dis6502.exe itself shows.
  * <p>
- * Ported from ui/MemoryInspectorControlImpl.cpp's {@code PrintLine}
- * (address, hex bytes color-coded by {@link MemoryType}, and the ASCII/
- * ATASCII column) - not the rest of that class: this renders every line of
- * the segment as one plain (if tall) component inside a {@link
- * javax.swing.JScrollPane}, relying on Swing's own clip-rect-based repaint
- * for virtualization instead of {@code PrintLine}/{@code ScrollUp}/{@code
- * ScrollDown}'s manual line-range/{@code BitBlt} scrolling. {@link
- * #offsetAtPoint} ports {@code LButtonDown}/{@code SetEndOfSelection}'s
- * pixel-to-byte mapping (the non-edit-mode case only), letting {@link
- * MemoryInspectorPanel} implement click/drag selection the idiomatic Swing
- * way, with {@link java.awt.event.MouseListener}/{@link
- * java.awt.event.MouseMotionListener} instead of mouse capture and manual
- * {@code SetCapture}/{@code ReleaseCapture} bookkeeping; in-place hex/ASCII
- * editing ({@code Char}/{@code KeyDown}'s edit mode, with its blinking-
- * cursor {@code WM_TIMER}) is not ported - {@link MemoryInspectorPanel}
- * predates this class and never had it (editing goes through {@link
- * AssembleDialog} instead), and this rewrite only replaces how the
- * existing byte grid is drawn and how its selection is set, not how bytes
- * are edited.
+ * Ported from ui/MemoryInspectorControlImpl.cpp's {@code PrintLine} (address,
+ * hex bytes color-coded by {@link MemoryType}, and the ASCII/ ATASCII column) -
+ * not the rest of that class: this renders every line of the segment as one
+ * plain (if tall) component inside a {@link javax.swing.JScrollPane}, relying
+ * on Swing's own clip-rect-based repaint for virtualization instead of
+ * {@code PrintLine}/{@code ScrollUp}/{@code
+ * ScrollDown}'s manual line-range/{@code BitBlt} scrolling.
+ * {@link #offsetAtPoint} ports {@code LButtonDown}/{@code SetEndOfSelection}'s
+ * pixel-to-byte mapping (the non-edit-mode case only), letting
+ * {@link MemoryInspectorPanel} implement click/drag selection the idiomatic
+ * Swing way, with
+ * {@link java.awt.event.MouseListener}/{@link java.awt.event.MouseMotionListener}
+ * instead of mouse capture and manual {@code SetCapture}/{@code ReleaseCapture}
+ * bookkeeping; in-place hex/ASCII editing ({@code Char}/{@code KeyDown}'s edit
+ * mode, with its blinking- cursor {@code WM_TIMER}) is not ported -
+ * {@link MemoryInspectorPanel} predates this class and never had it (editing
+ * goes through {@link AssembleDialog} instead), and this rewrite only replaces
+ * how the existing byte grid is drawn and how its selection is set, not how
+ * bytes are edited.
  * <p>
  * {@code PrintLine}'s hex-byte/ASCII-column color, including its LOBYTE/
- * HIBYTE-adjacency-to-CODE-color rule, is ported verbatim (see {@link
- * #computeDisplayType}) since it directly affects what a real, already
- * pixel-accurate rendering should look like; its {@code cOldType} reset
- * once per displayed line (not once per segment) is preserved by resetting
- * {@code oldType} at the start of each line's row loop here too, the same
- * scope {@code PrintLine} has (it is called once per line).
+ * HIBYTE-adjacency-to-CODE-color rule, is ported verbatim (see
+ * {@link #computeDisplayType}) since it directly affects what a real, already
+ * pixel-accurate rendering should look like; its {@code cOldType} reset once
+ * per displayed line (not once per segment) is preserved by resetting
+ * {@code oldType} at the start of each line's row loop here too, the same scope
+ * {@code PrintLine} has (it is called once per line).
  * <p>
  * Cell dimensions come straight from {@link ComputerFont#getGlyphWidth}/
  * {@link ComputerFont#getGlyphHeight} - already scaled for on-screen
- * legibility, see that class's javadoc - rather than this class applying
- * its own zoom factor.
+ * legibility, see that class's javadoc - rather than this class applying its
+ * own zoom factor.
  *
  * @author Peter Dell
  */
@@ -70,8 +70,9 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 	/** Matches dwMemoryInspectorColor[], indexed by MemoryType.ordinal(). */
 	private static final Color[] TYPE_COLORS = { new Color(0, 0, 0), new Color(192, 192, 192), new Color(128, 128, 128),
-			new Color(128, 0, 0), new Color(128, 0, 128), new Color(128, 128, 0), new Color(255, 127, 0), new Color(0, 127, 255),
-			new Color(0, 128, 0), new Color(255, 128, 255), new Color(0, 0, 128), new Color(255, 0, 128), new Color(255, 0, 255) };
+			new Color(128, 0, 0), new Color(128, 0, 128), new Color(128, 128, 0), new Color(255, 127, 0),
+			new Color(0, 127, 255), new Color(0, 128, 0), new Color(255, 128, 255), new Color(0, 0, 128),
+			new Color(255, 0, 128), new Color(255, 0, 255) };
 
 	private static final Color HIGHLIGHT_COLOR = Color.YELLOW;
 
@@ -126,13 +127,12 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	/**
 	 * Maps a point within this grid to the byte offset under it, ported from
 	 * {@code MemoryInspectorControlImpl::LButtonDown}/{@code
-	 * SetEndOfSelection}'s pixel-to-line/row mapping (the non-edit-mode
-	 * case only - this port has no in-place hex editing) - clicking left of
-	 * the hex pane (the address gutter) maps to row 0, matching the C++
-	 * source, and a point past the last line/row clamps to the nearest
-	 * valid one rather than returning no match, so a drag that leaves the
-	 * grid still extends the selection sensibly. Returns -1 if there is no
-	 * segment displayed or it has no bytes.
+	 * SetEndOfSelection}'s pixel-to-line/row mapping (the non-edit-mode case only -
+	 * this port has no in-place hex editing) - clicking left of the hex pane (the
+	 * address gutter) maps to row 0, matching the C++ source, and a point past the
+	 * last line/row clamps to the nearest valid one rather than returning no match,
+	 * so a drag that leaves the grid still extends the selection sensibly. Returns
+	 * -1 if there is no segment displayed or it has no bytes.
 	 */
 	public int offsetAtPoint(int x, int y) {
 		if (segment == null || computerFont == null) {
@@ -160,7 +160,10 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 		return line * BYTES_PER_LINE + row;
 	}
 
-	/** Ported from PrintLine's cType computation (the LOBYTE/HIBYTE-adjacency-to-CODE-color rule). */
+	/**
+	 * Ported from PrintLine's cType computation (the
+	 * LOBYTE/HIBYTE-adjacency-to-CODE-color rule).
+	 */
 	private MemoryType computeDisplayType(int offset, MemoryType oldType) {
 		MemoryType type = segment.getType(offset);
 		if (offset > 0) {
@@ -177,7 +180,10 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 		return type;
 	}
 
-	/** Ported from MemoryInspectorPanel's (formerly MemoryInspectorControlImpl.cpp PrintLine's) bInternal transform. */
+	/**
+	 * Ported from MemoryInspectorPanel's (formerly MemoryInspectorControlImpl.cpp
+	 * PrintLine's) bInternal transform.
+	 */
 	private static int toInternalCode(int value) {
 		if (value < 64) {
 			return value + 32;
@@ -199,7 +205,10 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 		return (size + BYTES_PER_LINE - 1) / BYTES_PER_LINE;
 	}
 
-	/** Total width in glyph-cell units: address (4 digits + '|') + each byte's "XX " + the ASCII column. */
+	/**
+	 * Total width in glyph-cell units: address (4 digits + '|') + each byte's "XX "
+	 * + the ASCII column.
+	 */
 	private static int totalUnits() {
 		return 5 + BYTES_PER_LINE * 4;
 	}
@@ -217,9 +226,6 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		if (segment == null) {
-			g.setColor(Color.GRAY);
-			g.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
-			g.drawString("No segment selected.", 8, 20);
 			return;
 		}
 
