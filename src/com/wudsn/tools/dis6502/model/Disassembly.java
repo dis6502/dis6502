@@ -67,6 +67,8 @@ public final class Disassembly {
 
 	/** Thrown to unwind to the next pass iteration when a segment boundary is crossed mid-instruction. */
 	private static final class AbortInstructionException extends RuntimeException {
+		private static final long serialVersionUID = 1L;
+
 		private AbortInstructionException() {
 			super(null, null, false, false);
 		}
@@ -74,6 +76,8 @@ public final class Disassembly {
 
 	/** Thrown to unwind out of the current pass when disassembly is cancelled. */
 	private static final class DisassemblyCancelledException extends RuntimeException {
+		private static final long serialVersionUID = 1L;
+
 		private DisassemblyCancelledException() {
 			super(null, null, false, false);
 		}

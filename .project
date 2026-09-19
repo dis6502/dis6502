@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
 	<name>com.wudsn.tools.dis6502</name>
-	<comment></comment>
+	<comment>The interactive MOS 6502 disassembler</comment>
 	<projects>
 	</projects>
 	<buildSpec>
