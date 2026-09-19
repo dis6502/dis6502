@@ -65,6 +65,22 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
+							<!-- org.eclipse.osgi is a signed jar; merging its META-INF
+							     signature files into this uber-jar without stripping them
+							     leaves a manifest the JVM's jar verifier rejects at
+							     runtime ("Invalid signature file digest for Manifest main
+							     attributes"), since the merged jar's content no longer
+							     matches the original signature. -->
+							<filters>
+								<filter>
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>META-INF/*.SF</exclude>
+										<exclude>META-INF/*.DSA</exclude>
+										<exclude>META-INF/*.RSA</exclude>
+									</excludes>
+								</filter>
+							</filters>
 							<transformers>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 									<mainClass>com.wudsn.tools.dis6502.Dis6502</mainClass>
