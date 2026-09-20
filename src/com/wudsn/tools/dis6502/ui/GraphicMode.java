@@ -5,6 +5,8 @@
  */
 package com.wudsn.tools.dis6502.ui;
 
+import com.wudsn.tools.dis6502.Text;
+
 /**
  * The characteristics of one Atari ANTIC graphics mode (8 through 15), as
  * used to render a raw byte buffer as a picture in {@link GraphicPanel}.
@@ -13,11 +15,14 @@ package com.wudsn.tools.dis6502.ui;
  * wSpriteNbColors}/{@code wSpriteNbBytesPerLine}/{@code
  * wSpriteNbPixelsPerByte}/{@code wSpritePixelWidth}/{@code
  * wSpritePixelHeight} parallel arrays in ui/SpriteControlImpl.cpp, and the
- * {@code IDS_SPRITE_ANTIC_8}..{@code _F} resource strings (dis6502.rc) for
- * {@link #label} - see {@link SelectGraphicsDialog}'s own javadoc for why
- * this port renames the C++ source's "Sprite" naming to "Graphic"
- * throughout, despite those citations staying accurate to the real C++
- * identifiers. {@code colors} is kept for fidelity even though nothing
+ * {@link Text#IDS_SPRITE_ANTIC_8}..{@code _F} resource strings (dis6502.rc)
+ * for {@link #label} - kept named after the real C++ resource IDs, per
+ * {@link Text}'s own naming convention of mirroring the original resource
+ * IDs verbatim, unlike this class's own name; see {@link
+ * SelectGraphicsDialog}'s own javadoc for why this port renames the C++
+ * source's "Sprite" naming to "Graphic" throughout, despite those citations
+ * staying accurate to the real C++ identifiers. {@code colors} is kept for
+ * fidelity even though nothing
  * in this port (or, as far as {@link #bitsPerPixel} suggests, the C++
  * source either) actually uses it for pixel decoding - that is fixed per
  * mode via {@link #bitsPerPixel}, matching the C++ version's hardcoded
@@ -32,14 +37,14 @@ package com.wudsn.tools.dis6502.ui;
  */
 public enum GraphicMode {
 
-	ANTIC_8(8, "ANTIC 8 ( 40 x  24 Pixels, 4 Colors)", 4, 10, 4, 8, 8),
-	ANTIC_9(9, "ANTIC 9 ( 80 x  48 Pixels, 2 Colors)", 2, 10, 8, 4, 4),
-	ANTIC_A(10, "ANTIC A ( 80 x  48 Pixels, 4 Colors)", 4, 20, 4, 4, 4),
-	ANTIC_B(11, "ANTIC B (160 x  96 Pixels, 2 Colors)", 2, 20, 8, 2, 2),
-	ANTIC_C(12, "ANTIC C (160 x 192 Pixels, 2 Colors)", 2, 20, 8, 2, 1),
-	ANTIC_D(13, "ANTIC D (160 x  96 Pixels, 4 Colors)", 4, 40, 4, 2, 2),
-	ANTIC_E(14, "ANTIC E (160 x 192 Pixels, 4 Colors)", 4, 40, 4, 2, 1),
-	ANTIC_F(15, "ANTIC F (320 x 192 Pixels, 2 Colors)", 1, 40, 8, 1, 1);
+	ANTIC_8(8, Text.IDS_SPRITE_ANTIC_8, 4, 10, 4, 8, 8),
+	ANTIC_9(9, Text.IDS_SPRITE_ANTIC_9, 2, 10, 8, 4, 4),
+	ANTIC_A(10, Text.IDS_SPRITE_ANTIC_A, 4, 20, 4, 4, 4),
+	ANTIC_B(11, Text.IDS_SPRITE_ANTIC_B, 2, 20, 8, 2, 2),
+	ANTIC_C(12, Text.IDS_SPRITE_ANTIC_C, 2, 20, 8, 2, 1),
+	ANTIC_D(13, Text.IDS_SPRITE_ANTIC_D, 4, 40, 4, 2, 2),
+	ANTIC_E(14, Text.IDS_SPRITE_ANTIC_E, 4, 40, 4, 2, 1),
+	ANTIC_F(15, Text.IDS_SPRITE_ANTIC_F, 1, 40, 8, 1, 1);
 
 	/** The ANTIC mode number (8-15), matching {@code SetMode}'s expected range. */
 	public final int anticMode;
