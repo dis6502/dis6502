@@ -243,7 +243,7 @@ public final class Dis6502 {
 		mainWindow.segmentListPanel.moveUpMenuItem.addActionListener(e -> workspace.getSegmentList().moveSelectedSegmentUp());
 		mainWindow.segmentListPanel.moveDownMenuItem.addActionListener(e -> workspace.getSegmentList().moveSelectedSegmentDown());
 		mainWindow.segmentListPanel.mergeMenuItem.addActionListener(e -> performMergeSegments());
-		mainWindow.segmentListPanel.deleteMenuItem.addActionListener(e -> workspace.getSegmentList().deleteSelectedSegment());
+		mainWindow.segmentListPanel.deleteMenuItem.addActionListener(e -> performDeleteSelectedSegments());
 		mainWindow.segmentListPanel.saveNoHeaderMenuItem.addActionListener(e -> performSaveSegment(false));
 		mainWindow.segmentListPanel.saveHeaderMenuItem.addActionListener(e -> performSaveSegment(true));
 		mainWindow.segmentListPanel.saveAllMenuItem.addActionListener(e -> performSaveAllSegments());
@@ -954,6 +954,17 @@ public final class Dis6502 {
 			int mergedCount = workspace.getSegmentList().mergeSegments();
 			application.sendInfoMessage(Text.IDS_LOG_SEGMENTS_MERGED, String.valueOf(mergedCount));
 		}
+	}
+
+	/**
+	 * No C++ counterpart - {@code MainSegment::PerformCommands}'s {@code
+	 * IDM_SEGMENT_DELETE} case only ever removes the one segment a
+	 * single-selection {@code ListBox} can have selected; see {@link
+	 * com.wudsn.tools.dis6502.ui.SegmentListPanel}'s own javadoc for why this
+	 * port deletes every selected segment instead.
+	 */
+	private void performDeleteSelectedSegments() {
+		workspace.getSegmentList().deleteSegments(mainWindow.segmentListPanel.getSelectedSegmentIndices());
 	}
 
 	/** Ported from MainSegment::SaveSegment. */

@@ -41,7 +41,30 @@ import com.wudsn.tools.dis6502.model.WorkspaceProperty;
  * MainSegment::Selected} - simplified to a plain {@link JTable} for this
  * first pass; the {@code updating} guard replicates {@code
  * MainSegment::updateCounter}'s reentrancy protection between the two
- * directions of selection sync. {@link #updatePopupMenuState} is ported
+ * directions of selection sync.
+ * <p>
+ * One deliberate departure from the C++ source: {@code
+ * SegmentListWindow.cpp} creates a plain single-selection Win32 {@code
+ * ListBox} ({@code LB_GETCURSEL}/{@code LB_SETCURSEL}, no {@code
+ * LBS_MULTIPLESEL}/{@code LBS_EXTENDEDSEL}), and {@code
+ * SegmentList::DeleteSelectedSegment}/{@link
+ * com.wudsn.tools.dis6502.model.SegmentList#deleteSelectedSegment} only
+ * ever removes that one segment - there is no multi-segment delete in the
+ * original at all. This port's {@link #table} uses {@link
+ * ListSelectionModel#MULTIPLE_INTERVAL_SELECTION} instead, letting {@link
+ * #deleteMenuItem} remove every selected segment in one step via {@link
+ * #getSelectedSegmentIndices}/{@link
+ * com.wudsn.tools.dis6502.model.SegmentList#deleteSegments} - every other
+ * command ({@link #moveUpMenuItem}/{@link #moveDownMenuItem}/{@link
+ * #saveNoHeaderMenuItem}/{@link #saveHeaderMenuItem}/{@link
+ * #propertiesMenuItem}) is inherently single-segment and stays gated on
+ * exactly one selected row (see {@link #updatePopupMenuState}), and {@link
+ * #mergeMenuItem} is untouched - {@code SegmentList::MergeSegments}/{@link
+ * com.wudsn.tools.dis6502.model.SegmentList#mergeSegments} was already a
+ * whole-list sweep for adjacent, compatible segments that never looked at
+ * the selection to begin with.
+ * <p>
+ * {@link #updatePopupMenuState} is ported
  * from {@code SegmentListPopupMenu::Update} and {@link #maybeShowPopup}
  * from {@code MainSegment::RButtonDownProc} (including its "no segments,
  * no menu" guard); the popup's items are exposed as public fields, with
@@ -97,7 +120,7 @@ public final class SegmentListPanel extends JPanel {
 
 	public SegmentListPanel() {
 		super(new BorderLayout());
-		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.setDefaultRenderer(Object.class, cellRenderer);
 		table.getSelectionModel().addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting() && !updating) {
@@ -147,20 +170,28 @@ public final class SegmentListPanel extends JPanel {
 		popupMenu.show(table, e.getX(), e.getY());
 	}
 
-	/** Ported from SegmentListPopupMenu::Update. */
+	/**
+	 * Ported from SegmentListPopupMenu::Update, with one deliberate
+	 * departure: {@link #deleteMenuItem} is enabled for one or more selected
+	 * rows (see this class's own javadoc for the multi-selection this
+	 * enables), while every other item stays gated on exactly one selected
+	 * row, since Move Up/Down, Save (with/without header) and Properties are
+	 * inherently single-segment operations - unchanged from C++, which never
+	 * had more than one row to consider in the first place.
+	 */
 	private void updatePopupMenuState() {
 		int segmentCount = workspace.getSegmentList().getCount();
 		int selectedIndex = workspace.getSegmentList().getSelectedIndex();
-		boolean selected = selectedIndex >= 0;
+		boolean singleSelected = table.getSelectedRowCount() == 1;
 
-		moveUpMenuItem.setEnabled(selectedIndex > 0);
-		moveDownMenuItem.setEnabled(selectedIndex < segmentCount - 1);
+		moveUpMenuItem.setEnabled(singleSelected && selectedIndex > 0);
+		moveDownMenuItem.setEnabled(singleSelected && selectedIndex < segmentCount - 1);
 		mergeMenuItem.setEnabled(segmentCount > 1);
-		deleteMenuItem.setEnabled(selected);
-		saveNoHeaderMenuItem.setEnabled(selected);
-		saveHeaderMenuItem.setEnabled(selected);
+		deleteMenuItem.setEnabled(table.getSelectedRowCount() > 0);
+		saveNoHeaderMenuItem.setEnabled(singleSelected);
+		saveHeaderMenuItem.setEnabled(singleSelected);
 		saveAllMenuItem.setEnabled(segmentCount > 0);
-		propertiesMenuItem.setEnabled(selected);
+		propertiesMenuItem.setEnabled(singleSelected);
 	}
 
 	public void setWorkspace(Workspace workspace) {
@@ -168,7 +199,17 @@ public final class SegmentListPanel extends JPanel {
 		workspace.addListener(new WorkspaceChangedListener() {
 			@Override
 			public void handleWorkspaceChanged(Workspace changedWorkspace, List<WorkspaceProperty> properties) {
-				if (properties.contains(WorkspaceProperty.SEGMENTS) || properties.contains(WorkspaceProperty.SELECTED_SEGMENT)) {
+				// The !updating check matters more than it used to: with
+				// multi-selection enabled, adding a second row to an
+				// existing selection still calls setSelectedIndex with the
+				// same (smallest-row) value in selected() below, which
+				// unconditionally re-notifies SELECTED_SEGMENT - without
+				// this guard, that self-inflicted notification would reach
+				// refresh() and collapse the table's real, just-made
+				// multi-row selection back down to one row before the user
+				// even sees it.
+				if (!updating
+						&& (properties.contains(WorkspaceProperty.SEGMENTS) || properties.contains(WorkspaceProperty.SELECTED_SEGMENT))) {
 					refresh();
 				}
 			}
@@ -192,7 +233,16 @@ public final class SegmentListPanel extends JPanel {
 		}
 	}
 
-	/** Ported from MainSegment::Selected. */
+	/**
+	 * Ported from MainSegment::Selected - {@code
+	 * table.getSelectedRow()} (the smallest selected row, by {@link
+	 * JTable}'s own contract) still drives {@link Workspace#getSegmentList()}'s
+	 * single {@code selectedIndex} with multi-selection enabled, so the
+	 * memory inspector/Properties/Save Segment/Move Up/Down - every
+	 * inherently single-segment concept in this port - keep tracking one
+	 * well-defined "current" segment exactly as before, regardless of how
+	 * many rows are actually selected.
+	 */
 	private void selected() {
 		updating = true;
 		try {
@@ -202,6 +252,16 @@ public final class SegmentListPanel extends JPanel {
 		} finally {
 			updating = false;
 		}
+	}
+
+	/**
+	 * The indices of every currently selected row, ascending - added
+	 * alongside {@link #deleteMenuItem}'s multi-selection support (see this
+	 * class's own javadoc) for {@code Dis6502} to delete them all via {@link
+	 * SegmentList#deleteSegments}.
+	 */
+	public int[] getSelectedSegmentIndices() {
+		return table.getSelectedRows();
 	}
 
 	private final class Model extends AbstractTableModel {

@@ -6,6 +6,7 @@
 package com.wudsn.tools.dis6502.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -288,6 +289,34 @@ public final class SegmentList implements Xml.Serializable {
 		// Select the previous segment, if there is any.
 		segmentIndex = (segmentIndex > 0) ? segmentIndex - 1 : NO_SEGMENT_INDEX;
 		setSelectedIndex(segmentIndex);
+		endUpdate();
+	}
+
+	/**
+	 * Deletes every segment at the given indices in one update - unlike
+	 * {@link #deleteSelectedSegment}, which this builds on and which is a
+	 * faithful port of {@code SegmentList::DeleteSelectedSegment} (C++'s
+	 * segment list is single-selection only, see {@code
+	 * com.wudsn.tools.dis6502.ui.SegmentListPanel}'s own javadoc for why this
+	 * multi-target method has no C++ counterpart to cite), this is a
+	 * deliberate departure added for that panel's Java-only multi-selection
+	 * support. Selects the segment immediately before the smallest deleted
+	 * index afterward, if any remain there, generalizing {@link
+	 * #deleteSelectedSegment}'s own "select the previous segment" choice to
+	 * more than one deletion.
+	 */
+	public void deleteSegments(int[] segmentIndices) {
+		if (segmentIndices.length == 0) {
+			return;
+		}
+		int[] sortedIndices = segmentIndices.clone();
+		Arrays.sort(sortedIndices);
+
+		beginUpdate();
+		for (int i = sortedIndices.length - 1; i >= 0; i--) {
+			deleteSegment(sortedIndices[i]);
+		}
+		setSelectedIndex(sortedIndices[0] > 0 ? sortedIndices[0] - 1 : NO_SEGMENT_INDEX);
 		endUpdate();
 	}
 
@@ -610,7 +639,7 @@ public final class SegmentList implements Xml.Serializable {
 	}
 
 	void notifyListeners(Property property) {
-		Log.logInfo("SegmentList.notifyListeners: Property {0}", new Object[] { property });
+		// Log.logInfo("SegmentList.notifyListeners: Property {0}", new Object[] { property });
 
 		// Add each event only once.
 		if (!propertyChangeEvents.contains(property)) {
