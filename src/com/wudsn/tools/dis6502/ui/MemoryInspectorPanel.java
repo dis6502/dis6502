@@ -183,10 +183,14 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * by a plain, headless unit test. This class keeps only the Swing-specific
  * glue: {@link #handleEditKeyPressed}/{@link #handleEditKeyTyped} translate
  * a raw {@link java.awt.event.KeyEvent} into a semantic call on {@link
- * #memoryInspectorState}, then mirror the result into {@link
- * MemoryInspectorGridPanel} for painting (it does not own this state
- * either); this class also owns focus/mouse handling, the popup-menu swap,
- * and the blink timer. Two confirmed C++
+ * #memoryInspectorState}, then tell {@link MemoryInspectorGridPanel} to
+ * notice via {@link MemoryInspectorGridPanel#refreshEditCursor}/{@link
+ * MemoryInspectorGridPanel#refreshEditMode} - that class reads the current
+ * selection/edit-mode values live off {@link #memoryInspectorState} itself
+ * (through {@link com.wudsn.tools.dis6502.model.ImmutableMemoryInspectorState},
+ * narrowing what a pure painter can do to it) rather than being handed each
+ * value as it changes; this class also owns focus/mouse handling, the
+ * popup-menu swap, and the blink timer. Two confirmed C++
  * quirks are deliberately fixed here rather than replicated: typing past the
  * end of the buffer bypasses {@code MainController::QuitEditMode} in C++, so
  * its disassembly refresh is skipped on that one exit path only (see the
@@ -664,6 +668,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		boolean hasData = segment != null && !segment.isHeader(FileHeader.SDX_SYM_DEFINED)
 				&& !segment.isSDXRelocBlkWithoutData();
 
+		grid.setMemoryInspectorState(memoryInspectorState);
 		grid.setSegment(hasData ? segment : null);
 		memoryInspectorState.clearSelection();
 		updateTitle();
@@ -731,12 +736,12 @@ public final class MemoryInspectorPanel extends JPanel {
 			return;
 		}
 		memoryInspectorState.setSelection(begin, end);
-		highlightRange(memoryInspectorState.getBegin(), memoryInspectorState.getEnd());
+		grid.refreshSelection();
 		updateTitle();
 		updatePopupMenuItemsState();
-		// highlightRange only repaints the grid, a child component - the
-		// titled border's text is painted by this panel itself, so it needs
-		// its own repaint to actually show the new title on screen.
+		// grid.refreshSelection() only repaints the grid, a child component -
+		// the titled border's text is painted by this panel itself, so it
+		// needs its own repaint to actually show the new title on screen.
 		repaint();
 	}
 
@@ -745,7 +750,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		if (memoryInspectorState != null) {
 			memoryInspectorState.clearSelection();
 		}
-		clearHighlight();
+		grid.refreshSelection();
 		updateTitle();
 		updatePopupMenuItemsState();
 		repaint();
@@ -943,7 +948,8 @@ public final class MemoryInspectorPanel extends JPanel {
 		if (!memoryInspectorState.enterEditMode(offset, pane)) {
 			return;
 		}
-		syncEditModeToGrid();
+		grid.refreshEditMode();
+		grid.refreshEditCursor();
 		grid.requestFocusInWindow();
 		startBlinkTimer();
 	}
@@ -968,7 +974,8 @@ public final class MemoryInspectorPanel extends JPanel {
 		boolean wasEditing = memoryInspectorState.isEditMode();
 		int offset = memoryInspectorState.getEditCursorOffset();
 		memoryInspectorState.quitEditMode();
-		grid.setEditMode(false);
+		grid.refreshEditMode();
+		grid.refreshEditCursor();
 		stopBlinkTimer();
 		if (wasEditing) {
 			if (offset >= 0) {
@@ -978,12 +985,6 @@ public final class MemoryInspectorPanel extends JPanel {
 				editModeExitedListener.onEditModeExited();
 			}
 		}
-	}
-
-	/** Mirrors {@link MemoryInspectorState}'s edit-mode state into {@link #grid} so it can paint the cursor - the grid itself does not own this state. */
-	private void syncEditModeToGrid() {
-		grid.setEditMode(memoryInspectorState.isEditMode());
-		grid.setEditCursor(memoryInspectorState.getEditCursorOffset(), memoryInspectorState.getEditCursorPane());
 	}
 
 	private void startBlinkTimer() {
@@ -1015,7 +1016,7 @@ public final class MemoryInspectorPanel extends JPanel {
 			return;
 		}
 		memoryInspectorState.moveEditCursor(movement);
-		syncEditModeToGrid();
+		grid.refreshEditCursor();
 		e.consume();
 	}
 
@@ -1055,7 +1056,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		if (result == MemoryInspectorEditCharResult.NOT_HANDLED) {
 			return;
 		}
-		syncEditModeToGrid();
+		grid.refreshEditCursor();
 		if (result == MemoryInspectorEditCharResult.HANDLED_AT_BUFFER_END) {
 			quitEditMode();
 			return;
@@ -1093,14 +1094,6 @@ public final class MemoryInspectorPanel extends JPanel {
 		splitAtSelectionMenuItem.setEnabled(hasSelection
 				&& memoryInspectorState.getWorkspace().getSegmentList().getCount() < SegmentList.MAX_SEGMENTS
 				&& memoryInspectorState.getSegment().canSplitAt(memoryInspectorState.getBegin()));
-	}
-
-	private void highlightRange(int begin, int end) {
-		grid.highlightRange(begin, end);
-	}
-
-	private void clearHighlight() {
-		grid.clearHighlight();
 	}
 
 	/** Ported from MemoryInspector::HasFindString. */
