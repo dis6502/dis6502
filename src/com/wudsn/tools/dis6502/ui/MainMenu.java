@@ -5,14 +5,14 @@
  */
 package com.wudsn.tools.dis6502.ui;
 
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.KeyStroke;
+
+import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.repository.Action;
+import com.wudsn.tools.dis6502.Actions;
 
 /**
  * The application's main menu bar.
@@ -34,6 +34,28 @@ import javax.swing.KeyStroke;
  * {@code Dis6502}); every other menu item is present (matching the .rc
  * structure, for visual completeness) but disabled, since the dialogs/
  * logic they need are not ported yet.
+ * <p>
+ * Every {@code JMenu}/{@code JMenuItem} is built from an {@link Action} via
+ * {@link ElementFactory} instead of a literal string label - see {@link
+ * Actions} for the per-item label/mnemonic/tooltip/accelerator repository
+ * (backed by {@code Actions.properties}) and {@code
+ * ACTIONS_ELEMENT_FACTORY_MIGRATION.md} at the repository root for the full
+ * rationale. This changes only how each component is constructed, not how
+ * it is wired: every field keeps its existing type/name/visibility, and
+ * {@code Dis6502} still attaches its own listener to each one directly
+ * (see that class's wiring block) - {@link ElementFactory} never attaches a
+ * listener itself. The three {@link JCheckBoxMenuItem}s have no {@link
+ * ElementFactory} factory method of their own (unlike {@link JMenu}/{@link
+ * JMenuItem}), so {@link #createCheckBoxMenuItem} builds one manually and
+ * applies {@link ElementFactory#setButtonTextAndMnemonic} to it, the same
+ * idiom {@code com.wudsn.tools.base.gui.AttributeTableColumnChooser} already
+ * uses for the same reason. The "Open File"/"Add File" submenu headers and
+ * the top-level "Equates"/"View" menus are local to this class ({@code
+ * Dis6502} never references them), so they stay plain local variables, not
+ * fields - only their {@link Action}s live in {@link Actions}. "File" and
+ * "Help" reuse {@code com.wudsn.tools.base.Actions}' own shared {@code
+ * MainMenu_File}/{@code MainMenu_Help} fields instead of duplicating them,
+ * matching every other WUDSN Swing tool's own main menu.
  *
  * @author Peter Dell
  */
@@ -41,46 +63,68 @@ public final class MainMenu {
 
 	public final JMenuBar menuBar = new JMenuBar();
 
-	public final JMenuItem newWorkspaceMenuItem = new JMenuItem("New Workspace");
-	public final JMenuItem openWorkspaceMenuItem = new JMenuItem("Open Workspace...");
-	public final JMenuItem openCassetteImageFileMenuItem = new JMenuItem("Open Cassette Image File...");
-	public final JMenuItem addCassetteImageFileMenuItem = new JMenuItem("Add Cassette Image File...");
-	public final JMenuItem openExecutableFileMenuItem = new JMenuItem("Open Executable File...");
-	public final JMenuItem addExecutableFileMenuItem = new JMenuItem("Add Executable File...");
-	public final JMenuItem openROMImageFileMenuItem = new JMenuItem("Open ROM Image File...");
-	public final JMenuItem addROMImageFileMenuItem = new JMenuItem("Add ROM Image File...");
-	public final JMenuItem openRawFileMenuItem = new JMenuItem("Open Raw File...");
-	public final JMenuItem addRawFileMenuItem = new JMenuItem("Add Raw File...");
-	public final JMenuItem openDiskImageExecutableFileMenuItem = new JMenuItem("Open Disk Image Executable File...");
-	public final JMenuItem addDiskImageExecutableFileMenuItem = new JMenuItem("Add Disk Image Executable File...");
-	public final JMenuItem openDiskImageBootSectorsMenuItem = new JMenuItem("Open Disk Image Boot Sectors...");
-	public final JMenuItem addDiskImageBootSectorsMenuItem = new JMenuItem("Add Disk Image Boot Sectors...");
-	public final JMenuItem openDiskImageSectorsMenuItem = new JMenuItem("Open Disk Image Sectors...");
-	public final JMenuItem addDiskImageSectorsMenuItem = new JMenuItem("Add Disk Image Sectors...");
-	public final JMenuItem saveWorkspaceMenuItem = new JMenuItem("Save Workspace");
-	public final JMenuItem saveWorkspaceAsMenuItem = new JMenuItem("Save Workspace As...");
-	public final JMenuItem saveDisassemblyFilesMenuItem = new JMenuItem("Save Disassembly Files...");
-	public final JMenuItem writeBootDiskMenuItem = new JMenuItem("Write Boot Disk...");
-	public final JMenu recentWorkspacesMenu = new JMenu("Recent Workspaces");
-	public final JMenu recentFilesMenu = new JMenu("Recent Files");
-	public final JMenuItem exitMenuItem = new JMenuItem("Exit");
+	public final JMenuItem newWorkspaceMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_NewWorkspace, "newWorkspaceMenuItem");
+	public final JMenuItem openWorkspaceMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenWorkspace, "openWorkspaceMenuItem");
+	public final JMenuItem openCassetteImageFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenCassetteImageFile,
+			"openCassetteImageFileMenuItem");
+	public final JMenuItem addCassetteImageFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_AddCassetteImageFile,
+			"addCassetteImageFileMenuItem");
+	public final JMenuItem openExecutableFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenExecutableFile,
+			"openExecutableFileMenuItem");
+	public final JMenuItem addExecutableFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_AddExecutableFile,
+			"addExecutableFileMenuItem");
+	public final JMenuItem openROMImageFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenROMImageFile,
+			"openROMImageFileMenuItem");
+	public final JMenuItem addROMImageFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_AddROMImageFile,
+			"addROMImageFileMenuItem");
+	public final JMenuItem openRawFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenRawFile, "openRawFileMenuItem");
+	public final JMenuItem addRawFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_AddRawFile, "addRawFileMenuItem");
+	public final JMenuItem openDiskImageExecutableFileMenuItem = ElementFactory
+			.createMenuItem(Actions.MainMenu_File_OpenDiskImageExecutableFile, "openDiskImageExecutableFileMenuItem");
+	public final JMenuItem addDiskImageExecutableFileMenuItem = ElementFactory
+			.createMenuItem(Actions.MainMenu_File_AddDiskImageExecutableFile, "addDiskImageExecutableFileMenuItem");
+	public final JMenuItem openDiskImageBootSectorsMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenDiskImageBootSectors,
+			"openDiskImageBootSectorsMenuItem");
+	public final JMenuItem addDiskImageBootSectorsMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_AddDiskImageBootSectors,
+			"addDiskImageBootSectorsMenuItem");
+	public final JMenuItem openDiskImageSectorsMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenDiskImageSectors,
+			"openDiskImageSectorsMenuItem");
+	public final JMenuItem addDiskImageSectorsMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_AddDiskImageSectors,
+			"addDiskImageSectorsMenuItem");
+	public final JMenuItem saveWorkspaceMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_SaveWorkspace, "saveWorkspaceMenuItem");
+	public final JMenuItem saveWorkspaceAsMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_SaveWorkspaceAs,
+			"saveWorkspaceAsMenuItem");
+	public final JMenuItem saveDisassemblyFilesMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_SaveDisassemblyFiles,
+			"saveDisassemblyFilesMenuItem");
+	public final JMenuItem writeBootDiskMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_WriteBootDisk, "writeBootDiskMenuItem");
+	public final JMenu recentWorkspacesMenu = ElementFactory.createMenu(Actions.MainMenu_File_RecentWorkspaces);
+	public final JMenu recentFilesMenu = ElementFactory.createMenu(Actions.MainMenu_File_RecentFiles);
+	public final JMenuItem exitMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_Exit, "exitMenuItem");
 
-	public final JMenuItem clearSystemEquatesMenuItem = new JMenuItem("Clear System Equates");
-	public final JMenuItem displaySystemEquatesMenuItem = new JMenuItem("Display System Equates");
-	public final JMenuItem clearUserEquatesMenuItem = new JMenuItem("Clear User Equates");
-	public final JMenuItem editUserEquatesMenuItem = new JMenuItem("Edit User Equates...");
-	public final JMenuItem defineUserAddressRangeMenuItem = new JMenuItem("Define Address Range...");
-	public final JMenuItem openUserEquatesMenuItem = new JMenuItem("Open User Equates...");
-	public final JMenuItem saveUserEquatesMenuItem = new JMenuItem("Save User Equates...");
-	public final JMenuItem exportUserEquatesMenuItem = new JMenuItem("Export User Equates...");
+	public final JMenuItem clearSystemEquatesMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Equates_ClearSystemEquates,
+			"clearSystemEquatesMenuItem");
+	public final JMenuItem displaySystemEquatesMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Equates_DisplaySystemEquates,
+			"displaySystemEquatesMenuItem");
+	public final JMenuItem clearUserEquatesMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Equates_ClearUserEquates,
+			"clearUserEquatesMenuItem");
+	public final JMenuItem editUserEquatesMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Equates_EditUserEquates,
+			"editUserEquatesMenuItem");
+	public final JMenuItem defineUserAddressRangeMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Equates_DefineUserAddressRange,
+			"defineUserAddressRangeMenuItem");
+	public final JMenuItem openUserEquatesMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Equates_OpenUserEquates,
+			"openUserEquatesMenuItem");
+	public final JMenuItem saveUserEquatesMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Equates_SaveUserEquates,
+			"saveUserEquatesMenuItem");
+	public final JMenuItem exportUserEquatesMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Equates_ExportUserEquates,
+			"exportUserEquatesMenuItem");
 
-	public final JCheckBoxMenuItem displayAsScreenCodeMenuItem = new JCheckBoxMenuItem("Display as Screen Code");
-	public final JCheckBoxMenuItem noDisassemblyMenuItem = new JCheckBoxMenuItem("No Disassembly");
-	public final JCheckBoxMenuItem doubleFontHeightMenuItem = new JCheckBoxMenuItem("Double Font Height");
-	public final JMenuItem defaultFoldersMenuItem = new JMenuItem("Default Folders...");
-	public final JMenuItem profileMenuItem = new JMenuItem("Profile...");
+	public final JCheckBoxMenuItem displayAsScreenCodeMenuItem = createCheckBoxMenuItem(Actions.MainMenu_View_DisplayAsScreenCode);
+	public final JCheckBoxMenuItem noDisassemblyMenuItem = createCheckBoxMenuItem(Actions.MainMenu_View_NoDisassembly);
+	public final JCheckBoxMenuItem doubleFontHeightMenuItem = createCheckBoxMenuItem(Actions.MainMenu_View_DoubleFontHeight);
+	public final JMenuItem defaultFoldersMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_View_DefaultFolders, "defaultFoldersMenuItem");
+	public final JMenuItem profileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_View_Profile, "profileMenuItem");
 
-	public final JMenuItem aboutMenuItem = new JMenuItem("About...");
+	public final JMenuItem aboutMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Help_About, "aboutMenuItem");
 
 	public MainMenu() {
 		menuBar.add(createFileMenu());
@@ -89,41 +133,42 @@ public final class MainMenu {
 		menuBar.add(createHelpMenu());
 	}
 
-	private JMenu createFileMenu() {
-		JMenu menu = new JMenu("File");
+	/** See the class javadoc for why {@link JCheckBoxMenuItem} needs this instead of an {@link ElementFactory} factory method. */
+	private static JCheckBoxMenuItem createCheckBoxMenuItem(Action action) {
+		JCheckBoxMenuItem item = new JCheckBoxMenuItem();
+		ElementFactory.setButtonTextAndMnemonic(item, action);
+		return item;
+	}
 
-		newWorkspaceMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK));
+	private JMenu createFileMenu() {
+		JMenu menu = ElementFactory.createMenu(com.wudsn.tools.base.Actions.MainMenu_File);
+
 		menu.add(newWorkspaceMenuItem);
 		menu.addSeparator();
 
-		openWorkspaceMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
 		menu.add(openWorkspaceMenuItem);
 
-		JMenu openFileMenu = new JMenu("Open File");
+		JMenu openFileMenu = ElementFactory.createMenu(Actions.MainMenu_File_OpenFile);
 		openFileMenu.add(openCassetteImageFileMenuItem);
 		openFileMenu.add(openDiskImageExecutableFileMenuItem);
 		openFileMenu.add(openDiskImageBootSectorsMenuItem);
 		openFileMenu.add(openDiskImageSectorsMenuItem);
-		openExecutableFileMenuItem
-				.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
 		openFileMenu.add(openExecutableFileMenuItem);
 		openFileMenu.add(openRawFileMenuItem);
 		openFileMenu.add(openROMImageFileMenuItem);
 		menu.add(openFileMenu);
 
-		JMenu addFileMenu = new JMenu("Add File");
+		JMenu addFileMenu = ElementFactory.createMenu(Actions.MainMenu_File_AddFile);
 		addFileMenu.add(addCassetteImageFileMenuItem);
 		addFileMenu.add(addDiskImageExecutableFileMenuItem);
 		addFileMenu.add(addDiskImageBootSectorsMenuItem);
 		addFileMenu.add(addDiskImageSectorsMenuItem);
-		addExecutableFileMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK));
 		addFileMenu.add(addExecutableFileMenuItem);
 		addFileMenu.add(addRawFileMenuItem);
 		addFileMenu.add(addROMImageFileMenuItem);
 		menu.add(addFileMenu);
 		menu.addSeparator();
 
-		saveWorkspaceMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
 		menu.add(saveWorkspaceMenuItem);
 		menu.add(saveWorkspaceAsMenuItem);
 		menu.add(saveDisassemblyFilesMenuItem);
@@ -142,7 +187,7 @@ public final class MainMenu {
 	}
 
 	private JMenu createEquatesMenu() {
-		JMenu menu = new JMenu("Equates");
+		JMenu menu = ElementFactory.createMenu(Actions.MainMenu_Equates);
 
 		menu.add(clearSystemEquatesMenuItem);
 		menu.add(displaySystemEquatesMenuItem);
@@ -163,7 +208,7 @@ public final class MainMenu {
 	}
 
 	private JMenu createViewMenu() {
-		JMenu menu = new JMenu("View");
+		JMenu menu = ElementFactory.createMenu(Actions.MainMenu_View);
 
 		menu.add(displayAsScreenCodeMenuItem);
 		menu.add(noDisassemblyMenuItem);
@@ -177,7 +222,7 @@ public final class MainMenu {
 	}
 
 	private JMenu createHelpMenu() {
-		JMenu menu = new JMenu("Help");
+		JMenu menu = ElementFactory.createMenu(com.wudsn.tools.base.Actions.MainMenu_Help);
 		menu.add(aboutMenuItem);
 		return menu;
 	}
