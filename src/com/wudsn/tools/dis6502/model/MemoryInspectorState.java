@@ -43,23 +43,29 @@ import java.util.Arrays;
  * {@link #moveEditCursor}/{@link #typeEditChar} read {@link #segment}
  * directly rather than re-resolving "the current segment" through {@link
  * Workspace#getSegmentList()} a second time.
+ * <p>
+ * Implements {@link ImmutableMemoryInspectorState} - see that interface's
+ * javadoc for why - so {@link #segment} is private (with no external
+ * writers before this split, confirmed by grep) rather than the public
+ * field it used to be: a public mutable field would have left the "read
+ * only" side of that split meaningless for anyone still holding this
+ * concrete type.
  *
  * @author Peter Dell
  */
-public final class MemoryInspectorState {
+public final class MemoryInspectorState implements ImmutableMemoryInspectorState {
 
 	/** Matches {@code MemoryInspectorGridPanel.BYTES_PER_LINE} - kept as its own constant since this class (model) must not depend on that UI class. */
 	private static final int EDIT_BYTES_PER_LINE = 16;
 
 	private final Workspace workspace;
 
-	public Segment segment;
-
 	private int segmentIndex;
+	private Segment segment;
 
 	private boolean selectionPresent;
-	private int nBegin;
-	private int nEnd;
+	private int begin;
+	private int end;
 
 	private boolean editMode;
 	private int editCursorOffset = -1;
@@ -70,6 +76,7 @@ public final class MemoryInspectorState {
 		clear();
 	}
 
+	@Override
 	public Workspace getWorkspace() {
 		return workspace;
 	}
@@ -81,10 +88,12 @@ public final class MemoryInspectorState {
 		quitEditMode();
 	}
 
+	@Override
 	public int getSegmentIndex() {
 		return segmentIndex;
 	}
 
+	@Override
 	public boolean hasSegment() {
 		return segmentIndex != SegmentList.NO_SEGMENT_INDEX;
 	}
@@ -95,20 +104,23 @@ public final class MemoryInspectorState {
 				: workspace.getSegmentList().getSegment(segmentIndex);
 	}
 
+	@Override
 	public Segment getSegment() {
 		return segment;
 	}
 
 	public void clearSelection() {
 		selectionPresent = false;
-		nBegin = 0;
-		nEnd = 0;
+		begin = 0;
+		end = 0;
 	}
 
+	@Override
 	public boolean hasSelection() {
 		return hasSegment() && !segment.isEmpty() && selectionPresent;
 	}
 
+	@Override
 	public boolean isEmpty() {
 		return !hasSelection();
 	}
@@ -128,24 +140,27 @@ public final class MemoryInspectorState {
 		}
 
 		if (nBegin <= nEnd) {
-			this.nBegin = nBegin;
-			this.nEnd = nEnd;
+			this.begin = nBegin;
+			this.end = nEnd;
 		} else {
-			this.nBegin = nEnd;
-			this.nEnd = nBegin;
+			this.begin = nEnd;
+			this.end = nBegin;
 		}
 
 		this.selectionPresent = true;
 	}
 
+	@Override
 	public int getBegin() {
-		return nBegin;
+		return begin;
 	}
 
+	@Override
 	public int getEnd() {
-		return nEnd;
+		return end;
 	}
 
+	@Override
 	public int getSize() {
 		if (isEmpty()) {
 			return 0;
@@ -153,14 +168,15 @@ public final class MemoryInspectorState {
 		return getEnd() - getBegin() + 1;
 	}
 
-	/** Returns the selection's begin/end addresses as a two-element array, or {@code null} if there is no segment. */
+	@Override
 	public int[] getAddressRange() {
 		if (segment == null) {
 			return null;
 		}
-		return new int[] { segment.wBegin + nBegin, segment.wBegin + nEnd };
+		return new int[] { segment.wBegin + begin, segment.wBegin + end };
 	}
 
+	@Override
 	public byte[] getByteSequence() {
 		if (hasSelection()) {
 			return Arrays.copyOfRange(segment.memoryBlock.getData(), getBegin(), getBegin() + getSize());
@@ -168,14 +184,17 @@ public final class MemoryInspectorState {
 		return new byte[0];
 	}
 
+	@Override
 	public boolean isEditMode() {
 		return editMode;
 	}
 
+	@Override
 	public int getEditCursorOffset() {
 		return editCursorOffset;
 	}
 
+	@Override
 	public MemoryInspectorEditPane getEditCursorPane() {
 		return editCursorPane;
 	}
