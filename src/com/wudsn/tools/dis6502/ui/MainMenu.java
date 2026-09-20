@@ -11,7 +11,6 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 
 import com.wudsn.tools.base.gui.ElementFactory;
-import com.wudsn.tools.base.repository.Action;
 import com.wudsn.tools.dis6502.Actions;
 
 /**
@@ -44,12 +43,14 @@ import com.wudsn.tools.dis6502.Actions;
  * it is wired: every field keeps its existing type/name/visibility, and
  * {@code Dis6502} still attaches its own listener to each one directly
  * (see that class's wiring block) - {@link ElementFactory} never attaches a
- * listener itself. The three {@link JCheckBoxMenuItem}s have no {@link
- * ElementFactory} factory method of their own (unlike {@link JMenu}/{@link
- * JMenuItem}), so {@link #createCheckBoxMenuItem} builds one manually and
- * applies {@link ElementFactory#setButtonTextAndMnemonic} to it, the same
- * idiom {@code com.wudsn.tools.base.gui.AttributeTableColumnChooser} already
- * uses for the same reason. The "Open File"/"Add File" submenu headers and
+ * listener itself. The three {@link JCheckBoxMenuItem}s are built via
+ * {@link ElementFactory#createCheckBoxMenuItem}, added to {@link
+ * ElementFactory} itself (rather than kept as a private helper here) since
+ * the same "manually construct, then apply {@link
+ * ElementFactory#setButtonTextAndMnemonic}" idiom was already duplicated in
+ * {@code com.wudsn.tools.base.gui.AttributeTableColumnChooser} for the same
+ * reason - a proper factory method belongs in {@link ElementFactory} once
+ * more than one caller needs it. The "Open File"/"Add File" submenu headers and
  * the top-level "Equates"/"View" menus are local to this class ({@code
  * Dis6502} never references them), so they stay plain local variables, not
  * fields - only their {@link Action}s live in {@link Actions}. "File" and
@@ -118,9 +119,9 @@ public final class MainMenu {
 	public final JMenuItem exportUserEquatesMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Equates_ExportUserEquates,
 			"exportUserEquatesMenuItem");
 
-	public final JCheckBoxMenuItem displayAsScreenCodeMenuItem = createCheckBoxMenuItem(Actions.MainMenu_View_DisplayAsScreenCode);
-	public final JCheckBoxMenuItem noDisassemblyMenuItem = createCheckBoxMenuItem(Actions.MainMenu_View_NoDisassembly);
-	public final JCheckBoxMenuItem doubleFontHeightMenuItem = createCheckBoxMenuItem(Actions.MainMenu_View_DoubleFontHeight);
+	public final JCheckBoxMenuItem displayAsScreenCodeMenuItem = ElementFactory.createCheckBoxMenuItem(Actions.MainMenu_View_DisplayAsScreenCode);
+	public final JCheckBoxMenuItem noDisassemblyMenuItem = ElementFactory.createCheckBoxMenuItem(Actions.MainMenu_View_NoDisassembly);
+	public final JCheckBoxMenuItem doubleFontHeightMenuItem = ElementFactory.createCheckBoxMenuItem(Actions.MainMenu_View_DoubleFontHeight);
 	public final JMenuItem defaultFoldersMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_View_DefaultFolders, "defaultFoldersMenuItem");
 	public final JMenuItem profileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_View_Profile, "profileMenuItem");
 
@@ -131,13 +132,6 @@ public final class MainMenu {
 		menuBar.add(createEquatesMenu());
 		menuBar.add(createViewMenu());
 		menuBar.add(createHelpMenu());
-	}
-
-	/** See the class javadoc for why {@link JCheckBoxMenuItem} needs this instead of an {@link ElementFactory} factory method. */
-	private static JCheckBoxMenuItem createCheckBoxMenuItem(Action action) {
-		JCheckBoxMenuItem item = new JCheckBoxMenuItem();
-		ElementFactory.setButtonTextAndMnemonic(item, action);
-		return item;
 	}
 
 	private JMenu createFileMenu() {
