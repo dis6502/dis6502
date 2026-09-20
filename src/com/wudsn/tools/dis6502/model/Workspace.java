@@ -253,7 +253,7 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 	}
 
 	private void notifyListeners(WorkspaceProperty property) {
-		Log.logInfo("Workspace.notifyListeners: Property {0}", new Object[] { property });
+		// Log.logInfo("Workspace.notifyListeners: Property {0}", new Object[] { property });
 
 		// Add each event only once.
 		if (!propertyChangeEvents.contains(property)) {
