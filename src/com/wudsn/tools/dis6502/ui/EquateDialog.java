@@ -172,7 +172,7 @@ public final class EquateDialog extends JDialog {
 			return;
 		}
 		EquateList scratch = new EquateList(WorkspaceProperty.USER_EQUATES);
-		Equate equate = scratch.addEquate(text);
+		Equate equate = scratch.addEquate(text).equate;
 		if (equate == null) {
 			return; // TODO: ERROR HANDLING - matches the C++ source's own unresolved TODO.
 		}

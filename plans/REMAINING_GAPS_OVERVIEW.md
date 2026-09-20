@@ -54,22 +54,39 @@ here - both repos continue to change.
   policy (don't diverge from C++ where C++ itself has no established correct
   behavior to port).
 
-### 2. `EquateList.addEquate()` silently swallows parse errors instead of logging them
+### 2. ~~`EquateList.addEquate()` silently swallows parse errors instead of logging them~~ - FIXED 2026-09-21
 
-- **Java**: `EquateList.java:296-299` - javadoc says *"Unlike the C++
+- **Was**: `EquateList.java:296-299` had a javadoc admitting *"Unlike the C++
   version, a parse error is not yet reported anywhere (the C++ version sends
   it to the application's message log) - this is deferred until
-  application-level logging is ported."*
-- **That's also stale.** `application.sendInfoMessage(...)` /
-  `application.sendErrorMessage(...)` is already fully wired and used
-  elsewhere in the model layer for exactly this kind of file-parse
-  error/info reporting: `EquateListLogic.java` (lines 54/63/67/75/92),
-  `ProfileLogic.java`, `WorkspaceLogic.java`.
-- **Impact**: a malformed line in an equates file is dropped with no
-  user-visible feedback at all (no log entry, no error dialog), unlike C++.
-- **Fix shape**: call `application.sendErrorMessage(...)` from
-  `addEquate()`'s error branch (`EquateList.java:303-306`), the same way the
-  sibling `*Logic` classes already do.
+  application-level logging is ported."* That was stale:
+  `application.sendInfoMessage(...)`/`application.sendErrorMessage(...)` was
+  already fully wired and used elsewhere in the model layer for exactly this
+  kind of file-parse error/info reporting (`EquateListLogic.java`,
+  `ProfileLogic.java`, `WorkspaceLogic.java`), and the exact message resource
+  the C++ version sends (`IDS_ERR_CANNOT_PARSE_EQUATE_LINE`) was already
+  ported into `Text.properties`/`Text.java` but referenced nowhere.
+- **Fix**: `EquateList` itself still has no `Application` reference by
+  design (it's kept a pure model class), so the fix threads the error back
+  to the one caller that does have one, `EquateListLogic.load()`:
+  - `Equate.ReadResult` (`Equate.java`) now carries the parsed, initialized
+    `Equate` instance itself (`null` on error/`UNKNOWN`), computed once in
+    its constructor via a new private `createEquate` helper.
+  - `EquateList.addEquate(String)` now returns a new nested
+    `EquateList.EquateResult` (`equate` + `error`) instead of a bare
+    `Equate`, appending `result.equate` directly instead of re-deriving it.
+  - `EquateListLogic.load()` inspects `result.error` per line and calls
+    `application.sendErrorMessage(Text.IDS_ERR_CANNOT_PARSE_EQUATE_LINE,
+    line, result.error)` - matching C++'s `EquateList::AddEquate(line)`
+    exactly.
+  - The one other caller, `EquateDialog.performAdd()`, was updated to
+    unwrap `.equate` from the new return type; its own pre-existing
+    `// TODO: ERROR HANDLING` (matching the C++ source's own unresolved
+    TODO there) was left as-is - out of scope for this fix.
+- Verified with a clean `mvn -o compile`/`test-compile` and a full
+  `TestRunner` run (all 12 tests still pass, including
+  `EquateListLogicTest`, which loads a 899-line real equates file with no
+  new false-positive parse errors).
 
 ## Confirmed gaps - UI layer
 
@@ -311,8 +328,8 @@ doesn't support, without a separate decision to add a genuinely new feature:
 
 1. ~~**Gap #1** (`DisassemblyWriter` return character)~~ - **fixed
    2026-09-21**, see above.
-2. **Gap #2** (`EquateList` swallowed parse errors) - small, mechanical, the
-   logging plumbing it needs already exists elsewhere in the codebase.
+2. ~~**Gap #2** (`EquateList` swallowed parse errors)~~ - **fixed
+   2026-09-21**, see above.
 3. **Opcode table parity check** (unverified item above) - core correctness
    surface; worth a dedicated diff pass even though no discrepancy is known
    yet.

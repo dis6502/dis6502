@@ -17,9 +17,9 @@ import com.wudsn.tools.base.common.HexUtility;
  * Load1X/Save1X format is not ported yet; deferred to when {@code
  * Workspace}'s own binary-format loading is ported.
  * <p>
- * Only {@link EquateList} may create and initialize instances (it was a C++
- * {@code friend class}); the constructor and {@link #init} are
- * package-private for the same reason.
+ * Only {@link EquateList} and this class's own {@link #readFrom} may create
+ * and initialize instances (it was a C++ {@code friend class}); the
+ * constructor and {@link #init} are package-private for the same reason.
  *
  * @author Peter Dell
  */
@@ -27,6 +27,9 @@ public final class Equate implements Xml.Serializable {
 
 	/**
 	 * The result of parsing one line of an equates file with {@link #readFrom}.
+	 * {@link #equate} is the parsed, initialized (but not yet
+	 * list-attached) equate, or {@code null} if the line could not be
+	 * parsed ({@link #error} non-empty) or was of {@link EquateType#UNKNOWN}.
 	 */
 	public static final class ReadResult {
 		public final EquateType equateType;
@@ -35,6 +38,7 @@ public final class Equate implements Xml.Serializable {
 		public final int address;
 		public final String comment;
 		public final String error;
+		public final Equate equate;
 
 		ReadResult(EquateType equateType, String label, int labelAccess, int address, String comment,
 				String error) {
@@ -44,7 +48,18 @@ public final class Equate implements Xml.Serializable {
 			this.address = address;
 			this.comment = comment;
 			this.error = error;
+			this.equate = createEquate(equateType, label, labelAccess, address, comment, error);
 		}
+	}
+
+	private static Equate createEquate(EquateType equateType, String label, int labelAccess, int address,
+			String comment, String error) {
+		if (!error.isEmpty() || equateType == EquateType.UNKNOWN) {
+			return null;
+		}
+		Equate equate = new Equate();
+		equate.init(equateType, label, labelAccess, address, comment);
+		return equate;
 	}
 
 	private EquateType equateType;

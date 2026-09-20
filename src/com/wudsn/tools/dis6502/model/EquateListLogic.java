@@ -57,7 +57,10 @@ public final class EquateListLogic {
 				new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8))) {
 			String line;
 			while ((line = reader.readLine()) != null) {
-				equateList.addEquate(line);
+				EquateList.EquateResult result = equateList.addEquate(line);
+				if (!result.error.isEmpty()) {
+					application.sendErrorMessage(Text.IDS_ERR_CANNOT_PARSE_EQUATE_LINE, line, result.error);
+				}
 			}
 		} catch (IOException ex) {
 			application.sendErrorMessage(ex);

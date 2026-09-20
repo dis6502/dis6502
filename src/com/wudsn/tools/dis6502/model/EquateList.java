@@ -290,25 +290,39 @@ public final class EquateList implements Xml.Serializable {
 	}
 
 	/**
-	 * Parses one line of an equates file and, if valid, appends the
-	 * resulting equate. Returns {@code null} without appending anything for
-	 * an empty/unparseable line.
-	 * <p>
-	 * Unlike the C++ version, a parse error is not yet reported anywhere
-	 * (the C++ version sends it to the application's message log) - this is
-	 * deferred until application-level logging is ported.
+	 * The result of {@link #addEquate(String)}: either the newly added
+	 * {@link #equate}, or a non-empty {@link #error} describing why the
+	 * line could not be parsed (nothing was appended in that case). The
+	 * caller - not {@link EquateList}, which has no {@code Application}
+	 * reference - is responsible for reporting a non-empty {@code error},
+	 * mirroring how C++'s {@code EquateList::AddEquate(line)} reports it
+	 * directly via {@code g_Application->SendErrorMessageWithID(
+	 * IDS_ERR_CANNOT_PARSE_EQUATE_LINE, line, errorString)}.
 	 */
-	public Equate addEquate(String line) {
+	public static final class EquateResult {
+		public final Equate equate;
+		public final String error;
+
+		EquateResult(Equate equate, String error) {
+			this.equate = equate;
+			this.error = error;
+		}
+	}
+
+	/**
+	 * Parses one line of an equates file and, if valid, appends the
+	 * resulting equate.
+	 */
+	public EquateResult addEquate(String line) {
 		Equate.ReadResult result = Equate.readFrom(line);
 
 		if (!result.error.isEmpty()) {
-			return null;
+			return new EquateResult(null, result.error);
 		}
 		if (result.equateType == EquateType.UNKNOWN) {
-			return null;
+			return new EquateResult(null, "");
 		}
-		Equate equate = addEquate();
-		equate.init(result.equateType, result.label, result.labelAccess, result.address, result.comment);
-		return equate;
+		equateList.add(result.equate);
+		return new EquateResult(result.equate, "");
 	}
 }
