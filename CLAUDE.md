@@ -1,7 +1,7 @@
-# dis6502 (Java port)
+# DIS6502 (Java port)
 
 This is the Java/Swing successor (starting with version 4.0) to the C++/Win32
-`dis6502` disassembler, being ported class-by-class from the original source.
+`DIS6502` disassembler, being ported class-by-class from the original source.
 
 - **C++ source being ported**: `C:\jac\system\Windows\Programming\Tools\dis6502\src`
 - **Shared WUDSN Java library** (`com.wudsn.tools.base`/`.base.atari`, a
@@ -27,5 +27,10 @@ be rediscovered:
   history of wiring up popup-menu keyboard accelerators via
   `InputMap`/`ActionMap` instead of relying on `JPopupMenu` item accelerators,
   which only fire while that specific popup is open (status: done).
+- [`plans/MEMORY.md`](plans/MEMORY.md) - a plain-text export of the durable,
+  project-specific lessons Claude has accumulated in its own memory while
+  working on this port (state ownership, Swing UI conventions, porting
+  fidelity rules), so the same guidance is visible to anyone working in this
+  repository, not just a future Claude session.
 
 New planning/guidance documents for future work should also go in `plans/`.
