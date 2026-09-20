@@ -21,18 +21,13 @@ import com.wudsn.tools.base.common.HexUtility;
  * instead (accessible only from within this package), the same adaptation
  * already used for {@code SegmentList}/{@code SegmentListInserter}.
  * <p>
- * {@code returnCharacter} is a placeholder (0x9B, Atari800's value, matching
- * {@link Profile}'s MADS/Atari-oriented defaults) rather than read from
- * {@code Workspace.GetComputerSystem()}, since {@code ComputerSystem} is not
- * ported yet.
- *
  * @author Peter Dell
  */
 public final class DisassemblyWriter {
 
 	private final Disassembly disassembly;
 	private final Profile profile;
-	private final int returnCharacter = 0x9B; // TODO: Read from Workspace's ComputerSystem once it is ported.
+	private final int returnCharacter;
 	private final char quoteCharacter;
 
 	private int disNbBytes;
@@ -41,6 +36,7 @@ public final class DisassemblyWriter {
 
 	public DisassemblyWriter(Disassembly disassembly, Workspace workspace) {
 		this.disassembly = disassembly;
+		this.returnCharacter = workspace.getComputerSystem().getReturnCharacter();
 		this.profile = workspace.getProfile();
 		this.quoteCharacter = profile.quoteForASCIIStrings.charAt(0);
 	}

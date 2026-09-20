@@ -22,35 +22,37 @@ here - both repos continue to change.
 
 ## Confirmed gaps - model/logic layer
 
-### 1. `DisassemblyWriter` hardcodes the Atari800 return character for every computer system
+### 1. ~~`DisassemblyWriter` hardcodes the Atari800 return character for every computer system~~ - FIXED 2026-09-21
 
-- **Java**: `DisassemblyWriter.java:35` -
-  `private final int returnCharacter = 0x9B; // TODO: Read from Workspace's ComputerSystem once it is ported.`
-  The class javadoc (lines 24-27) says this is a placeholder "since
-  `ComputerSystem` is not ported yet."
-- **That's now stale.** `ComputerSystem`/`ComputerSystemFactory` are fully
-  ported and already wired into `Workspace.getComputerSystem()`
-  (`Workspace.java:153`), and `ComputerSystem.getReturnCharacter()` already
-  returns the correct per-system value: Atari800/Atari5200 = `0x9B`,
-  **C64 = `0x0D`, Oric = `0x0D`, Unknown = `0x0A`** (`ComputerSystem.java:55`,
-  `Atari800.java:78`, `C64.java:31`, `Oric.java:46`, `Atari5200.java:34`,
-  `Unknown.java:21`).
-- C++'s `DisassemblyWriter.cpp:15` does
-  `returnCharacter = workspace.GetComputerSystem()->GetReturnCharacter();` -
-  this one-line wiring was simply never followed up in Java after
-  `ComputerSystem` landed.
-- **Impact**: `isByteAllowedInString()` (line 54) uses this wrong constant to
-  decide whether a byte can render as an ASCII string character vs. must be
-  shown as a raw hex byte in the disassembly listing. For C64/Oric/Unknown
-  workspaces this produces incorrect listing output, since Atari's `0x9B`
-  end-of-line byte is not their line-end byte.
-- **Related, same root cause**: line 58's
-  `TODO: This actually depends on the character set of the computer system`
-  (the `showNonASCIIChararactersAsBytes` check) is not computer-system-aware
-  either and should be fixed alongside the above.
-- **Fix shape**: read the return character (and the ASCII-allowed check) from
-  `workspace.getComputerSystem()` instead of a hardcoded field, mirroring the
-  C++ line above.
+- **Was**: `DisassemblyWriter.java:35` hardcoded
+  `private final int returnCharacter = 0x9B;` (Atari800's value) regardless
+  of which computer system the workspace actually used, with a stale
+  class-javadoc claim that this was a placeholder "since `ComputerSystem` is
+  not ported yet" - but `ComputerSystem`/`ComputerSystemFactory` had in fact
+  already been fully ported and wired into `Workspace.getComputerSystem()`,
+  with `ComputerSystem.getReturnCharacter()` already returning the correct
+  per-system value (Atari800/Atari5200 = `0x9B`, C64/Oric = `0x0D`,
+  Unknown = `0x0A`). The C++ constructor
+  (`DisassemblyWriter.cpp:15`) reads this from
+  `workspace.GetComputerSystem()->GetReturnCharacter()`; the equivalent Java
+  wiring had simply never been done.
+- **Fix**: `returnCharacter` is now set in the constructor from
+  `workspace.getComputerSystem().getReturnCharacter()`, matching the C++
+  wiring exactly; the stale javadoc paragraph was removed. Verified with
+  `mvn -o compile`/`test-compile` and a full run of `TestRunner` (all 12
+  tests still pass, including the `ComputerSystemTest`/`DisassemblyResult*`
+  tests that exercise `DisassemblyWriter` via Atari800 and C64 fixtures).
+- **Correction to the original write-up above**: the neighboring
+  `isByteAllowedInString()` TODO -
+  `// TODO: This actually depends on the character set of the computer system`
+  (the `showNonASCIIChararactersAsBytes` check) - was described here as
+  "related, same root cause, should be fixed alongside the above." That was
+  wrong: this TODO comment exists **verbatim in the C++ source itself**
+  (`DisassemblyWriter.cpp`'s own `IsByteAllowedInString`), so it's a
+  pre-existing, shared C++ limitation, not a Java-specific gap. It was left
+  untouched by this fix, correctly, per the porting guide's bug-handling
+  policy (don't diverge from C++ where C++ itself has no established correct
+  behavior to port).
 
 ### 2. `EquateList.addEquate()` silently swallows parse errors instead of logging them
 
@@ -307,9 +309,8 @@ doesn't support, without a separate decision to add a genuinely new feature:
 
 ## Suggested priority order for closing these
 
-1. **Gap #1** (`DisassemblyWriter` return character) - small, mechanical,
-   high-impact correctness bug for non-Atari systems; the fix is already
-   spelled out by the C++ one-liner it's missing.
+1. ~~**Gap #1** (`DisassemblyWriter` return character)~~ - **fixed
+   2026-09-21**, see above.
 2. **Gap #2** (`EquateList` swallowed parse errors) - small, mechanical, the
    logging plumbing it needs already exists elsewhere in the codebase.
 3. **Opcode table parity check** (unverified item above) - core correctness
