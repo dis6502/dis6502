@@ -7,19 +7,28 @@ package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 
 import com.wudsn.tools.base.Actions;
+import com.wudsn.tools.base.gui.Desktop;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.Text;
 
@@ -93,7 +102,7 @@ public final class AboutDialog extends JDialog {
 		JPanel textPanel = new JPanel(new GridLayout(textLines.length, 1));
 		textPanel.setBackground(Color.WHITE);
 		for (String line : textLines) {
-			textPanel.add(new JLabel(line, SwingConstants.CENTER));
+			textPanel.add(line.startsWith("https://") ? createLinkLabel(line) : new JLabel(line, SwingConstants.CENTER));
 		}
 		contentPanel.add(textPanel, BorderLayout.CENTER);
 
@@ -106,8 +115,49 @@ public final class AboutDialog extends JDialog {
 
 		setContentPane(contentPanel);
 		getRootPane().setDefaultButton(okButton);
+
+		// No C++ counterpart to port: AboutDialog::ProcessDialogMessage never
+		// handles WM_KEYDOWN/VK_ESCAPE, relying on the OS-level modal dialog
+		// default of Esc mapping to IDCANCEL - which ProcessCommand treats the
+		// same as IDOK (both just close the dialog, matching okButton's own
+		// listener above). Swing has no such built-in mapping, so it is wired
+		// explicitly here, the same way EquateDialog wires its own Esc/cancel.
+		getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+				"close");
+		getRootPane().getActionMap().put("close", new AbstractAction() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				okButton.doClick();
+			}
+		});
+
 		pack();
 		setResizable(false);
 		setLocationRelativeTo(owner);
+	}
+
+	/**
+	 * No C++ counterpart: {@code CTEXT} is plain static text, not a clickable
+	 * control, so the .rc source's URL line was never a real link either.
+	 * {@code <html><a href="...">} gets {@link JLabel} to render the usual
+	 * blue/underlined link look for free (Swing's own basic HTML support,
+	 * per the user's own suggestion) - it does not make the label clickable
+	 * by itself, so a {@link MouseAdapter} plus a hand {@link Cursor} do the
+	 * rest, opening the URL via {@link Desktop#openBrowser}, the same
+	 * shared helper {@code com.wudsn.tools.thecartstudio.ui.AboutDialog}
+	 * already uses for its own About link.
+	 */
+	private static JLabel createLinkLabel(String url) {
+		JLabel label = new JLabel("<html><a href=\"" + url + "\">" + url + "</a></html>", SwingConstants.CENTER);
+		label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		label.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				Desktop.openBrowser(url);
+			}
+		});
+		return label;
 	}
 }
