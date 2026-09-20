@@ -119,7 +119,6 @@ public final class MainMenu {
 	public final JMenuItem exportUserEquatesMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Equates_ExportUserEquates,
 			"exportUserEquatesMenuItem");
 
-	public final JCheckBoxMenuItem displayAsScreenCodeMenuItem = ElementFactory.createCheckBoxMenuItem(Actions.MainMenu_View_DisplayAsScreenCode);
 	public final JCheckBoxMenuItem noDisassemblyMenuItem = ElementFactory.createCheckBoxMenuItem(Actions.MainMenu_View_NoDisassembly);
 	public final JCheckBoxMenuItem doubleFontHeightMenuItem = ElementFactory.createCheckBoxMenuItem(Actions.MainMenu_View_DoubleFontHeight);
 	public final JMenuItem defaultFoldersMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_View_DefaultFolders, "defaultFoldersMenuItem");
@@ -204,7 +203,6 @@ public final class MainMenu {
 	private JMenu createViewMenu() {
 		JMenu menu = ElementFactory.createMenu(Actions.MainMenu_View);
 
-		menu.add(displayAsScreenCodeMenuItem);
 		menu.add(noDisassemblyMenuItem);
 		menu.add(doubleFontHeightMenuItem);
 		menu.addSeparator();

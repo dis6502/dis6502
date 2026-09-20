@@ -144,7 +144,6 @@ public final class Actions extends NLS {
 	public static Action MainMenu_Equates_ExportUserEquates;
 
 	// Actions: Main Menu - View.
-	public static Action MainMenu_View_DisplayAsScreenCode;
 	public static Action MainMenu_View_NoDisassembly;
 	public static Action MainMenu_View_DoubleFontHeight;
 	public static Action MainMenu_View_DefaultFolders;

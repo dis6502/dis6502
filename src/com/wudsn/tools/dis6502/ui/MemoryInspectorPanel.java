@@ -6,6 +6,7 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -21,6 +22,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
@@ -61,16 +63,22 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * FindNextString}/{@code CanFind}, triggered from {@link #findMenuItem}/
  * {@link #findNextMenuItem}.
  * <p>
- * This panel has no toolbar - every command is reachable only from the
- * right-click popup menu ({@link #maybeShowPopup}, attached to the grid),
- * ported from ui/MemoryInspectorPopupMenu.h/.cpp's {@code
- * MEMORY_INSPECTOR_POPUP_MENU} resource and following
+ * This panel has no toolbar of per-command buttons - almost every command is
+ * reachable only from the right-click popup menu ({@link #maybeShowPopup},
+ * attached to the grid), ported from ui/MemoryInspectorPopupMenu.h/.cpp's
+ * {@code MEMORY_INSPECTOR_POPUP_MENU} resource and following
  * {@link SegmentListPanel}'s pattern: every item is a public {@code JMenuItem}
  * field wired directly by {@code Dis6502}, never a hidden {@code JButton} kept
  * around only to be {@code doClick()}d - this panel used to also have a toolbar
  * with a button per command, each popup item {@code
  * doClick()}ing its button, until both the redundant toolbar and that
- * indirection were removed. {@link #splitAtSelectionMenuItem} (from
+ * indirection were removed. {@link #displayAsScreenCodeButton} is the one
+ * exception - a real header button, not a popup item at all, since the C++
+ * source's own {@code ID_VIEW_DISPLAYASSCREENCODE} lives in the main menu,
+ * not this panel's popup; moving it here (see that field's own javadoc) is
+ * this port's own UI choice, not a fidelity port, but it stays wired
+ * directly by {@code Dis6502} like everything else, not a {@code
+ * doClick()} proxy. {@link #splitAtSelectionMenuItem} (from
  * {@code MemoryInspector::SplitAtSelection}/ IDM_DUMP_SPLIT_AT_SELECTION) only
  * splits the segment list the same way
  * {@code com.wudsn.tools.dis6502.ui.SegmentListPanel}'s Move Up/Down/
@@ -202,6 +210,20 @@ public final class MemoryInspectorPanel extends JPanel {
 	private final MemoryInspectorGridPanel grid = new MemoryInspectorGridPanel();
 
 	/**
+	 * Toggles {@link #setDisplayAsScreenCode} - moved here from a {@code
+	 * View} main-menu checkbox item (which the C++ source's own equivalent,
+	 * {@code ID_VIEW_DISPLAYASSCREENCODE}, still is), since it only ever
+	 * affects this one panel. A plain, non-{@code Action}-backed field like
+	 * {@link DisassemblyPanel#findButton}/{@link DisassemblyPanel#findNextButton}
+	 * - not every button in this port needs to go through {@code
+	 * com.wudsn.tools.dis6502.Actions}/{@code ElementFactory}, only the ones
+	 * that are actually menu items. {@code Dis6502} wires this directly, the
+	 * same as every other control here - not a hidden {@code doClick()}
+	 * proxy, since this button is now this command's only home.
+	 */
+	public final JToggleButton displayAsScreenCodeButton = new JToggleButton("Display as Screen Code");
+
+	/**
 	 * Every popup menu item is a public field wired directly by {@code
 	 * Dis6502}, the same way {@link DisassemblyPanel}'s label-navigation popup
 	 * items are - a hidden {@code JButton} kept around only to be
@@ -270,6 +292,10 @@ public final class MemoryInspectorPanel extends JPanel {
 	public MemoryInspectorPanel() {
 		super(new BorderLayout());
 		setBorder(titledBorder);
+
+		JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		headerPanel.add(displayAsScreenCodeButton);
+		add(headerPanel, BorderLayout.NORTH);
 
 		add(new JScrollPane(grid), BorderLayout.CENTER);
 

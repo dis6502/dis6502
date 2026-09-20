@@ -297,8 +297,6 @@ public final class Dis6502 {
 		mainWindow.mainMenu.saveUserEquatesMenuItem.addActionListener(e -> performSaveUserEquates(false));
 		mainWindow.mainMenu.exportUserEquatesMenuItem.addActionListener(e -> performSaveUserEquates(true));
 
-		mainWindow.mainMenu.displayAsScreenCodeMenuItem.setSelected(workspace.isViewDisplayAsScreenCode());
-		mainWindow.mainMenu.displayAsScreenCodeMenuItem.addActionListener(e -> performToggleDisplayAsScreenCode());
 		mainWindow.mainMenu.noDisassemblyMenuItem.setSelected(workspace.isViewNoDisassembly());
 		mainWindow.mainMenu.noDisassemblyMenuItem.addActionListener(e -> performToggleViewDisassembly());
 		mainWindow.mainMenu.doubleFontHeightMenuItem.setSelected(workspace.isViewDoubleHeight());
@@ -330,6 +328,8 @@ public final class Dis6502 {
 		mainWindow.disassemblyPanel.setNavigateToDefinitionListener(this::performFindDisassemblyLabelDefinition);
 		mainWindow.xrefPanel.setSelectionListener(this::performXRefSelected);
 
+		mainWindow.memoryInspectorPanel.displayAsScreenCodeButton.setSelected(workspace.isViewDisplayAsScreenCode());
+		mainWindow.memoryInspectorPanel.displayAsScreenCodeButton.addActionListener(e -> performToggleDisplayAsScreenCode());
 		mainWindow.memoryInspectorPanel.findMenuItem.addActionListener(e -> performShowMemoryInspectorFindDialog());
 		mainWindow.memoryInspectorPanel.findNextMenuItem.addActionListener(e -> performMemoryInspectorFindNext());
 		mainWindow.memoryInspectorPanel.splitAtSelectionMenuItem.addActionListener(e -> performSplitAtSelection());
@@ -1317,7 +1317,7 @@ public final class Dis6502 {
 	 * Atari internal (ANTIC screen code) equivalent.
 	 */
 	private void performToggleDisplayAsScreenCode() {
-		workspace.setViewDisplayAsScreenCode(mainWindow.mainMenu.displayAsScreenCodeMenuItem.isSelected());
+		workspace.setViewDisplayAsScreenCode(mainWindow.memoryInspectorPanel.displayAsScreenCodeButton.isSelected());
 		mainWindow.memoryInspectorPanel.setDisplayAsScreenCode(workspace.isViewDisplayAsScreenCode());
 	}
 
