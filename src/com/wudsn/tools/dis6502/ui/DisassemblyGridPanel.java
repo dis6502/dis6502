@@ -55,11 +55,14 @@ import com.wudsn.tools.dis6502.model.DisassemblySectionType;
  * FlushPartOfLine}'s per-token syntax coloring (mnemonic/number/string/
  * comment/plain), which this panel used to skip entirely (every line drawn
  * in one plain black {@link ComputerFont#drawText} call) - see that
- * method's own javadoc for the token classification and what was
- * deliberately left out of the port. The C++ source's optional line-number
- * column ({@code lineNumbersActive}) is not ported either - this listing
- * never shows line numbers, matching this port's pre-existing behavior -
- * so that branch of the C++ state machine has no Java counterpart.
+ * method's own javadoc for the token classification. {@link
+ * #setLineNumbersActive} ports the C++ source's optional line-number
+ * column - see that method's own javadoc for why this class reads {@link
+ * com.wudsn.tools.dis6502.model.Profile#useLineNumbers} instead of storing
+ * it directly (that field is the real ported settings source: a Profile
+ * dialog checkbox, not a menu item - {@code Dis6502} pushes it in on every
+ * disassembly refresh, matching {@code MainDisassembly::RefreshDisControl}'s
+ * {@code disassemblyControl->SetLineNumbersActive(...)} call).
  *
  * @author Peter Dell
  */
@@ -67,10 +70,15 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 
 	private static final long serialVersionUID = 1L;
 
+	// "NNNN " - 4-digit zero-padded line number plus a space, matching PrintAll's
+	// "%04lu %s" prefix (more digits print as-is past 9999, exactly like %04lu).
+	private static final int LINE_NUMBER_PREFIX_LENGTH = 5;
+
 	private List<DisassemblyLine> lines = Collections.emptyList();
 	private ComputerFont computerFont;
 	private int highlightedLine = -1;
 	private int maxLineLength;
+	private boolean lineNumbersActive;
 
 	public DisassemblyGridPanel() {
 		setBackground(Color.WHITE);
@@ -79,6 +87,21 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 
 	public void setComputerFont(ComputerFont computerFont) {
 		this.computerFont = computerFont;
+		revalidate();
+		repaint();
+	}
+
+	/**
+	 * Ported from {@code MainDisassembly::RefreshDisControl}'s {@code
+	 * disassemblyControl->SetLineNumbersActive(::g_Workspace->GetConstProfile()->useLineNumbers)}
+	 * call - {@code Dis6502} calls this alongside every {@link
+	 * DisassemblyPanel#refresh}, pushing in the current profile's {@code
+	 * useLineNumbers} setting the same way the C++ source does, rather than
+	 * this panel reaching for a {@code Workspace}/{@code Profile} reference
+	 * itself.
+	 */
+	public void setLineNumbersActive(boolean lineNumbersActive) {
+		this.lineNumbersActive = lineNumbersActive;
 		revalidate();
 		repaint();
 	}
@@ -121,7 +144,8 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 			return super.getPreferredSize();
 		}
 		int lineCount = Math.max(lines.size(), 1);
-		return new Dimension(maxLineLength * computerFont.getGlyphWidth(), lineCount * computerFont.getGlyphHeight());
+		int lineLength = maxLineLength + (lineNumbersActive ? LINE_NUMBER_PREFIX_LENGTH : 0);
+		return new Dimension(lineLength * computerFont.getGlyphWidth(), lineCount * computerFont.getGlyphHeight());
 	}
 
 	@Override
@@ -176,13 +200,21 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 	 * equates sections, where an unreferenced equate is greyed out rather
 	 * than removed.
 	 * <p>
-	 * Two things the C++ source's version does that this port leaves out,
-	 * both already out of scope before this method existed: the optional
-	 * line-number column ({@code lineNumbersActive}, never active in this
-	 * port - see this class's javadoc) and the yellow selected-line
-	 * background fill, which this panel already paints separately via
-	 * {@link #highlightedLine} before calling this method, the same way it
-	 * did before this method existed.
+	 * When {@link #lineNumbersActive}, a leading {@code "NNNN "} run (4-digit
+	 * zero-padded line number plus a space) is drawn first, in the same
+	 * color the rest of this method would use for plain text - ported from
+	 * the {@code if (lineNumbersActive) { ... }} block at the very start of
+	 * {@code PrintOneLineInColor}, which consumes that prefix from the
+	 * shared text buffer {@code PrintAll} built via {@code "%04lu %s"}; this
+	 * port instead formats {@link DisassemblyLine#getLineNumber()} directly
+	 * rather than prepending it to {@code text} and re-parsing the digits
+	 * back out, since the real line number is already available as an
+	 * {@code int} here - same visible result, without the C++ source's
+	 * buffer-sharing contortion.
+	 * <p>
+	 * The yellow selected-line background fill is not this method's
+	 * responsibility - this panel already paints that separately via
+	 * {@link #highlightedLine} before calling this method.
 	 */
 	private void paintLineInColor(Graphics2D g2, DisassemblyLine disassemblyLine, int xStart, int y) {
 		String text = disassemblyLine.getLine();
@@ -190,6 +222,11 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 		int[] index = { 0 };
 		int x = xStart;
 		StringBuilder buf = new StringBuilder();
+
+		if (lineNumbersActive) {
+			String lineNumberPrefix = String.format("%04d ", disassemblyLine.getLineNumber());
+			x = flushPartOfLine(g2, x, y, referenced ? COLOR_NORMAL : COLOR_UNREFERENCED, lineNumberPrefix);
+		}
 
 		char c = DisassemblyPanel.charAt(text, index);
 

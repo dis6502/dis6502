@@ -1505,6 +1505,9 @@ public final class Dis6502 {
 		} catch (RuntimeException ex) {
 			application.sendErrorMessage(ex);
 		}
+		// Matches MainDisassembly::RefreshDisControl pushing the current profile's
+		// useLineNumbers into the control on every refresh.
+		mainWindow.disassemblyPanel.setLineNumbersActive(workspace.getProfile().useLineNumbers);
 		mainWindow.disassemblyPanel.refresh(workspace.getDisassemblyResult());
 		mainWindow.disassemblyPanel.findField.setText("");
 		mainWindow.xrefPanel.updateList("", Collections.emptyList());

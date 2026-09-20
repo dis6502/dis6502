@@ -522,6 +522,11 @@ public final class DisassemblyPanel extends JPanel {
 		grid.setComputerFont(computerFont);
 	}
 
+	/** See {@link DisassemblyGridPanel#setLineNumbersActive} - call alongside every {@link #refresh}, matching {@code MainDisassembly::RefreshDisControl}. */
+	public void setLineNumbersActive(boolean lineNumbersActive) {
+		grid.setLineNumbersActive(lineNumbersActive);
+	}
+
 	public void refresh(DisassemblyResult disassemblyResult) {
 		lineNumberToIndex.clear();
 		rightClickedLine = null;
