@@ -130,18 +130,61 @@ here - both repos continue to change.
   supersedes it" decision if that's the intent, rather than leaving it
   implicit.
 
-### 6. `DiskImageSectorsDialog`'s byte-range picker is Start/End offset fields, not a drag-selectable hex view
+### 6. ~~`DiskImageSectorsDialog`'s byte-range picker is Start/End offset fields, not a drag-selectable hex view~~ - FIXED 2026-09-21
 
-- The C++ dialog lets you drag-select a byte range directly in a hex-dump
-  view (built on `MemoryInspectorControl`).
-- The Java `DiskImageSectorsDialog.java:50` javadoc notes this depends on a
-  reusable, generic version of the memory inspector's grid control that
-  isn't ported yet (distinct from `MemoryInspectorGridPanel`, which exists
-  but is specific to the main Memory Inspector panel, not reusable as a
-  generic embeddable control). The dialog instead uses explicit numeric
-  Start/End Offset fields.
-- Sector navigation also uses a `JSpinner` instead of a native scrollbar -
-  likely UX-equivalent, low risk, not called out as a functional gap.
+- **Was**: the C++ dialog lets you drag-select a byte range directly in a
+  hex-dump view (built on `MemoryInspectorControl`); the Java dialog used
+  plain numeric Start/End Offset `JTextField`s instead, because a reusable,
+  generic version of the memory inspector's grid control didn't exist yet
+  (`MemoryInspectorGridPanel` was specific to the main Memory Inspector
+  panel, hard-typed to `Segment`/`MemoryInspectorState`).
+- **Fix**: generalized `MemoryInspectorGridPanel` behind two new small
+  abstractions and moved its drag-select mouse handling onto the grid
+  itself (previously duplicated per-caller in `MemoryInspectorPanel`):
+  - `HexGridByteSource` (new `ui` interface: `getSize()`/`getData()`/
+    `getType()`/`getBaseAddress()`) replaces the grid's hard-typed `Segment`
+    field. `SegmentByteSource` adapts a `Segment` (used by the main Memory
+    Inspector, no changes to `Segment`'s own API); `DiskSectorByteSource`
+    wraps a raw `byte[]` sector buffer (used by the dialog), always
+    reporting `MemoryType.UNKNOWN` - already painted in plain black, so no
+    separate "coloring off" mode was needed.
+  - `ByteRangeSelection`/`MutableByteRangeSelection` (new `model` class
+    pair, matching the existing `MemoryInspectorState`/
+    `MutableMemoryInspectorState` read-only-interface/mutable-impl split)
+    extract the pure begin/end swap-and-clamp arithmetic out of
+    `MutableMemoryInspectorState`, which now delegates to an owned instance
+    instead of tracking the fields itself (its own public API and the main
+    Memory Inspector's behavior are unchanged). `DiskImageSectorsDialog`
+    owns a second, fully independent instance - never touching
+    `Workspace`, matching how the C++ `MemoryInspectorControl` is one
+    reusable class with an independent instance per window.
+  - `MemoryInspectorGridPanel.DragSelectionListener` (`onDragSelectionChanged`/
+    `onDragSelectionFinished`) plus a `MouseAdapter` built into the grid's
+    own constructor reproduce the anchor-tracking drag logic that used to
+    live in `MemoryInspectorPanel` (`beginByteSelection`/
+    `extendByteSelection`, now removed) - both callers now share the same
+    code. `DiskImageSectorsDialog` only implements
+    `onDragSelectionChanged` (a lambda): it pulls the current selection
+    synchronously at "Add Sector" click time, defaulting to the whole
+    sector if nothing was dragged, exactly matching C++'s
+    `MemoryInspectorControl::GetSelection(..., bDefaultAll=true)` - the C++
+    dialog never listens for `SELECTION_CHANGED` either.
+  - Auto-scroll-past-viewport-edge while dragging stays out of scope
+    (recorded in `MemoryInspectorGridPanel`'s class javadoc) - this was
+    already a pre-existing, shipped divergence from C++'s
+    `SetEndOfSelection`/`VScroll` behavior (`offsetAtPoint` just clamps),
+    now simply shared by two callers instead of one, not a new gap.
+  - Sector navigation still uses a `JSpinner` instead of a native
+    scrollbar - unrelated, unchanged, still likely UX-equivalent/low risk.
+- Verified with a clean `mvn -o compile`/`test-compile`, a full `TestRunner`
+  run (13 tests, including a new `ByteRangeSelectionTest` covering the
+  extracted swap/clamp arithmetic), and an ad hoc off-screen smoke test
+  (scratch, not committed, per the porting guide's testing-strategy
+  convention) that constructs `DiskImageSectorsDialog`, paints
+  `MemoryInspectorGridPanel` with a synthetic `DiskSectorByteSource`, and
+  confirms `offsetAtPoint` returns in-range offsets - full interactive
+  drag-select/rendering verification in the real running app is still a
+  manual follow-up.
 
 ## Divergences where the Java port fixed a real C++ bug (not a Java gap)
 
@@ -345,8 +388,8 @@ doesn't support, without a separate decision to add a genuinely new feature:
    2026-09-21**, see above.
 3. ~~**Opcode table parity check**~~ - **completed 2026-09-21, no gap
    found**, see above.
-4. **Gap #6** (`DiskImageSectorsDialog` drag-select) - needs the reusable
-   generic hex-grid control extracted first; larger effort.
+4. ~~**Gap #6** (`DiskImageSectorsDialog` drag-select)~~ - **fixed
+   2026-09-21**, see above.
 5. **Gap #3** (Memory Inspector Delete/Cut/Paste Selection) - explicitly
    blocked on `MemoryBlock` gaining real resize support; needs a scoping
    decision (faithful-but-broken port vs. a fixed reimplementation) before
