@@ -19,6 +19,8 @@ import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 
 import com.wudsn.tools.dis6502.model.ComputerSystemType;
+import com.wudsn.tools.dis6502.model.DisassemblyLine;
+import com.wudsn.tools.dis6502.model.DisassemblySectionType;
 
 /**
  * A read-only, custom-painted list of disassembly listing lines, drawn with
@@ -35,10 +37,7 @@ import com.wudsn.tools.dis6502.model.ComputerSystemType;
  * ATASCII/PETSCII text and graphics characters from {@code STRING}/{@code
  * SBYTE} data.
  * <p>
- * Ported from ui/DisassemblyControlImpl.cpp's paint routine, restricted to
- * plain text layout (one {@link ComputerFont#drawText} call per visible
- * line, all in black - unlike the memory inspector's grid, a disassembly
- * line has no per-character {@code MemoryType} coloring): virtualized
+ * Ported from ui/DisassemblyControlImpl.cpp's paint routine: virtualized
  * scrolling relies on Swing's clip-rect-based repaint the same way {@link
  * MemoryInspectorGridPanel} does, and inline editing/the full popup menu
  * are not ported - {@link DisassemblyPanel} predates this class and never
@@ -51,6 +50,16 @@ import com.wudsn.tools.dis6502.model.ComputerSystemType;
  * ComputerFont#getGlyphHeight} - already scaled for on-screen legibility,
  * see that class's javadoc - rather than this class applying its own zoom
  * factor.
+ * <p>
+ * {@link #paintLineInColor} ports {@code PrintOneLineInColor}/{@code
+ * FlushPartOfLine}'s per-token syntax coloring (mnemonic/number/string/
+ * comment/plain), which this panel used to skip entirely (every line drawn
+ * in one plain black {@link ComputerFont#drawText} call) - see that
+ * method's own javadoc for the token classification and what was
+ * deliberately left out of the port. The C++ source's optional line-number
+ * column ({@code lineNumbersActive}) is not ported either - this listing
+ * never shows line numbers, matching this port's pre-existing behavior -
+ * so that branch of the C++ state machine has no Java counterpart.
  *
  * @author Peter Dell
  */
@@ -58,7 +67,7 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 
 	private static final long serialVersionUID = 1L;
 
-	private List<String> lines = Collections.emptyList();
+	private List<DisassemblyLine> lines = Collections.emptyList();
 	private ComputerFont computerFont;
 	private int highlightedLine = -1;
 	private int maxLineLength;
@@ -74,12 +83,12 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 		repaint();
 	}
 
-	public void setLines(List<String> lines) {
+	public void setLines(List<DisassemblyLine> lines) {
 		this.lines = lines;
 		this.highlightedLine = -1;
 		this.maxLineLength = 1;
-		for (String line : lines) {
-			maxLineLength = Math.max(maxLineLength, line.length());
+		for (DisassemblyLine line : lines) {
+			maxLineLength = Math.max(maxLineLength, line.getLine().length());
 		}
 		revalidate();
 		repaint();
@@ -139,8 +148,186 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 				g2.setColor(Color.YELLOW);
 				g2.fillRect(0, y, getWidth(), cellH);
 			}
-			computerFont.drawText(g2, lines.get(index), Color.BLACK, 0, y);
+			paintLineInColor(g2, lines.get(index), 0, y);
 		}
+	}
+
+	// Colors for the different parts of a disassembly line, ported from
+	// DisassemblyControlImpl.cpp's Colors[]/DIS_STATE table.
+	private static final Color COLOR_NORMAL = Color.BLACK;
+	private static final Color COLOR_COMMENT = new Color(0, 128, 0);
+	private static final Color COLOR_NUMBER = new Color(128, 0, 0);
+	private static final Color COLOR_STRING = new Color(128, 0, 128);
+	private static final Color COLOR_INSTRUCTION = new Color(0, 0, 128);
+	private static final Color COLOR_UNREFERENCED = new Color(192, 192, 192);
+
+	/**
+	 * Ported from {@code PrintOneLineInColor}: a hand-written character
+	 * scanner that classifies {@code disassemblyLine}'s text into runs - a
+	 * leading label (or, if column 0 isn't a label start character, the
+	 * whole rest of the line is a comment), the instruction mnemonic (or,
+	 * for an {@code =}/{@code *} equate/org line, plain text), an optional
+	 * quoted string or {@code #}-immediate operand, any {@code $}-prefixed
+	 * hex numbers (comma-separated), and a trailing {@code ;} comment - and
+	 * draws each run in its own color via {@link #flushPartOfLine} (ported
+	 * from {@code FlushPartOfLine}). {@code referenced} (from {@link
+	 * #isReferenced}) overrides every run's own color with a flat grey,
+	 * matching the C++ source's own override - used only for system/user
+	 * equates sections, where an unreferenced equate is greyed out rather
+	 * than removed.
+	 * <p>
+	 * Two things the C++ source's version does that this port leaves out,
+	 * both already out of scope before this method existed: the optional
+	 * line-number column ({@code lineNumbersActive}, never active in this
+	 * port - see this class's javadoc) and the yellow selected-line
+	 * background fill, which this panel already paints separately via
+	 * {@link #highlightedLine} before calling this method, the same way it
+	 * did before this method existed.
+	 */
+	private void paintLineInColor(Graphics2D g2, DisassemblyLine disassemblyLine, int xStart, int y) {
+		String text = disassemblyLine.getLine();
+		boolean referenced = isReferenced(disassemblyLine);
+		int[] index = { 0 };
+		int x = xStart;
+		StringBuilder buf = new StringBuilder();
+
+		char c = DisassemblyPanel.charAt(text, index);
+
+		// Label on column 0 should begin with a letter, an @ or an _.
+		// Otherwise the rest of the line is a comment.
+		if (DisassemblyPanel.isLabelStartChar(c)) {
+			while (c != '\0' && c != ' ') {
+				buf.append(c);
+				c = DisassemblyPanel.charAt(text, index);
+			}
+			while (c == ' ') {
+				buf.append(c);
+				c = DisassemblyPanel.charAt(text, index);
+			}
+			x = flushPartOfLine(g2, x, y, referenced ? COLOR_NORMAL : COLOR_UNREFERENCED, buf.toString());
+			buf.setLength(0);
+		} else if (c != ' ') {
+			flushPartOfLine(g2, x, y, referenced ? COLOR_COMMENT : COLOR_UNREFERENCED, restOfLine(text, index));
+			return;
+		}
+
+		// Now we have the instruction.
+		Color instructionColor = COLOR_INSTRUCTION;
+		while (c == ' ') {
+			buf.append(c);
+			c = DisassemblyPanel.charAt(text, index);
+		}
+		if (c == '=' || c == '*') {
+			instructionColor = COLOR_NORMAL;
+		}
+		while (c != '\0' && c != ' ') {
+			buf.append(c);
+			c = DisassemblyPanel.charAt(text, index);
+		}
+		while (c == ' ') {
+			buf.append(c);
+			c = DisassemblyPanel.charAt(text, index);
+		}
+		x = flushPartOfLine(g2, x, y, referenced ? instructionColor : COLOR_UNREFERENCED, buf.toString());
+		buf.setLength(0);
+
+		// Now we have either a parameter or a comment.
+		if (c == '"' || c == '\'') {
+			char quote = c;
+			buf.append(c);
+			x = flushPartOfLine(g2, x, y, referenced ? COLOR_NORMAL : COLOR_UNREFERENCED, buf.toString());
+			buf.setLength(0);
+			c = DisassemblyPanel.charAt(text, index);
+			while (c != '\0' && c != quote) {
+				buf.append(c);
+				c = DisassemblyPanel.charAt(text, index);
+			}
+			x = flushPartOfLine(g2, x, y, referenced ? COLOR_STRING : COLOR_UNREFERENCED, buf.toString());
+			buf.setLength(0);
+		} else if (c == '#') {
+			buf.append(c);
+			x = flushPartOfLine(g2, x, y, referenced ? COLOR_NORMAL : COLOR_UNREFERENCED, buf.toString());
+			buf.setLength(0);
+			c = DisassemblyPanel.charAt(text, index);
+			while (c == ' ') {
+				buf.append(c);
+				c = DisassemblyPanel.charAt(text, index);
+			}
+		}
+		do {
+			if (c == ',') {
+				buf.append(c);
+				c = DisassemblyPanel.charAt(text, index);
+				x = flushPartOfLine(g2, x, y, referenced ? COLOR_NORMAL : COLOR_UNREFERENCED, buf.toString());
+				buf.setLength(0);
+			}
+			boolean isNumber = false;
+			if (c == '$') {
+				isNumber = true;
+				buf.append(c);
+				c = DisassemblyPanel.charAt(text, index);
+				x = flushPartOfLine(g2, x, y, referenced ? COLOR_NORMAL : COLOR_UNREFERENCED, buf.toString());
+				buf.setLength(0);
+			}
+			if (isNumber) {
+				while (isHexDigit(c)) {
+					buf.append(c);
+					c = DisassemblyPanel.charAt(text, index);
+				}
+				x = flushPartOfLine(g2, x, y, referenced ? COLOR_NUMBER : COLOR_UNREFERENCED, buf.toString());
+				buf.setLength(0);
+			}
+		} while (c == ',');
+
+		// The rest of the line.
+		if (c == ';') {
+			flushPartOfLine(g2, x, y, referenced ? COLOR_COMMENT : COLOR_UNREFERENCED, restOfLine(text, index));
+			return;
+		}
+		buf.append(c);
+		c = DisassemblyPanel.charAt(text, index);
+		while (c != '\0' && c != ';') {
+			buf.append(c);
+			c = DisassemblyPanel.charAt(text, index);
+		}
+		x = flushPartOfLine(g2, x, y, referenced ? COLOR_NORMAL : COLOR_UNREFERENCED, buf.toString());
+		if (c == ';') {
+			flushPartOfLine(g2, x, y, referenced ? COLOR_COMMENT : COLOR_UNREFERENCED, restOfLine(text, index));
+		}
+	}
+
+	/** {@code &szText[wSrcIndex - 1]} in the C++ source: the text from the last character read (re-including it) to the end. */
+	private static String restOfLine(String text, int[] index) {
+		return text.substring(Math.min(index[0] - 1, text.length()));
+	}
+
+	private static boolean isHexDigit(char c) {
+		return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+	}
+
+	/**
+	 * Ported from the referenced-section check in {@code PrintAll}: all
+	 * sections other than the system/user equates are never greyed out,
+	 * regardless of {@link DisassemblyLine#referenced}.
+	 */
+	private static boolean isReferenced(DisassemblyLine disassemblyLine) {
+		DisassemblySectionType type = disassemblyLine.getSection().getType();
+		if (type == DisassemblySectionType.SYSTEM_EQUATES || type == DisassemblySectionType.USER_EQUATES) {
+			return disassemblyLine.referenced;
+		}
+		return true;
+	}
+
+	/**
+	 * Ported from {@code FlushPartOfLine}: draws one colored run and returns
+	 * the x position just past it, using this font's own real glyph width
+	 * (the C++ source hardcoded a fixed 8px console-font width instead,
+	 * matching what every other call site in this class already uses via
+	 * {@link ComputerFont#drawText}).
+	 */
+	private int flushPartOfLine(Graphics2D g2, int x, int y, Color color, String text) {
+		computerFont.drawText(g2, text, color, x, y);
+		return x + text.length() * computerFont.getGlyphWidth();
 	}
 
 	@Override

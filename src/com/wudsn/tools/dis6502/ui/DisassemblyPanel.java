@@ -486,13 +486,15 @@ public final class DisassemblyPanel extends JPanel {
 		return new LabelsInLine(labelDefinition, labelReference);
 	}
 
-	private static char charAt(String text, int[] index) {
+	/** Package-visible so {@link DisassemblyGridPanel}'s syntax-coloring state machine can reuse it, rather than duplicating this same char-scanning idiom. */
+	static char charAt(String text, int[] index) {
 		char c = index[0] < text.length() ? text.charAt(index[0]) : '\0';
 		index[0]++;
 		return c;
 	}
 
-	private static boolean isLabelStartChar(char c) {
+	/** Package-visible - see {@link #charAt}. */
+	static boolean isLabelStartChar(char c) {
 		return c == '@' || c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 	}
 
@@ -531,17 +533,15 @@ public final class DisassemblyPanel extends JPanel {
 			return;
 		}
 
-		List<String> lines = new ArrayList<>();
 		List<DisassemblyLine> newDisassemblyLines = new ArrayList<>();
 		DisassemblyResult.LineIterator iterator = disassemblyResult.createLineIterator();
 		while (iterator.hasNext()) {
 			DisassemblyLine line = iterator.next();
-			lineNumberToIndex.put(line.getLineNumber(), lines.size());
-			lines.add(line.getLine());
+			lineNumberToIndex.put(line.getLineNumber(), newDisassemblyLines.size());
 			newDisassemblyLines.add(line);
 		}
 		disassemblyLines = newDisassemblyLines;
-		grid.setLines(lines);
+		grid.setLines(newDisassemblyLines);
 	}
 
 	/**
