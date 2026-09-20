@@ -32,10 +32,14 @@ import com.wudsn.tools.base.repository.Action;
 import com.wudsn.tools.dis6502.Actions;
 import com.wudsn.tools.dis6502.model.FileHeader;
 import com.wudsn.tools.dis6502.model.GuessCodeLogic;
+import com.wudsn.tools.dis6502.model.MemoryInspectorEditCharResult;
+import com.wudsn.tools.dis6502.model.MemoryInspectorEditCursorMovement;
+import com.wudsn.tools.dis6502.model.MemoryInspectorEditPane;
 import com.wudsn.tools.dis6502.model.MemoryInspectorSelection;
 import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentList;
+import com.wudsn.tools.dis6502.model.Workspace;
 
 /**
  * A read-only hex/ASCII dump of the currently selected segment, with a
@@ -168,22 +172,35 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * entered via F2, {@link #editMenuItem}, or a double-click, exited via Esc or
  * {@link #quitEditModeMenuItem} (shown, while editing, in a separate ad hoc
  * popup that replaces the normal one - {@code MainMemoryInspector::
- * PerformCommands}'s modal gate on every other command while editing).
- * {@link MemoryInspectorGridPanel#toSbyteInternalCode} and this class's
- * key-typed handler apply {@code Char}'s {@link MemoryType#SBYTE} ASCII
- * transform. Two confirmed C++ quirks are deliberately fixed here rather than
- * replicated: typing past the end of the buffer bypasses {@code
- * MainController::QuitEditMode} in C++, so its disassembly refresh is skipped
- * on that one exit path only (see the TODO left in {@code
- * MemoryInspectorControlImpl.cpp}'s {@code Char} method) - {@link
- * #quitEditMode()} is the single exit point here, so every exit path refreshes
- * uniformly; and C++ never resyncs the selection/title to the cursor's final
- * position on exit, leaving it at wherever editing started - {@link
- * #quitEditMode()} calls {@link #select} with the cursor's final offset
- * instead. A third quirk is deliberately NOT replicated: {@code Char}'s
- * printable-ASCII gate excludes {@code '~'}, {@code '{'}, {@code '}'} for no
- * evident reason (it looks like an unintentional leftover, not designed
- * behavior) - this port's key-typed handler accepts the full printable range.
+ * PerformCommands}'s modal gate on every other command while editing). Unlike
+ * the C++ source, the actual cursor state and navigation/writing logic - not
+ * just the on/off flag - live on {@link
+ * com.wudsn.tools.dis6502.model.Workspace} ({@link
+ * Workspace#moveMemoryInspectorEditCursor}/{@link
+ * Workspace#typeMemoryInspectorEditChar}, applying {@code Char}'s {@link
+ * MemoryType#SBYTE} ASCII transform via {@link
+ * MemoryType#toSbyteInternalCode}), not here or in {@link
+ * MemoryInspectorGridPanel} - a deliberate departure from the C++ design (see
+ * {@code Workspace}'s own javadoc) so that logic can be exercised by a plain,
+ * headless unit test. This class keeps only the Swing-specific glue: {@link
+ * #handleEditKeyPressed}/{@link #handleEditKeyTyped} translate a raw {@link
+ * java.awt.event.KeyEvent} into a semantic call on {@code Workspace}, then
+ * mirror the result into {@link MemoryInspectorGridPanel} for painting (it
+ * does not own this state either); this class also owns focus/mouse
+ * handling, the popup-menu swap, and the blink timer. Two confirmed C++
+ * quirks are deliberately fixed here rather than replicated: typing past the
+ * end of the buffer bypasses {@code MainController::QuitEditMode} in C++, so
+ * its disassembly refresh is skipped on that one exit path only (see the
+ * TODO left in {@code MemoryInspectorControlImpl.cpp}'s {@code Char} method)
+ * - {@link #quitEditMode()} is the single exit point here, so every exit
+ * path refreshes uniformly; and C++ never resyncs the selection/title to the
+ * cursor's final position on exit, leaving it at wherever editing started -
+ * {@link #quitEditMode()} calls {@link #select} with the cursor's final
+ * offset instead. A third quirk is deliberately NOT replicated: {@code
+ * Char}'s printable-ASCII gate excludes {@code '~'}, {@code '{'}, {@code
+ * '}'} for no evident reason (it looks like an unintentional leftover, not
+ * designed behavior) - {@link Workspace#typeMemoryInspectorEditChar} accepts
+ * the full printable range instead.
  *
  * @author Peter Dell
  */
@@ -282,7 +299,6 @@ public final class MemoryInspectorPanel extends JPanel {
 	private MemoryInspectorSelection memoryInspectorSelection;
 	private int selectionAnchorOffset = -1;
 
-	private boolean editMode;
 	private Timer blinkTimer;
 
 	private int findSegmentIndex = SegmentList.NO_SEGMENT_INDEX;
@@ -309,14 +325,14 @@ public final class MemoryInspectorPanel extends JPanel {
 			public void mousePressed(MouseEvent e) {
 				grid.requestFocusInWindow();
 				maybeShowPopup(e);
-				if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger() && !editMode) {
+				if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger() && !isEditMode()) {
 					beginByteSelection(e);
 				}
 			}
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				if (SwingUtilities.isLeftMouseButton(e) && !editMode) {
+				if (SwingUtilities.isLeftMouseButton(e) && !isEditMode()) {
 					extendByteSelection(e);
 				}
 			}
@@ -540,7 +556,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		if (!e.isPopupTrigger() || memoryInspectorSelection == null || !memoryInspectorSelection.hasSegment()) {
 			return;
 		}
-		if (editMode) {
+		if (isEditMode()) {
 			editModePopupMenu.show(grid, e.getX(), e.getY());
 			return;
 		}
@@ -874,8 +890,14 @@ public final class MemoryInspectorPanel extends JPanel {
 				memoryInspectorSelection.getBegin());
 	}
 
+	/**
+	 * Delegates to {@link Workspace#isMemoryInspectorEditMode()} - {@code false}
+	 * if there is no {@link #memoryInspectorSelection} yet (e.g. before the
+	 * first {@link #segmentChanged}), since edit mode can only ever have been
+	 * entered once one exists.
+	 */
 	public boolean isEditMode() {
-		return editMode;
+		return memoryInspectorSelection != null && memoryInspectorSelection.getWorkspace().isMemoryInspectorEditMode();
 	}
 
 	/**
@@ -887,7 +909,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * hex pane's high nibble.
 	 */
 	public void enterEditMode() {
-		enterEditModeAt(-1, MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH);
+		enterEditModeAt(-1, MemoryInspectorEditPane.HEX_HIGH);
 	}
 
 	/**
@@ -904,15 +926,26 @@ public final class MemoryInspectorPanel extends JPanel {
 		enterEditModeAt(hit.offset, hit.pane);
 	}
 
-	private void enterEditModeAt(int offsetHint, int paneHint) {
+	/**
+	 * This method decides WHERE to start editing (a fresh selection's first
+	 * byte, or an exact double-clicked position); {@link
+	 * Workspace#enterMemoryInspectorEditMode} then owns whether that is
+	 * actually allowed (a selected segment must exist and the offset must be
+	 * in range for it) and the resulting lock state itself.
+	 */
+	private void enterEditModeAt(int offsetHint, MemoryInspectorEditPane paneHint) {
 		if (memoryInspectorSelection == null || !memoryInspectorSelection.hasSelection()) {
 			return;
 		}
 		int begin = memoryInspectorSelection.getBegin();
 		select(begin, begin);
-		editMode = true;
-		grid.setEditMode(true);
-		grid.setEditCursor(offsetHint >= 0 ? offsetHint : begin, offsetHint >= 0 ? paneHint : MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH);
+		Workspace workspace = memoryInspectorSelection.getWorkspace();
+		int offset = offsetHint >= 0 ? offsetHint : begin;
+		MemoryInspectorEditPane pane = offsetHint >= 0 ? paneHint : MemoryInspectorEditPane.HEX_HIGH;
+		if (!workspace.enterMemoryInspectorEditMode(offset, pane)) {
+			return;
+		}
+		syncEditModeToGrid();
 		grid.requestFocusInWindow();
 		startBlinkTimer();
 	}
@@ -925,15 +958,22 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * typing past the end of the buffer, or the segment changing), so the
 	 * selection-resync below and {@link #editModeExitedListener} both fire
 	 * uniformly on every exit - see this class's javadoc for the two C++ exit
-	 * quirks this fixes.
+	 * quirks this fixes. {@link Workspace#quitMemoryInspectorEditMode()} only
+	 * releases the model-level lock; the UI-facing consequences (the
+	 * selection resync, the grid/blink-timer state, notifying {@link
+	 * #editModeExitedListener}) stay this method's job, not that one's.
 	 */
 	public void quitEditMode() {
-		boolean wasEditing = editMode;
-		editMode = false;
+		if (memoryInspectorSelection == null) {
+			return; // Edit mode can only ever have been entered once a segment/selection exists.
+		}
+		Workspace workspace = memoryInspectorSelection.getWorkspace();
+		boolean wasEditing = workspace.isMemoryInspectorEditMode();
+		int offset = workspace.getMemoryInspectorEditCursorOffset();
+		workspace.quitMemoryInspectorEditMode();
 		grid.setEditMode(false);
 		stopBlinkTimer();
 		if (wasEditing) {
-			int offset = grid.getEditCursorOffset();
 			if (offset >= 0) {
 				select(offset, offset);
 			}
@@ -941,6 +981,13 @@ public final class MemoryInspectorPanel extends JPanel {
 				editModeExitedListener.onEditModeExited();
 			}
 		}
+	}
+
+	/** Mirrors {@link Workspace}'s edit-mode state into {@link #grid} so it can paint the cursor - the grid itself does not own this state. */
+	private void syncEditModeToGrid() {
+		Workspace workspace = memoryInspectorSelection.getWorkspace();
+		grid.setEditMode(workspace.isMemoryInspectorEditMode());
+		grid.setEditCursor(workspace.getMemoryInspectorEditCursorOffset(), workspace.getMemoryInspectorEditCursorPane());
 	}
 
 	private void startBlinkTimer() {
@@ -957,155 +1004,67 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from {@code MemoryInspectorControlImpl::KeyDown}'s edit-mode
-	 * branch: arrow/Home/End navigation, with no data change. The hex panes
-	 * (nibble 0/1) move nibble-wise on Left/Right (crossing to the adjacent
-	 * byte's far nibble at a boundary) and a whole line (16 bytes) on Up/Down,
-	 * resetting to the high nibble; the ASCII pane moves byte-wise for all six
-	 * keys, with no nibble concept.
+	 * Translates a raw arrow/Home/End {@link KeyEvent} into a {@link
+	 * MemoryInspectorEditCursorMovement} and hands the actual navigation math
+	 * to {@link Workspace#moveMemoryInspectorEditCursor} - ported from {@code
+	 * MemoryInspectorControlImpl::KeyDown}'s edit-mode branch, now split so
+	 * that math is headlessly unit-testable, free of any Swing dependency.
 	 */
 	private void handleEditKeyPressed(KeyEvent e) {
-		if (!editMode) {
+		if (!isEditMode()) {
 			return;
 		}
-		Segment segment = memoryInspectorSelection.getSegment();
-		int size = segment.getSize();
-		int offset = grid.getEditCursorOffset();
-		int pane = grid.getEditCursorPane();
-		if (offset < 0) {
+		MemoryInspectorEditCursorMovement movement = toEditCursorMovement(e.getKeyCode());
+		if (movement == null) {
 			return;
 		}
+		memoryInspectorSelection.getWorkspace().moveMemoryInspectorEditCursor(movement);
+		syncEditModeToGrid();
+		e.consume();
+	}
 
-		int newOffset = offset;
-		int newPane = pane;
-		boolean handled = true;
-		switch (e.getKeyCode()) {
+	private static MemoryInspectorEditCursorMovement toEditCursorMovement(int keyCode) {
+		switch (keyCode) {
 		case KeyEvent.VK_HOME:
-			newOffset = 0;
-			newPane = pane < MemoryInspectorGridPanel.EDIT_PANE_ASCII ? MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH : pane;
-			break;
+			return MemoryInspectorEditCursorMovement.HOME;
 		case KeyEvent.VK_END:
-			newOffset = size - 1;
-			newPane = pane < MemoryInspectorGridPanel.EDIT_PANE_ASCII ? MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH : pane;
-			break;
+			return MemoryInspectorEditCursorMovement.END;
 		case KeyEvent.VK_UP:
-			if (offset - MemoryInspectorGridPanel.BYTES_PER_LINE >= 0) {
-				newOffset = offset - MemoryInspectorGridPanel.BYTES_PER_LINE;
-				newPane = pane < MemoryInspectorGridPanel.EDIT_PANE_ASCII ? MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH : pane;
-			}
-			break;
+			return MemoryInspectorEditCursorMovement.UP;
 		case KeyEvent.VK_DOWN:
-			if (offset + MemoryInspectorGridPanel.BYTES_PER_LINE < size) {
-				newOffset = offset + MemoryInspectorGridPanel.BYTES_PER_LINE;
-				newPane = pane < MemoryInspectorGridPanel.EDIT_PANE_ASCII ? MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH : pane;
-			}
-			break;
+			return MemoryInspectorEditCursorMovement.DOWN;
 		case KeyEvent.VK_LEFT:
-			if (pane == MemoryInspectorGridPanel.EDIT_PANE_ASCII) {
-				if (offset > 0) {
-					newOffset = offset - 1;
-				}
-			} else if (pane == MemoryInspectorGridPanel.EDIT_PANE_HEX_LOW) {
-				newPane = MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH;
-			} else if (offset > 0) {
-				newOffset = offset - 1;
-				newPane = MemoryInspectorGridPanel.EDIT_PANE_HEX_LOW;
-			}
-			break;
+			return MemoryInspectorEditCursorMovement.LEFT;
 		case KeyEvent.VK_RIGHT:
-			if (pane == MemoryInspectorGridPanel.EDIT_PANE_ASCII) {
-				if (offset + 1 < size) {
-					newOffset = offset + 1;
-				}
-			} else if (pane == MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH) {
-				newPane = MemoryInspectorGridPanel.EDIT_PANE_HEX_LOW;
-			} else if (offset + 1 < size) {
-				newOffset = offset + 1;
-				newPane = MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH;
-			}
-			break;
+			return MemoryInspectorEditCursorMovement.RIGHT;
 		default:
-			handled = false;
-			break;
-		}
-
-		if (handled) {
-			grid.setEditCursor(newOffset, newPane);
-			e.consume();
+			return null;
 		}
 	}
 
 	/**
-	 * Ported from {@code MemoryInspectorControlImpl::Char}: hex-digit/ASCII data
-	 * entry, plus Tab to switch panes. Every valid keystroke writes immediately
-	 * via {@link Segment#setData} - there is no staging buffer or undo, matching
-	 * the C++ source.
+	 * Hands the typed character straight to {@link
+	 * Workspace#typeMemoryInspectorEditChar} - ported from {@code
+	 * MemoryInspectorControlImpl::Char}: hex-digit/ASCII data entry, plus Tab
+	 * to switch panes, now split so that logic is headlessly unit-testable,
+	 * free of any Swing dependency. Deliberately does not call {@link
+	 * KeyEvent#consume()} on the {@code HANDLED_AT_BUFFER_END} exit path,
+	 * matching this method's own prior behavior.
 	 */
 	private void handleEditKeyTyped(KeyEvent e) {
-		if (!editMode) {
+		if (!isEditMode()) {
 			return;
 		}
-		Segment segment = memoryInspectorSelection.getSegment();
-		int offset = grid.getEditCursorOffset();
-		if (offset < 0 || offset >= segment.getSize()) {
+		MemoryInspectorEditCharResult result = memoryInspectorSelection.getWorkspace().typeMemoryInspectorEditChar(e.getKeyChar());
+		if (result == MemoryInspectorEditCharResult.NOT_HANDLED) {
 			return;
 		}
-		int pane = grid.getEditCursorPane();
-		char c = e.getKeyChar();
-
-		if (pane != MemoryInspectorGridPanel.EDIT_PANE_ASCII) {
-			if (c == '\t') {
-				grid.setEditCursor(offset, MemoryInspectorGridPanel.EDIT_PANE_ASCII);
-				e.consume();
-				return;
-			}
-			int nibble = Character.digit(c, 16);
-			if (nibble < 0) {
-				return;
-			}
-			int oldValue = segment.getData(offset) & 0xFF;
-			int updated = pane == MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH ? (oldValue & 0x0F) | (nibble << 4)
-					: (oldValue & 0xF0) | nibble;
-			segment.setData(offset, updated);
-			if (pane == MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH) {
-				grid.setEditCursor(offset, MemoryInspectorGridPanel.EDIT_PANE_HEX_LOW);
-			} else if (offset + 1 < segment.getSize()) {
-				grid.setEditCursor(offset + 1, MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH);
-			} else {
-				quitEditMode();
-				return;
-			}
-			e.consume();
-		} else {
-			if (c == '\t') {
-				grid.setEditCursor(offset, MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH);
-				e.consume();
-				return;
-			}
-			int toWrite;
-			if (c == '\r' || c == '\n') {
-				toWrite = 0x9B; // Atari end-of-line byte, written like any other typed character.
-			} else if (c >= ' ' && c < 128) {
-				// Deliberately NOT replicating MemoryInspectorControlImpl.cpp Char()'s
-				// exclusion of '~', '{', '}' from the printable range - there is no
-				// evident reason for it; it looks like an unintentional leftover rather
-				// than intended behavior, so this port allows the full printable range.
-				toWrite = c;
-				if (segment.isType(offset, MemoryType.SBYTE)) {
-					toWrite = MemoryInspectorGridPanel.toSbyteInternalCode(toWrite);
-				}
-			} else {
-				return;
-			}
-			segment.setData(offset, toWrite);
-			if (offset + 1 < segment.getSize()) {
-				grid.setEditCursor(offset + 1, MemoryInspectorGridPanel.EDIT_PANE_ASCII);
-			} else {
-				quitEditMode();
-				return;
-			}
-			e.consume();
+		syncEditModeToGrid();
+		if (result == MemoryInspectorEditCharResult.HANDLED_AT_BUFFER_END) {
+			quitEditMode();
+			return;
 		}
+		e.consume();
 	}
 
 	/**

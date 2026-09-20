@@ -64,4 +64,28 @@ public enum MemoryType {
 		}
 		ORDINALS_MATCH_VERSION_22 = true;
 	}
+
+	/**
+	 * Ported from {@code MemoryInspectorControlImpl::Char}'s {@code if (cType ==
+	 * SBYTE) { ... }} block - the ASCII-to-"internal" (Atari screen code)
+	 * transform applied when typing a character into an {@link #SBYTE}-typed
+	 * byte's cell, used by {@link Workspace#typeMemoryInspectorEditChar}. This
+	 * is the WRITE direction, gated per-byte on its type and only ever given a
+	 * typed ASCII character (0-127); it is deliberately kept separate from
+	 * {@code com.wudsn.tools.dis6502.ui.MemoryInspectorGridPanel}'s
+	 * {@code toInternalCode}, the DISPLAY direction, which is driven by the
+	 * global "display as screen code" toggle and covers the full 0-255 byte
+	 * range. The two are mathematical inverses of each other on the 0-127
+	 * range but are distinct, differently-shaped formulas in the C++ source,
+	 * so they stay distinct here too rather than sharing one generalized
+	 * method.
+	 */
+	public static int toSbyteInternalCode(int asciiChar) {
+		if (asciiChar < 32) {
+			return asciiChar + 64;
+		} else if (asciiChar < 96) {
+			return asciiChar - 32;
+		}
+		return asciiChar;
+	}
 }

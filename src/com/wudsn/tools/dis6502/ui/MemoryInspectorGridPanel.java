@@ -16,6 +16,7 @@ import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 
 import com.wudsn.tools.dis6502.model.ComputerSystemType;
+import com.wudsn.tools.dis6502.model.MemoryInspectorEditPane;
 import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.Segment;
 
@@ -41,12 +42,15 @@ import com.wudsn.tools.dis6502.model.Segment;
  * instead of mouse capture and manual {@code SetCapture}/{@code ReleaseCapture}
  * bookkeeping. {@link #cellAtPoint} is that same mapping's edit-mode sibling,
  * additionally resolving which hex nibble or ASCII character a point falls in
- * ({@code EDIT_PANE_HEX_HIGH}/{@code _HEX_LOW}/{@code _ASCII}), needed to
+ * ({@link com.wudsn.tools.dis6502.model.MemoryInspectorEditPane}), needed to
  * position the in-place edit cursor precisely; {@link #setEditMode}/
  * {@link #setEditCursor}/{@link #advanceBlinkPhase} and this class's cursor
- * painting in {@link #paintLine} port {@code Char}/{@code KeyDown}'s edit mode
- * and its blinking-cursor {@code WM_TIMER} - see {@link MemoryInspectorPanel}
- * for the keyboard/focus/timer wiring that drives them.
+ * painting in {@link #paintLine} mirror {@link
+ * com.wudsn.tools.dis6502.model.Workspace}'s edit-mode state (this class
+ * paints it; it does not own it) and port {@code Char}/{@code KeyDown}'s edit
+ * mode and its blinking-cursor {@code WM_TIMER} - see {@link
+ * MemoryInspectorPanel} for the keyboard/focus/timer wiring that drives
+ * them.
  * <p>
  * {@code PrintLine}'s hex-byte/ASCII-column color, including its LOBYTE/
  * HIBYTE-adjacency-to-CODE-color rule, is ported verbatim (see
@@ -77,11 +81,6 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 	private static final Color HIGHLIGHT_COLOR = Color.YELLOW;
 
-	/** Which part of a byte's cell the edit cursor is on - matches {@code wEditedPart} (0/1/2). */
-	public static final int EDIT_PANE_HEX_HIGH = 0;
-	public static final int EDIT_PANE_HEX_LOW = 1;
-	public static final int EDIT_PANE_ASCII = 2;
-
 	private Segment segment;
 	private ComputerFont computerFont;
 	private boolean displayAsScreenCode;
@@ -90,7 +89,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 	private boolean editMode;
 	private int editCursorOffset = -1;
-	private int editCursorPane = EDIT_PANE_HEX_HIGH;
+	private MemoryInspectorEditPane editCursorPane = MemoryInspectorEditPane.HEX_HIGH;
 	private int blinkPhase;
 
 	public MemoryInspectorGridPanel() {
@@ -154,12 +153,14 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	}
 
 	/**
-	 * Moves the edit cursor to {@code offset}/{@code pane} (one of the
-	 * {@code EDIT_PANE_*} constants), scrolling it into view and repainting just
-	 * the old and new cursor lines - not the whole grid, unlike {@code
-	 * MemoryInspectorControlImpl::Refresh}'s full-panel repaint on every change.
+	 * Moves the edit cursor to {@code offset}/{@code pane}, mirroring {@link
+	 * com.wudsn.tools.dis6502.model.Workspace}'s own edit-cursor state for
+	 * painting purposes (this class does not own that state), scrolling it
+	 * into view and repainting just the old and new cursor lines - not the
+	 * whole grid, unlike {@code MemoryInspectorControlImpl::Refresh}'s
+	 * full-panel repaint on every change.
 	 */
-	public void setEditCursor(int offset, int pane) {
+	public void setEditCursor(int offset, MemoryInspectorEditPane pane) {
 		int previousOffset = this.editCursorOffset;
 		this.editCursorOffset = offset;
 		this.editCursorPane = pane;
@@ -176,7 +177,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 		return editCursorOffset;
 	}
 
-	public int getEditCursorPane() {
+	public MemoryInspectorEditPane getEditCursorPane() {
 		return editCursorPane;
 	}
 
@@ -207,9 +208,9 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	/** The result of {@link #cellAtPoint}: a byte offset plus which part of its cell was hit. */
 	public static final class CellHit {
 		public final int offset;
-		public final int pane;
+		public final MemoryInspectorEditPane pane;
 
-		CellHit(int offset, int pane) {
+		CellHit(int offset, MemoryInspectorEditPane pane) {
 			this.offset = offset;
 			this.pane = pane;
 		}
@@ -240,40 +241,18 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 		int startOfAsciiPaneInPixel = (BYTES_PER_LINE * 3 + 5) * cellW;
 		int row;
-		int pane;
+		MemoryInspectorEditPane pane;
 		if (x > startOfAsciiPaneInPixel) {
 			row = Math.max(0, x - 1 - startOfAsciiPaneInPixel) / cellW;
-			pane = EDIT_PANE_ASCII;
+			pane = MemoryInspectorEditPane.ASCII;
 		} else {
 			int relative = Math.max(0, x - 1 - 4 * cellW - cellW / 2);
 			row = relative / (3 * cellW);
-			pane = (relative % (3 * cellW)) > (3 * cellW) / 2 ? EDIT_PANE_HEX_LOW : EDIT_PANE_HEX_HIGH;
+			pane = (relative % (3 * cellW)) > (3 * cellW) / 2 ? MemoryInspectorEditPane.HEX_LOW : MemoryInspectorEditPane.HEX_HIGH;
 		}
 		row = Math.max(0, Math.min(BYTES_PER_LINE - 1, row));
 
 		return new CellHit(line * BYTES_PER_LINE + row, pane);
-	}
-
-	/**
-	 * Ported from {@code MemoryInspectorControlImpl::Char}'s
-	 * {@code if (cType == SBYTE) { ... }} block - the ASCII-to-"internal"
-	 * (Atari screen code) transform applied when typing a character into a
-	 * {@link MemoryType#SBYTE}-typed byte's cell. This is the WRITE direction,
-	 * gated per-byte on its type and only ever given a typed ASCII character
-	 * (0-127); it is deliberately kept separate from {@link #toInternalCode},
-	 * the DISPLAY direction, which is driven by the global "display as screen
-	 * code" toggle and covers the full 0-255 byte range. The two are
-	 * mathematical inverses of each other on the 0-127 range but are distinct,
-	 * differently-shaped formulas in the C++ source, so they stay distinct here
-	 * too rather than sharing one generalized method.
-	 */
-	static int toSbyteInternalCode(int asciiChar) {
-		if (asciiChar < 32) {
-			return asciiChar + 64;
-		} else if (asciiChar < 96) {
-			return asciiChar - 32;
-		}
-		return asciiChar;
 	}
 
 	/**
@@ -457,11 +436,11 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	 * sibling nibble is left completely unhighlighted.
 	 */
 	private void paintCursorHexCell(Graphics2D g2, String hex, Color color, int hexX, int cellW, int cellH, int y) {
-		boolean asciiActive = editCursorPane == EDIT_PANE_ASCII;
+		boolean asciiActive = editCursorPane == MemoryInspectorEditPane.ASCII;
 		paintCursorSubCell(g2, hex.charAt(0), color, hexX, y, cellW, cellH,
-				asciiActive || editCursorPane == EDIT_PANE_HEX_HIGH, editCursorPane == EDIT_PANE_HEX_HIGH);
+				asciiActive || editCursorPane == MemoryInspectorEditPane.HEX_HIGH, editCursorPane == MemoryInspectorEditPane.HEX_HIGH);
 		paintCursorSubCell(g2, hex.charAt(1), color, hexX + cellW, y, cellW, cellH,
-				asciiActive || editCursorPane == EDIT_PANE_HEX_LOW, editCursorPane == EDIT_PANE_HEX_LOW);
+				asciiActive || editCursorPane == MemoryInspectorEditPane.HEX_LOW, editCursorPane == MemoryInspectorEditPane.HEX_LOW);
 		computerFont.drawText(g2, String.valueOf(hex.charAt(2)), color, hexX + cellW * 2, y);
 	}
 
@@ -489,7 +468,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	private void paintCursorAsciiCell(Graphics2D g2, int displayValue, int charX, int cellW, int cellH, int y) {
 		g2.setColor(HIGHLIGHT_COLOR);
 		g2.fillRect(charX, y, cellW, cellH);
-		boolean blinking = editCursorPane == EDIT_PANE_ASCII;
+		boolean blinking = editCursorPane == MemoryInspectorEditPane.ASCII;
 		if (!(blinking && blinkPhase == 0)) {
 			computerFont.drawGlyph(g2, displayValue, Color.BLACK, charX, y);
 		}
