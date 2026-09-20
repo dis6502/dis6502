@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.wudsn.tools.dis6502.model.ComputerSystemType;
@@ -57,6 +58,28 @@ import com.wudsn.tools.dis6502.model.ComputerSystemType;
  * generated text - hex digits, addresses, disassembly mnemonics) draws
  * every character at its own direct, unshifted code point instead, which
  * both fonts render correctly - see that method's own javadoc.
+ * <p>
+ * Each glyph is rasterized once, into a small cached {@link BufferedImage}
+ * at its native pixel size, rather than calling {@link
+ * Graphics2D#drawString} directly against the caller's own on-screen
+ * {@link Graphics2D} the way this class used to. That change fixes a real
+ * bug found on an actual HiDPI display (Windows at 150% scaling, not
+ * reproducible on the offscreen renders used to develop this font
+ * support): Swing/AWT applies the desktop's display-scale transform to
+ * every on-screen {@code Graphics2D} automatically, and rasterizing this
+ * pixel-art font's vector outline straight through a non-1.0, non-hinted
+ * transform (antialiasing is off - see below - so there is no hinting to
+ * correct for it either) produces inconsistent per-glyph stem coverage -
+ * jagged, broken-looking characters, not a uniform blur. Caching each
+ * glyph as a small bitmap sidesteps that: the bitmap itself is always
+ * rasterized through a fresh {@link BufferedImage}'s own identity-
+ * transform {@code Graphics2D}, so it is pixel-perfect regardless of the
+ * caller's transform; drawing that bitmap back onto the caller's
+ * {@code Graphics2D} with {@link RenderingHints#VALUE_INTERPOLATION_NEAREST_NEIGHBOR}
+ * scales it by simple pixel replication, which stays crisp and blocky at
+ * any display scale instead of reintroducing hinting-related artifacts -
+ * the same technique {@link SpritePanel#paintComponent} already uses for
+ * the same reason.
  * <p>
  * No TTF is available for Oric/Unknown - those fall back to a plain
  * {@link Font#MONOSPACED} system font with no byte-index shift ({@link
@@ -101,6 +124,13 @@ public final class ComputerFont {
 	private final int glyphWidth;
 	private final int glyphHeight;
 	private final int codePointBase;
+
+	// Bounded in practice: at most a few hundred distinct (character, color)
+	// pairs ever get drawn (the font's own byte-indexed range plus a small,
+	// fixed palette of text colors), each a tiny glyphWidth x glyphHeight
+	// bitmap - not worth an eviction policy. Painting only ever happens on
+	// the EDT, so this needs no synchronization.
+	private final Map<Character, Map<Color, BufferedImage>> glyphImageCache = new HashMap<>();
 
 	private ComputerFont(Font font, int glyphWidth, int glyphHeight, int codePointBase) {
 		this.font = font;
@@ -247,14 +277,44 @@ public final class ComputerFont {
 	}
 
 	private void drawChar(Graphics2D g2, char ch, Color color, int x, int y) {
-		Object oldHint = g2.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING);
-		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-		g2.setFont(font);
-		g2.setColor(color);
-		FontMetrics metrics = g2.getFontMetrics(font);
-		g2.drawString(String.valueOf(ch), x, y + metrics.getAscent());
+		BufferedImage glyphImage = getGlyphImage(ch, color);
+		Object oldHint = g2.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+		g2.drawImage(glyphImage, x, y, glyphWidth, glyphHeight, null);
 		if (oldHint != null) {
-			g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, oldHint);
+			g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, oldHint);
 		}
+	}
+
+	private BufferedImage getGlyphImage(char ch, Color color) {
+		Map<Color, BufferedImage> byColor = glyphImageCache.computeIfAbsent(ch, k -> new HashMap<>());
+		BufferedImage glyphImage = byColor.get(color);
+		if (glyphImage == null) {
+			glyphImage = renderGlyphImage(ch, color);
+			byColor.put(color, glyphImage);
+		}
+		return glyphImage;
+	}
+
+	/**
+	 * Rasterizes {@code ch} into a new, small bitmap via a fresh {@link
+	 * BufferedImage}'s own identity-transform {@code Graphics2D} - see this
+	 * class's javadoc for why that, rather than drawing directly onto the
+	 * caller's own (possibly display-scaled) {@code Graphics2D}, is what
+	 * keeps this pixel-art font crisp on a HiDPI display.
+	 */
+	private BufferedImage renderGlyphImage(char ch, Color color) {
+		BufferedImage glyphImage = new BufferedImage(glyphWidth, glyphHeight, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2 = glyphImage.createGraphics();
+		try {
+			g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+			g2.setFont(font);
+			g2.setColor(color);
+			FontMetrics metrics = g2.getFontMetrics(font);
+			g2.drawString(String.valueOf(ch), 0, metrics.getAscent());
+		} finally {
+			g2.dispose();
+		}
+		return glyphImage;
 	}
 }
