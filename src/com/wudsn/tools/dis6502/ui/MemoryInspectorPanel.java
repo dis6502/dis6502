@@ -213,15 +213,17 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * Toggles {@link #setDisplayAsScreenCode} - moved here from a {@code
 	 * View} main-menu checkbox item (which the C++ source's own equivalent,
 	 * {@code ID_VIEW_DISPLAYASSCREENCODE}, still is), since it only ever
-	 * affects this one panel. A plain, non-{@code Action}-backed field like
-	 * {@link DisassemblyPanel#findButton}/{@link DisassemblyPanel#findNextButton}
-	 * - not every button in this port needs to go through {@code
-	 * com.wudsn.tools.dis6502.Actions}/{@code ElementFactory}, only the ones
-	 * that are actually menu items. {@code Dis6502} wires this directly, the
+	 * affects this one panel. Built via {@link Actions#MemoryInspectorPanel_DisplayAsScreenCode}/
+	 * {@link ElementFactory#createToggleButton}, the same {@code Action}-backed
+	 * pattern every other control in this port uses - unlike {@link
+	 * DisassemblyPanel#findButton}/{@link DisassemblyPanel#findNextButton},
+	 * which predate that pattern and stay plain since they were never menu
+	 * items even in the C++ source. {@code Dis6502} wires this directly, the
 	 * same as every other control here - not a hidden {@code doClick()}
 	 * proxy, since this button is now this command's only home.
 	 */
-	public final JToggleButton displayAsScreenCodeButton = new JToggleButton("Display as Screen Code");
+	public final JToggleButton displayAsScreenCodeButton = ElementFactory.createToggleButton(Actions.MemoryInspectorPanel_DisplayAsScreenCode,
+			true);
 
 	/**
 	 * Every popup menu item is a public field wired directly by {@code

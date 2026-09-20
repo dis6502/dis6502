@@ -174,6 +174,10 @@ public final class Actions extends NLS {
 	public static Action DisassemblyPopupMenu_AddrRangeDef;
 	public static Action DisassemblyPopupMenu_AddrRangeRef;
 
+	// Actions: Memory Inspector header. Not a popup item and not the main
+	// menu (see this field's own javadoc on MemoryInspectorPanel for why).
+	public static Action MemoryInspectorPanel_DisplayAsScreenCode;
+
 	// Actions: Memory Inspector popup menu.
 	public static Action MemoryInspectorPopupMenu_StartCodeTrace = new Action(KeyEvent.VK_T, KeyStroke.M1);
 	public static Action MemoryInspectorPopupMenu_ChangeType;
