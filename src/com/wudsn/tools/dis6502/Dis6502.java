@@ -1570,7 +1570,18 @@ public final class Dis6502 {
 		}
 	}
 
-	/** Ported from MainDisassembly::XRefSelected. */
+	/**
+	 * Ported from {@code MainDisassembly::XRefSelected}, with one fix: the
+	 * C++ source's match condition is {@code (disLine->xrefLineNumber ==
+	 * xrefLineNumber) && (disLine->segmentIndex != NO_SEGMENT_INDEX)}, so
+	 * clicking the XRef entry for a label's own definition line never
+	 * navigates anywhere when that line has no segment - e.g. a system
+	 * equate's {@code equ} line (a symbolic name for a hardware register
+	 * address, not backed by any loaded segment). The segment/memory-
+	 * inspector sync genuinely needs a segment, but scrolling the
+	 * disassembly view to the line does not, so that guard is narrowed to
+	 * just the sync below, letting every XRef entry navigate.
+	 */
 	private void performXRefSelected(int xrefLineNumber) {
 		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
 		if (disassemblyResult == null) {
@@ -1578,15 +1589,17 @@ public final class Dis6502 {
 		}
 		for (DisassemblyResult.LineIterator i = disassemblyResult.createLineIterator(); i.hasNext();) {
 			DisassemblyLine line = i.next();
-			if (line.xrefLineNumber == xrefLineNumber && line.segmentIndex != SegmentList.NO_SEGMENT_INDEX) {
-				// Selecting the segment refreshes the memory inspector's own hex
-				// dump (via updateMemoryInspectorSegment, on the SELECTED_SEGMENT
-				// listener) before the explicit select()/clearSelection() below.
-				workspace.getSegmentList().setSelectedIndex(line.segmentIndex);
-				if (line.size != 0) {
-					mainWindow.memoryInspectorPanel.select(line.offset, line.offset + line.size - 1);
-				} else {
-					mainWindow.memoryInspectorPanel.clearSelection();
+			if (line.xrefLineNumber == xrefLineNumber) {
+				if (line.segmentIndex != SegmentList.NO_SEGMENT_INDEX) {
+					// Selecting the segment refreshes the memory inspector's own hex
+					// dump (via updateMemoryInspectorSegment, on the SELECTED_SEGMENT
+					// listener) before the explicit select()/clearSelection() below.
+					workspace.getSegmentList().setSelectedIndex(line.segmentIndex);
+					if (line.size != 0) {
+						mainWindow.memoryInspectorPanel.select(line.offset, line.offset + line.size - 1);
+					} else {
+						mainWindow.memoryInspectorPanel.clearSelection();
+					}
 				}
 				mainWindow.disassemblyPanel.navigateToLine(line.getLineNumber());
 				return;
