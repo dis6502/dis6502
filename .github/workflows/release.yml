@@ -4,12 +4,15 @@ name: Release
 # macOS via jpackage (bundling the JVM, so end users need no Java install of
 # their own) and publishes them as assets on a GitHub Release.
 #
-# Trigger: push a tag matching v*, e.g. `git tag v1.0.0 && git push origin v1.0.0`.
+# Trigger: push a tag matching v*, e.g. `git tag v4.0.0 && git push origin v4.0.0`
+# (the Java port continues the version line the Windows/C++ builds left off at
+# 3.6.1 - see README.md's History section - so the first tag here is v4.0.0,
+# not v1.0.0).
 #
 # Can also be run manually (workflow_dispatch):
 # - With the release_tag input left empty: a plain test build - no release is
 #   published, only build artifacts you can download from the workflow run.
-# - With release_tag set to an EXISTING release's tag (e.g. v1.0.0): rebuilds
+# - With release_tag set to an EXISTING release's tag (e.g. v4.0.0): rebuilds
 #   whatever the triggering branch currently is and republishes those binaries
 #   to that release, without moving the git tag itself - useful for shipping
 #   a fixed build under the same version number without creating a new tag.
@@ -72,9 +75,8 @@ jobs:
         shell: bash
         # macOS's app-image bundler rejects an app-version whose first number
         # is 0 ("The first number in an app-version cannot be zero or
-        # negative"), so both the workflow_dispatch placeholder and every
-        # real release tag need a major version of at least 1 (v1.0.0, not
-        # v0.1.0).
+        # negative"), which the 4.x version line (see the trigger comment
+        # above) satisfies anyway.
         env:
           RELEASE_TAG_INPUT: ${{ github.event.inputs.release_tag }}
         run: |
@@ -86,7 +88,7 @@ jobs:
           if [[ -n "${TAG:-}" ]]; then
             echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
           else
-            echo "version=1.0.0" >> "$GITHUB_OUTPUT"
+            echo "version=4.0.0" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Build portable app image with jpackage
