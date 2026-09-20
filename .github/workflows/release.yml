@@ -1,0 +1,119 @@
+name: Release
+
+# Builds a portable, no-install-needed app image for Windows, Linux and
+# macOS via jpackage (bundling the JVM, so end users need no Java install of
+# their own) and publishes them as assets on a GitHub Release.
+#
+# Trigger: push a tag matching v*, e.g. `git tag v1.0.0 && git push origin v1.0.0`.
+# Can also be run manually (workflow_dispatch) for a test build - in that
+# case the version defaults to 0.0.0 and no release is published, only
+# build artifacts you can download from the workflow run.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: macos
+          - os: ubuntu-latest
+            platform: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout dis6502
+        uses: actions/checkout@v4
+        with:
+          path: dis6502
+
+      - name: Checkout WUDSN-Base
+        uses: actions/checkout@v4
+        with:
+          repository: wudsn/wudsn-base
+          path: wudsn-base
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Install WUDSN-Base into the local Maven repo
+        run: mvn -B -ntp install
+        working-directory: wudsn-base
+
+      - name: Build the dis6502 shaded jar
+        run: mvn -B -ntp package
+        working-directory: dis6502
+
+      - name: Determine app version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=0.0.0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build portable app image with jpackage
+        shell: bash
+        run: |
+          jpackage \
+            --type app-image \
+            --name dis6502 \
+            --input dis6502/target \
+            --main-jar dis6502.jar \
+            --main-class com.wudsn.tools.dis6502.Dis6502 \
+            --app-version "${{ steps.version.outputs.version }}" \
+            --add-modules ALL-MODULE-PATH \
+            --dest dist
+
+      - name: Archive app image (Windows)
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: Compress-Archive -Path dist/dis6502 -DestinationPath dis6502-windows-x64.zip
+
+      - name: Archive app image (Linux)
+        if: matrix.platform == 'linux'
+        shell: bash
+        run: tar czf dis6502-linux-x64.tar.gz -C dist dis6502
+
+      - name: Archive app image (macOS)
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: tar czf dis6502-macos-x64.tar.gz -C dist dis6502.app
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dis6502-${{ matrix.platform }}
+          path: dis6502-${{ matrix.platform }}-*.*
+          if-no-files-found: error
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*/*
+          generate_release_notes: true
