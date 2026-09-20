@@ -31,6 +31,7 @@ public final class MemoryInspectorStateTest {
 	public static void testMemoryInspectorState() {
 		testEnterQuit();
 		testCursorNavigation();
+		testCursorNavigationWithNarrowerBytesPerLine();
 		testHexDigitWrite();
 		testAsciiWrite();
 		testPrintableRangeIncludesTildeBraces();
@@ -74,7 +75,7 @@ public final class MemoryInspectorStateTest {
 		Assert.boolEquals(state.isEditMode(), false);
 
 		// Every navigation/typing method is itself a no-op while not editing.
-		Assert.boolEquals(state.moveEditCursor(EditCursorMovement.RIGHT), false);
+		Assert.boolEquals(state.moveEditCursor(EditCursorMovement.RIGHT, 16), false);
 		Assert.boolEquals(state.typeEditChar('5') == EditCharResult.NOT_HANDLED, true);
 	}
 
@@ -84,48 +85,68 @@ public final class MemoryInspectorStateTest {
 		state.enterEditMode(0, EditPane.HEX_HIGH);
 
 		// Right within a byte: high -> low nibble, same offset.
-		state.moveEditCursor(EditCursorMovement.RIGHT);
+		state.moveEditCursor(EditCursorMovement.RIGHT, 16);
 		assertCursor(state, 0, EditPane.HEX_LOW);
 
 		// Right from the low nibble crosses to the next byte's high nibble.
-		state.moveEditCursor(EditCursorMovement.RIGHT);
+		state.moveEditCursor(EditCursorMovement.RIGHT, 16);
 		assertCursor(state, 1, EditPane.HEX_HIGH);
 
 		// Left from the high nibble crosses back to the previous byte's low nibble.
-		state.moveEditCursor(EditCursorMovement.LEFT);
+		state.moveEditCursor(EditCursorMovement.LEFT, 16);
 		assertCursor(state, 0, EditPane.HEX_LOW);
 
 		// Left at offset 0's low nibble goes back to its own high nibble, not offset -1.
-		state.moveEditCursor(EditCursorMovement.LEFT);
+		state.moveEditCursor(EditCursorMovement.LEFT, 16);
 		assertCursor(state, 0, EditPane.HEX_HIGH);
-		state.moveEditCursor(EditCursorMovement.LEFT);
+		state.moveEditCursor(EditCursorMovement.LEFT, 16);
 		assertCursor(state, 0, EditPane.HEX_HIGH); // No further effect.
 
 		// Down/Up move a whole line (16 bytes), resetting to the high nibble.
-		state.moveEditCursor(EditCursorMovement.DOWN);
+		state.moveEditCursor(EditCursorMovement.DOWN, 16);
 		assertCursor(state, 16, EditPane.HEX_HIGH);
-		state.moveEditCursor(EditCursorMovement.DOWN);
+		state.moveEditCursor(EditCursorMovement.DOWN, 16);
 		assertCursor(state, 32, EditPane.HEX_HIGH); // Last valid offset (size 0x21 = 33).
-		state.moveEditCursor(EditCursorMovement.DOWN);
+		state.moveEditCursor(EditCursorMovement.DOWN, 16);
 		assertCursor(state, 32, EditPane.HEX_HIGH); // Would overshoot - no effect.
-		state.moveEditCursor(EditCursorMovement.UP);
+		state.moveEditCursor(EditCursorMovement.UP, 16);
 		assertCursor(state, 16, EditPane.HEX_HIGH);
 
 		// Home/End jump to the segment's first/last offset.
-		state.moveEditCursor(EditCursorMovement.END);
+		state.moveEditCursor(EditCursorMovement.END, 16);
 		assertCursor(state, 32, EditPane.HEX_HIGH);
-		state.moveEditCursor(EditCursorMovement.HOME);
+		state.moveEditCursor(EditCursorMovement.HOME, 16);
 		assertCursor(state, 0, EditPane.HEX_HIGH);
 
 		// The ASCII pane moves byte-wise for all six movements, no nibble concept.
 		state.typeEditChar('\t'); // Switch to the ASCII pane.
 		assertCursor(state, 0, EditPane.ASCII);
-		state.moveEditCursor(EditCursorMovement.LEFT);
+		state.moveEditCursor(EditCursorMovement.LEFT, 16);
 		assertCursor(state, 0, EditPane.ASCII); // No effect at offset 0.
-		state.moveEditCursor(EditCursorMovement.RIGHT);
+		state.moveEditCursor(EditCursorMovement.RIGHT, 16);
 		assertCursor(state, 1, EditPane.ASCII);
-		state.moveEditCursor(EditCursorMovement.DOWN);
+		state.moveEditCursor(EditCursorMovement.DOWN, 16);
 		assertCursor(state, 17, EditPane.ASCII); // Stays on the ASCII pane, unlike the hex panes.
+	}
+
+	/**
+	 * Confirms {@code bytesPerLine} is genuinely read from the call site
+	 * rather than a leftover hardcoded 16 - the caller,
+	 * {@code com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}, passes
+	 * whatever {@code MemoryInspectorGridPanel#getBytesPerLine()} currently
+	 * reports, which can be 8 once the grid's own responsive layout has
+	 * narrowed it.
+	 */
+	private static void testCursorNavigationWithNarrowerBytesPerLine() {
+		MutableMemoryInspectorState state = newStateWithSelectedSegment(0x21); // 33 bytes: four full 8-byte lines plus one.
+		state.enterEditMode(0, EditPane.HEX_HIGH);
+
+		state.moveEditCursor(EditCursorMovement.DOWN, 8);
+		assertCursor(state, 8, EditPane.HEX_HIGH);
+		state.moveEditCursor(EditCursorMovement.DOWN, 8);
+		assertCursor(state, 16, EditPane.HEX_HIGH);
+		state.moveEditCursor(EditCursorMovement.UP, 8);
+		assertCursor(state, 8, EditPane.HEX_HIGH);
 	}
 
 	private static void assertCursor(MutableMemoryInspectorState state, int expectedOffset, EditPane expectedPane) {

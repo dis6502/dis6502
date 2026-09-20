@@ -6,10 +6,13 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 
 import javax.swing.JPanel;
 import javax.swing.Scrollable;
@@ -43,8 +46,26 @@ import com.wudsn.tools.dis6502.model.Segment;
  * instead of mouse capture and manual {@code SetCapture}/{@code ReleaseCapture}
  * bookkeeping. {@link #cellAtPoint} is that same mapping's edit-mode sibling,
  * additionally resolving which hex nibble or ASCII character a point falls in
- * ({@link com.wudsn.tools.dis6502.model.EditPane}), needed to
- * position the in-place edit cursor precisely.
+ * ({@link EditPane}), needed to position the in-place edit cursor precisely.
+ * <p>
+ * {@link #getBytesPerLine} is responsive, not the fixed 16 it used to be:
+ * ported from {@code Layout::Compute}'s own {@code
+ * memoryInspectorNumberOfBytesPerLine} decision, which drops from 16 to 8
+ * once the *whole* main window is narrower than a fixed 152-column
+ * threshold (computed once per window resize by that hand-rolled manual
+ * layout system, which positions every panel from the window's raw pixel
+ * dimensions). This class has no equivalent whole-window computation to
+ * hook into - {@code MainWindow} nests ordinary {@link
+ * javax.swing.JSplitPane}s instead - so {@link #updateBytesPerLine} reacts
+ * to this component's own enclosing {@link javax.swing.JScrollPane}
+ * viewport's width instead (already reduced correctly for whatever room
+ * the surrounding split panes end up giving this panel): wide enough to
+ * fit all 16 bytes/line without horizontal scrolling, and it does; too
+ * narrow, and it drops to 8. {@link MutableMemoryInspectorState#moveEditCursor}'s
+ * Up/Down navigation needs this same value for its whole-line jump, so it
+ * takes it as a parameter from {@link MemoryInspectorPanel} rather than
+ * owning any bytes-per-line concept of its own - a UI-computed fact like
+ * this has no business being model state.
  * <p>
  * The selection range and edit-mode cursor are read live from {@link
  * #setMemoryInspectorState}'s {@link MemoryInspectorState} - this
@@ -82,8 +103,6 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 	private static final long serialVersionUID = 1L;
 
-	public static final int BYTES_PER_LINE = 16;
-
 	/** Matches dwMemoryInspectorColor[], indexed by MemoryType.ordinal(). */
 	private static final Color[] TYPE_COLORS = { new Color(0, 0, 0), new Color(192, 192, 192), new Color(128, 128, 128),
 			new Color(128, 0, 0), new Color(128, 0, 128), new Color(128, 128, 0), new Color(255, 127, 0),
@@ -100,13 +119,77 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	private int previousEditCursorOffset = -1;
 	private int blinkPhase;
 
+	private int bytesPerLine = 16;
+	private final ComponentAdapter parentResizeListener = new ComponentAdapter() {
+		@Override
+		public void componentResized(ComponentEvent e) {
+			updateBytesPerLine();
+		}
+	};
+
 	public MemoryInspectorGridPanel() {
 		setBackground(Color.WHITE);
 		setComputerFont(ComputerFont.get(ComputerSystemType.ATARI800, false));
 	}
 
+	/**
+	 * Tracks the enclosing {@link javax.swing.JScrollPane} viewport (this
+	 * component's {@link #getParent()} once actually placed in one) so
+	 * {@link #updateBytesPerLine} runs whenever it resizes - see this
+	 * class's own javadoc for why that, not the whole window, is what this
+	 * port reacts to.
+	 */
+	@Override
+	public void addNotify() {
+		super.addNotify();
+		Container parent = getParent();
+		if (parent != null) {
+			parent.addComponentListener(parentResizeListener);
+		}
+		updateBytesPerLine();
+	}
+
+	@Override
+	public void removeNotify() {
+		Container parent = getParent();
+		if (parent != null) {
+			parent.removeComponentListener(parentResizeListener);
+		}
+		super.removeNotify();
+	}
+
+	public int getBytesPerLine() {
+		return bytesPerLine;
+	}
+
+	/**
+	 * Ported from {@code Layout::Compute}'s {@code
+	 * memoryInspectorNumberOfBytesPerLine} decision - see this class's own
+	 * javadoc for the full explanation of what this reacts to instead of
+	 * the C++ source's whole-window column count. A no-op until {@link
+	 * #computerFont} is known (glyph width isn't available yet to size the
+	 * comparison), and whenever the result doesn't actually change from
+	 * the current value.
+	 */
+	private void updateBytesPerLine() {
+		if (computerFont == null) {
+			return;
+		}
+		Container parent = getParent();
+		int availableWidth = parent != null ? parent.getWidth() : getWidth();
+		int neededFor16BytesPerLine = totalUnitsFor(16) * computerFont.getGlyphWidth();
+		int newBytesPerLine = availableWidth >= neededFor16BytesPerLine ? 16 : 8;
+		if (newBytesPerLine != bytesPerLine) {
+			bytesPerLine = newBytesPerLine;
+			previousEditCursorOffset = -1; // Stale cursor-line bookkeeping once the column count itself changes.
+			revalidate();
+			repaint();
+		}
+	}
+
 	public void setComputerFont(ComputerFont computerFont) {
 		this.computerFont = computerFont;
+		updateBytesPerLine();
 		revalidate();
 		repaint();
 	}
@@ -147,7 +230,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	public void refreshSelection() {
 		repaint();
 		if (memoryInspectorState != null && memoryInspectorState.hasSelection()) {
-			scrollLineToVisible(memoryInspectorState.getBegin() / BYTES_PER_LINE);
+			scrollLineToVisible(memoryInspectorState.getBegin() / bytesPerLine);
 		}
 	}
 
@@ -186,7 +269,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 			repaintCursorLine(previousEditCursorOffset);
 		}
 		if (offset >= 0) {
-			scrollLineToVisible(offset / BYTES_PER_LINE);
+			scrollLineToVisible(offset / bytesPerLine);
 			repaintCursorLine(offset);
 		}
 		previousEditCursorOffset = offset;
@@ -221,7 +304,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 			return;
 		}
 		int cellH = computerFont.getGlyphHeight();
-		int line = offset / BYTES_PER_LINE;
+		int line = offset / bytesPerLine;
 		repaint(new Rectangle(0, line * cellH, totalUnits() * computerFont.getGlyphWidth(), cellH));
 	}
 
@@ -259,7 +342,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 		int cellH = computerFont.getGlyphHeight();
 		int line = Math.max(0, Math.min(lines - 1, y / cellH));
 
-		int startOfAsciiPaneInPixel = (BYTES_PER_LINE * 3 + 5) * cellW;
+		int startOfAsciiPaneInPixel = (bytesPerLine * 3 + 5) * cellW;
 		int row;
 		EditPane pane;
 		if (x > startOfAsciiPaneInPixel) {
@@ -270,9 +353,9 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 			row = relative / (3 * cellW);
 			pane = (relative % (3 * cellW)) > (3 * cellW) / 2 ? EditPane.HEX_LOW : EditPane.HEX_HIGH;
 		}
-		row = Math.max(0, Math.min(BYTES_PER_LINE - 1, row));
+		row = Math.max(0, Math.min(bytesPerLine - 1, row));
 
-		return new CellHit(line * BYTES_PER_LINE + row, pane);
+		return new CellHit(line * bytesPerLine + row, pane);
 	}
 
 	/**
@@ -301,14 +384,14 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 		int row;
 		if (column < 5) {
 			row = 0;
-		} else if (column >= 5 + BYTES_PER_LINE * 3) {
-			row = column - (5 + BYTES_PER_LINE * 3);
+		} else if (column >= 5 + bytesPerLine * 3) {
+			row = column - (5 + bytesPerLine * 3);
 		} else {
 			row = (column - 5) / 3;
 		}
-		row = Math.max(0, Math.min(BYTES_PER_LINE - 1, row));
+		row = Math.max(0, Math.min(bytesPerLine - 1, row));
 
-		return line * BYTES_PER_LINE + row;
+		return line * bytesPerLine + row;
 	}
 
 	/**
@@ -353,15 +436,19 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 			return 0;
 		}
 		int size = segment.getSize();
-		return (size + BYTES_PER_LINE - 1) / BYTES_PER_LINE;
+		return (size + bytesPerLine - 1) / bytesPerLine;
 	}
 
 	/**
 	 * Total width in glyph-cell units: address (4 digits + '|') + each byte's "XX "
 	 * + the ASCII column.
 	 */
-	private static int totalUnits() {
-		return 5 + BYTES_PER_LINE * 4;
+	private int totalUnits() {
+		return totalUnitsFor(bytesPerLine);
+	}
+
+	private static int totalUnitsFor(int bytesPerLine) {
+		return 5 + bytesPerLine * 4;
 	}
 
 	@Override
@@ -398,8 +485,8 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 	private void paintLine(Graphics2D g2, int line, int size, int cellW, int cellH) {
 		int y = line * cellH;
-		int lineStart = line * BYTES_PER_LINE;
-		int lineEnd = Math.min(lineStart + BYTES_PER_LINE, size);
+		int lineStart = line * bytesPerLine;
+		int lineEnd = Math.min(lineStart + bytesPerLine, size);
 		int rowsInLine = lineEnd - lineStart;
 
 		// Address, e.g. "0600|".
@@ -413,9 +500,9 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 		int selectionEnd = hasSelection ? memoryInspectorState.getEnd() : -1;
 
 		MemoryType oldType = null;
-		for (int row = 0; row < BYTES_PER_LINE; row++) {
+		for (int row = 0; row < bytesPerLine; row++) {
 			int hexX = (5 + row * 3) * cellW;
-			int charX = (5 + BYTES_PER_LINE * 3 + row) * cellW;
+			int charX = (5 + bytesPerLine * 3 + row) * cellW;
 
 			if (row >= rowsInLine) {
 				drawBlank(g2, hexX, y, cellW * 3, cellH);
@@ -449,7 +536,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 		}
 
 		// Vertical bar separating the hex and ASCII columns.
-		computerFont.drawText(g2, "|", Color.BLACK, (5 + BYTES_PER_LINE * 3 - 1) * cellW, y);
+		computerFont.drawText(g2, "|", Color.BLACK, (5 + bytesPerLine * 3 - 1) * cellW, y);
 	}
 
 	/**

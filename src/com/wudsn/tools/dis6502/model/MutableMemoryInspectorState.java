@@ -55,9 +55,6 @@ import java.util.Arrays;
  */
 public final class MutableMemoryInspectorState implements MemoryInspectorState {
 
-	/** Matches {@code MemoryInspectorGridPanel.BYTES_PER_LINE} - kept as its own constant since this class (model) must not depend on that UI class. */
-	private static final int EDIT_BYTES_PER_LINE = 16;
-
 	private final Workspace workspace;
 
 	private int segmentIndex;
@@ -243,9 +240,14 @@ public final class MutableMemoryInspectorState implements MemoryInspectorState {
 	 * RIGHT} (crossing to the adjacent byte's far nibble at a boundary) and a
 	 * whole line on {@code UP}/{@code DOWN}, resetting to the high nibble; the
 	 * ASCII pane moves byte-wise for all six movements, with no nibble
-	 * concept. Returns {@code false} (a no-op) if edit mode is not active.
+	 * concept. {@code bytesPerLine} is the grid's current line width - a
+	 * UI-computed fact ({@code
+	 * com.wudsn.tools.dis6502.ui.MemoryInspectorGridPanel#getBytesPerLine()})
+	 * that this model class does not own, so it is passed in for the
+	 * {@code UP}/{@code DOWN} whole-line jump rather than hardcoded. Returns
+	 * {@code false} (a no-op) if edit mode is not active.
 	 */
-	public boolean moveEditCursor(EditCursorMovement movement) {
+	public boolean moveEditCursor(EditCursorMovement movement, int bytesPerLine) {
 		if (!editMode) {
 			return false;
 		}
@@ -265,14 +267,14 @@ public final class MutableMemoryInspectorState implements MemoryInspectorState {
 			newPane = pane != EditPane.ASCII ? EditPane.HEX_HIGH : pane;
 			break;
 		case UP:
-			if (offset - EDIT_BYTES_PER_LINE >= 0) {
-				newOffset = offset - EDIT_BYTES_PER_LINE;
+			if (offset - bytesPerLine >= 0) {
+				newOffset = offset - bytesPerLine;
 				newPane = pane != EditPane.ASCII ? EditPane.HEX_HIGH : pane;
 			}
 			break;
 		case DOWN:
-			if (offset + EDIT_BYTES_PER_LINE < size) {
-				newOffset = offset + EDIT_BYTES_PER_LINE;
+			if (offset + bytesPerLine < size) {
+				newOffset = offset + bytesPerLine;
 				newPane = pane != EditPane.ASCII ? EditPane.HEX_HIGH : pane;
 			}
 			break;

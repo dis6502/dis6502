@@ -1017,7 +1017,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		if (movement == null) {
 			return;
 		}
-		memoryInspectorState.moveEditCursor(movement);
+		memoryInspectorState.moveEditCursor(movement, grid.getBytesPerLine());
 		grid.refreshEditCursor();
 		e.consume();
 	}
