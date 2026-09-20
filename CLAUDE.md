@@ -3,7 +3,7 @@
 This is the Java/Swing successor (starting with version 4.0) to the C++/Win32
 `DIS6502` disassembler, being ported class-by-class from the original source.
 
-- **C++ source being ported**: `C:\jac\system\Windows\Programming\Tools\dis6502\src`
+- **C++ source being ported**: `C:\jac\system\Windows\Programming\Repositories\dis6502\src`
 - **Shared WUDSN Java library** (`com.wudsn.tools.base`/`.base.atari`, a
   separate Maven module this project depends on): `C:\jac\system\Java\Programming\Repositories\WUDSN-Base`
 
