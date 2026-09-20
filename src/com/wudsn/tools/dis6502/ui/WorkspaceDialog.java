@@ -87,8 +87,6 @@ public final class WorkspaceDialog extends JDialog {
 		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(formPanel, BorderLayout.CENTER);
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-		pack();
-		setLocationRelativeTo(owner);
 	}
 
 	/** Ported from WorkspaceDialog::OnOK. */
@@ -112,6 +110,12 @@ public final class WorkspaceDialog extends JDialog {
 		computerSystemComboBox.addItem(computerSystemFactory.getComputerSystemTypeInfo(ComputerSystemType.C64));
 		computerSystemComboBox.addItem(computerSystemFactory.getComputerSystemTypeInfo(ComputerSystemType.ORIC));
 		computerSystemComboBox.setSelectedItem(workspace.getComputerSystem().getTypeInfo());
+
+		// Packed here, not in the constructor: the combo box is still empty at
+		// construction time, so packing then sized the dialog too narrow to
+		// show the populated item text once items were added afterwards.
+		pack();
+		setLocationRelativeTo(getOwner());
 
 		confirmed = false;
 		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
