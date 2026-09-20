@@ -401,6 +401,20 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * doClick()} indirection {@link #bindEditModeKeys} relies on too (calling
 	 * {@link #enterEditMode()}/{@link #quitEditMode()} directly), not a proxy to
 	 * a hidden component.
+	 * <p>
+	 * One keystroke does not fit the "defer to the item's own live accelerator"
+	 * story above: Esc, while {@link #popupMenu}/{@link #editModePopupMenu} is
+	 * open, fires neither {@link #quitEditModeMenuItem}'s own accelerator nor
+	 * this method's window-level binding (confirmed with a dedicated smoke
+	 * test) - Swing's own menu-cancel handling (closing the open popup)
+	 * consumes Esc before either accelerator mechanism sees it, the same way
+	 * {@code TrackPopupMenu}'s internal modal loop consumes it in the C++
+	 * source ({@code ui/MemoryInspector.cpp}) before it ever reaches {@code
+	 * TranslateAccelerator}/the app's {@code ACCELERATORS} table. So pressing
+	 * Esc while either popup happens to be open just closes that popup,
+	 * leaving edit mode active - matching the C++ original's own limitation,
+	 * not a Java-only regression; Esc still reliably exits edit mode the rest
+	 * of the time, i.e. whenever neither popup is currently open.
 	 */
 	private void bindPopupMenuAccelerators() {
 		bindAccelerator(Actions.MemoryInspectorPopupMenu_StartCodeTrace, startCodeTraceMenuItem);
