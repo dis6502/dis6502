@@ -21,11 +21,11 @@ import com.wudsn.tools.base.repository.NLS;
  * follow {@code MainMenu_<TopMenu>_<Item>} (nested submenus add one more
  * {@code _<SubMenu>} segment), matching the convention every other WUDSN
  * Swing tool's own {@code Actions} class already uses (e.g. {@code
- * com.wudsn.tools.thecartstudio.Actions}), and - unlike {@link Text}, which
- * extends {@code org.eclipse.osgi.util.NLS} - extends {@code
- * com.wudsn.tools.base.repository.NLS} instead, the richer of the two base
- * classes this project uses, since only it supports {@link Action}-typed
- * fields.
+ * com.wudsn.tools.thecartstudio.Actions}). Extends {@code
+ * com.wudsn.tools.base.repository.NLS}, the same base {@link Text}/{@link
+ * Texts} use, rather than the plain-{@code String}-only {@code
+ * org.eclipse.osgi.util.NLS}, since only this richer base class supports
+ * {@link Action}-typed fields.
  * <p>
  * Label text and mnemonic placement are copied verbatim from {@code
  * dis6502.rc}'s {@code MAIN_MENU} resource (dropping each item's

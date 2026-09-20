@@ -5,7 +5,7 @@
  */
 package com.wudsn.tools.dis6502;
 
-import org.eclipse.osgi.util.NLS;
+import com.wudsn.tools.base.repository.NLS;
 
 /**
  * Text repository: the application's user-visible message/title strings,
@@ -13,11 +13,11 @@ import org.eclipse.osgi.util.NLS;
  * constants, with their text taken from the {@code STRINGTABLE} block of
  * dis6502.rc).
  * <p>
- * Follows the same {@code org.eclipse.osgi.util.NLS} pattern as {@code
- * com.wudsn.tools.base.hello.Texts} (in the {@code
- * com.wudsn.tools.base.hello.standalone} project): each field is populated
- * reflectively from the matching key in {@code Text.properties} when this
- * class is loaded. Unlike the C++ source, where {@code IDS_*} are opaque
+ * Follows the same {@code com.wudsn.tools.base.repository.NLS} pattern as
+ * {@link Actions} and {@code com.wudsn.tools.thecartstudio.Texts}: each
+ * field is populated reflectively from the matching key in {@code
+ * Text.properties} when this class is loaded, via the inherited {@code
+ * initializeClass} call below. Unlike the C++ source, where {@code IDS_*} are opaque
  * resource IDs requiring a {@code Text::Get(TextID)}/{@code
  * Application::GetText} round trip through the Windows resource table at
  * runtime, each field here directly holds its resolved text - there is no
@@ -135,6 +135,6 @@ public final class Text extends NLS {
 	public static String IDS_XREF_TITLE_NO_LABEL_SELECTED;
 
 	static {
-		NLS.initializeMessages(Text.class.getName(), Text.class);
+		initializeClass(Text.class, null);
 	}
 }

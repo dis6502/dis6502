@@ -5,7 +5,7 @@
  */
 package com.wudsn.tools.dis6502;
 
-import org.eclipse.osgi.util.NLS;
+import com.wudsn.tools.base.repository.NLS;
 
 /**
  * UI text repository for strings this port introduces itself - dialog
@@ -14,14 +14,9 @@ import org.eclipse.osgi.util.NLS;
  * dialog ({@code <DialogName>_<Purpose>}, e.g. {@link #AboutDialog_Title}),
  * following the same convention {@code com.wudsn.tools.thecartstudio.Texts}
  * uses for its own dialog-local strings (its {@code AboutDialog_Content}/
- * {@code AboutDialog_URL} fields).
- * <p>
- * Populated the same reflective way as {@link Text} - see that class's own
- * javadoc - via {@code org.eclipse.osgi.util.NLS}, not {@code
- * com.wudsn.tools.base.repository.NLS} (what {@code
- * com.wudsn.tools.thecartstudio.Texts} itself actually extends): an
- * already-established, deliberate departure for this project, confirmed
- * when porting {@link Text} itself.
+ * {@code AboutDialog_URL} fields) - including that class's own {@code
+ * com.wudsn.tools.base.repository.NLS} base, the same one {@link Text}/
+ * {@link Actions} use.
  *
  * @author Peter Dell
  */
@@ -37,6 +32,6 @@ public final class Texts extends NLS {
 	public static String AboutDialog_Text;
 
 	static {
-		NLS.initializeMessages(Texts.class.getName(), Texts.class);
+		initializeClass(Texts.class, null);
 	}
 }

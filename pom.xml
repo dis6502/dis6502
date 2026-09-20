@@ -28,15 +28,6 @@
 			<artifactId>com.wudsn.tools.base.atari</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
-		<!-- org.eclipse.osgi.util.NLS: the same standalone text-repository mechanism
-		     used by com.wudsn.tools.base.hello.standalone's Texts.java, used here by
-		     Text.java. Used purely as a plain library class - no OSGi runtime/container
-		     is involved. -->
-		<dependency>
-			<groupId>org.eclipse.platform</groupId>
-			<artifactId>org.eclipse.osgi</artifactId>
-			<version>3.21.0</version>
-		</dependency>
 	</dependencies>
 
 	<build>
@@ -65,22 +56,6 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-							<!-- org.eclipse.osgi is a signed jar; merging its META-INF
-							     signature files into this uber-jar without stripping them
-							     leaves a manifest the JVM's jar verifier rejects at
-							     runtime ("Invalid signature file digest for Manifest main
-							     attributes"), since the merged jar's content no longer
-							     matches the original signature. -->
-							<filters>
-								<filter>
-									<artifact>*:*</artifact>
-									<excludes>
-										<exclude>META-INF/*.SF</exclude>
-										<exclude>META-INF/*.DSA</exclude>
-										<exclude>META-INF/*.RSA</exclude>
-									</excludes>
-								</filter>
-							</filters>
 							<transformers>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 									<mainClass>com.wudsn.tools.dis6502.Dis6502</mainClass>
