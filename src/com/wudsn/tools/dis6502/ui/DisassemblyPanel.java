@@ -7,7 +7,6 @@ package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -223,31 +222,40 @@ public final class DisassemblyPanel extends JPanel {
 			}
 		});
 
-		// Ctrl+Shift+F/Shift+F3, from dis6502.rc's ACCELERATORS table (see
-		// POPUP_MENU_ACCELERATORS_PLAN.md), bound WHEN_IN_FOCUSED_WINDOW like
-		// MemoryInspectorPanel's own popup-menu accelerators - unlike Return
-		// above, these carry no risk of stealing a common key from an unrelated
-		// focused component, so no such narrowing is needed. Calling
-		// findButton/findNextButton.doClick() directly - not popupFindMenuItem/
-		// popupFindNextMenuItem.doClick() - sidesteps relying on those popup
-		// items' own liveness entirely: the same empirical finding documented in
-		// MemoryInspectorPanel.bindPopupMenuAccelerators applies here too (a
-		// standalone JPopupMenu's item accelerators only fire while that popup
-		// instance is open), and this panel's popup is rebuilt from scratch on
-		// every right-click besides.
-		grid.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK),
-				"find");
-		grid.getActionMap().put("find", new AbstractAction() {
+		// Ctrl+Shift+F/Shift+F3, from Actions.DisassemblyPopupMenu_Find/_FindNext
+		// (see POPUP_MENU_ACCELERATORS_PLAN.md for how they were verified), bound
+		// WHEN_IN_FOCUSED_WINDOW like MemoryInspectorPanel's own popup-menu
+		// accelerators - unlike Return above, these carry no risk of stealing a
+		// common key from an unrelated focused component, so no such narrowing is
+		// needed. Calling findButton/findNextButton.doClick() directly - not
+		// popupFindMenuItem/popupFindNextMenuItem.doClick() - sidesteps relying on
+		// those popup items' own liveness entirely: the same empirical finding
+		// documented in MemoryInspectorPanel.bindPopupMenuAccelerators applies
+		// here too (a standalone JPopupMenu's item accelerators, which {@code
+		// ElementFactory.createMenuItem} applies automatically from these same
+		// Actions, only fire while that popup instance is open), and this panel's
+		// popup is rebuilt from scratch on every right-click besides - hence the
+		// isPopupMenuVisible() guard below, deferring to the item's own
+		// accelerator whenever the popup happens to already be showing.
+		bindAccelerator(Actions.DisassemblyPopupMenu_Find, findButton::doClick);
+		bindAccelerator(Actions.DisassemblyPopupMenu_FindNext, findNextButton::doClick);
+	}
+
+	private boolean isPopupMenuVisible() {
+		return popupMenu.isVisible();
+	}
+
+	private int popupAcceleratorCounter;
+
+	private void bindAccelerator(Action action, Runnable command) {
+		String actionKey = "popupAccelerator" + popupAcceleratorCounter++;
+		grid.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(action.getAccelerator(), actionKey);
+		grid.getActionMap().put(actionKey, new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				findButton.doClick();
-			}
-		});
-		grid.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F3, InputEvent.SHIFT_DOWN_MASK), "findNext");
-		grid.getActionMap().put("findNext", new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				findNextButton.doClick();
+				if (!isPopupMenuVisible()) {
+					command.run();
+				}
 			}
 		});
 	}

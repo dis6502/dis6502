@@ -7,7 +7,6 @@ package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -22,7 +21,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
@@ -337,73 +335,79 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * Binds F2/Esc at the window level ({@code WHEN_IN_FOCUSED_WINDOW}, not
 	 * {@code WHEN_FOCUSED}) - matching the C++ source's accelerator table, where
 	 * {@code ID_DUMP_EDIT}/{@code ID_DUMP_QUIT_EDIT} work regardless of which
-	 * child control currently has focus, as long as the window is active.
+	 * child control currently has focus, as long as the window is active. The
+	 * keystrokes themselves come from {@link Actions#MemoryInspectorPopupMenu_Edit}/
+	 * {@link Actions#MemoryInspectorPopupMenu_QuitEditMode} - see
+	 * {@link #bindPopupMenuAccelerators} for why every binding here (and there)
+	 * is guarded by {@link #isAnyPopupMenuVisible}.
 	 */
 	private void bindEditModeKeys() {
-		// editMenuItem/quitEditModeMenuItem's accelerators (F2/Esc) already come from
-		// their Action in com.wudsn.tools.dis6502.Actions.
-		grid.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "editBytesAtSelection");
-		grid.getActionMap().put("editBytesAtSelection", new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				enterEditMode();
-			}
-		});
-		grid.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "quitEditMode");
-		grid.getActionMap().put("quitEditMode", new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				quitEditMode();
-			}
-		});
+		bindAccelerator(Actions.MemoryInspectorPopupMenu_Edit, this::enterEditMode);
+		bindAccelerator(Actions.MemoryInspectorPopupMenu_QuitEditMode, this::quitEditMode);
 	}
 
 	/**
 	 * Binds the remaining popup-menu accelerators from {@code dis6502.rc}'s
 	 * {@code ACCELERATORS} table (see POPUP_MENU_ACCELERATORS_PLAN.md) at the
 	 * window level, the same {@code WHEN_IN_FOCUSED_WINDOW} scope as
-	 * {@link #bindEditModeKeys}. Unlike that method, these bindings do not rely
-	 * on the item's own {@code Action}-provided accelerator (which {@code
-	 * ElementFactory.createMenuItem}/{@code createCheckBoxMenuItem} would
-	 * otherwise apply automatically) - an empirical smoke test written for that
-	 * plan's "Step 0" found a standalone {@code JPopupMenu}'s item accelerators
-	 * only fire while that specific popup instance is actually open on screen,
-	 * not window-wide as the C++ accelerator table requires, so
-	 * {@code Actions.java} deliberately leaves these items' accelerator fields
-	 * unset and every binding here calls {@code doClick()} on the
-	 * already-correctly-wired, already-visible item instead - the same
-	 * sanctioned exception to avoiding hidden {@code doClick()} indirection
-	 * {@link #bindEditModeKeys} documents, not a proxy to a hidden component.
+	 * {@link #bindEditModeKeys}. Each keystroke comes from the same {@link Action}
+	 * in {@code com.wudsn.tools.dis6502.Actions} that built the corresponding
+	 * menu item - not a literal duplicated here - so {@code Actions.java} stays
+	 * the single source of truth for every item's keystroke, the same as it
+	 * already is for its label/mnemonic.
+	 * <p>
+	 * Populating these {@link Action}s' accelerators also makes {@code
+	 * ElementFactory.createMenuItem} apply them to the menu item itself (nice,
+	 * free shortcut-hint text next to the label) - but an empirical smoke test
+	 * written for that plan's "Step 0" found a standalone {@code JPopupMenu}
+	 * item's accelerator this way only actually fires while that specific popup
+	 * instance is open on screen, not window-wide like the C++ accelerator
+	 * table. While {@link #popupMenu} (or {@link #editModePopupMenu}) is open,
+	 * that means both the item's own live-but-narrow accelerator and this
+	 * method's window-level binding could fire for the same keystroke - {@link
+	 * #isAnyPopupMenuVisible} guards every binding here (and in
+	 * {@link #bindEditModeKeys}) against that double-fire, deferring to the
+	 * item's own accelerator whenever a popup happens to already be showing.
+	 * Calling {@code doClick()} on the already-correctly-wired, already-visible
+	 * item is the same sanctioned exception to avoiding hidden {@code
+	 * doClick()} indirection {@link #bindEditModeKeys} relies on too (calling
+	 * {@link #enterEditMode()}/{@link #quitEditMode()} directly), not a proxy to
+	 * a hidden component.
 	 */
 	private void bindPopupMenuAccelerators() {
-		bindAccelerator(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK, startCodeTraceMenuItem);
-		bindAccelerator(KeyEvent.VK_F8, 0, assembleMenuItem);
-		bindAccelerator(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK, copySelectionMenuItem);
-		bindAccelerator(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK, findMenuItem);
-		bindAccelerator(KeyEvent.VK_F3, 0, findNextMenuItem);
-		bindAccelerator(KeyEvent.VK_F5, 0, selectNextUnknownBlockMenuItem);
-		bindAccelerator(KeyEvent.VK_F4, 0, selectSpritesMenuItem);
-		bindAccelerator(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK, selectAllMenuItem);
+		bindAccelerator(Actions.MemoryInspectorPopupMenu_StartCodeTrace, startCodeTraceMenuItem);
+		bindAccelerator(Actions.MemoryInspectorPopupMenu_Assemble, assembleMenuItem);
+		bindAccelerator(Actions.MemoryInspectorPopupMenu_CopySelection, copySelectionMenuItem);
+		bindAccelerator(Actions.MemoryInspectorPopupMenu_Find, findMenuItem);
+		bindAccelerator(Actions.MemoryInspectorPopupMenu_FindNext, findNextMenuItem);
+		bindAccelerator(Actions.MemoryInspectorPopupMenu_SelectNextUnknownBlock, selectNextUnknownBlockMenuItem);
+		bindAccelerator(Actions.MemoryInspectorPopupMenu_SelectSprites, selectSpritesMenuItem);
+		bindAccelerator(Actions.MemoryInspectorPopupMenu_SelectAll, selectAllMenuItem);
 
-		// Shift+<letter> for the Change Type submenu, in TYPE_SUBMENU_ORDER's order:
-		// Code, LowByte, HighByte, Byte, Word, Label, Symbol, Fixup, String, Sbyte,
-		// Dlist, Store, Unknown.
-		int[] typeKeyCodes = { KeyEvent.VK_C, KeyEvent.VK_O, KeyEvent.VK_I, KeyEvent.VK_B, KeyEvent.VK_W, KeyEvent.VK_L,
-				KeyEvent.VK_X, KeyEvent.VK_F, KeyEvent.VK_S, KeyEvent.VK_Y, KeyEvent.VK_D, KeyEvent.VK_A, KeyEvent.VK_U };
-		for (int i = 0; i < typeKeyCodes.length; i++) {
-			bindAccelerator(typeKeyCodes[i], InputEvent.SHIFT_DOWN_MASK, typeMenuItems[i]);
+		for (int i = 0; i < TYPE_SUBMENU_ACTIONS.length; i++) {
+			bindAccelerator(TYPE_SUBMENU_ACTIONS[i], typeMenuItems[i]);
 		}
+	}
+
+	private boolean isAnyPopupMenuVisible() {
+		return popupMenu.isVisible() || editModePopupMenu.isVisible();
 	}
 
 	private int popupAcceleratorCounter;
 
-	private void bindAccelerator(int keyCode, int modifiers, JMenuItem item) {
+	private void bindAccelerator(Action action, JMenuItem item) {
+		bindAccelerator(action, item::doClick);
+	}
+
+	private void bindAccelerator(Action action, Runnable command) {
 		String actionKey = "popupAccelerator" + popupAcceleratorCounter++;
-		grid.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(keyCode, modifiers), actionKey);
+		grid.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(action.getAccelerator(), actionKey);
 		grid.getActionMap().put(actionKey, new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				item.doClick();
+				if (!isAnyPopupMenuVisible()) {
+					command.run();
+				}
 			}
 		});
 	}

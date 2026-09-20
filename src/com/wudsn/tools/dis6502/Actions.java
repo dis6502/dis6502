@@ -60,16 +60,26 @@ import com.wudsn.tools.base.repository.NLS;
  * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s right-click popup
  * menus, sourced from {@code dis6502.rc}'s {@code SEGMENT_LIST_POPUP_MENU}/
  * {@code DISASSEMBLY_POPUP_MENU}/{@code MEMORY_INSPECTOR_POPUP_MENU}/{@code
- * MEMORY_INSPECTOR_QUIT_EDIT_POPUP_MENU}. Unlike the main menu, none of
- * these items are given a live accelerator beyond the two that already had
- * one ({@link #MemoryInspectorPopupMenu_Edit}/{@link
- * #MemoryInspectorPopupMenu_QuitEditMode}, F2/Esc, ported from {@code
- * MemoryInspectorPanel}'s own edit-mode key bindings) - many popup items
- * have a {@code \tAccelerator} hint in the C++ source that was never wired
- * as a real Swing accelerator in this port, and wiring roughly a dozen new
- * ones at once was deliberately kept out of this change; only the
- * label/mnemonic construction moved to {@link Action}/{@code
- * ElementFactory}. Several C++ menu items - {@code DisassemblyPopupMenu}'s
+ * MEMORY_INSPECTOR_QUIT_EDIT_POPUP_MENU}, including every keystroke the
+ * C++ source's {@code ACCELERATORS} table defines for a popup item
+ * (see POPUP_MENU_ACCELERATORS_PLAN.md for how each one was verified,
+ * including a found C++ bug at {@link #MemoryInspectorPopupMenu_ChangeType_Dlist}).
+ * Populating these fields' accelerators is what makes them the single
+ * source of truth for the corresponding keystroke - {@link
+ * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}/{@link
+ * com.wudsn.tools.dis6502.ui.DisassemblyPanel}'s window-level {@code
+ * InputMap}/{@code ActionMap} bindings read {@code getAccelerator()} off
+ * these same fields rather than duplicating the keystroke as a literal.
+ * That said, an empirical smoke test (that plan's "Step 0") found a
+ * standalone {@code JPopupMenu} item's {@code setAccelerator()} - which
+ * {@code ElementFactory.createMenuItem} applies automatically from here -
+ * only actually fires while that specific popup instance is open on
+ * screen, unlike a {@code JMenuBar}'s items; both panels guard their
+ * window-level bindings against double-firing in that narrow window (see
+ * their own javadoc) rather than this class leaving the accelerator unset,
+ * since the field is still useful as the single source of truth and for
+ * the decorative shortcut-hint text {@code createMenuItem} appends to the
+ * label. Several C++ menu items - {@code DisassemblyPopupMenu}'s
  * six {@code {0}}-templated label/reference items plus {@code
  * DisassemblyPopupMenu_EditComment}, and roughly half of {@code
  * MemoryInspectorPopupMenu}'s items ({@link
@@ -156,8 +166,8 @@ public final class Actions extends NLS {
 	// Actions: Disassembly popup menu.
 	public static Action DisassemblyPopupMenu_FindDef;
 	public static Action DisassemblyPopupMenu_EditComment;
-	public static Action DisassemblyPopupMenu_Find;
-	public static Action DisassemblyPopupMenu_FindNext;
+	public static Action DisassemblyPopupMenu_Find = new Action(KeyEvent.VK_F, KeyStroke.M1 | KeyStroke.M2);
+	public static Action DisassemblyPopupMenu_FindNext = new Action(KeyEvent.VK_F3, KeyStroke.M2);
 	public static Action DisassemblyPopupMenu_FindRef2;
 	public static Action DisassemblyPopupMenu_FindRef1;
 	public static Action DisassemblyPopupMenu_RenameDef;
@@ -166,32 +176,35 @@ public final class Actions extends NLS {
 	public static Action DisassemblyPopupMenu_AddrRangeRef;
 
 	// Actions: Memory Inspector popup menu.
-	public static Action MemoryInspectorPopupMenu_StartCodeTrace;
+	public static Action MemoryInspectorPopupMenu_StartCodeTrace = new Action(KeyEvent.VK_T, KeyStroke.M1);
 	public static Action MemoryInspectorPopupMenu_ChangeType;
-	public static Action MemoryInspectorPopupMenu_ChangeType_Code;
-	public static Action MemoryInspectorPopupMenu_ChangeType_LowByte;
-	public static Action MemoryInspectorPopupMenu_ChangeType_HighByte;
-	public static Action MemoryInspectorPopupMenu_ChangeType_Byte;
-	public static Action MemoryInspectorPopupMenu_ChangeType_Word;
-	public static Action MemoryInspectorPopupMenu_ChangeType_Label;
-	public static Action MemoryInspectorPopupMenu_ChangeType_Symbol;
-	public static Action MemoryInspectorPopupMenu_ChangeType_Fixup;
-	public static Action MemoryInspectorPopupMenu_ChangeType_String;
-	public static Action MemoryInspectorPopupMenu_ChangeType_Sbyte;
-	public static Action MemoryInspectorPopupMenu_ChangeType_Dlist;
-	public static Action MemoryInspectorPopupMenu_ChangeType_Store;
-	public static Action MemoryInspectorPopupMenu_ChangeType_Unknown;
+	public static Action MemoryInspectorPopupMenu_ChangeType_Code = new Action(KeyEvent.VK_C, KeyStroke.M2);
+	public static Action MemoryInspectorPopupMenu_ChangeType_LowByte = new Action(KeyEvent.VK_O, KeyStroke.M2);
+	public static Action MemoryInspectorPopupMenu_ChangeType_HighByte = new Action(KeyEvent.VK_I, KeyStroke.M2);
+	public static Action MemoryInspectorPopupMenu_ChangeType_Byte = new Action(KeyEvent.VK_B, KeyStroke.M2);
+	public static Action MemoryInspectorPopupMenu_ChangeType_Word = new Action(KeyEvent.VK_W, KeyStroke.M2);
+	public static Action MemoryInspectorPopupMenu_ChangeType_Label = new Action(KeyEvent.VK_L, KeyStroke.M2);
+	public static Action MemoryInspectorPopupMenu_ChangeType_Symbol = new Action(KeyEvent.VK_X, KeyStroke.M2);
+	public static Action MemoryInspectorPopupMenu_ChangeType_Fixup = new Action(KeyEvent.VK_F, KeyStroke.M2);
+	public static Action MemoryInspectorPopupMenu_ChangeType_String = new Action(KeyEvent.VK_S, KeyStroke.M2);
+	public static Action MemoryInspectorPopupMenu_ChangeType_Sbyte = new Action(KeyEvent.VK_Y, KeyStroke.M2);
+	// The .rc's own displayed hint for Display List says Shift+A, but the
+	// ACCELERATORS table actually binds Shift+D to it (and Shift+A to Data
+	// Store) - see the TODO left at its MENUITEM line in dis6502.rc.
+	public static Action MemoryInspectorPopupMenu_ChangeType_Dlist = new Action(KeyEvent.VK_D, KeyStroke.M2);
+	public static Action MemoryInspectorPopupMenu_ChangeType_Store = new Action(KeyEvent.VK_A, KeyStroke.M2);
+	public static Action MemoryInspectorPopupMenu_ChangeType_Unknown = new Action(KeyEvent.VK_U, KeyStroke.M2);
 	public static Action MemoryInspectorPopupMenu_SetUnknownBlockToByte;
 	public static Action MemoryInspectorPopupMenu_EditComment;
 	public static Action MemoryInspectorPopupMenu_Edit = new Action(KeyEvent.VK_F2, 0);
-	public static Action MemoryInspectorPopupMenu_Assemble;
-	public static Action MemoryInspectorPopupMenu_CopySelection;
+	public static Action MemoryInspectorPopupMenu_Assemble = new Action(KeyEvent.VK_F8, 0);
+	public static Action MemoryInspectorPopupMenu_CopySelection = new Action(KeyEvent.VK_C, KeyStroke.M1);
 	public static Action MemoryInspectorPopupMenu_SplitAtSelection;
-	public static Action MemoryInspectorPopupMenu_Find;
-	public static Action MemoryInspectorPopupMenu_FindNext;
-	public static Action MemoryInspectorPopupMenu_SelectNextUnknownBlock;
-	public static Action MemoryInspectorPopupMenu_SelectSprites;
-	public static Action MemoryInspectorPopupMenu_SelectAll;
+	public static Action MemoryInspectorPopupMenu_Find = new Action(KeyEvent.VK_F, KeyStroke.M1);
+	public static Action MemoryInspectorPopupMenu_FindNext = new Action(KeyEvent.VK_F3, 0);
+	public static Action MemoryInspectorPopupMenu_SelectNextUnknownBlock = new Action(KeyEvent.VK_F5, 0);
+	public static Action MemoryInspectorPopupMenu_SelectSprites = new Action(KeyEvent.VK_F4, 0);
+	public static Action MemoryInspectorPopupMenu_SelectAll = new Action(KeyEvent.VK_A, KeyStroke.M1);
 	public static Action MemoryInspectorPopupMenu_SaveSelectionNoHeader;
 	public static Action MemoryInspectorPopupMenu_SaveSelectionHeader;
 	public static Action MemoryInspectorPopupMenu_QuitEditMode = new Action(KeyEvent.VK_ESCAPE, 0);

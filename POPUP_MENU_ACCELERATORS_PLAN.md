@@ -5,16 +5,24 @@ question: a standalone `JPopupMenu`'s item accelerators only fire while that
 specific popup instance is actually open on screen (confirmed for both
 `MemoryInspectorPanel`'s never-rebuilt popup and `DisassemblyPanel`'s
 rebuilt-per-click one) - useless for C++'s window-wide accelerator-table
-semantics. All items in this plan were wired the "Mechanism B" way:
-`Actions.java`'s accelerator fields are left unset, and each keystroke is
-bound via `InputMap`/`ActionMap` on `grid` (`WHEN_IN_FOCUSED_WINDOW`),
-calling `doClick()` on the already-correctly-wired, already-visible item -
-`MemoryInspectorPanel.bindPopupMenuAccelerators`/`DisassemblyPanel`'s
-constructor. Verified via a throwaway
-`PopupMenuAcceleratorWiringSmokeTest`/`AcceleratorLivenessSmokeTest` (never
-committed) covering: firing without the popup ever having opened, no
-double-fire on repeated presses, and Ctrl+C/Ctrl+A not being hijacked while a
-`JTextField` elsewhere in the same window has focus.
+semantics. Every item's keystroke is bound via `InputMap`/`ActionMap` on
+`grid` (`WHEN_IN_FOCUSED_WINDOW`) - `MemoryInspectorPanel.bindPopupMenuAccelerators`/
+`bindEditModeKeys`, `DisassemblyPanel`'s constructor. That binding reads the
+keystroke off the same `Actions.java` field (`getAccelerator()`) that built
+the menu item, rather than a literal duplicated in the panel, keeping
+`Actions.java` the single source of truth for every item's keystroke, the
+same as it already is for label/mnemonic - a follow-up revision from the
+first version of this plan, which left these `Action`s' accelerators unset
+specifically to dodge the risk below; instead, each `InputMap` binding now
+checks `isAnyPopupMenuVisible()`/`isPopupMenuVisible()` and defers to the
+item's own (correctly, if narrowly, live) accelerator whenever a popup
+happens to already be showing, which a smoke test confirmed prevents a
+double-fire in exactly that case. Verified via a throwaway
+`PopupMenuAcceleratorWiringSmokeTest`/`AcceleratorLivenessSmokeTest`/
+`MemoryInspectorEditModeSmokeTest` (never committed) covering: firing without
+the popup ever having opened, no double-fire on repeated presses, no
+double-fire while the popup is open, and Ctrl+C/Ctrl+A not being hijacked
+while a `JTextField` elsewhere in the same window has focus.
 
 ## Context
 
