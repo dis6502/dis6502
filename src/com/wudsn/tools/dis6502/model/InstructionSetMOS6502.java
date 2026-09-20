@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 <a href="https://www.wudsn.com" target="_top">Peter Dell</a>
+ * Copyright (C) 2026 <a href="https://www.wudsn.com" target="_top">Peter Dell</a>
  *
  * This file is part of dis6502.
  */
