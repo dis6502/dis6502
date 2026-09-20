@@ -32,11 +32,11 @@ import com.wudsn.tools.base.repository.Action;
 import com.wudsn.tools.dis6502.Actions;
 import com.wudsn.tools.dis6502.model.FileHeader;
 import com.wudsn.tools.dis6502.model.GuessCodeLogic;
-import com.wudsn.tools.dis6502.model.MemoryInspectorEditCharResult;
-import com.wudsn.tools.dis6502.model.MemoryInspectorEditCursorMovement;
-import com.wudsn.tools.dis6502.model.MemoryInspectorEditPane;
-import com.wudsn.tools.dis6502.model.MemoryInspectorState;
+import com.wudsn.tools.dis6502.model.MemoryInspectorState.EditCharResult;
+import com.wudsn.tools.dis6502.model.MemoryInspectorState.EditCursorMovement;
+import com.wudsn.tools.dis6502.model.MemoryInspectorState.EditPane;
 import com.wudsn.tools.dis6502.model.MemoryType;
+import com.wudsn.tools.dis6502.model.MutableMemoryInspectorState;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentList;
 
@@ -174,12 +174,12 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * PerformCommands}'s modal gate on every other command while editing). Unlike
  * the C++ source, the actual cursor state and navigation/writing logic - not
  * just the on/off flag - live on {@link #memoryInspectorState} ({@link
- * MemoryInspectorState#moveEditCursor}/{@link
- * MemoryInspectorState#typeEditChar}, applying {@code Char}'s {@link
+ * MutableMemoryInspectorState#moveEditCursor}/{@link
+ * MutableMemoryInspectorState#typeEditChar}, applying {@code Char}'s {@link
  * MemoryType#SBYTE} ASCII transform via {@link
  * MemoryType#toSbyteInternalCode}), not here or in {@link
  * MemoryInspectorGridPanel} - a deliberate departure from the C++ design (see
- * {@link MemoryInspectorState}'s own javadoc) so that logic can be exercised
+ * {@link MutableMemoryInspectorState}'s own javadoc) so that logic can be exercised
  * by a plain, headless unit test. This class keeps only the Swing-specific
  * glue: {@link #handleEditKeyPressed}/{@link #handleEditKeyTyped} translate
  * a raw {@link java.awt.event.KeyEvent} into a semantic call on {@link
@@ -187,7 +187,7 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * notice via {@link MemoryInspectorGridPanel#refreshEditCursor}/{@link
  * MemoryInspectorGridPanel#refreshEditMode} - that class reads the current
  * selection/edit-mode values live off {@link #memoryInspectorState} itself
- * (through {@link com.wudsn.tools.dis6502.model.ImmutableMemoryInspectorState},
+ * (through {@link com.wudsn.tools.dis6502.model.MemoryInspectorState},
  * narrowing what a pure painter can do to it) rather than being handed each
  * value as it changes; this class also owns focus/mouse handling, the
  * popup-menu swap, and the blink timer. Two confirmed C++
@@ -202,7 +202,7 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * offset instead. A third quirk is deliberately NOT replicated: {@code
  * Char}'s printable-ASCII gate excludes {@code '~'}, {@code '{'}, {@code
  * '}'} for no evident reason (it looks like an unintentional leftover, not
- * designed behavior) - {@link MemoryInspectorState#typeEditChar} accepts
+ * designed behavior) - {@link MutableMemoryInspectorState#typeEditChar} accepts
  * the full printable range instead.
  *
  * @author Peter Dell
@@ -299,7 +299,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	private SelectionChangedListener selectionChangedListener;
 	private EditModeExitedListener editModeExitedListener;
 
-	private MemoryInspectorState memoryInspectorState;
+	private MutableMemoryInspectorState memoryInspectorState;
 	private int selectionAnchorOffset = -1;
 
 	private Timer blinkTimer;
@@ -661,7 +661,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * {@link #updateTitle}'s own C++ source, which only special-cases a null
 	 * segment, not this narrower {@code hasData} condition.
 	 */
-	public void segmentChanged(MemoryInspectorState memoryInspectorState) {
+	public void segmentChanged(MutableMemoryInspectorState memoryInspectorState) {
 		quitEditMode(); // Ported from MainSegment::Selected/MainXRef's and Main::ClearWorkspace's QuitEditMode() calls.
 		this.memoryInspectorState = memoryInspectorState;
 		Segment segment = memoryInspectorState.getSegment();
@@ -760,7 +760,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * Ported from MemoryInspector::SelectAll: selects the whole segment.
 	 * {@code end} is passed as the segment's size (one past the last valid offset),
 	 * matching the C++ version -
-	 * {@link #select}/{@link MemoryInspectorState#setSelection} clamp it back
+	 * {@link #select}/{@link MutableMemoryInspectorState#setSelection} clamp it back
 	 * down to the last valid offset, the same way the C++ version's own
 	 * {@code Select}/ {@code MemoryInspectorState::SetSelection} do.
 	 */
@@ -895,7 +895,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Delegates to {@link MemoryInspectorState#isEditMode()} - {@code false}
+	 * Delegates to {@link MutableMemoryInspectorState#isEditMode()} - {@code false}
 	 * if there is no {@link #memoryInspectorState} yet (e.g. before the
 	 * first {@link #segmentChanged}), since edit mode can only ever have been
 	 * entered once one exists.
@@ -913,7 +913,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * hex pane's high nibble.
 	 */
 	public void enterEditMode() {
-		enterEditModeAt(-1, MemoryInspectorEditPane.HEX_HIGH);
+		enterEditModeAt(-1, EditPane.HEX_HIGH);
 	}
 
 	/**
@@ -933,18 +933,18 @@ public final class MemoryInspectorPanel extends JPanel {
 	/**
 	 * This method decides WHERE to start editing (a fresh selection's first
 	 * byte, or an exact double-clicked position); {@link
-	 * MemoryInspectorState#enterEditMode} then owns whether that is actually
+	 * MutableMemoryInspectorState#enterEditMode} then owns whether that is actually
 	 * allowed (a selected segment must exist and the offset must be in range
 	 * for it) and the resulting lock state itself.
 	 */
-	private void enterEditModeAt(int offsetHint, MemoryInspectorEditPane paneHint) {
+	private void enterEditModeAt(int offsetHint, EditPane paneHint) {
 		if (memoryInspectorState == null || !memoryInspectorState.hasSelection()) {
 			return;
 		}
 		int begin = memoryInspectorState.getBegin();
 		select(begin, begin);
 		int offset = offsetHint >= 0 ? offsetHint : begin;
-		MemoryInspectorEditPane pane = offsetHint >= 0 ? paneHint : MemoryInspectorEditPane.HEX_HIGH;
+		EditPane pane = offsetHint >= 0 ? paneHint : EditPane.HEX_HIGH;
 		if (!memoryInspectorState.enterEditMode(offset, pane)) {
 			return;
 		}
@@ -962,7 +962,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * typing past the end of the buffer, or the segment changing), so the
 	 * selection-resync below and {@link #editModeExitedListener} both fire
 	 * uniformly on every exit - see this class's javadoc for the two C++ exit
-	 * quirks this fixes. {@link MemoryInspectorState#quitEditMode()} only
+	 * quirks this fixes. {@link MutableMemoryInspectorState#quitEditMode()} only
 	 * releases the model-level lock; the UI-facing consequences (the
 	 * selection resync, the grid/blink-timer state, notifying {@link
 	 * #editModeExitedListener}) stay this method's job, not that one's.
@@ -1002,8 +1002,8 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	/**
 	 * Translates a raw arrow/Home/End {@link KeyEvent} into a {@link
-	 * MemoryInspectorEditCursorMovement} and hands the actual navigation math
-	 * to {@link MemoryInspectorState#moveEditCursor} - ported from {@code
+	 * EditCursorMovement} and hands the actual navigation math
+	 * to {@link MutableMemoryInspectorState#moveEditCursor} - ported from {@code
 	 * MemoryInspectorControlImpl::KeyDown}'s edit-mode branch, now split so
 	 * that math is headlessly unit-testable, free of any Swing dependency.
 	 */
@@ -1011,7 +1011,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		if (!isEditMode()) {
 			return;
 		}
-		MemoryInspectorEditCursorMovement movement = toEditCursorMovement(e.getKeyCode());
+		EditCursorMovement movement = toEditCursorMovement(e.getKeyCode());
 		if (movement == null) {
 			return;
 		}
@@ -1020,20 +1020,20 @@ public final class MemoryInspectorPanel extends JPanel {
 		e.consume();
 	}
 
-	private static MemoryInspectorEditCursorMovement toEditCursorMovement(int keyCode) {
+	private static EditCursorMovement toEditCursorMovement(int keyCode) {
 		switch (keyCode) {
 		case KeyEvent.VK_HOME:
-			return MemoryInspectorEditCursorMovement.HOME;
+			return EditCursorMovement.HOME;
 		case KeyEvent.VK_END:
-			return MemoryInspectorEditCursorMovement.END;
+			return EditCursorMovement.END;
 		case KeyEvent.VK_UP:
-			return MemoryInspectorEditCursorMovement.UP;
+			return EditCursorMovement.UP;
 		case KeyEvent.VK_DOWN:
-			return MemoryInspectorEditCursorMovement.DOWN;
+			return EditCursorMovement.DOWN;
 		case KeyEvent.VK_LEFT:
-			return MemoryInspectorEditCursorMovement.LEFT;
+			return EditCursorMovement.LEFT;
 		case KeyEvent.VK_RIGHT:
-			return MemoryInspectorEditCursorMovement.RIGHT;
+			return EditCursorMovement.RIGHT;
 		default:
 			return null;
 		}
@@ -1041,7 +1041,7 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	/**
 	 * Hands the typed character straight to {@link
-	 * MemoryInspectorState#typeEditChar} - ported from {@code
+	 * MutableMemoryInspectorState#typeEditChar} - ported from {@code
 	 * MemoryInspectorControlImpl::Char}: hex-digit/ASCII data entry, plus Tab
 	 * to switch panes, now split so that logic is headlessly unit-testable,
 	 * free of any Swing dependency. Deliberately does not call {@link
@@ -1052,12 +1052,12 @@ public final class MemoryInspectorPanel extends JPanel {
 		if (!isEditMode()) {
 			return;
 		}
-		MemoryInspectorEditCharResult result = memoryInspectorState.typeEditChar(e.getKeyChar());
-		if (result == MemoryInspectorEditCharResult.NOT_HANDLED) {
+		EditCharResult result = memoryInspectorState.typeEditChar(e.getKeyChar());
+		if (result == EditCharResult.NOT_HANDLED) {
 			return;
 		}
 		grid.refreshEditCursor();
-		if (result == MemoryInspectorEditCharResult.HANDLED_AT_BUFFER_END) {
+		if (result == EditCharResult.HANDLED_AT_BUFFER_END) {
 			quitEditMode();
 			return;
 		}

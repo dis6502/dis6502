@@ -27,12 +27,12 @@ import com.wudsn.tools.base.common.Log;
  * logging.
  * <p>
  * {@link #getMemoryInspectorState()} is this workspace's single, owned
- * {@link MemoryInspectorState} instance (constructed once, alongside {@link
+ * {@link MutableMemoryInspectorState} instance (constructed once, alongside {@link
  * #getSegmentList()}/{@link #getProfile()}) - not a satellite object built
  * and passed around by callers, even though {@code
  * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel} still receives it as a
  * parameter (see that class's own javadoc). See {@link
- * MemoryInspectorState}'s own javadoc for why its edit-mode half in
+ * MutableMemoryInspectorState}'s own javadoc for why its edit-mode half in
  * particular lives there and not as flat fields/methods on this class
  * directly.
  *
@@ -59,7 +59,7 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 	private final SegmentList segmentList = new SegmentList(this);
 	private final Profile profile = new Profile();
 	private final DisassemblyResult disassemblyResult = new DisassemblyResult();
-	private final MemoryInspectorState memoryInspectorState = new MemoryInspectorState(this);
+	private final MutableMemoryInspectorState memoryInspectorState = new MutableMemoryInspectorState(this);
 
 	// Event handling.
 	private int updateCounter;
@@ -121,7 +121,7 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 		viewDoubleHeight = value;
 	}
 
-	public MemoryInspectorState getMemoryInspectorState() {
+	public MutableMemoryInspectorState getMemoryInspectorState() {
 		return memoryInspectorState;
 	}
 

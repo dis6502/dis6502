@@ -47,7 +47,7 @@ import com.wudsn.tools.dis6502.model.ImgInfo;
 import com.wudsn.tools.dis6502.model.ImgRWPacket;
 import com.wudsn.tools.dis6502.model.InstructionSet;
 import com.wudsn.tools.dis6502.model.MRUEntry;
-import com.wudsn.tools.dis6502.model.MemoryInspectorState;
+import com.wudsn.tools.dis6502.model.MutableMemoryInspectorState;
 import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.OperandMode;
 import com.wudsn.tools.dis6502.model.ProfileLogic;
@@ -176,7 +176,7 @@ public final class Dis6502 {
 	private MainWindow mainWindow;
 	private MRUController mruController;
 	private DefaultFolders defaultFolders;
-	private MemoryInspectorState memoryInspectorState;
+	private MutableMemoryInspectorState memoryInspectorState;
 	private File currentFile;
 	private File lastEquateFile;
 	private final int[] findFirstLineNumber = { 0 };
@@ -1011,7 +1011,7 @@ public final class Dis6502 {
 	 * start.
 	 */
 	private void performSplitAtSelection() {
-		if (memoryInspectorState.isEmpty()) {
+		if (memoryInspectorState.isSelectionEmpty()) {
 			return;
 		}
 		workspace.getSegmentList().splitSelectedSegment(memoryInspectorState.getBegin());
@@ -1080,7 +1080,7 @@ public final class Dis6502 {
 	 * MemoryType} constant).
 	 */
 	private void performSetMemoryInspectorLoHiType(MemoryType type) {
-		if (memoryInspectorState.isEmpty()) {
+		if (memoryInspectorState.isSelectionEmpty()) {
 			return;
 		}
 		Segment segment = memoryInspectorState.getSegment();
@@ -1132,7 +1132,7 @@ public final class Dis6502 {
 	 * through {@link UIApplication}.
 	 */
 	private void performCopyMemoryInspectorSelection() {
-		if (memoryInspectorState.isEmpty()) {
+		if (memoryInspectorState.isSelectionEmpty()) {
 			return;
 		}
 		StringBuilder hex = new StringBuilder();
@@ -1151,7 +1151,7 @@ public final class Dis6502 {
 	 * directly instead - see {@link #performEditDisassemblyComment}.
 	 */
 	private void performEditMemoryInspectorComment() {
-		if (memoryInspectorState.isEmpty()) {
+		if (memoryInspectorState.isSelectionEmpty()) {
 			return;
 		}
 		CommentDialog dialog = new CommentDialog(mainWindow.getFrame());
@@ -1265,7 +1265,7 @@ public final class Dis6502 {
 	 * {@code AssembleDialog::Show}'s return value either.
 	 */
 	private void performShowAssembleDialog() {
-		if (memoryInspectorState.isEmpty()) {
+		if (memoryInspectorState.isSelectionEmpty()) {
 			return;
 		}
 		new AssembleDialog(mainWindow.getFrame()).show(workspace, memoryInspectorState.getSegment(), memoryInspectorState,
@@ -1637,7 +1637,7 @@ public final class Dis6502 {
 	 * single highlighted line, not a range (see that class's javadoc).
 	 */
 	private void performMemoryInspectorSelectionChanged() {
-		if (!memoryInspectorState.hasSelection()) {
+		if (memoryInspectorState.isSelectionEmpty()) {
 			return;
 		}
 		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();

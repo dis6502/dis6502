@@ -16,8 +16,8 @@ import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 
 import com.wudsn.tools.dis6502.model.ComputerSystemType;
-import com.wudsn.tools.dis6502.model.ImmutableMemoryInspectorState;
-import com.wudsn.tools.dis6502.model.MemoryInspectorEditPane;
+import com.wudsn.tools.dis6502.model.MemoryInspectorState;
+import com.wudsn.tools.dis6502.model.MemoryInspectorState.EditPane;
 import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.Segment;
 
@@ -43,11 +43,11 @@ import com.wudsn.tools.dis6502.model.Segment;
  * instead of mouse capture and manual {@code SetCapture}/{@code ReleaseCapture}
  * bookkeeping. {@link #cellAtPoint} is that same mapping's edit-mode sibling,
  * additionally resolving which hex nibble or ASCII character a point falls in
- * ({@link com.wudsn.tools.dis6502.model.MemoryInspectorEditPane}), needed to
+ * ({@link com.wudsn.tools.dis6502.model.EditPane}), needed to
  * position the in-place edit cursor precisely.
  * <p>
  * The selection range and edit-mode cursor are read live from {@link
- * #setMemoryInspectorState}'s {@link ImmutableMemoryInspectorState} - this
+ * #setMemoryInspectorState}'s {@link MemoryInspectorState} - this
  * class does not own or mirror that state as its own fields, it just paints
  * whatever it currently says (matching {@code Char}/{@code KeyDown}'s edit
  * mode and its blinking-cursor {@code WM_TIMER}, ported in {@link #paintLine}
@@ -56,7 +56,7 @@ import com.wudsn.tools.dis6502.model.Segment;
  * #refreshSelection}/{@link #refreshEditMode}/{@link #refreshEditCursor} to
  * ask this class to notice. {@link #segment}, by contrast, stays an explicit,
  * separately-pushed field via {@link #setSegment} rather than read from
- * {@code ImmutableMemoryInspectorState.getSegment()} directly: {@code
+ * {@code MemoryInspectorState.getSegment()} directly: {@code
  * MemoryInspectorPanel} sometimes needs this class to show nothing even
  * though a segment actually is selected (an SDX symbol-table header, for
  * instance - see {@code MemoryInspectorPanel#segmentChanged}'s {@code
@@ -96,7 +96,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	private ComputerFont computerFont;
 	private boolean displayAsScreenCode;
 
-	private ImmutableMemoryInspectorState memoryInspectorState;
+	private MemoryInspectorState memoryInspectorState;
 	private int previousEditCursorOffset = -1;
 	private int blinkPhase;
 
@@ -119,14 +119,14 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	}
 
 	/**
-	 * Points this panel at the {@link ImmutableMemoryInspectorState} to read
+	 * Points this panel at the {@link MemoryInspectorState} to read
 	 * the selection range and edit-mode cursor from at paint time - see this
 	 * class's own javadoc for why {@link #segment} stays a separate, explicit
 	 * field instead of also being read from here. Does not itself trigger a
 	 * repaint: call {@link #refreshSelection}/{@link #refreshEditMode}/{@link
 	 * #refreshEditCursor} once the state has actually changed.
 	 */
-	public void setMemoryInspectorState(ImmutableMemoryInspectorState memoryInspectorState) {
+	public void setMemoryInspectorState(MemoryInspectorState memoryInspectorState) {
 		this.memoryInspectorState = memoryInspectorState;
 	}
 
@@ -196,8 +196,8 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 		return memoryInspectorState == null ? -1 : memoryInspectorState.getEditCursorOffset();
 	}
 
-	public MemoryInspectorEditPane getEditCursorPane() {
-		return memoryInspectorState == null ? MemoryInspectorEditPane.HEX_HIGH : memoryInspectorState.getEditCursorPane();
+	public EditPane getEditCursorPane() {
+		return memoryInspectorState == null ? EditPane.HEX_HIGH : memoryInspectorState.getEditCursorPane();
 	}
 
 	/**
@@ -228,9 +228,9 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	/** The result of {@link #cellAtPoint}: a byte offset plus which part of its cell was hit. */
 	public static final class CellHit {
 		public final int offset;
-		public final MemoryInspectorEditPane pane;
+		public final EditPane pane;
 
-		CellHit(int offset, MemoryInspectorEditPane pane) {
+		CellHit(int offset, EditPane pane) {
 			this.offset = offset;
 			this.pane = pane;
 		}
@@ -261,14 +261,14 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 		int startOfAsciiPaneInPixel = (BYTES_PER_LINE * 3 + 5) * cellW;
 		int row;
-		MemoryInspectorEditPane pane;
+		EditPane pane;
 		if (x > startOfAsciiPaneInPixel) {
 			row = Math.max(0, x - 1 - startOfAsciiPaneInPixel) / cellW;
-			pane = MemoryInspectorEditPane.ASCII;
+			pane = EditPane.ASCII;
 		} else {
 			int relative = Math.max(0, x - 1 - 4 * cellW - cellW / 2);
 			row = relative / (3 * cellW);
-			pane = (relative % (3 * cellW)) > (3 * cellW) / 2 ? MemoryInspectorEditPane.HEX_LOW : MemoryInspectorEditPane.HEX_HIGH;
+			pane = (relative % (3 * cellW)) > (3 * cellW) / 2 ? EditPane.HEX_LOW : EditPane.HEX_HIGH;
 		}
 		row = Math.max(0, Math.min(BYTES_PER_LINE - 1, row));
 
@@ -461,12 +461,12 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	 * sibling nibble is left completely unhighlighted.
 	 */
 	private void paintCursorHexCell(Graphics2D g2, String hex, Color color, int hexX, int cellW, int cellH, int y) {
-		MemoryInspectorEditPane editCursorPane = getEditCursorPane();
-		boolean asciiActive = editCursorPane == MemoryInspectorEditPane.ASCII;
+		EditPane editCursorPane = getEditCursorPane();
+		boolean asciiActive = editCursorPane == EditPane.ASCII;
 		paintCursorSubCell(g2, hex.charAt(0), color, hexX, y, cellW, cellH,
-				asciiActive || editCursorPane == MemoryInspectorEditPane.HEX_HIGH, editCursorPane == MemoryInspectorEditPane.HEX_HIGH);
+				asciiActive || editCursorPane == EditPane.HEX_HIGH, editCursorPane == EditPane.HEX_HIGH);
 		paintCursorSubCell(g2, hex.charAt(1), color, hexX + cellW, y, cellW, cellH,
-				asciiActive || editCursorPane == MemoryInspectorEditPane.HEX_LOW, editCursorPane == MemoryInspectorEditPane.HEX_LOW);
+				asciiActive || editCursorPane == EditPane.HEX_LOW, editCursorPane == EditPane.HEX_LOW);
 		computerFont.drawText(g2, String.valueOf(hex.charAt(2)), color, hexX + cellW * 2, y);
 	}
 
@@ -494,7 +494,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	private void paintCursorAsciiCell(Graphics2D g2, int displayValue, int charX, int cellW, int cellH, int y) {
 		g2.setColor(HIGHLIGHT_COLOR);
 		g2.fillRect(charX, y, cellW, cellH);
-		boolean blinking = getEditCursorPane() == MemoryInspectorEditPane.ASCII;
+		boolean blinking = getEditCursorPane() == EditPane.ASCII;
 		if (!(blinking && blinkPhase == 0)) {
 			computerFont.drawGlyph(g2, displayValue, Color.BLACK, charX, y);
 		}

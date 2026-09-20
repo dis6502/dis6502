@@ -69,7 +69,7 @@ public enum MemoryType {
 	 * Ported from {@code MemoryInspectorControlImpl::Char}'s {@code if (cType ==
 	 * SBYTE) { ... }} block - the ASCII-to-"internal" (Atari screen code)
 	 * transform applied when typing a character into an {@link #SBYTE}-typed
-	 * byte's cell, used by {@link Workspace#typeMemoryInspectorEditChar}. This
+	 * byte's cell, used by {@link MutableMemoryInspectorState#typeEditChar}. This
 	 * is the WRITE direction, gated per-byte on its type and only ever given a
 	 * typed ASCII character (0-127); it is deliberately kept separate from
 	 * {@code com.wudsn.tools.dis6502.ui.MemoryInspectorGridPanel}'s

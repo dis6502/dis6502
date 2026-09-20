@@ -19,7 +19,7 @@ import javax.swing.JTextField;
 
 import com.wudsn.tools.dis6502.model.Assembler;
 import com.wudsn.tools.dis6502.model.Instruction;
-import com.wudsn.tools.dis6502.model.MemoryInspectorState;
+import com.wudsn.tools.dis6502.model.MutableMemoryInspectorState;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.Workspace;
 
@@ -62,7 +62,7 @@ public final class AssembleDialog extends JDialog {
 
 	private Workspace workspace;
 	private Segment segment;
-	private MemoryInspectorState memoryInspectorState;
+	private MutableMemoryInspectorState memoryInspectorState;
 	private MemoryInspectorPanel memoryInspectorPanel;
 	private boolean assembledAny;
 
@@ -167,7 +167,7 @@ public final class AssembleDialog extends JDialog {
 	}
 
 	/** Ported from AssembleDialog::Show/InitDialog. Returns whether at least one instruction was actually assembled. */
-	public boolean show(Workspace workspace, Segment segment, MemoryInspectorState memoryInspectorState,
+	public boolean show(Workspace workspace, Segment segment, MutableMemoryInspectorState memoryInspectorState,
 			MemoryInspectorPanel memoryInspectorPanel) {
 		this.workspace = workspace;
 		this.segment = segment;
