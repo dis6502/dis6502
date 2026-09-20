@@ -27,6 +27,15 @@ import com.wudsn.tools.dis6502.model.Profile;
  * achievable by hand. A duplicate mnemonic across two different panels is a
  * minor UX rough edge (Swing resolves Alt+key ambiguity deterministically,
  * it does not crash or silently do nothing), not a functional bug.
+ * <p>
+ * Constants below the {@code Profile_*} group belong to other dialogs and
+ * are named {@code <DialogName>_<Purpose>} rather than
+ * {@code <ModelClass>_<Field>}, since (unlike {@code Profile}'s fields) most
+ * don't map 1:1 onto a shared model field - matching the same real-shared-
+ * resource-vs-dialog-local-text split {@link Text}/{@link Texts} already
+ * draws. Each dialog's mnemonics are unique only within that one dialog;
+ * since these are all separate modal dialogs (never simultaneously visible),
+ * cross-dialog mnemonic reuse is harmless, unlike the panel-scoping above.
  *
  * @author Peter Dell
  */
@@ -76,6 +85,66 @@ public final class DataTypes extends NLS {
 	public static DataType Profile_DirectiveINCLUDEAllIncludesInMainFile = new DataType(Boolean.class);
 	public static DataType Profile_DirectiveINCLUDEEachFileIncludesNextFile = new DataType(Boolean.class);
 	public static DataType Profile_DirectiveINCLUDEMaximumNumberOfLinesPerFile = new DataType(Integer.class);
+
+	// AssembleDialog.
+	public static DataType AssembleDialog_Address = new DataType(String.class);
+	public static DataType AssembleDialog_Result = new DataType(String.class);
+
+	// DisassemblyProgressDialog.
+	public static DataType DisassemblyProgressDialog_Pass = new DataType(String.class);
+	public static DataType DisassemblyProgressDialog_Segment = new DataType(String.class);
+
+	// DiskImageExecutableFileDialog.
+	public static DataType DiskImageExecutableFileDialog_DiskImageFile = new DataType(String.class);
+	public static DataType DiskImageExecutableFileDialog_ExecutableFileName = new DataType(String.class);
+
+	// DiskImageSectorsDialog.
+	public static DataType DiskImageSectorsDialog_DiskImageFile = new DataType(String.class);
+	public static DataType DiskImageSectorsDialog_StartOffset = new DataType(String.class);
+	public static DataType DiskImageSectorsDialog_EndOffset = new DataType(String.class);
+	public static DataType DiskImageSectorsDialog_Address = new DataType(String.class);
+
+	// EquateDialog.
+	public static DataType EquateDialog_Equate = new DataType(String.class);
+
+	// EquateRangeDialog.
+	public static DataType EquateRangeDialog_StartAddress = new DataType(String.class);
+	public static DataType EquateRangeDialog_EndAddress = new DataType(String.class);
+	public static DataType EquateRangeDialog_RelativeToEquate = new DataType(String.class);
+
+	// LowHighByteDialog.
+	public static DataType LowHighByteDialog_LowByte = new DataType(String.class);
+	public static DataType LowHighByteDialog_HighByte = new DataType(String.class);
+
+	// MemoryInspectorFindStringDialog.
+	public static DataType MemoryInspectorFindStringDialog_AsciiString = new DataType(String.class);
+	public static DataType MemoryInspectorFindStringDialog_Hex = new DataType(String.class);
+	public static DataType MemoryInspectorFindStringDialog_AllSegments = new DataType(Boolean.class);
+	public static DataType MemoryInspectorFindStringDialog_SelectedSegment = new DataType(Boolean.class);
+
+	// RawFileDialog.
+	public static DataType RawFileDialog_FilePath = new DataType(String.class);
+	public static DataType RawFileDialog_StartOffset = new DataType(String.class);
+	public static DataType RawFileDialog_EndOffset = new DataType(String.class);
+	public static DataType RawFileDialog_Address = new DataType(String.class);
+
+	// SegmentPropertiesDialog.
+	public static DataType SegmentPropertiesDialog_Address = new DataType(String.class);
+	public static DataType SegmentPropertiesDialog_LabelPrefix = new DataType(String.class);
+	public static DataType SegmentPropertiesDialog_Processor = new DataType(String.class);
+	public static DataType SegmentPropertiesDialog_Binary = new DataType(Boolean.class);
+
+	// SegmentWriteBootDiskDialog.
+	public static DataType SegmentWriteBootDiskDialog_LoadAddress = new DataType(String.class);
+	public static DataType SegmentWriteBootDiskDialog_InitAddress = new DataType(String.class);
+
+	// SelectGraphicsDialog.
+	public static DataType SelectGraphicsDialog_GraphicMode = new DataType(String.class);
+	public static DataType SelectGraphicsDialog_BytesPerLine = new DataType(String.class);
+	public static DataType SelectGraphicsDialog_Address = new DataType(String.class);
+
+	// WorkspaceDialog.
+	public static DataType WorkspaceDialog_ComputerSystem = new DataType(String.class);
 
 	static {
 		initializeClass(DataTypes.class, null);

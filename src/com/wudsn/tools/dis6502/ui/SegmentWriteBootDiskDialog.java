@@ -26,6 +26,7 @@ import javax.swing.event.DocumentListener;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.model.AtariDOS;
 import com.wudsn.tools.dis6502.model.AtariDisk;
 import com.wudsn.tools.dis6502.model.AtariError;
@@ -80,7 +81,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 
 		c.gridx = 0;
 		c.gridy = 0;
-		panel.add(new JLabel("Load Address: $"), c);
+		panel.add(ElementFactory.createLabel(DataTypes.SegmentWriteBootDiskDialog_LoadAddress, loadAddressField), c);
 		c.gridx = 1;
 		c.anchor = GridBagConstraints.WEST;
 		panel.add(loadAddressField, c);
@@ -88,7 +89,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 		c.gridx = 0;
 		c.gridy = 1;
 		c.anchor = GridBagConstraints.EAST;
-		panel.add(new JLabel("Init Address: $"), c);
+		panel.add(ElementFactory.createLabel(DataTypes.SegmentWriteBootDiskDialog_InitAddress, initAddressField), c);
 		c.gridx = 1;
 		c.anchor = GridBagConstraints.WEST;
 		panel.add(initAddressField, c);

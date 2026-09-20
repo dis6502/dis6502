@@ -31,6 +31,7 @@ import javax.swing.event.DocumentListener;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.model.DiskImage;
 import com.wudsn.tools.dis6502.model.ImgInfo;
 import com.wudsn.tools.dis6502.model.ImgRWPacket;
@@ -147,7 +148,7 @@ public final class DiskImageSectorsDialog extends JDialog {
 		});
 
 		JPanel topPanel = new JPanel(new BorderLayout(4, 4));
-		topPanel.add(new JLabel("Disk Image File:"), BorderLayout.WEST);
+		topPanel.add(ElementFactory.createLabel(DataTypes.DiskImageSectorsDialog_DiskImageFile, diskImageFilePathField), BorderLayout.WEST);
 		topPanel.add(diskImageFilePathField, BorderLayout.CENTER);
 		topPanel.add(sectorSpinner, BorderLayout.EAST);
 
@@ -157,15 +158,15 @@ public final class DiskImageSectorsDialog extends JDialog {
 		c.anchor = GridBagConstraints.WEST;
 		c.gridx = 0;
 		c.gridy = 0;
-		fieldsPanel.add(new JLabel("Start Offset:"), c);
+		fieldsPanel.add(ElementFactory.createLabel(DataTypes.DiskImageSectorsDialog_StartOffset, startOffsetField), c);
 		c.gridx = 1;
 		fieldsPanel.add(startOffsetField, c);
 		c.gridx = 2;
-		fieldsPanel.add(new JLabel("End Offset:"), c);
+		fieldsPanel.add(ElementFactory.createLabel(DataTypes.DiskImageSectorsDialog_EndOffset, endOffsetField), c);
 		c.gridx = 3;
 		fieldsPanel.add(endOffsetField, c);
 		c.gridx = 4;
-		fieldsPanel.add(new JLabel("Address ($):"), c);
+		fieldsPanel.add(ElementFactory.createLabel(DataTypes.DiskImageSectorsDialog_Address, addressField), c);
 		c.gridx = 5;
 		fieldsPanel.add(addressField, c);
 		c.gridx = 6;

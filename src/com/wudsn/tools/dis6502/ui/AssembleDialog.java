@@ -17,6 +17,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.model.Assembler;
 import com.wudsn.tools.dis6502.model.Instruction;
 import com.wudsn.tools.dis6502.model.MutableMemoryInspectorState;
@@ -78,7 +80,7 @@ public final class AssembleDialog extends JDialog {
 
 		c.gridx = 0;
 		c.gridy = 0;
-		formPanel.add(new JLabel("New Instruction at:"), c);
+		formPanel.add(ElementFactory.createLabel(DataTypes.AssembleDialog_Address, addressLabel), c);
 		c.gridx = 1;
 		formPanel.add(addressLabel, c);
 
@@ -94,7 +96,7 @@ public final class AssembleDialog extends JDialog {
 		c.gridwidth = 1;
 		c.fill = GridBagConstraints.NONE;
 		c.weightx = 0;
-		formPanel.add(new JLabel("Result:"), c);
+		formPanel.add(ElementFactory.createLabel(DataTypes.AssembleDialog_Result, resultLabel), c);
 		c.gridx = 1;
 		formPanel.add(resultLabel, c);
 

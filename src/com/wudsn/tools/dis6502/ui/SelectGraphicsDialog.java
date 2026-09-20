@@ -22,6 +22,7 @@ import javax.swing.SpinnerNumberModel;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState;
 import com.wudsn.tools.dis6502.model.Segment;
 
@@ -95,7 +96,7 @@ public final class SelectGraphicsDialog extends JDialog {
 
 		c.gridx = 0;
 		c.gridy = 0;
-		southPanel.add(new JLabel("Graphic Mode:"), c);
+		southPanel.add(ElementFactory.createLabel(DataTypes.SelectGraphicsDialog_GraphicMode, modeComboBox), c);
 		c.gridx = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1;
@@ -105,13 +106,13 @@ public final class SelectGraphicsDialog extends JDialog {
 		c.gridy = 1;
 		c.fill = GridBagConstraints.NONE;
 		c.weightx = 0;
-		southPanel.add(new JLabel("Bytes per Line:"), c);
+		southPanel.add(ElementFactory.createLabel(DataTypes.SelectGraphicsDialog_BytesPerLine, numberOfBytesPerLineSpinner), c);
 		c.gridx = 1;
 		southPanel.add(numberOfBytesPerLineSpinner, c);
 
 		c.gridx = 0;
 		c.gridy = 2;
-		southPanel.add(new JLabel("Address:"), c);
+		southPanel.add(ElementFactory.createLabel(DataTypes.SelectGraphicsDialog_Address, addressLabel), c);
 		c.gridx = 1;
 		southPanel.add(addressLabel, c);
 

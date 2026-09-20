@@ -23,6 +23,7 @@ import javax.swing.JTextField;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.model.AtariDisk;
 import com.wudsn.tools.dis6502.model.AtariError;
 import com.wudsn.tools.dis6502.model.AtariFile;
@@ -95,11 +96,11 @@ public final class DiskImageExecutableFileDialog extends JDialog {
 		});
 
 		JPanel topPanel = new JPanel(new BorderLayout(4, 4));
-		topPanel.add(new JLabel("Disk Image File:"), BorderLayout.WEST);
+		topPanel.add(ElementFactory.createLabel(DataTypes.DiskImageExecutableFileDialog_DiskImageFile, diskImageFilePathField), BorderLayout.WEST);
 		topPanel.add(diskImageFilePathField, BorderLayout.CENTER);
 
 		JPanel fileNamePanel = new JPanel(new BorderLayout(4, 4));
-		fileNamePanel.add(new JLabel("Executable File Name:"), BorderLayout.WEST);
+		fileNamePanel.add(ElementFactory.createLabel(DataTypes.DiskImageExecutableFileDialog_ExecutableFileName, fileNameLabel), BorderLayout.WEST);
 		fileNamePanel.add(fileNameLabel, BorderLayout.CENTER);
 
 		JPanel buttonPanel = new JPanel();

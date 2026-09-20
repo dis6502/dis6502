@@ -28,6 +28,7 @@ import javax.swing.event.DocumentListener;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.dis6502.DataTypes;
 
 /**
  * A dialog for adding a raw (headerless) file to the workspace as a single
@@ -105,7 +106,7 @@ public final class RawFileDialog extends JDialog {
 		});
 
 		JPanel topPanel = new JPanel(new BorderLayout(4, 4));
-		topPanel.add(new JLabel("File:"), BorderLayout.WEST);
+		topPanel.add(ElementFactory.createLabel(DataTypes.RawFileDialog_FilePath, filePathField), BorderLayout.WEST);
 		topPanel.add(filePathField, BorderLayout.CENTER);
 
 		JPanel fieldsPanel = new JPanel(new GridBagLayout());
@@ -115,15 +116,15 @@ public final class RawFileDialog extends JDialog {
 
 		c.gridx = 0;
 		c.gridy = 0;
-		fieldsPanel.add(new JLabel("Start Offset:"), c);
+		fieldsPanel.add(ElementFactory.createLabel(DataTypes.RawFileDialog_StartOffset, startOffsetField), c);
 		c.gridx = 1;
 		fieldsPanel.add(startOffsetField, c);
 		c.gridx = 2;
-		fieldsPanel.add(new JLabel("End Offset:"), c);
+		fieldsPanel.add(ElementFactory.createLabel(DataTypes.RawFileDialog_EndOffset, endOffsetField), c);
 		c.gridx = 3;
 		fieldsPanel.add(endOffsetField, c);
 		c.gridx = 4;
-		fieldsPanel.add(new JLabel("Address ($):"), c);
+		fieldsPanel.add(ElementFactory.createLabel(DataTypes.RawFileDialog_Address, addressField), c);
 		c.gridx = 5;
 		fieldsPanel.add(addressField, c);
 

@@ -11,7 +11,6 @@ import java.awt.Frame;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -22,6 +21,7 @@ import javax.swing.event.DocumentListener;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.model.Equate;
 import com.wudsn.tools.dis6502.model.EquateList;
 import com.wudsn.tools.dis6502.model.WorkspaceProperty;
@@ -122,7 +122,7 @@ public final class EquateDialog extends JDialog {
 		});
 
 		JPanel editRowPanel = new JPanel(new BorderLayout(4, 4));
-		editRowPanel.add(new JLabel("Equate"), BorderLayout.WEST);
+		editRowPanel.add(ElementFactory.createLabel(DataTypes.EquateDialog_Equate, equateLineField), BorderLayout.WEST);
 		editRowPanel.add(equateLineField, BorderLayout.CENTER);
 		JPanel editButtonPanel = new JPanel();
 		editButtonPanel.add(addButton);

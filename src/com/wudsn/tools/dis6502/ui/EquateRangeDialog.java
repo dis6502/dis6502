@@ -16,7 +16,6 @@ import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -24,6 +23,7 @@ import javax.swing.JTextField;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.model.Equate;
 import com.wudsn.tools.dis6502.model.EquateList;
 
@@ -79,7 +79,7 @@ public final class EquateRangeDialog extends JDialog {
 
 		c.gridx = 0;
 		c.gridy = 0;
-		formPanel.add(new JLabel("Start Address ($):"), c);
+		formPanel.add(ElementFactory.createLabel(DataTypes.EquateRangeDialog_StartAddress, startAddressField), c);
 		c.gridx = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1;
@@ -89,7 +89,7 @@ public final class EquateRangeDialog extends JDialog {
 		c.gridy = 1;
 		c.fill = GridBagConstraints.NONE;
 		c.weightx = 0;
-		formPanel.add(new JLabel("End Address ($):"), c);
+		formPanel.add(ElementFactory.createLabel(DataTypes.EquateRangeDialog_EndAddress, endAddressField), c);
 		c.gridx = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1;
@@ -99,7 +99,7 @@ public final class EquateRangeDialog extends JDialog {
 		c.gridy = 2;
 		c.fill = GridBagConstraints.NONE;
 		c.weightx = 0;
-		formPanel.add(new JLabel("Relative to Equate:"), c);
+		formPanel.add(ElementFactory.createLabel(DataTypes.EquateRangeDialog_RelativeToEquate, baseEquateComboBox), c);
 		c.gridx = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1;

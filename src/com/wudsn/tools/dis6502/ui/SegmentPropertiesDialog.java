@@ -24,6 +24,8 @@ import javax.swing.JTextField;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.repository.DataType;
+import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.model.ProcessorType;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.Workspace;
@@ -46,7 +48,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 	private static final List<ProcessorType> PROCESSOR_TYPES = List.of(ProcessorType.MOS6502, ProcessorType.MOS65C02);
 
 	private final JTextField addressField = new JTextField(6);
-	private final JCheckBox binaryCheckBox = new JCheckBox("Binary");
+	private final JCheckBox binaryCheckBox = checkBox(DataTypes.SegmentPropertiesDialog_Binary);
 	private final JTextField labelPrefixField = new JTextField(10);
 	private final JComboBox<String> processorComboBox = new JComboBox<>();
 
@@ -65,7 +67,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 
 		c.gridx = 0;
 		c.gridy = 0;
-		formPanel.add(new JLabel("Address ($):"), c);
+		formPanel.add(ElementFactory.createLabel(DataTypes.SegmentPropertiesDialog_Address, addressField), c);
 		c.gridx = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1;
@@ -75,7 +77,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 		c.gridy = 1;
 		c.fill = GridBagConstraints.NONE;
 		c.weightx = 0;
-		formPanel.add(new JLabel("Label Prefix:"), c);
+		formPanel.add(ElementFactory.createLabel(DataTypes.SegmentPropertiesDialog_LabelPrefix, labelPrefixField), c);
 		c.gridx = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1;
@@ -85,7 +87,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 		c.gridy = 2;
 		c.fill = GridBagConstraints.NONE;
 		c.weightx = 0;
-		formPanel.add(new JLabel("Processor:"), c);
+		formPanel.add(ElementFactory.createLabel(DataTypes.SegmentPropertiesDialog_Processor, processorComboBox), c);
 		c.gridx = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1;
@@ -110,6 +112,13 @@ public final class SegmentPropertiesDialog extends JDialog {
 		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(formPanel, BorderLayout.CENTER);
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+	}
+
+	/** Builds a self-labeled checkbox (text plus mnemonic) from a {@link com.wudsn.tools.base.repository.DataType}, see {@link DataTypes}. */
+	private static JCheckBox checkBox(DataType dataType) {
+		JCheckBox checkBox = new JCheckBox();
+		ElementUtilities.applyLabel(checkBox, dataType);
+		return checkBox;
 	}
 
 	/** Ported from SegmentPropertiesDialog::OnOK. */

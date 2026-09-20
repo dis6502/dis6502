@@ -21,6 +21,7 @@ import javax.swing.event.DocumentListener;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.model.MemoryType;
 
 /**
@@ -127,8 +128,10 @@ public final class LowHighByteDialog extends JDialog {
 	/** Ported from LowHighByteDialog::Show/InitDialog. */
 	public boolean show(MemoryType memoryType, int knownByte) {
 		boolean lowIsKnown = memoryType == MemoryType.LOBYTE;
-		knownByteLabel.setText(lowIsKnown ? "Low Byte ($):" : "High Byte ($):");
-		unknownByteLabel.setText(lowIsKnown ? "High Byte ($):" : "Low Byte ($):");
+		ElementUtilities.applyLabel(knownByteLabel, lowIsKnown ? DataTypes.LowHighByteDialog_LowByte : DataTypes.LowHighByteDialog_HighByte,
+				knownByteField);
+		ElementUtilities.applyLabel(unknownByteLabel, lowIsKnown ? DataTypes.LowHighByteDialog_HighByte : DataTypes.LowHighByteDialog_LowByte,
+				unknownByteField);
 		knownByteField.setText(String.format("%02X", knownByte));
 		unknownByteField.setText("");
 		okButton.setEnabled(false);

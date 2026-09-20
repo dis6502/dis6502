@@ -21,6 +21,7 @@ import javax.swing.SwingWorker;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
 
@@ -81,7 +82,7 @@ public final class DisassemblyProgressDialog extends JDialog {
 		c.gridy = 1;
 		c.gridx = 0;
 		c.anchor = GridBagConstraints.EAST;
-		content.add(new JLabel("Pass:"), c);
+		content.add(ElementFactory.createLabel(DataTypes.DisassemblyProgressDialog_Pass, passLabel), c);
 		c.gridx = 1;
 		c.anchor = GridBagConstraints.WEST;
 		content.add(passLabel, c);
@@ -89,7 +90,7 @@ public final class DisassemblyProgressDialog extends JDialog {
 		c.gridy = 2;
 		c.gridx = 0;
 		c.anchor = GridBagConstraints.EAST;
-		content.add(new JLabel("Segment:"), c);
+		content.add(ElementFactory.createLabel(DataTypes.DisassemblyProgressDialog_Segment, segmentLabel), c);
 		c.gridx = 1;
 		c.anchor = GridBagConstraints.WEST;
 		content.add(segmentLabel, c);

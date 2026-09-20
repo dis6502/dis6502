@@ -12,6 +12,7 @@ import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.KeyStroke;
 
 import com.wudsn.tools.base.repository.DataType;
@@ -82,5 +83,36 @@ public final class ElementUtilities {
 		if (toolTip != null && !toolTip.isEmpty()) {
 			button.setToolTipText(toolTip);
 		}
+	}
+
+	/**
+	 * Applies a {@link DataType}'s label text and mnemonic to an existing
+	 * {@code JLabel} instance, mirroring {@code
+	 * com.wudsn.tools.base.gui.ElementFactory#createLabel(DataType,
+	 * JComponent)} but mutating {@code label} in place instead of
+	 * constructing a new one - for the rare case where a dialog reuses one
+	 * {@code JLabel} field across multiple {@code DataType}s depending on
+	 * runtime state (e.g. {@link LowHighByteDialog}'s Low/High Byte swap),
+	 * rather than binding a label to a {@code DataType} once at construction.
+	 */
+	public static void applyLabel(JLabel label, DataType dataType, JComponent field) {
+		String text = dataType.getLabel();
+		int index = text.indexOf('&');
+		if (index == -1) {
+			throw new RuntimeException("No '&' contained in label text '" + text + "'.");
+		}
+		char c = text.charAt(index + 1);
+		c = Character.toUpperCase(c);
+		if (c < KeyEvent.VK_A || c > KeyEvent.VK_Z) {
+			throw new RuntimeException(
+					"Mnemonic character '" + c + "' contained in label text '" + text + "' is not between 'A' and 'Z'.");
+		}
+		label.setText(dataType.getLabelWithoutMnemonics());
+		label.setDisplayedMnemonic(c);
+		label.setDisplayedMnemonicIndex(index);
+		label.setLabelFor(field);
+
+		String toolTip = dataType.getToolTip();
+		label.setToolTipText(toolTip != null && !toolTip.isEmpty() ? toolTip : null);
 	}
 }
