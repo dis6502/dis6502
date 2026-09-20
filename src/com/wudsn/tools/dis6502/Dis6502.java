@@ -327,6 +327,7 @@ public final class Dis6502 {
 		mainWindow.disassemblyPanel.addrRangeRefMenuItem
 				.addActionListener(e -> performDefineAddressRangeForLabel(mainWindow.disassemblyPanel.getRightClickedLabelReference()));
 		mainWindow.disassemblyPanel.setLineSelectionListener(this::performDisassemblyLineSelected);
+		mainWindow.disassemblyPanel.setNavigateToDefinitionListener(this::performFindDisassemblyLabelDefinition);
 		mainWindow.xrefPanel.setSelectionListener(this::performXRefSelected);
 
 		mainWindow.memoryInspectorPanel.findMenuItem.addActionListener(e -> performShowMemoryInspectorFindDialog());
@@ -1191,13 +1192,28 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from MainDisassembly::FindRef1/FindRef2 (both just call this
-	 * with a different label) - the same find-and-populate-XRef shape as
+	 * Ported from MainDisassembly::FindRef1/FindRef2 (both just call this with a
+	 * different label) and, via {@link #performDisassemblyLineSelected}, the
+	 * DIS_XREF case of MainDisassembly::Proc reached on every plain line
+	 * click/drag - the same find-and-populate-XRef shape as
 	 * {@link #performFindInDisassembly}, but keyed to a label instead of the
-	 * find field's text, and using a fresh, local line-number holder so it
-	 * does not disturb the ongoing Find/Find Next search state, matching how
-	 * the C++ version's {@code SelectAllReferences}/{@code RefreshXRef} never
-	 * touch {@code findString}/{@code findFirstLineNumber} either.
+	 * find field's text, and using a fresh, local line-number holder so it does
+	 * not disturb the ongoing Find/Find Next search state, matching how the
+	 * C++ version's {@code SelectAllReferences}/{@code RefreshXRef} never touch
+	 * {@code findString}/{@code findFirstLineNumber} either. Unlike
+	 * {@link #performFindInDisassembly}/{@link #performFindNextInDisassembly},
+	 * this deliberately never navigates: {@code
+	 * DisassemblyControl::SelectAllLabelReferences} always passes {@code
+	 * bSelect=FALSE}, so {@code DisassemblyControlImpl::SelectAllReferences}'s
+	 * own {@code if (selectedDisLine && bSelect) SyncLine(...)} guard never
+	 * fires for it - navigating to a label's definition is a distinct, only
+	 * explicitly user-requested action (Return or a double-click; see
+	 * {@link com.wudsn.tools.dis6502.ui.DisassemblyPanel#setNavigateToDefinitionListener})
+	 * matching {@code DisassemblyControlImpl::SelectDefinition}, not this method.
+	 * An earlier version of this port called {@link
+	 * com.wudsn.tools.dis6502.ui.DisassemblyPanel#navigateToLine} here too,
+	 * which wrongly jumped the listing away from whatever line the user had
+	 * just clicked, every time that line happened to reference a label.
 	 */
 	private void performFindDisassemblyReferences(String label) {
 		if (label.isEmpty()) {
@@ -1205,7 +1221,7 @@ public final class Dis6502 {
 		}
 		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
 		int[] firstLineNumber = { 0 };
-		boolean found = disassemblyResult.findAndSelectLines(true, firstLineNumber, label);
+		disassemblyResult.findAndSelectLines(true, firstLineNumber, label);
 
 		List<XRefPanel.Entry> entries = new ArrayList<>();
 		for (DisassemblyResult.LineIterator i = disassemblyResult.createLineIterator(); i.hasNext();) {
@@ -1215,10 +1231,6 @@ public final class Dis6502 {
 			}
 		}
 		mainWindow.xrefPanel.updateList(label, entries);
-
-		if (found) {
-			mainWindow.disassemblyPanel.navigateToLine(firstLineNumber[0]);
-		}
 	}
 
 	/** Ported from MainDisassembly::RenameDef/RenameRef (both just call this with a different label), via EquateListController::Edit. */

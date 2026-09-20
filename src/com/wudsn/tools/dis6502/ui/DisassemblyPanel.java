@@ -6,6 +6,8 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -14,12 +16,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.AbstractAction;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
@@ -54,7 +59,13 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * #setLineSelectionListener} - ported from {@code
  * DisassemblyControlImpl::MouseMove}'s per-line click handling, see that
  * method's javadoc for the {@code dwLastLine} correspondence) are the
- * pieces of the C++ control's selection behavior this port implements.
+ * pieces of the C++ control's selection behavior this port implements. A
+ * plain click/drag never navigates away from the clicked line - only a
+ * double-click or Return does, via {@link #navigateToDefinitionOfSelectedLine}/
+ * {@link #setNavigateToDefinitionListener}, ported from {@code
+ * DisassemblyControlImpl::FindReference}/{@code MainDisassembly::FindDef}
+ * (see {@code Dis6502#performFindDisassemblyReferences}'s javadoc for a bug
+ * this port used to have here: navigating on every plain click).
  * {@link #setComputerFont} must be called by {@code Dis6502} whenever the
  * workspace's computer system or double-font-height setting changes,
  * matching {@code DisassemblyWindow}'s use of {@code
@@ -126,7 +137,9 @@ public final class DisassemblyPanel extends JPanel {
 	private DisassemblyLine rightClickedLine;
 	private String rightClickedLabelDefinition = "";
 	private String rightClickedLabelReference = "";
+	private String selectedLabelReference = "";
 	private LineSelectionListener lineSelectionListener;
+	private NavigateToDefinitionListener navigateToDefinitionListener;
 	private int lastSelectedLineIndex = -1;
 
 	public DisassemblyPanel() {
@@ -146,9 +159,11 @@ public final class DisassemblyPanel extends JPanel {
 		popupFindMenuItem.addActionListener(e -> findButton.doClick());
 		popupFindNextMenuItem.addActionListener(e -> findNextButton.doClick());
 
+		grid.setFocusable(true);
 		MouseAdapter mouseHandler = new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
+				grid.requestFocusInWindow();
 				maybeShowPopup(e);
 				if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger()) {
 					lastSelectedLineIndex = -1;
@@ -167,9 +182,43 @@ public final class DisassemblyPanel extends JPanel {
 			public void mouseReleased(MouseEvent e) {
 				maybeShowPopup(e);
 			}
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
+					navigateToDefinitionOfSelectedLine();
+				}
+			}
 		};
 		grid.addMouseListener(mouseHandler);
 		grid.addMouseMotionListener(mouseHandler);
+
+		// Bound WHEN_FOCUSED, not WHEN_IN_FOCUSED_WINDOW like MemoryInspectorPanel's
+		// F2/Esc: unlike those, this action's state (selectedLabelReference) only
+		// ever comes from clicking in this grid, so there is nothing to gain from a
+		// window-wide accelerator, and scoping it to the grid's own focus avoids
+		// stealing Enter from unrelated focused components elsewhere in the window.
+		grid.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "navigateToDefinition");
+		grid.getActionMap().put("navigateToDefinition", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				navigateToDefinitionOfSelectedLine();
+			}
+		});
+	}
+
+	/**
+	 * Ported from {@code DisassemblyControlImpl::FindReference} (double-click)
+	 * and {@code MainDisassembly::FindDef} (Return, {@code ID_DIS_FIND_DEF}) -
+	 * both navigate to the definition of the currently selected line's
+	 * referenced label, unlike a plain click/drag (see {@link #selectLineAt}),
+	 * which only reports the selection and refreshes the XRef list, never
+	 * navigating away from the clicked line.
+	 */
+	private void navigateToDefinitionOfSelectedLine() {
+		if (navigateToDefinitionListener != null && !selectedLabelReference.isEmpty()) {
+			navigateToDefinitionListener.onNavigateToDefinition(selectedLabelReference);
+		}
 	}
 
 	/**
@@ -194,9 +243,11 @@ public final class DisassemblyPanel extends JPanel {
 		lastSelectedLineIndex = index;
 		grid.highlightLine(index);
 
+		DisassemblyLine line = disassemblyLines.get(index);
+		LabelsInLine labels = findLabelInLine(line.getLine());
+		selectedLabelReference = labels.reference;
+
 		if (lineSelectionListener != null) {
-			DisassemblyLine line = disassemblyLines.get(index);
-			LabelsInLine labels = findLabelInLine(line.getLine());
 			String label = !labels.reference.isEmpty() ? labels.reference : labels.definition;
 			lineSelectionListener.onLineSelected(line, label);
 		}
@@ -205,6 +256,11 @@ public final class DisassemblyPanel extends JPanel {
 	/** Reports the line the user clicked or dragged to in the listing, and the label it defines/references - see {@link #selectLineAt}. */
 	public void setLineSelectionListener(LineSelectionListener lineSelectionListener) {
 		this.lineSelectionListener = lineSelectionListener;
+	}
+
+	/** Reports a request to navigate to a label's definition - see {@link #navigateToDefinitionOfSelectedLine}. */
+	public void setNavigateToDefinitionListener(NavigateToDefinitionListener navigateToDefinitionListener) {
+		this.navigateToDefinitionListener = navigateToDefinitionListener;
 	}
 
 	/**
@@ -440,5 +496,10 @@ public final class DisassemblyPanel extends JPanel {
 	/** Reports a line the user clicked or dragged to - see {@link #selectLineAt}. */
 	public interface LineSelectionListener {
 		void onLineSelected(DisassemblyLine line, String label);
+	}
+
+	/** Reports a Return-key/double-click request to navigate to a label's definition - see {@link #setNavigateToDefinitionListener}. */
+	public interface NavigateToDefinitionListener {
+		void onNavigateToDefinition(String label);
 	}
 }
