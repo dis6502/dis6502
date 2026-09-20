@@ -196,8 +196,8 @@ public final class DisassemblyPanel extends JPanel {
 
 		if (lineSelectionListener != null) {
 			DisassemblyLine line = disassemblyLines.get(index);
-			String[] labels = findLabelInLine(line.getLine());
-			String label = !labels[1].isEmpty() ? labels[1] : labels[0];
+			LabelsInLine labels = findLabelInLine(line.getLine());
+			String label = !labels.reference.isEmpty() ? labels.reference : labels.definition;
 			lineSelectionListener.onLineSelected(line, label);
 		}
 	}
@@ -220,9 +220,9 @@ public final class DisassemblyPanel extends JPanel {
 		}
 		int index = grid.lineIndexAtY(e.getY());
 		rightClickedLine = (index >= 0 && index < disassemblyLines.size()) ? disassemblyLines.get(index) : null;
-		String[] labels = findLabelInLine(rightClickedLine == null ? "" : rightClickedLine.getLine());
-		rightClickedLabelDefinition = labels[0];
-		rightClickedLabelReference = labels[1];
+		LabelsInLine labels = findLabelInLine(rightClickedLine == null ? "" : rightClickedLine.getLine());
+		rightClickedLabelDefinition = labels.definition;
+		rightClickedLabelReference = labels.reference;
 
 		boolean hasDefinition = !rightClickedLabelDefinition.isEmpty();
 		boolean hasReference = !rightClickedLabelReference.isEmpty();
@@ -279,17 +279,30 @@ public final class DisassemblyPanel extends JPanel {
 	}
 
 	/**
-	 * Splits {@code text} into the label it defines (a leading identifier at
-	 * column 0) and the label its operand references, as a two-element array
-	 * (either may be {@code ""}). Ported from {@code
-	 * DisassemblyControlImpl::FindLabelInLine} - despite that method's name
-	 * suggesting it needs to know where in the line the mouse was, it only
-	 * ever parses the whole line's text structurally (leading identifier =
-	 * definition; skip the mnemonic; an operand starting with a letter/@/_
-	 * after an optional #/(/&gt;/&lt; prefix = reference), with no mouse
-	 * position involved at all.
+	 * The two labels {@link #findLabelInLine} can find in a disassembly line -
+	 * the label it defines (a leading identifier at column 0) and the label its
+	 * operand references - either of which may be {@code ""} if not present.
 	 */
-	private static String[] findLabelInLine(String text) {
+	private static final class LabelsInLine {
+		final String definition;
+		final String reference;
+
+		LabelsInLine(String definition, String reference) {
+			this.definition = definition;
+			this.reference = reference;
+		}
+	}
+
+	/**
+	 * Splits {@code text} into the label it defines and the label its operand
+	 * references. Ported from {@code DisassemblyControlImpl::FindLabelInLine} -
+	 * despite that method's name suggesting it needs to know where in the line
+	 * the mouse was, it only ever parses the whole line's text structurally
+	 * (leading identifier = definition; skip the mnemonic; an operand starting
+	 * with a letter/@/_ after an optional #/(/&gt;/&lt; prefix = reference), with
+	 * no mouse position involved at all.
+	 */
+	private static LabelsInLine findLabelInLine(String text) {
 		int[] index = { 0 };
 		String labelDefinition = "";
 		String labelReference = "";
@@ -309,7 +322,7 @@ public final class DisassemblyPanel extends JPanel {
 				c = charAt(text, index);
 			}
 		} else if (c != ' ') {
-			return new String[] { "", "" };
+			return new LabelsInLine("", "");
 		}
 
 		// Skip the mnemonic.
@@ -324,7 +337,7 @@ public final class DisassemblyPanel extends JPanel {
 		}
 
 		if (c == '"') {
-			return new String[] { labelDefinition, "" };
+			return new LabelsInLine(labelDefinition, "");
 		}
 		if (c == '#' || c == '(') {
 			c = charAt(text, index);
@@ -348,7 +361,7 @@ public final class DisassemblyPanel extends JPanel {
 				labelReference = reference.toString();
 			}
 		}
-		return new String[] { labelDefinition, labelReference };
+		return new LabelsInLine(labelDefinition, labelReference);
 	}
 
 	private static char charAt(String text, int[] index) {
