@@ -5,6 +5,7 @@
  */
 package com.wudsn.tools.dis6502.ui;
 
+import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -56,7 +57,9 @@ import com.wudsn.tools.dis6502.Actions;
  * fields - only their {@link Action}s live in {@link Actions}. "File" and
  * "Help" reuse {@code com.wudsn.tools.base.Actions}' own shared {@code
  * MainMenu_File}/{@code MainMenu_Help} fields instead of duplicating them,
- * matching every other WUDSN Swing tool's own main menu.
+ * matching every other WUDSN Swing tool's own main menu. {@link
+ * #applyIcons} restores the icons {@code MainWindowMenu::CreateControl}
+ * attaches to a subset of these same items - see that method's own javadoc.
  *
  * @author Peter Dell
  */
@@ -131,6 +134,66 @@ public final class MainMenu {
 		menuBar.add(createEquatesMenu());
 		menuBar.add(createViewMenu());
 		menuBar.add(createHelpMenu());
+		applyIcons();
+	}
+
+	/**
+	 * Ported from {@code MainWindowMenu::CreateControl}'s {@code
+	 * AddIconToMenu} calls (dis6502.rc's {@code IDI_*} icon resources,
+	 * originally {@code src/icons/*.ico}) - migrated to PNG (see {@code
+	 * images/} at this project's classpath root, converted losslessly via
+	 * .NET's {@code System.Drawing.Icon}, since Java has no built-in ICO
+	 * reader) rather than kept as .ico, since {@link
+	 * ElementFactory#createImageIcon} only needs a format {@link
+	 * javax.swing.ImageIcon} can decode. {@code AddIconToMenu}'s own {@code
+	 * MakeBitMapTransparent} step (manually keying out a fixed background
+	 * color against {@code COLOR_MENU}, since old-style {@code HBITMAP}
+	 * menu icons have no real alpha channel) has no Java equivalent to
+	 * port: the converted PNGs' own pixel data already carries a real
+	 * alpha channel (confirmed genuinely semi-transparent, not just fully
+	 * opaque/transparent, on most of these icons), which {@link
+	 * javax.swing.JMenuItem}'s normal icon painting already composites
+	 * correctly against whatever background it is drawn on, unlike the
+	 * C++ source's single-color GDI bitmap. The seven {@code ID_FILE_ADD_*}
+	 * items reuse their {@code ID_FILE_OPEN_*} counterpart's icon, exactly
+	 * as {@code AddIconToMenu}'s own calls do.
+	 */
+	private void applyIcons() {
+		newWorkspaceMenuItem.setIcon(loadIcon("file_new"));
+
+		openCassetteImageFileMenuItem.setIcon(loadIcon("file_open_cassette_image_file"));
+		openDiskImageBootSectorsMenuItem.setIcon(loadIcon("file_open_disk_image_boot_sectors"));
+		openDiskImageExecutableFileMenuItem.setIcon(loadIcon("file_open_disk_image_executable_file"));
+		openDiskImageSectorsMenuItem.setIcon(loadIcon("file_open_disk_image_sectors"));
+		openExecutableFileMenuItem.setIcon(loadIcon("file_open_executable_file"));
+		openRawFileMenuItem.setIcon(loadIcon("file_open_raw_file"));
+		openROMImageFileMenuItem.setIcon(loadIcon("file_open_rom_image_file"));
+
+		addCassetteImageFileMenuItem.setIcon(loadIcon("file_open_cassette_image_file"));
+		addDiskImageBootSectorsMenuItem.setIcon(loadIcon("file_open_disk_image_boot_sectors"));
+		addDiskImageExecutableFileMenuItem.setIcon(loadIcon("file_open_disk_image_executable_file"));
+		addDiskImageSectorsMenuItem.setIcon(loadIcon("file_open_disk_image_sectors"));
+		addExecutableFileMenuItem.setIcon(loadIcon("file_open_executable_file"));
+		addRawFileMenuItem.setIcon(loadIcon("file_open_raw_file"));
+		addROMImageFileMenuItem.setIcon(loadIcon("file_open_rom_image_file"));
+
+		saveDisassemblyFilesMenuItem.setIcon(loadIcon("file_save_disassembly_files"));
+		writeBootDiskMenuItem.setIcon(loadIcon("file_save_disk_image_boot_sectors"));
+
+		clearUserEquatesMenuItem.setIcon(loadIcon("labels_clear_user_equates"));
+		editUserEquatesMenuItem.setIcon(loadIcon("labels_edit_user_equates"));
+		defineUserAddressRangeMenuItem.setIcon(loadIcon("labels_define_user_address_range"));
+		openUserEquatesMenuItem.setIcon(loadIcon("labels_open_user_equates"));
+		saveUserEquatesMenuItem.setIcon(loadIcon("labels_save_user_equates"));
+		exportUserEquatesMenuItem.setIcon(loadIcon("labels_export_user_equates"));
+
+		profileMenuItem.setIcon(loadIcon("view_profile"));
+
+		aboutMenuItem.setIcon(loadIcon("help_about"));
+	}
+
+	private static Icon loadIcon(String name) {
+		return ElementFactory.createImageIcon("images/" + name + ".png");
 	}
 
 	private JMenu createFileMenu() {
