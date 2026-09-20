@@ -24,6 +24,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 
+import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.dis6502.Actions;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentList;
 import com.wudsn.tools.dis6502.model.Workspace;
@@ -46,7 +48,12 @@ import com.wudsn.tools.dis6502.model.WorkspaceProperty;
  * their commands wired up by {@code Dis6502} the same way {@link
  * MainMenu}'s items are, since running them (saving files, editing a
  * segment) needs things ({@code Application}, a parent {@link
- * java.awt.Frame}) this panel does not otherwise have.
+ * java.awt.Frame}) this panel does not otherwise have. Each item is built
+ * via {@code com.wudsn.tools.base.gui.ElementFactory} from an {@code
+ * Action} in {@code com.wudsn.tools.dis6502.Actions} (label/mnemonic
+ * sourced from {@code dis6502.rc}'s {@code SEGMENT_LIST_POPUP_MENU}), the
+ * same pattern {@link MainMenu} uses - see that class's/{@code Actions}'
+ * own javadoc.
  * <p>
  * {@link #setComputerFont} is ported from {@code PartWindow::ApplyLayout}'s
  * blanket {@code SetFont(partLayout->GetLayout()->GetFont())} call, which
@@ -72,15 +79,14 @@ public final class SegmentListPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
-	// TODO Use Actions (either Swing or WUDSN)
-	public final JMenuItem moveUpMenuItem = new JMenuItem("Move Up");
-	public final JMenuItem moveDownMenuItem = new JMenuItem("Move Down");
-	public final JMenuItem mergeMenuItem = new JMenuItem("Merge Segments");
-	public final JMenuItem deleteMenuItem = new JMenuItem("Delete");
-	public final JMenuItem saveNoHeaderMenuItem = new JMenuItem("Save Segment (No Header)...");
-	public final JMenuItem saveHeaderMenuItem = new JMenuItem("Save Segment (With Header)...");
-	public final JMenuItem saveAllMenuItem = new JMenuItem("Save All Segments...");
-	public final JMenuItem propertiesMenuItem = new JMenuItem("Properties...");
+	public final JMenuItem moveUpMenuItem = ElementFactory.createMenuItem(Actions.SegmentListPopupMenu_MoveUp, "moveUpMenuItem");
+	public final JMenuItem moveDownMenuItem = ElementFactory.createMenuItem(Actions.SegmentListPopupMenu_MoveDown, "moveDownMenuItem");
+	public final JMenuItem mergeMenuItem = ElementFactory.createMenuItem(Actions.SegmentListPopupMenu_Merge, "mergeMenuItem");
+	public final JMenuItem deleteMenuItem = ElementFactory.createMenuItem(Actions.SegmentListPopupMenu_Delete, "deleteMenuItem");
+	public final JMenuItem saveNoHeaderMenuItem = ElementFactory.createMenuItem(Actions.SegmentListPopupMenu_SaveNoHeader, "saveNoHeaderMenuItem");
+	public final JMenuItem saveHeaderMenuItem = ElementFactory.createMenuItem(Actions.SegmentListPopupMenu_SaveHeader, "saveHeaderMenuItem");
+	public final JMenuItem saveAllMenuItem = ElementFactory.createMenuItem(Actions.SegmentListPopupMenu_SaveAll, "saveAllMenuItem");
+	public final JMenuItem propertiesMenuItem = ElementFactory.createMenuItem(Actions.SegmentListPopupMenu_Properties, "propertiesMenuItem");
 
 	private final JPopupMenu popupMenu = new JPopupMenu();
 	private final Model model = new Model();

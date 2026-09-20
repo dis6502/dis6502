@@ -27,6 +27,10 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
+import com.wudsn.tools.base.common.TextUtility;
+import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.repository.Action;
+import com.wudsn.tools.dis6502.Actions;
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblyResult;
 import com.wudsn.tools.dis6502.model.Equate;
@@ -99,7 +103,14 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * the popup was shown, matching {@code MainDisassembly::DrawMenu} capturing
  * {@code disSelection}/{@code labelDefinition}/{@code labelReference} once
  * per right-click rather than re-deriving them when a menu item is later
- * clicked. {@link #editCommentMenuItem}'s Add/Edit Comment, unlike {@code
+ * clicked. Every static item is built via {@code
+ * com.wudsn.tools.base.gui.ElementFactory} from an {@code Action} in
+ * {@code com.wudsn.tools.dis6502.Actions}, the same as {@link MainMenu};
+ * the seven items whose label names an actual label ({@link #findDefMenuItem}
+ * and friends) stay plain {@code JMenuItem}s built with no label at all,
+ * since their text is {@code "{0}"}-templated and only resolved at
+ * popup-show time - see {@link #setDynamicLabel} and {@code Actions}' own
+ * javadoc. {@link #editCommentMenuItem}'s Add/Edit Comment, unlike {@code
  * MainDisassembly::AddComment} (which always passes the sentinel size
  * {@code 0xFFFF} for {@link CommentDialog} to snap to the enclosing
  * instruction via {@code DisassemblyResult::findOffsetAtStartOfInstruction}),
@@ -119,7 +130,11 @@ public final class DisassemblyPanel extends JPanel {
 	public final JTextField findField = new JTextField(24);
 	public final JButton findButton = new JButton("Find");
 	public final JButton findNextButton = new JButton("Find Next");
-	public final JMenuItem editCommentMenuItem = new JMenuItem("Add/Edit comment...");
+	public final JMenuItem editCommentMenuItem = ElementFactory.createMenuItem(Actions.DisassemblyPopupMenu_EditComment, "editCommentMenuItem");
+	// findDefMenuItem/findRef1MenuItem/findRef2MenuItem/renameDefMenuItem/renameRefMenuItem/
+	// addrRangeDefMenuItem/addrRangeRefMenuItem stay plain JMenuItems, not built via
+	// ElementFactory.createMenuItem: their label is "{0}"-templated and only known once
+	// the popup is about to show - see setDynamicLabel/maybeShowPopup.
 	public final JMenuItem findDefMenuItem = new JMenuItem();
 	public final JMenuItem findRef1MenuItem = new JMenuItem();
 	public final JMenuItem findRef2MenuItem = new JMenuItem();
@@ -129,8 +144,9 @@ public final class DisassemblyPanel extends JPanel {
 	public final JMenuItem addrRangeRefMenuItem = new JMenuItem();
 
 	private final JPopupMenu popupMenu = new JPopupMenu();
-	private final JMenuItem popupFindMenuItem = new JMenuItem("Find...");
-	private final JMenuItem popupFindNextMenuItem = new JMenuItem("Find next");
+	private final JMenuItem popupFindMenuItem = ElementFactory.createMenuItem(Actions.DisassemblyPopupMenu_Find, "popupFindMenuItem");
+	private final JMenuItem popupFindNextMenuItem = ElementFactory.createMenuItem(Actions.DisassemblyPopupMenu_FindNext,
+			"popupFindNextMenuItem");
 
 	private final Map<Integer, Integer> lineNumberToIndex = new HashMap<>();
 	private List<DisassemblyLine> disassemblyLines = Collections.emptyList();
@@ -287,7 +303,7 @@ public final class DisassemblyPanel extends JPanel {
 
 		popupMenu.removeAll();
 		if (hasReference) {
-			findDefMenuItem.setText("Navigate to Definition of Label " + rightClickedLabelReference);
+			setDynamicLabel(findDefMenuItem, Actions.DisassemblyPopupMenu_FindDef, rightClickedLabelReference);
 			popupMenu.add(findDefMenuItem);
 			popupMenu.addSeparator();
 		}
@@ -302,36 +318,49 @@ public final class DisassemblyPanel extends JPanel {
 		popupFindNextMenuItem.setEnabled(findNextButton.isEnabled());
 		popupMenu.add(popupFindNextMenuItem);
 		if (hasDefinition) {
-			findRef2MenuItem.setText("Find References for Label " + rightClickedLabelDefinition);
+			setDynamicLabel(findRef2MenuItem, Actions.DisassemblyPopupMenu_FindRef2, rightClickedLabelDefinition);
 			popupMenu.add(findRef2MenuItem);
 		}
 		if (hasReference) {
-			findRef1MenuItem.setText("Find References for Label " + rightClickedLabelReference);
+			setDynamicLabel(findRef1MenuItem, Actions.DisassemblyPopupMenu_FindRef1, rightClickedLabelReference);
 			popupMenu.add(findRef1MenuItem);
 		}
 
 		if (definitionAutomatic || referenceAutomatic) {
 			popupMenu.addSeparator();
 			if (definitionAutomatic) {
-				renameDefMenuItem.setText("Rename Defined Label " + rightClickedLabelDefinition);
+				setDynamicLabel(renameDefMenuItem, Actions.DisassemblyPopupMenu_RenameDef, rightClickedLabelDefinition);
 				popupMenu.add(renameDefMenuItem);
 			}
 			if (referenceAutomatic && !rightClickedLabelReference.equals(rightClickedLabelDefinition)) {
-				renameRefMenuItem.setText("Rename Referenced Label " + rightClickedLabelReference);
+				setDynamicLabel(renameRefMenuItem, Actions.DisassemblyPopupMenu_RenameRef, rightClickedLabelReference);
 				popupMenu.add(renameRefMenuItem);
 			}
 			popupMenu.addSeparator();
 			if (definitionAutomatic) {
-				addrRangeDefMenuItem.setText("Define Address Range Relative to " + rightClickedLabelDefinition + " ...");
+				setDynamicLabel(addrRangeDefMenuItem, Actions.DisassemblyPopupMenu_AddrRangeDef, rightClickedLabelDefinition);
 				popupMenu.add(addrRangeDefMenuItem);
 			}
 			if (referenceAutomatic) {
-				addrRangeRefMenuItem.setText("Define Address Range Relative to " + rightClickedLabelReference + " ...");
+				setDynamicLabel(addrRangeRefMenuItem, Actions.DisassemblyPopupMenu_AddrRangeRef, rightClickedLabelReference);
 				popupMenu.add(addrRangeRefMenuItem);
 			}
 		}
 
 		popupMenu.show(grid, e.getX(), e.getY());
+	}
+
+	/**
+	 * Applies {@code action}'s {@code "{0}"}-templated label to {@code item},
+	 * substituting {@code label} and re-deriving the mnemonic from the
+	 * resulting text - see {@code com.wudsn.tools.dis6502.Actions}' own class
+	 * javadoc for why this can't just be {@code
+	 * ElementFactory.setButtonTextAndMnemonic(item, action)} directly (that
+	 * would apply the un-substituted {@code "{0}"} template).
+	 */
+	private static void setDynamicLabel(JMenuItem item, Action action, String label) {
+		String text = TextUtility.format(action.getLabel(), label);
+		ElementFactory.setButtonTextAndMnemonic(item, new Action(text, action.getToolTip(), action.getAccelerator()));
 	}
 
 	/**

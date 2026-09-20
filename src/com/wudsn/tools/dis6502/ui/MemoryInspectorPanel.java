@@ -26,6 +26,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
 
+import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.repository.Action;
+import com.wudsn.tools.dis6502.Actions;
 import com.wudsn.tools.dis6502.model.FileHeader;
 import com.wudsn.tools.dis6502.model.GuessCodeLogic;
 import com.wudsn.tools.dis6502.model.MemoryInspectorSelection;
@@ -188,9 +191,13 @@ public final class MemoryInspectorPanel extends JPanel {
 	private static final MemoryType[] TYPE_SUBMENU_ORDER = { MemoryType.CODE, MemoryType.LOBYTE, MemoryType.HIBYTE,
 			MemoryType.BYTE, MemoryType.WORD, MemoryType.LABEL, MemoryType.SYMBOL, MemoryType.FIXUP, MemoryType.STRING,
 			MemoryType.SBYTE, MemoryType.DLIST, MemoryType.STORE, MemoryType.UNKNOWN };
-	private static final String[] TYPE_SUBMENU_LABELS = { "Code", "Code with Low Byte", "Code with High Byte", "Byte",
-			"Word", "Label", "SpartaDos X Label", "SpartaDos X Address Fix-Up", "String", "Screen Byte", "Display List",
-			"Data Store", "Unknown" };
+	private static final Action[] TYPE_SUBMENU_ACTIONS = { Actions.MemoryInspectorPopupMenu_ChangeType_Code,
+			Actions.MemoryInspectorPopupMenu_ChangeType_LowByte, Actions.MemoryInspectorPopupMenu_ChangeType_HighByte,
+			Actions.MemoryInspectorPopupMenu_ChangeType_Byte, Actions.MemoryInspectorPopupMenu_ChangeType_Word,
+			Actions.MemoryInspectorPopupMenu_ChangeType_Label, Actions.MemoryInspectorPopupMenu_ChangeType_Symbol,
+			Actions.MemoryInspectorPopupMenu_ChangeType_Fixup, Actions.MemoryInspectorPopupMenu_ChangeType_String,
+			Actions.MemoryInspectorPopupMenu_ChangeType_Sbyte, Actions.MemoryInspectorPopupMenu_ChangeType_Dlist,
+			Actions.MemoryInspectorPopupMenu_ChangeType_Store, Actions.MemoryInspectorPopupMenu_ChangeType_Unknown };
 
 	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("No segment selected.");
 	private final MemoryInspectorGridPanel grid = new MemoryInspectorGridPanel();
@@ -202,22 +209,35 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * {@code doClick()}d would be a pointless layer of indirection. The Change Type
 	 * submenu is the one exception: with thirteen items, each already knowing its
 	 * own type, a public field per item would be backwards - its items report the
-	 * type the user picked through {@link #setTypeSelectionListener} instead.
+	 * type the user picked through {@link #setTypeSelectionListener} instead. Each
+	 * item is built via {@code com.wudsn.tools.base.gui.ElementFactory} from an
+	 * {@code Action} in {@code com.wudsn.tools.dis6502.Actions} - see {@code
+	 * Actions}' own javadoc for label/mnemonic sourcing, including the several
+	 * items with no mnemonic in {@code dis6502.rc} that were given one here.
 	 */
-	public final JMenuItem findMenuItem = new JMenuItem("Find...");
-	public final JMenuItem findNextMenuItem = new JMenuItem("Find next");
-	public final JMenuItem splitAtSelectionMenuItem = new JMenuItem("Split at selection");
-	public final JMenuItem startCodeTraceMenuItem = new JMenuItem("Start code trace at selection");
-	public final JMenuItem setUnknownBlockToByteMenuItem = new JMenuItem("Set current block of Unknown type to Byte");
-	public final JMenuItem editCommentMenuItem = new JMenuItem("Add/Edit comment...");
-	public final JMenuItem editMenuItem = new JMenuItem("Edit bytes at selection");
-	public final JMenuItem assembleMenuItem = new JMenuItem("Assemble at selection...");
-	public final JMenuItem copySelectionMenuItem = new JMenuItem("Copy");
-	public final JMenuItem selectNextUnknownBlockMenuItem = new JMenuItem("Select next block of Unknown type");
-	public final JMenuItem selectSpritesMenuItem = new JMenuItem("Select Sprites...");
-	public final JMenuItem selectAllMenuItem = new JMenuItem("Select all");
-	public final JMenuItem saveSelectionNoHeaderMenuItem = new JMenuItem("Save selection without header...");
-	public final JMenuItem saveSelectionHeaderMenuItem = new JMenuItem("Save selection with header...");
+	public final JMenuItem findMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_Find, "findMenuItem");
+	public final JMenuItem findNextMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_FindNext, "findNextMenuItem");
+	public final JMenuItem splitAtSelectionMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_SplitAtSelection,
+			"splitAtSelectionMenuItem");
+	public final JMenuItem startCodeTraceMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_StartCodeTrace,
+			"startCodeTraceMenuItem");
+	public final JMenuItem setUnknownBlockToByteMenuItem = ElementFactory
+			.createMenuItem(Actions.MemoryInspectorPopupMenu_SetUnknownBlockToByte, "setUnknownBlockToByteMenuItem");
+	public final JMenuItem editCommentMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_EditComment,
+			"editCommentMenuItem");
+	public final JMenuItem editMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_Edit, "editMenuItem");
+	public final JMenuItem assembleMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_Assemble, "assembleMenuItem");
+	public final JMenuItem copySelectionMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_CopySelection,
+			"copySelectionMenuItem");
+	public final JMenuItem selectNextUnknownBlockMenuItem = ElementFactory
+			.createMenuItem(Actions.MemoryInspectorPopupMenu_SelectNextUnknownBlock, "selectNextUnknownBlockMenuItem");
+	public final JMenuItem selectSpritesMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_SelectSprites,
+			"selectSpritesMenuItem");
+	public final JMenuItem selectAllMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_SelectAll, "selectAllMenuItem");
+	public final JMenuItem saveSelectionNoHeaderMenuItem = ElementFactory
+			.createMenuItem(Actions.MemoryInspectorPopupMenu_SaveSelectionNoHeader, "saveSelectionNoHeaderMenuItem");
+	public final JMenuItem saveSelectionHeaderMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_SaveSelectionHeader,
+			"saveSelectionHeaderMenuItem");
 
 	/**
 	 * The single item of the ad hoc popup shown, instead of {@link #popupMenu},
@@ -226,7 +246,8 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * since every other command is modally blocked while editing (see
 	 * {@code MainMemoryInspector::PerformCommands}).
 	 */
-	public final JMenuItem quitEditModeMenuItem = new JMenuItem("Quit memory inspector edit mode");
+	public final JMenuItem quitEditModeMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_QuitEditMode,
+			"quitEditModeMenuItem");
 
 	private final JPopupMenu popupMenu = new JPopupMenu();
 	private final JPopupMenu editModePopupMenu = new JPopupMenu();
@@ -317,9 +338,8 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * child control currently has focus, as long as the window is active.
 	 */
 	private void bindEditModeKeys() {
-		editMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
-		quitEditModeMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
-
+		// editMenuItem/quitEditModeMenuItem's accelerators (F2/Esc) already come from
+		// their Action in com.wudsn.tools.dis6502.Actions.
 		grid.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "editBytesAtSelection");
 		grid.getActionMap().put("editBytesAtSelection", new AbstractAction() {
 			@Override
@@ -373,10 +393,10 @@ public final class MemoryInspectorPanel extends JPanel {
 	private void buildPopupMenu() {
 		popupMenu.add(startCodeTraceMenuItem);
 
-		JMenu changeTypeMenu = new JMenu("Change type of selected bytes to");
+		JMenu changeTypeMenu = ElementFactory.createMenu(Actions.MemoryInspectorPopupMenu_ChangeType);
 		for (int i = 0; i < TYPE_SUBMENU_ORDER.length; i++) {
 			MemoryType type = TYPE_SUBMENU_ORDER[i];
-			JCheckBoxMenuItem item = new JCheckBoxMenuItem(TYPE_SUBMENU_LABELS[i]);
+			JCheckBoxMenuItem item = ElementFactory.createCheckBoxMenuItem(TYPE_SUBMENU_ACTIONS[i]);
 			item.addActionListener(e -> {
 				if (typeSelectionListener != null) {
 					typeSelectionListener.onTypeSelected(type);

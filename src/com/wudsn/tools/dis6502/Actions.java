@@ -52,6 +52,41 @@ import com.wudsn.tools.base.repository.NLS;
  * every other WUDSN Swing tool's main menu does the same; "Equates" and
  * "View" are specific to this application, so they are declared here
  * instead ({@link #MainMenu_Equates}/{@link #MainMenu_View}).
+ * <p>
+ * The {@code SegmentListPopupMenu_*}/{@code DisassemblyPopupMenu_*}/{@code
+ * MemoryInspectorPopupMenu_*} fields are the same pattern applied to {@link
+ * com.wudsn.tools.dis6502.ui.SegmentListPanel}/{@link
+ * com.wudsn.tools.dis6502.ui.DisassemblyPanel}/{@link
+ * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s right-click popup
+ * menus, sourced from {@code dis6502.rc}'s {@code SEGMENT_LIST_POPUP_MENU}/
+ * {@code DISASSEMBLY_POPUP_MENU}/{@code MEMORY_INSPECTOR_POPUP_MENU}/{@code
+ * MEMORY_INSPECTOR_QUIT_EDIT_POPUP_MENU}. Unlike the main menu, none of
+ * these items are given a live accelerator beyond the two that already had
+ * one ({@link #MemoryInspectorPopupMenu_Edit}/{@link
+ * #MemoryInspectorPopupMenu_QuitEditMode}, F2/Esc, ported from {@code
+ * MemoryInspectorPanel}'s own edit-mode key bindings) - many popup items
+ * have a {@code \tAccelerator} hint in the C++ source that was never wired
+ * as a real Swing accelerator in this port, and wiring roughly a dozen new
+ * ones at once was deliberately kept out of this change; only the
+ * label/mnemonic construction moved to {@link Action}/{@code
+ * ElementFactory}. Several C++ menu items - {@code DisassemblyPopupMenu}'s
+ * six {@code {0}}-templated label/reference items plus {@code
+ * DisassemblyPopupMenu_EditComment}, and roughly half of {@code
+ * MemoryInspectorPopupMenu}'s items ({@link
+ * #MemoryInspectorPopupMenu_StartCodeTrace}, {@link
+ * #MemoryInspectorPopupMenu_ChangeType}, and others) - have no {@code
+ * &amp;} mnemonic at all in {@code dis6502.rc}; unlike the main menu (where
+ * every added mnemonic already existed in the C++ source), these fields'
+ * mnemonics were newly chosen here, picking an unused letter within each
+ * popup - see each panel's own javadoc/source for exactly which items this
+ * applies to. The six {@code {0}}-templated {@code DisassemblyPopupMenu}
+ * fields keep their {@code {0}} placeholder in {@code .label} - {@code
+ * DisassemblyPanel} formats it with the actual label name via {@code
+ * com.wudsn.tools.base.common.TextUtility#format} each time the popup is
+ * shown, then re-derives the mnemonic from the formatted text, since
+ * {@link com.wudsn.tools.base.gui.ElementFactory} has no method for
+ * applying an already-built {@link Action}'s mnemonic to text that isn't
+ * the action's own literal label.
  *
  * @author Peter Dell
  */
@@ -107,6 +142,59 @@ public final class Actions extends NLS {
 
 	// Actions: Main Menu - Help.
 	public static Action MainMenu_Help_About;
+
+	// Actions: Segment List popup menu.
+	public static Action SegmentListPopupMenu_MoveUp;
+	public static Action SegmentListPopupMenu_MoveDown;
+	public static Action SegmentListPopupMenu_Merge;
+	public static Action SegmentListPopupMenu_Delete;
+	public static Action SegmentListPopupMenu_SaveNoHeader;
+	public static Action SegmentListPopupMenu_SaveHeader;
+	public static Action SegmentListPopupMenu_SaveAll;
+	public static Action SegmentListPopupMenu_Properties;
+
+	// Actions: Disassembly popup menu.
+	public static Action DisassemblyPopupMenu_FindDef;
+	public static Action DisassemblyPopupMenu_EditComment;
+	public static Action DisassemblyPopupMenu_Find;
+	public static Action DisassemblyPopupMenu_FindNext;
+	public static Action DisassemblyPopupMenu_FindRef2;
+	public static Action DisassemblyPopupMenu_FindRef1;
+	public static Action DisassemblyPopupMenu_RenameDef;
+	public static Action DisassemblyPopupMenu_RenameRef;
+	public static Action DisassemblyPopupMenu_AddrRangeDef;
+	public static Action DisassemblyPopupMenu_AddrRangeRef;
+
+	// Actions: Memory Inspector popup menu.
+	public static Action MemoryInspectorPopupMenu_StartCodeTrace;
+	public static Action MemoryInspectorPopupMenu_ChangeType;
+	public static Action MemoryInspectorPopupMenu_ChangeType_Code;
+	public static Action MemoryInspectorPopupMenu_ChangeType_LowByte;
+	public static Action MemoryInspectorPopupMenu_ChangeType_HighByte;
+	public static Action MemoryInspectorPopupMenu_ChangeType_Byte;
+	public static Action MemoryInspectorPopupMenu_ChangeType_Word;
+	public static Action MemoryInspectorPopupMenu_ChangeType_Label;
+	public static Action MemoryInspectorPopupMenu_ChangeType_Symbol;
+	public static Action MemoryInspectorPopupMenu_ChangeType_Fixup;
+	public static Action MemoryInspectorPopupMenu_ChangeType_String;
+	public static Action MemoryInspectorPopupMenu_ChangeType_Sbyte;
+	public static Action MemoryInspectorPopupMenu_ChangeType_Dlist;
+	public static Action MemoryInspectorPopupMenu_ChangeType_Store;
+	public static Action MemoryInspectorPopupMenu_ChangeType_Unknown;
+	public static Action MemoryInspectorPopupMenu_SetUnknownBlockToByte;
+	public static Action MemoryInspectorPopupMenu_EditComment;
+	public static Action MemoryInspectorPopupMenu_Edit = new Action(KeyEvent.VK_F2, 0);
+	public static Action MemoryInspectorPopupMenu_Assemble;
+	public static Action MemoryInspectorPopupMenu_CopySelection;
+	public static Action MemoryInspectorPopupMenu_SplitAtSelection;
+	public static Action MemoryInspectorPopupMenu_Find;
+	public static Action MemoryInspectorPopupMenu_FindNext;
+	public static Action MemoryInspectorPopupMenu_SelectNextUnknownBlock;
+	public static Action MemoryInspectorPopupMenu_SelectSprites;
+	public static Action MemoryInspectorPopupMenu_SelectAll;
+	public static Action MemoryInspectorPopupMenu_SaveSelectionNoHeader;
+	public static Action MemoryInspectorPopupMenu_SaveSelectionHeader;
+	public static Action MemoryInspectorPopupMenu_QuitEditMode = new Action(KeyEvent.VK_ESCAPE, 0);
 
 	static {
 		initializeClass(Actions.class, null);
