@@ -1,4 +1,4 @@
-# DIS6502 - the interactive 6502 disassembler.
+# DIS6502 - The Interactive MOS 6502 Disassembler
 
 
 ## History
