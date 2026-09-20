@@ -323,7 +323,11 @@ public final class MemoryInspectorPanel extends JPanel {
 		headerPanel.add(displayAsScreenCodeButton);
 		add(headerPanel, BorderLayout.NORTH);
 
-		add(new JScrollPane(grid), BorderLayout.CENTER);
+		JScrollPane scrollPane = new JScrollPane(grid);
+		// Splitters already separate the part windows - the scroll pane's own
+		// L&F-default border would just draw a redundant line right next to them.
+		scrollPane.setBorder(BorderFactory.createEmptyBorder());
+		add(scrollPane, BorderLayout.CENTER);
 
 		grid.setFocusable(true);
 		buildPopupMenu();

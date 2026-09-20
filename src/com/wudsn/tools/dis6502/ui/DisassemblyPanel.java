@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
@@ -170,7 +171,11 @@ public final class DisassemblyPanel extends JPanel {
 		findPanel.add(findButtonsPanel, BorderLayout.EAST);
 
 		add(findPanel, BorderLayout.NORTH);
-		add(new JScrollPane(grid), BorderLayout.CENTER);
+		JScrollPane scrollPane = new JScrollPane(grid);
+		// Splitters already separate the part windows - the scroll pane's own
+		// L&F-default border would just draw a redundant line right next to them.
+		scrollPane.setBorder(BorderFactory.createEmptyBorder());
+		add(scrollPane, BorderLayout.CENTER);
 
 		popupFindMenuItem.addActionListener(e -> findButton.doClick());
 		popupFindNextMenuItem.addActionListener(e -> findNextButton.doClick());

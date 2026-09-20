@@ -14,6 +14,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -151,7 +152,11 @@ public final class SegmentListPanel extends JPanel {
 			}
 		});
 
-		add(new JScrollPane(table), BorderLayout.CENTER);
+		JScrollPane scrollPane = new JScrollPane(table);
+		// Splitters already separate the part windows - the scroll pane's own
+		// L&F-default border would just draw a redundant line right next to them.
+		scrollPane.setBorder(BorderFactory.createEmptyBorder());
+		add(scrollPane, BorderLayout.CENTER);
 	}
 
 	/** Ported from PartWindow::ApplyLayout's SetFont(partLayout->GetLayout()->GetFont()) - call whenever the workspace's computer system or double-height setting changes. */

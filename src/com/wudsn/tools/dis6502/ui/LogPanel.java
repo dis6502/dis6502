@@ -8,6 +8,7 @@ package com.wudsn.tools.dis6502.ui;
 import java.awt.BorderLayout;
 import java.awt.RenderingHints;
 
+import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -52,7 +53,11 @@ public final class LogPanel extends JPanel {
 		textArea.setEditable(false);
 		textArea.setFont(new java.awt.Font(java.awt.Font.MONOSPACED, java.awt.Font.PLAIN, 12));
 		textArea.putClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-		add(new JScrollPane(textArea), BorderLayout.CENTER);
+		JScrollPane scrollPane = new JScrollPane(textArea);
+		// Splitters already separate the part windows - the scroll pane's own
+		// L&F-default border would just draw a redundant line right next to them.
+		scrollPane.setBorder(BorderFactory.createEmptyBorder());
+		add(scrollPane, BorderLayout.CENTER);
 	}
 
 	/** Ported from PartWindow::ApplyLayout's SetFont(partLayout->GetLayout()->GetFont()) - call whenever the workspace's computer system or double-height setting changes. */

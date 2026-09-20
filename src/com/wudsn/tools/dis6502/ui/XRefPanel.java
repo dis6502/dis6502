@@ -64,7 +64,11 @@ public final class XRefPanel extends JPanel {
 		super(new BorderLayout());
 		setBorder(titledBorder);
 		list.setCellRenderer(cellRenderer);
-		add(new JScrollPane(list), BorderLayout.CENTER);
+		JScrollPane scrollPane = new JScrollPane(list);
+		// Splitters already separate the part windows - the scroll pane's own
+		// L&F-default border would just draw a redundant line right next to them.
+		scrollPane.setBorder(BorderFactory.createEmptyBorder());
+		add(scrollPane, BorderLayout.CENTER);
 
 		list.addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting() && selectionListener != null) {
