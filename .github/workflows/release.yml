@@ -58,11 +58,16 @@ jobs:
       - name: Determine app version
         id: version
         shell: bash
+        # macOS's app-image bundler rejects an app-version whose first number
+        # is 0 ("The first number in an app-version cannot be zero or
+        # negative"), so both the workflow_dispatch placeholder and every
+        # real release tag need a major version of at least 1 (v1.0.0, not
+        # v0.1.0).
         run: |
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
           else
-            echo "version=0.0.0" >> "$GITHUB_OUTPUT"
+            echo "version=1.0.0" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Build portable app image with jpackage
