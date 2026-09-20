@@ -5,15 +5,27 @@ name: Release
 # their own) and publishes them as assets on a GitHub Release.
 #
 # Trigger: push a tag matching v*, e.g. `git tag v1.0.0 && git push origin v1.0.0`.
-# Can also be run manually (workflow_dispatch) for a test build - in that
-# case the version defaults to 0.0.0 and no release is published, only
-# build artifacts you can download from the workflow run.
+#
+# Can also be run manually (workflow_dispatch):
+# - With the release_tag input left empty: a plain test build - no release is
+#   published, only build artifacts you can download from the workflow run.
+# - With release_tag set to an EXISTING release's tag (e.g. v1.0.0): rebuilds
+#   whatever the triggering branch currently is and republishes those binaries
+#   to that release, without moving the git tag itself - useful for shipping
+#   a fixed build under the same version number without creating a new tag.
+#   softprops/action-gh-release updates the existing release's assets/notes
+#   in place; the tag keeps pointing at whatever commit it always did.
 
 on:
   push:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Existing release tag to rebuild and republish assets for (leave empty for a plain test build)"
+        required: false
+        type: string
 
 jobs:
   build:
@@ -63,9 +75,16 @@ jobs:
         # negative"), so both the workflow_dispatch placeholder and every
         # real release tag need a major version of at least 1 (v1.0.0, not
         # v0.1.0).
+        env:
+          RELEASE_TAG_INPUT: ${{ github.event.inputs.release_tag }}
         run: |
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+            TAG="${GITHUB_REF_NAME}"
+          elif [[ -n "${RELEASE_TAG_INPUT}" ]]; then
+            TAG="${RELEASE_TAG_INPUT}"
+          fi
+          if [[ -n "${TAG:-}" ]]; then
+            echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
           else
             echo "version=1.0.0" >> "$GITHUB_OUTPUT"
           fi
@@ -106,7 +125,7 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: github.ref_type == 'tag'
+    if: github.ref_type == 'tag' || github.event.inputs.release_tag != ''
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -117,8 +136,24 @@ jobs:
         with:
           path: artifacts
 
+      - name: Determine release tag
+        id: tag
+        shell: bash
+        env:
+          RELEASE_TAG_INPUT: ${{ github.event.inputs.release_tag }}
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${RELEASE_TAG_INPUT}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # tag_name targets an existing release/tag when republishing via
+      # release_tag - the action updates that release's assets/notes in
+      # place rather than creating a new one, and does not move the git tag.
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.tag.outputs.tag }}
           files: artifacts/*/*
           generate_release_notes: true
