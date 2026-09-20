@@ -57,6 +57,7 @@ import com.wudsn.tools.dis6502.model.SegmentListInserter;
 import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogic;
 import com.wudsn.tools.dis6502.model.WorkspaceProperty;
+import com.wudsn.tools.dis6502.ui.AboutDialog;
 import com.wudsn.tools.dis6502.ui.AssembleDialog;
 import com.wudsn.tools.dis6502.ui.CommentDialog;
 import com.wudsn.tools.dis6502.ui.ComputerFont;
@@ -1710,16 +1711,10 @@ public final class Dis6502 {
 		System.exit(0);
 	}
 
+	/** Ported from {@code AboutDialog::Show} - see {@link AboutDialog}'s own javadoc for the migrated icon/bitmap and the dropped version listbox. */
 	private void performAbout() {
-		String message = "6502 Disassembler\n\n" + "The purpose of this software is to disassemble a 6502\n"
-				+ "binary file and generate a listing ready to assemble.\n\n"
-				+ "(c) 1997-2024 Eric Bacher, atari@ebacher.info\n"
-				+ "Win32 Port - 2005 by James Wilkinson, james@slor.net\n"
-				+ "Win32 Fixes - 2015-2024 by Peter Dell, jac@wudsn.com\n\n"
-				+ "Feel free to send any comments, new ideas, or\n" + "bug reports on SourceForge.\n"
-				+ "http://sourceforge.net/projects/dis6502";
-		JOptionPane.showMessageDialog(mainWindow.getFrame(), message, "About DIS6502",
-				JOptionPane.INFORMATION_MESSAGE);
+		AboutDialog dialog = new AboutDialog(mainWindow.getFrame());
+		dialog.setVisible(true);
 	}
 
 	private void updateTitle() {

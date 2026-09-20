@@ -9,6 +9,8 @@ import javax.swing.JFrame;
 import javax.swing.JSplitPane;
 import javax.swing.WindowConstants;
 
+import com.wudsn.tools.base.gui.ElementFactory;
+
 /**
  * The application's main window: a menu bar plus the five panels
  * {@code MainWindow.h}'s C++ counterpart composes ({@link
@@ -47,6 +49,11 @@ public final class MainWindow {
 
 	public MainWindow() {
 		frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+		// Matches IDI_DIS6502 (dis6502.ico, converted to PNG - see MainMenu#applyIcons's
+		// javadoc for why) being the app's own icon resource in the .rc; the window/taskbar
+		// icon has no dedicated C++ call site to port from - Win32 picks IDI_DIS6502 up
+		// automatically as the main window class's registered icon.
+		frame.setIconImage(ElementFactory.createImageIcon("images/dis6502.png").getImage());
 		frame.setJMenuBar(mainMenu.menuBar);
 		frame.setContentPane(createContentPane());
 		frame.setSize(1100, 750);
