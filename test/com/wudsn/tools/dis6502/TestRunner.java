@@ -87,6 +87,7 @@ public final class TestRunner {
 		runTest("MemoryInspectorTest", MemoryInspectorTest::testMemoryInspectorType);
 		runTest("AtariDiskImageTest", AtariDiskImageTest::testAtariDiskImage);
 		runTest("MemoryInspectorStateTest", MemoryInspectorStateTest::testMemoryInspectorState);
+		runTest("DataTypesTest", DataTypesTest::testDataTypes);
 
 		if (failedCount == 0) {
 			log("INFO: All " + totalCount + " unit tests were successful.");

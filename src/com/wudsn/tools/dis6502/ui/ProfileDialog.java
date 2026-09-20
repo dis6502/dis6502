@@ -20,7 +20,6 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -30,6 +29,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.repository.DataType;
+import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.model.ComputerSystemTypeInfo;
 import com.wudsn.tools.dis6502.model.Encoding;
 import com.wudsn.tools.dis6502.model.Profile;
@@ -78,30 +79,30 @@ public final class ProfileDialog extends JDialog {
 	// General.
 	private final JTextField commentField = new JTextField(4);
 	private final JTextField hexNotationField = new JTextField(4);
-	private final JCheckBox illegalInstructionCheckBox = new JCheckBox("Illegal Instructions");
-	private final JCheckBox useHexCheckBox = new JCheckBox("Use Hex Notation");
-	private final JCheckBox alignInstructionCheckBox = new JCheckBox("Align Instructions");
-	private final JCheckBox lineNumberingCheckBox = new JCheckBox("Use Line Numbers");
-	private final JCheckBox showLowerCaseCheckBox = new JCheckBox("Show Lowercase Instructions");
-	private final JCheckBox showImpliciteCheckBox = new JCheckBox("Show 'A' in Accumulator Mode");
-	private final JCheckBox showColonCheckBox = new JCheckBox("Show ':' after Labels");
-	private final JCheckBox displayOpcodesCheckBox = new JCheckBox("Show Opcode as Comment");
-	private final JCheckBox showByte0CheckBox = new JCheckBox("Show 'BRK' as '.BYTE $00'");
-	private final JCheckBox showZPAsByteCheckBox = new JCheckBox("Show ZP Addr. in Absolute Mode as Bytes");
+	private final JCheckBox illegalInstructionCheckBox = checkBox(DataTypes.Profile_UseIllegalOpcodes);
+	private final JCheckBox useHexCheckBox = checkBox(DataTypes.Profile_UseHexNotation);
+	private final JCheckBox alignInstructionCheckBox = checkBox(DataTypes.Profile_AlignInstructions);
+	private final JCheckBox lineNumberingCheckBox = checkBox(DataTypes.Profile_UseLineNumbers);
+	private final JCheckBox showLowerCaseCheckBox = checkBox(DataTypes.Profile_ShowLowerCaseInstructions);
+	private final JCheckBox showImpliciteCheckBox = checkBox(DataTypes.Profile_ShowAInAccumulatorMode);
+	private final JCheckBox showColonCheckBox = checkBox(DataTypes.Profile_ShowColonAfterLabel);
+	private final JCheckBox displayOpcodesCheckBox = checkBox(DataTypes.Profile_ShowOpcodeAsComment);
+	private final JCheckBox showByte0CheckBox = checkBox(DataTypes.Profile_ShowBRKAsByte0);
+	private final JCheckBox showZPAsByteCheckBox = checkBox(DataTypes.Profile_ShowZPAbsoluteAsByte);
 	private final JTextField forceAbsoluteField = new JTextField(4);
-	private final JCheckBox nonASCIIAsBytesCheckBox = new JCheckBox("Show Non-ASCII Characters as Bytes");
+	private final JCheckBox nonASCIIAsBytesCheckBox = checkBox(DataTypes.Profile_ShowNonASCIIChararactersAsBytes);
 	private final JTextField bytePerLineField = new JTextField(3);
 	private final JTextField wordPerLineField = new JTextField(3);
 	private final JTextField charPerLineField = new JTextField(3);
 	private final JTextField quoteForASCIIStringsField = new JTextField(3);
 
 	// Directive Syntax.
-	private final JCheckBox numOnlyInByteCheckBox = new JCheckBox("Only Numbers in .BYTE");
+	private final JCheckBox numOnlyInByteCheckBox = checkBox(DataTypes.Profile_DirectiveBYTEOnlyNumbersAllowed);
 	private final JTextField byteSyntaxField = new JTextField(6);
 	private final JTextField byteSeparatorField = new JTextField(3);
-	private final JCheckBox wordAllowedCheckBox = new JCheckBox(".WORD Allowed:");
+	private final JCheckBox wordAllowedCheckBox = checkBox(DataTypes.Profile_DirectiveWORDAllowed);
 	private final JTextField wordSyntaxField = new JTextField(6);
-	private final JCheckBox sByteAllowedCheckBox = new JCheckBox(".SBYTE Allowed:");
+	private final JCheckBox sByteAllowedCheckBox = checkBox(DataTypes.Profile_DirectiveSBYTEAllowed);
 	private final JTextField sByteSyntaxField = new JTextField(6);
 	private final JTextField orgSyntaxField = new JTextField(6);
 	private final JTextField lowHeadSyntaxField = new JTextField(6);
@@ -110,20 +111,20 @@ public final class ProfileDialog extends JDialog {
 	private final JTextField highHeadSyntaxField = new JTextField(6);
 	private final JTextField highTailSyntaxField = new JTextField(6);
 	private final JTextField endSyntaxField = new JTextField(8);
-	private final JCheckBox endFilenameCheckBox = new JCheckBox("Add File Name");
+	private final JCheckBox endFilenameCheckBox = checkBox(DataTypes.Profile_DirectiveENDNeedsFilename);
 	private final JTextField endTailField = new JTextField(8);
-	private final JCheckBox dsAllowedCheckBox = new JCheckBox(".DS (Data Storage) Allowed:");
+	private final JCheckBox dsAllowedCheckBox = checkBox(DataTypes.Profile_DirectiveDSAllowed);
 	private final JTextField dsSyntaxField = new JTextField(6);
 
 	// Disassembly Listing.
 	private final JComboBox<Encoding> outputEncodingComboBox = new JComboBox<>(OUTPUT_ENCODINGS);
-	private final JCheckBox removeUnusedLabelsCheckBox = new JCheckBox("Omit Unreferenced System Labels");
-	private final JCheckBox includeAllowedCheckBox = new JCheckBox("Include Files Allowed");
+	private final JCheckBox removeUnusedLabelsCheckBox = checkBox(DataTypes.Profile_OmitUnreferencedSystemLabels);
+	private final JCheckBox includeAllowedCheckBox = checkBox(DataTypes.Profile_DirectiveINCLUDEAllowed);
 	private final JTextField includeHeadField = new JTextField(8);
 	private final JTextField includeTailField = new JTextField(8);
-	private final JRadioButton radioIncludeOneFile = new JRadioButton("One File for Equates included in Main File");
-	private final JRadioButton radioIncludeAllFiles = new JRadioButton("All Files Included in Main File");
-	private final JRadioButton radioIncludeNextFile = new JRadioButton("Each File Includes Next File");
+	private final JRadioButton radioIncludeOneFile = radioButton(DataTypes.Profile_DirectiveINCLUDEAllEquatesInOneIncludeFile);
+	private final JRadioButton radioIncludeAllFiles = radioButton(DataTypes.Profile_DirectiveINCLUDEAllIncludesInMainFile);
+	private final JRadioButton radioIncludeNextFile = radioButton(DataTypes.Profile_DirectiveINCLUDEEachFileIncludesNextFile);
 	private final JTextField maxIncludeLinesField = new JTextField(6);
 
 	private final ProfileLogic profileLogic;
@@ -214,7 +215,7 @@ public final class ProfileDialog extends JDialog {
 		JPanel panel = new JPanel(new GridBagLayout());
 		panel.setBorder(BorderFactory.createTitledBorder("General"));
 		int row = 0;
-		addLabeledField(panel, row++, "Comment:", commentField, "Hex Prefix:", hexNotationField);
+		addLabeledField(panel, row++, DataTypes.Profile_CommentPrefix, commentField, DataTypes.Profile_HexNotationPrefix, hexNotationField);
 		addFullWidth(panel, row++, illegalInstructionCheckBox);
 		addFullWidth(panel, row++, useHexCheckBox);
 		addFullWidth(panel, row++, alignInstructionCheckBox);
@@ -225,12 +226,12 @@ public final class ProfileDialog extends JDialog {
 		addFullWidth(panel, row++, displayOpcodesCheckBox);
 		addFullWidth(panel, row++, showByte0CheckBox);
 		addFullWidth(panel, row++, showZPAsByteCheckBox);
-		addLabeledField(panel, row++, "Mnemonic to force Absolute Mode:", forceAbsoluteField);
+		addLabeledField(panel, row++, DataTypes.Profile_DirectiveForceAbsolute, forceAbsoluteField);
 		addFullWidth(panel, row++, nonASCIIAsBytesCheckBox);
-		addLabeledField(panel, row++, "Number of Byte Values per Line:", bytePerLineField);
-		addLabeledField(panel, row++, "Number of Word Values per Line:", wordPerLineField);
-		addLabeledField(panel, row++, "Number of Characters per String:", charPerLineField);
-		addLabeledField(panel, row++, "Quote for ASCII Strings:", quoteForASCIIStringsField);
+		addLabeledField(panel, row++, DataTypes.Profile_DirectiveBYTENumberOfBytesPerLine, bytePerLineField);
+		addLabeledField(panel, row++, DataTypes.Profile_DirectiveWORDNumberOfWordsPerLine, wordPerLineField);
+		addLabeledField(panel, row++, DataTypes.Profile_DirectiveBYTENumberOfCharactersPerString, charPerLineField);
+		addLabeledField(panel, row++, DataTypes.Profile_QuoteForASCIIStrings, quoteForASCIIStringsField);
 		return panel;
 	}
 
@@ -238,13 +239,13 @@ public final class ProfileDialog extends JDialog {
 		JPanel panel = new JPanel(new GridBagLayout());
 		panel.setBorder(BorderFactory.createTitledBorder("Directive Syntax"));
 		int row = 0;
-		addLabeledField(panel, row++, ".BYTE:", byteSyntaxField, "Separator:", byteSeparatorField);
+		addLabeledField(panel, row++, DataTypes.Profile_DirectiveBYTE, byteSyntaxField, DataTypes.Profile_DirectiveBYTESeparator, byteSeparatorField);
 		addFullWidth(panel, row++, numOnlyInByteCheckBox);
 		addLabeledField(panel, row++, wordAllowedCheckBox, wordSyntaxField);
 		addLabeledField(panel, row++, sByteAllowedCheckBox, sByteSyntaxField);
-		addLabeledField(panel, row++, ".ORG:", orgSyntaxField, "Low Byte (ADDR):", lowHeadSyntaxField, lowTailSyntaxField);
-		addLabeledField(panel, row++, "EQU:", equSyntaxField, "High Byte (ADDR):", highHeadSyntaxField, highTailSyntaxField);
-		addLabeledField(panel, row++, ".END:", endSyntaxField, endFilenameCheckBox, endTailField);
+		addLabeledField(panel, row++, DataTypes.Profile_DirectiveORG, orgSyntaxField, DataTypes.Profile_DirectiveLOWHead, lowHeadSyntaxField, lowTailSyntaxField);
+		addLabeledField(panel, row++, DataTypes.Profile_DirectiveEQU, equSyntaxField, DataTypes.Profile_DirectiveHIGHHead, highHeadSyntaxField, highTailSyntaxField);
+		addLabeledField(panel, row++, DataTypes.Profile_DirectiveENDHead, endSyntaxField, endFilenameCheckBox, endTailField);
 		addLabeledField(panel, row++, dsAllowedCheckBox, dsSyntaxField);
 		return panel;
 	}
@@ -253,14 +254,14 @@ public final class ProfileDialog extends JDialog {
 		JPanel panel = new JPanel(new GridBagLayout());
 		panel.setBorder(BorderFactory.createTitledBorder("Disassembly Listing"));
 		int row = 0;
-		addLabeledField(panel, row++, "Encoding:", outputEncodingComboBox);
+		addLabeledField(panel, row++, DataTypes.Profile_OutputEncoding, outputEncodingComboBox);
 		addFullWidth(panel, row++, removeUnusedLabelsCheckBox);
 		addFullWidth(panel, row++, includeAllowedCheckBox);
-		addLabeledField(panel, row++, ".INCLUDE:", includeHeadField, "FILENAME:", includeTailField);
+		addLabeledField(panel, row++, DataTypes.Profile_DirectiveINCLUDEHead, includeHeadField, DataTypes.Profile_DirectiveINCLUDETail, includeTailField);
 		addFullWidth(panel, row++, radioIncludeOneFile);
 		addFullWidth(panel, row++, radioIncludeAllFiles);
 		addFullWidth(panel, row++, radioIncludeNextFile);
-		addLabeledField(panel, row++, "Maximum Number of Lines per Include File:", maxIncludeLinesField);
+		addLabeledField(panel, row++, DataTypes.Profile_DirectiveINCLUDEMaximumNumberOfLinesPerFile, maxIncludeLinesField);
 		return panel;
 	}
 
@@ -273,6 +274,20 @@ public final class ProfileDialog extends JDialog {
 		return c;
 	}
 
+	/** Builds a self-labeled checkbox (text plus mnemonic) from a {@link DataType}, see {@link DataTypes}. */
+	private static JCheckBox checkBox(DataType dataType) {
+		JCheckBox checkBox = new JCheckBox();
+		ElementUtilities.applyLabel(checkBox, dataType);
+		return checkBox;
+	}
+
+	/** Builds a self-labeled radio button (text plus mnemonic) from a {@link DataType}, see {@link DataTypes}. */
+	private static JRadioButton radioButton(DataType dataType) {
+		JRadioButton radioButton = new JRadioButton();
+		ElementUtilities.applyLabel(radioButton, dataType);
+		return radioButton;
+	}
+
 	private static void addFullWidth(JPanel panel, int row, JComponent component) {
 		GridBagConstraints c = gbc(0, row);
 		c.gridwidth = 4;
@@ -280,9 +295,9 @@ public final class ProfileDialog extends JDialog {
 		panel.add(component, c);
 	}
 
-	private static void addLabeledField(JPanel panel, int row, String label, JComponent field) {
+	private static void addLabeledField(JPanel panel, int row, DataType dataType, JComponent field) {
 		GridBagConstraints lc = gbc(0, row);
-		panel.add(new JLabel(label), lc);
+		panel.add(ElementFactory.createLabel(dataType, field), lc);
 		GridBagConstraints fc = gbc(1, row);
 		fc.gridwidth = 3;
 		fc.fill = GridBagConstraints.HORIZONTAL;
@@ -301,31 +316,31 @@ public final class ProfileDialog extends JDialog {
 		panel.add(field, fc);
 	}
 
-	private static void addLabeledField(JPanel panel, int row, String label1, JComponent field1, String label2, JComponent field2) {
+	private static void addLabeledField(JPanel panel, int row, DataType dataType1, JComponent field1, DataType dataType2, JComponent field2) {
 		GridBagConstraints l1 = gbc(0, row);
-		panel.add(new JLabel(label1), l1);
+		panel.add(ElementFactory.createLabel(dataType1, field1), l1);
 		GridBagConstraints f1 = gbc(1, row);
 		f1.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(field1, f1);
 		GridBagConstraints l2 = gbc(2, row);
-		panel.add(new JLabel(label2), l2);
+		panel.add(ElementFactory.createLabel(dataType2, field2), l2);
 		GridBagConstraints f2 = gbc(3, row);
 		f2.fill = GridBagConstraints.HORIZONTAL;
 		f2.weightx = 1;
 		panel.add(field2, f2);
 	}
 
-	private static void addLabeledField(JPanel panel, int row, String label1, JComponent field1, String label2, JComponent field2,
+	private static void addLabeledField(JPanel panel, int row, DataType dataType1, JComponent field1, DataType dataType2, JComponent field2,
 			JComponent field3) {
-		addLabeledField(panel, row, label1, field1, label2, field2);
+		addLabeledField(panel, row, dataType1, field1, dataType2, field2);
 		GridBagConstraints f3 = gbc(4, row);
 		f3.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(field3, f3);
 	}
 
-	private static void addLabeledField(JPanel panel, int row, String label1, JComponent field1, JComponent checkBox2, JComponent field2) {
+	private static void addLabeledField(JPanel panel, int row, DataType dataType1, JComponent field1, JComponent checkBox2, JComponent field2) {
 		GridBagConstraints l1 = gbc(0, row);
-		panel.add(new JLabel(label1), l1);
+		panel.add(ElementFactory.createLabel(dataType1, field1), l1);
 		GridBagConstraints f1 = gbc(1, row);
 		f1.fill = GridBagConstraints.HORIZONTAL;
 		panel.add(field1, f1);

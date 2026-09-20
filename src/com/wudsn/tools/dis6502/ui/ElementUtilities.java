@@ -9,9 +9,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.KeyStroke;
+
+import com.wudsn.tools.base.repository.DataType;
 
 /**
  * Small Swing helpers shared by more than one of this project's own dialogs.
@@ -49,5 +52,35 @@ public final class ElementUtilities {
 				closeAction.run();
 			}
 		});
+	}
+
+	/**
+	 * Applies a {@link DataType}'s label text and mnemonic directly to a
+	 * self-labeled button ({@code JCheckBox}/{@code JRadioButton}), mirroring
+	 * {@code com.wudsn.tools.base.gui.ElementFactory#createLabel(DataType,
+	 * JComponent)}'s '&amp;'-mnemonic handling but without a separate {@code
+	 * JLabel}, since these buttons carry their own text instead of being
+	 * paired with one.
+	 */
+	public static void applyLabel(AbstractButton button, DataType dataType) {
+		String text = dataType.getLabel();
+		int index = text.indexOf('&');
+		if (index == -1) {
+			throw new RuntimeException("No '&' contained in label text '" + text + "'.");
+		}
+		char c = text.charAt(index + 1);
+		c = Character.toUpperCase(c);
+		if (c < KeyEvent.VK_A || c > KeyEvent.VK_Z) {
+			throw new RuntimeException(
+					"Mnemonic character '" + c + "' contained in label text '" + text + "' is not between 'A' and 'Z'.");
+		}
+		button.setText(dataType.getLabelWithoutMnemonics());
+		button.setMnemonic(c);
+		button.setDisplayedMnemonicIndex(index);
+
+		String toolTip = dataType.getToolTip();
+		if (toolTip != null && !toolTip.isEmpty()) {
+			button.setToolTipText(toolTip);
+		}
 	}
 }
