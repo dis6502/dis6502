@@ -29,6 +29,8 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import com.wudsn.tools.base.Actions;
+import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.model.DiskImage;
 import com.wudsn.tools.dis6502.model.ImgInfo;
 import com.wudsn.tools.dis6502.model.ImgRWPacket;
@@ -83,7 +85,7 @@ public final class DiskImageSectorsDialog extends JDialog {
 	private final JTextField addressField = new JTextField(6);
 	private final JButton addSectorButton = new JButton("Add Sector");
 	private final JButton removeSectorButton = new JButton("Remove Sector");
-	private final JButton okButton = new JButton("OK");
+	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 	private final DefaultListModel<Item> itemsListModel = new DefaultListModel<>();
 	private final JList<Item> itemsList = new JList<>(itemsListModel);
 
@@ -138,7 +140,7 @@ public final class DiskImageSectorsDialog extends JDialog {
 			confirmed = true;
 			setVisible(false);
 		});
-		JButton cancelButton = new JButton("Cancel");
+		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
 		cancelButton.addActionListener(e -> {
 			confirmed = false;
 			setVisible(false);

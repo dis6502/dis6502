@@ -20,6 +20,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import com.wudsn.tools.base.Actions;
+import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.model.Equate;
 import com.wudsn.tools.dis6502.model.EquateList;
 import com.wudsn.tools.dis6502.model.WorkspaceProperty;
@@ -107,13 +109,13 @@ public final class EquateDialog extends JDialog {
 		deleteButton.setEnabled(false);
 		deleteButton.addActionListener(e -> performDelete());
 
-		JButton okButton = new JButton("OK");
+		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 		okButton.addActionListener(e -> {
 			performAdd();
 			confirmed = true;
 			setVisible(false);
 		});
-		JButton cancelButton = new JButton("Cancel");
+		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
 		cancelButton.addActionListener(e -> {
 			confirmed = false;
 			setVisible(false);

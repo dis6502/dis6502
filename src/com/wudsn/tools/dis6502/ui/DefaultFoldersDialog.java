@@ -20,7 +20,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.common.TextUtility;
+import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.Text;
 import com.wudsn.tools.dis6502.model.DefaultFolders;
 import com.wudsn.tools.dis6502.model.FolderType;
@@ -85,12 +87,12 @@ public final class DefaultFoldersDialog extends JDialog {
 			row++;
 		}
 
-		JButton okButton = new JButton("OK");
+		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 		okButton.addActionListener(e -> {
 			confirmed = true;
 			setVisible(false);
 		});
-		JButton cancelButton = new JButton("Cancel");
+		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
 		cancelButton.addActionListener(e -> {
 			confirmed = false;
 			setVisible(false);

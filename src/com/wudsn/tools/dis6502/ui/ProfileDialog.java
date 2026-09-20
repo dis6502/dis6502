@@ -28,6 +28,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.wudsn.tools.base.Actions;
+import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.model.ComputerSystemTypeInfo;
 import com.wudsn.tools.dis6502.model.Encoding;
 import com.wudsn.tools.dis6502.model.Profile;
@@ -178,12 +180,12 @@ public final class ProfileDialog extends JDialog {
 		loadButton.addActionListener(e -> performLoadProfile());
 		JButton saveButton = new JButton("Save Profile...");
 		saveButton.addActionListener(e -> performSaveProfile());
-		JButton okButton = new JButton("OK");
+		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 		okButton.addActionListener(e -> {
 			confirmed = true;
 			setVisible(false);
 		});
-		JButton cancelButton = new JButton("Cancel");
+		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
 		cancelButton.addActionListener(e -> {
 			confirmed = false;
 			setVisible(false);

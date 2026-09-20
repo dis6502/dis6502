@@ -20,6 +20,8 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 
+import com.wudsn.tools.base.Actions;
+import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.ComputerSystemTypeInfo;
@@ -73,9 +75,9 @@ public final class WorkspaceDialog extends JDialog {
 		c.weightx = 1;
 		formPanel.add(computerSystemComboBox, c);
 
-		JButton okButton = new JButton("OK");
+		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = new JButton("Cancel");
+		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
 		cancelButton.addActionListener(e -> {
 			confirmed = false;
 			setVisible(false);

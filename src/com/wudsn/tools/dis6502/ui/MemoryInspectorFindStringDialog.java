@@ -23,6 +23,9 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import com.wudsn.tools.base.Actions;
+import com.wudsn.tools.base.gui.ElementFactory;
+
 /**
  * A dialog for searching the memory inspector for a byte sequence, typed
  * as either ASCII text or hexadecimal bytes - the two fields stay in sync
@@ -52,7 +55,7 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 	private final JTextField hexField = new JTextField(20);
 	private final JRadioButton allSegmentsRadioButton = new JRadioButton("All Segments");
 	private final JRadioButton selectedSegmentRadioButton = new JRadioButton("Selected Segment");
-	private final JButton okButton = new JButton("OK");
+	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 
 	private MemoryInspectorPanel memoryInspectorPanel;
 	private boolean updatingFields;
@@ -140,7 +143,7 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 		formPanel.add(scopePanel, c);
 
 		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = new JButton("Cancel");
+		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
 		cancelButton.addActionListener(e -> {
 			confirmed = false;
 			setVisible(false);

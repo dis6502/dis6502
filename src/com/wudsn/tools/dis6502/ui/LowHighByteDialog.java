@@ -19,6 +19,8 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import com.wudsn.tools.base.Actions;
+import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.model.MemoryType;
 
 /**
@@ -41,7 +43,7 @@ public final class LowHighByteDialog extends JDialog {
 	private final JTextField knownByteField = new JTextField(4);
 	private final JLabel unknownByteLabel = new JLabel();
 	private final JTextField unknownByteField = new JTextField(4);
-	private final JButton okButton = new JButton("OK");
+	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 
 	private int unknownByte;
 	private boolean confirmed;
@@ -91,7 +93,7 @@ public final class LowHighByteDialog extends JDialog {
 		formPanel.add(unknownByteField, c);
 
 		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = new JButton("Cancel");
+		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
 		cancelButton.addActionListener(e -> {
 			confirmed = false;
 			setVisible(false);

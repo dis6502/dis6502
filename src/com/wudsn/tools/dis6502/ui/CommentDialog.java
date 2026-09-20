@@ -14,6 +14,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import com.wudsn.tools.base.Actions;
+import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.model.SegmentList;
 
 /**
@@ -57,9 +59,9 @@ public final class CommentDialog extends JDialog {
 		commentArea.setLineWrap(true);
 		commentArea.setWrapStyleWord(true);
 
-		JButton okButton = new JButton("OK");
+		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = new JButton("Cancel");
+		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
 		cancelButton.addActionListener(e -> {
 			confirmed = false;
 			setVisible(false);

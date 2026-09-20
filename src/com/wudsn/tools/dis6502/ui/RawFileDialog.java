@@ -26,6 +26,9 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import com.wudsn.tools.base.Actions;
+import com.wudsn.tools.base.gui.ElementFactory;
+
 /**
  * A dialog for adding a raw (headerless) file to the workspace as a single
  * segment: the whole file, or a chosen byte range of it, loaded at a chosen
@@ -57,7 +60,7 @@ public final class RawFileDialog extends JDialog {
 	private final JTextField startOffsetField = new JTextField(8);
 	private final JTextField endOffsetField = new JTextField(8);
 	private final JTextField addressField = new JTextField(6);
-	private final JButton okButton = new JButton("OK");
+	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 
 	private byte[] fileBuffer = new byte[0];
 	private int resultBegin;
@@ -95,7 +98,7 @@ public final class RawFileDialog extends JDialog {
 
 		okButton.setEnabled(false);
 		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = new JButton("Cancel");
+		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
 		cancelButton.addActionListener(e -> {
 			confirmed = false;
 			setVisible(false);

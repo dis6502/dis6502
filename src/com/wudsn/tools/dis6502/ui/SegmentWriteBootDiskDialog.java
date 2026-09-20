@@ -24,6 +24,8 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import com.wudsn.tools.base.Actions;
+import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.model.AtariDOS;
 import com.wudsn.tools.dis6502.model.AtariDisk;
 import com.wudsn.tools.dis6502.model.AtariError;
@@ -62,7 +64,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 
 	private final JTextField loadAddressField = new JTextField(4);
 	private final JTextField initAddressField = new JTextField(4);
-	private final JButton okButton = new JButton("OK");
+	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 
 	private Segment segment;
 
@@ -92,7 +94,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 		panel.add(initAddressField, c);
 
 		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = new JButton("Cancel");
+		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
 		cancelButton.addActionListener(e -> setVisible(false));
 
 		JPanel buttonPanel = new JPanel();

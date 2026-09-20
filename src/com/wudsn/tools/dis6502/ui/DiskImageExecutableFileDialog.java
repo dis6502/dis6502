@@ -21,6 +21,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
+import com.wudsn.tools.base.Actions;
+import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.model.AtariDisk;
 import com.wudsn.tools.dis6502.model.AtariError;
 import com.wudsn.tools.dis6502.model.AtariFile;
@@ -55,7 +57,7 @@ public final class DiskImageExecutableFileDialog extends JDialog {
 	private final DefaultListModel<Entry> listModel = new DefaultListModel<>();
 	private final JList<Entry> filesList = new JList<>(listModel);
 	private final JLabel fileNameLabel = new JLabel(" ");
-	private final JButton okButton = new JButton("OK");
+	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 
 	private String executableFileName = "";
 	private boolean confirmed;
@@ -86,7 +88,7 @@ public final class DiskImageExecutableFileDialog extends JDialog {
 
 		okButton.setEnabled(false);
 		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = new JButton("Cancel");
+		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
 		cancelButton.addActionListener(e -> {
 			confirmed = false;
 			setVisible(false);

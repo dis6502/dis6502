@@ -19,6 +19,8 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
+import com.wudsn.tools.base.Actions;
+import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
 
@@ -92,7 +94,7 @@ public final class DisassemblyProgressDialog extends JDialog {
 		c.anchor = GridBagConstraints.WEST;
 		content.add(segmentLabel, c);
 
-		JButton cancelButton = new JButton("Cancel");
+		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
 		cancelButton.addActionListener(e -> cancelled.set(true));
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.add(cancelButton);

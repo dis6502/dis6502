@@ -20,6 +20,8 @@ import javax.swing.JScrollBar;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
+import com.wudsn.tools.base.Actions;
+import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState;
 import com.wudsn.tools.dis6502.model.Segment;
 
@@ -113,9 +115,9 @@ public final class SelectGraphicsDialog extends JDialog {
 		c.gridx = 1;
 		southPanel.add(addressLabel, c);
 
-		JButton okButton = new JButton("OK");
+		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = new JButton("Cancel");
+		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
 		cancelButton.addActionListener(e -> {
 			confirmed = false;
 			setVisible(false);
