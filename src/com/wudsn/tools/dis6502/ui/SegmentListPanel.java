@@ -6,24 +6,18 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
 import javax.swing.BorderFactory;
-import javax.swing.JComponent;
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellRenderer;
 
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.Actions;
@@ -34,15 +28,23 @@ import com.wudsn.tools.dis6502.model.WorkspaceChangedListener;
 import com.wudsn.tools.dis6502.model.WorkspaceProperty;
 
 /**
- * A table of the current workspace's segments.
+ * A list of the current workspace's segments.
  * <p>
  * Ported from ui/SegmentListWindow.h / SegmentListWindow.cpp and the
  * selection handling part of ui/MainSegment.cpp - {@link #refresh} from
  * {@code MainSegment::UpdateList}, {@link #selected} from {@code
- * MainSegment::Selected} - simplified to a plain {@link JTable} for this
+ * MainSegment::Selected} - simplified to a plain {@link JList} for this
  * first pass; the {@code updating} guard replicates {@code
  * MainSegment::updateCounter}'s reentrancy protection between the two
- * directions of selection sync.
+ * directions of selection sync. Each row's text is {@link
+ * Segment#toString()}, a faithful port of {@code Segment::ToString}, the
+ * exact same single-string-per-segment format {@code
+ * MainSegment::UpdateList}'s own {@code segmentListWindow->AddSegment(
+ * segment->ToString())} call builds the real Win32 {@code ListBox} from -
+ * an earlier version of this class instead showed a {@link javax.swing.JTable}
+ * with separate Title/Header/Begin/End/Size/Binary columns, which has no
+ * C++ counterpart at all ({@code Segment::ToString} has no title in it
+ * either - segment titles are shown nowhere in the C++ segment list).
  * <p>
  * One deliberate departure from the C++ source: {@code
  * SegmentListWindow.cpp} creates a plain single-selection Win32 {@code
@@ -51,7 +53,7 @@ import com.wudsn.tools.dis6502.model.WorkspaceProperty;
  * SegmentList::DeleteSelectedSegment}/{@link
  * com.wudsn.tools.dis6502.model.SegmentList#deleteSelectedSegment} only
  * ever removes that one segment - there is no multi-segment delete in the
- * original at all. This port's {@link #table} uses {@link
+ * original at all. This port's {@link #list} uses {@link
  * ListSelectionModel#MULTIPLE_INTERVAL_SELECTION} instead, letting {@link
  * #deleteMenuItem} remove every selected segment in one step via {@link
  * #getSelectedSegmentIndices}/{@link
@@ -83,19 +85,20 @@ import com.wudsn.tools.dis6502.model.WorkspaceProperty;
  * blanket {@code SetFont(partLayout->GetLayout()->GetFont())} call, which
  * every part window gets, not just the memory inspector/disassembly
  * listing - {@code SegmentListWindow} is a plain native {@code ListBox}, so
- * in C++ this happens automatically via {@code WM_SETFONT}. This table only
- * ever shows already-formatted metadata text (titles, hex addresses), not
- * raw byte values, so it needs none of {@link ComputerFont}'s byte-indexed
- * glyph lookup - but it still cannot just be {@code table.setFont(...)} plus
- * JTable's default cell renderer: on real screen output (unlike the
- * offscreen renders used to develop this font support), Windows applies its
- * own ClearType/subpixel text antialiasing to ordinary Swing text painting,
- * which blurs this small pixel-art font into illegible dots. Every other
- * {@code ComputerFont}-driven panel avoids this because {@link
+ * in C++ this happens automatically via {@code WM_SETFONT}. This list only
+ * ever shows already-formatted metadata text, not raw byte values, so it
+ * needs none of {@link ComputerFont}'s byte-indexed glyph lookup - but it
+ * still cannot just be {@code list.setFont(...)} plus {@link JList}'s
+ * default renderer: on real screen output (unlike the offscreen renders
+ * used to develop this font support), Windows applies its own ClearType/
+ * subpixel text antialiasing to ordinary Swing text painting, which blurs
+ * this small pixel-art font into illegible dots. Every other {@code
+ * ComputerFont}-driven panel avoids this because {@link
  * ComputerFont#drawText} explicitly disables antialiasing before drawing;
- * {@link ComputerFontTableCellRenderer} gives this table the same explicit
- * control by painting cell text through {@code drawText} itself instead of
- * relying on the default renderer's {@code g.drawString}.
+ * {@link ComputerFontListCellRenderer} (shared with {@link XRefPanel})
+ * gives this list the same explicit control by painting cell text through
+ * {@code drawText} itself instead of relying on the default renderer's
+ * {@code g.drawString}.
  *
  * @author Peter Dell
  */
@@ -113,17 +116,17 @@ public final class SegmentListPanel extends JPanel {
 	public final JMenuItem propertiesMenuItem = ElementFactory.createMenuItem(Actions.SegmentListPopupMenu_Properties, "propertiesMenuItem");
 
 	private final JPopupMenu popupMenu = new JPopupMenu();
-	private final Model model = new Model();
-	private final JTable table = new JTable(model);
-	private final ComputerFontTableCellRenderer cellRenderer = new ComputerFontTableCellRenderer();
+	private final DefaultListModel<Segment> listModel = new DefaultListModel<>();
+	private final JList<Segment> list = new JList<>(listModel);
+	private final ComputerFontListCellRenderer<Segment> cellRenderer = new ComputerFontListCellRenderer<>();
 	private Workspace workspace;
 	private boolean updating;
 
 	public SegmentListPanel() {
 		super(new BorderLayout());
-		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		table.setDefaultRenderer(Object.class, cellRenderer);
-		table.getSelectionModel().addListSelectionListener(e -> {
+		list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		list.setCellRenderer(cellRenderer);
+		list.addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting() && !updating) {
 				selected();
 			}
@@ -140,7 +143,7 @@ public final class SegmentListPanel extends JPanel {
 		popupMenu.add(saveAllMenuItem);
 		popupMenu.addSeparator();
 		popupMenu.add(propertiesMenuItem);
-		table.addMouseListener(new MouseAdapter() {
+		list.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				maybeShowPopup(e);
@@ -152,7 +155,7 @@ public final class SegmentListPanel extends JPanel {
 			}
 		});
 
-		JScrollPane scrollPane = new JScrollPane(table);
+		JScrollPane scrollPane = new JScrollPane(list);
 		// Splitters already separate the part windows - the scroll pane's own
 		// L&F-default border would just draw a redundant line right next to them.
 		scrollPane.setBorder(BorderFactory.createEmptyBorder());
@@ -161,8 +164,7 @@ public final class SegmentListPanel extends JPanel {
 
 	/** Ported from PartWindow::ApplyLayout's SetFont(partLayout->GetLayout()->GetFont()) - call whenever the workspace's computer system or double-height setting changes. */
 	public void setComputerFont(ComputerFont computerFont) {
-		table.setFont(computerFont.getAwtFont());
-		table.setRowHeight(computerFont.getGlyphHeight() + 2);
+		list.setFont(computerFont.getAwtFont());
 		cellRenderer.setComputerFont(computerFont);
 	}
 
@@ -172,7 +174,7 @@ public final class SegmentListPanel extends JPanel {
 			return;
 		}
 		updatePopupMenuState();
-		popupMenu.show(table, e.getX(), e.getY());
+		popupMenu.show(list, e.getX(), e.getY());
 	}
 
 	/**
@@ -187,12 +189,13 @@ public final class SegmentListPanel extends JPanel {
 	private void updatePopupMenuState() {
 		int segmentCount = workspace.getSegmentList().getCount();
 		int selectedIndex = workspace.getSegmentList().getSelectedIndex();
-		boolean singleSelected = table.getSelectedRowCount() == 1;
+		int selectedCount = list.getSelectedIndices().length;
+		boolean singleSelected = selectedCount == 1;
 
 		moveUpMenuItem.setEnabled(singleSelected && selectedIndex > 0);
 		moveDownMenuItem.setEnabled(singleSelected && selectedIndex < segmentCount - 1);
 		mergeMenuItem.setEnabled(segmentCount > 1);
-		deleteMenuItem.setEnabled(table.getSelectedRowCount() > 0);
+		deleteMenuItem.setEnabled(selectedCount > 0);
 		saveNoHeaderMenuItem.setEnabled(singleSelected);
 		saveHeaderMenuItem.setEnabled(singleSelected);
 		saveAllMenuItem.setEnabled(segmentCount > 0);
@@ -210,7 +213,7 @@ public final class SegmentListPanel extends JPanel {
 				// same (smallest-row) value in selected() below, which
 				// unconditionally re-notifies SELECTED_SEGMENT - without
 				// this guard, that self-inflicted notification would reach
-				// refresh() and collapse the table's real, just-made
+				// refresh() and collapse the list's real, just-made
 				// multi-row selection back down to one row before the user
 				// even sees it.
 				if (!updating
@@ -226,12 +229,18 @@ public final class SegmentListPanel extends JPanel {
 	public void refresh() {
 		updating = true;
 		try {
-			model.fireTableDataChanged();
+			listModel.clear();
+			if (workspace != null) {
+				SegmentList segmentList = workspace.getSegmentList();
+				for (int i = 0; i < segmentList.getCount(); i++) {
+					listModel.addElement(segmentList.getSegment(i));
+				}
+			}
 			int selectedIndex = workspace == null ? SegmentList.NO_SEGMENT_INDEX : workspace.getSegmentList().getSelectedIndex();
 			if (selectedIndex < 0) {
-				table.clearSelection();
+				list.clearSelection();
 			} else {
-				table.setRowSelectionInterval(selectedIndex, selectedIndex);
+				list.setSelectedIndex(selectedIndex);
 			}
 		} finally {
 			updating = false;
@@ -240,8 +249,8 @@ public final class SegmentListPanel extends JPanel {
 
 	/**
 	 * Ported from MainSegment::Selected - {@code
-	 * table.getSelectedRow()} (the smallest selected row, by {@link
-	 * JTable}'s own contract) still drives {@link Workspace#getSegmentList()}'s
+	 * list.getSelectedIndex()} (the smallest selected index, by {@link
+	 * JList}'s own contract) still drives {@link Workspace#getSegmentList()}'s
 	 * single {@code selectedIndex} with multi-selection enabled, so the
 	 * memory inspector/Properties/Save Segment/Move Up/Down - every
 	 * inherently single-segment concept in this port - keep tracking one
@@ -251,8 +260,8 @@ public final class SegmentListPanel extends JPanel {
 	private void selected() {
 		updating = true;
 		try {
-			int rowIndex = table.getSelectedRow();
-			int segmentIndex = rowIndex < 0 ? SegmentList.NO_SEGMENT_INDEX : rowIndex;
+			int index = list.getSelectedIndex();
+			int segmentIndex = index < 0 ? SegmentList.NO_SEGMENT_INDEX : index;
 			workspace.getSegmentList().setSelectedIndex(segmentIndex);
 		} finally {
 			updating = false;
@@ -266,94 +275,6 @@ public final class SegmentListPanel extends JPanel {
 	 * SegmentList#deleteSegments}.
 	 */
 	public int[] getSelectedSegmentIndices() {
-		return table.getSelectedRows();
-	}
-
-	private final class Model extends AbstractTableModel {
-
-		private static final long serialVersionUID = 1L;
-
-		private final String[] columnNames = { "Title", "Header", "Begin", "End", "Size", "Binary" };
-
-		@Override
-		public int getRowCount() {
-			return workspace == null ? 0 : workspace.getSegmentList().getCount();
-		}
-
-		@Override
-		public int getColumnCount() {
-			return columnNames.length;
-		}
-
-		@Override
-		public String getColumnName(int column) {
-			return columnNames[column];
-		}
-
-		@Override
-		public Object getValueAt(int rowIndex, int columnIndex) {
-			Segment segment = workspace.getSegmentList().getSegment(rowIndex);
-			switch (columnIndex) {
-			case 0:
-				return segment.title;
-			case 1:
-				return segment.getHeader();
-			case 2:
-				return String.format("$%04X", segment.wBegin);
-			case 3:
-				return String.format("$%04X", segment.wEnd);
-			case 4:
-				return segment.getSize();
-			case 5:
-				return segment.bBinary;
-			default:
-				return "";
-			}
-		}
-	}
-
-	/**
-	 * Paints cell text via {@link ComputerFont#drawText} instead of {@code
-	 * JLabel}'s own {@code g.drawString}, so the same explicit
-	 * antialiasing-off control every other {@code ComputerFont}-driven panel
-	 * relies on also applies here - see the class comment for why plain
-	 * {@code table.setFont(...)} is not enough on real screen output.
-	 */
-	private static final class ComputerFontTableCellRenderer extends JComponent implements TableCellRenderer {
-
-		private static final long serialVersionUID = 1L;
-
-		private ComputerFont computerFont;
-		private String text = "";
-		private Color foreground = Color.BLACK;
-		private Color background = Color.WHITE;
-
-		ComputerFontTableCellRenderer() {
-			setOpaque(true);
-		}
-
-		void setComputerFont(ComputerFont computerFont) {
-			this.computerFont = computerFont;
-		}
-
-		@Override
-		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-			text = value == null ? "" : String.valueOf(value);
-			background = isSelected ? table.getSelectionBackground() : table.getBackground();
-			foreground = isSelected ? table.getSelectionForeground() : table.getForeground();
-			return this;
-		}
-
-		@Override
-		protected void paintComponent(Graphics g) {
-			g.setColor(background);
-			g.fillRect(0, 0, getWidth(), getHeight());
-			if (computerFont != null) {
-				computerFont.drawText((Graphics2D) g, text, foreground, 2, 1);
-			} else {
-				g.setColor(foreground);
-				g.drawString(text, 2, g.getFontMetrics().getAscent() + 1);
-			}
-		}
+		return list.getSelectedIndices();
 	}
 }
