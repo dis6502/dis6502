@@ -265,16 +265,29 @@ accelerator migrations (`plans/ACTIONS_ELEMENT_FACTORY_MIGRATION.md`,
 literal `JButton("OK")`-style stragglers, no direct `setAccelerator` calls
 bypassing the `InputMap`/`ActionMap` pattern.
 
+**Opcode/addressing-mode table parity check - completed 2026-09-21, no gap
+found.** `InstructionSetMOS6502.java` and `InstructionSetMOS65C02.java` were
+diffed entry-by-entry (all 512 opcode rows combined) against C++'s
+`InstructionSet.cpp`: mnemonic, `illegal` flag, `LabelAccess`, and
+`OperandMode` all match exactly for every opcode in both tables. The
+supporting `Instruction` class (`getLength()`/`isImmediateMode()`/
+`isUnsupportedInstruction()`) also matches C++'s `Instruction::GetLength()`
+etc. one-for-one, including a shared quirk: `GetLength()`'s `switch` never
+gained cases for 65C02-only `OperandMode`s (`ZeroPageIndirect`,
+`ZeroPageRelative`, `IndexedIndirectAbsolute`, `ReservedNop1Byte`/`2Byte`/
+`3Byte`), falling through to its `default: return 1` for all of them in
+*both* languages - but this is harmless in both, since actual instruction
+length for those modes is computed by dedicated `OperandMode` switches
+directly in `Disassembly.cpp`/`Disassembly.java` (confirmed present for all
+six modes in both files), never through `Instruction::GetLength()`/
+`getLength()`. Not a gap - `InstructionSet`'s own `GetLength()` is simply
+unused for these modes in both codebases.
+
 ## Explicitly unverified - needs a follow-up pass
 
 These were not checked deeply enough to classify as either "fine" or "a
 gap" - flag them for a dedicated follow-up rather than assuming either way:
 
-- **Opcode/addressing-mode table parity** between C++'s `InstructionSet.cpp`
-  and Java's `InstructionSetMOS6502.java`/`InstructionSetMOS65C02.java` -
-  only confirmed the classes exist and are split sensibly; the actual opcode
-  tables were not diffed entry-by-entry. Given this is the disassembler's
-  core correctness surface, this is probably the highest-value follow-up.
 - **`Workspace1X`/`Profile1X`** (legacy-format loaders) - classes exist with
   plausible content, but not every legacy field/quirk C++ handles was
   verified as preserved.
@@ -330,9 +343,8 @@ doesn't support, without a separate decision to add a genuinely new feature:
    2026-09-21**, see above.
 2. ~~**Gap #2** (`EquateList` swallowed parse errors)~~ - **fixed
    2026-09-21**, see above.
-3. **Opcode table parity check** (unverified item above) - core correctness
-   surface; worth a dedicated diff pass even though no discrepancy is known
-   yet.
+3. ~~**Opcode table parity check**~~ - **completed 2026-09-21, no gap
+   found**, see above.
 4. **Gap #6** (`DiskImageSectorsDialog` drag-select) - needs the reusable
    generic hex-grid control extracted first; larger effort.
 5. **Gap #3** (Memory Inspector Delete/Cut/Paste Selection) - explicitly
