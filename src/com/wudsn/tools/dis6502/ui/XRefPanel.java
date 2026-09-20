@@ -50,7 +50,10 @@ public final class XRefPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
-	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("No label selected");
+	// Flat empty base border instead of createTitledBorder(String)'s L&F-default
+	// one, which paints a bevel/etched box around the whole panel on this
+	// project's native (Windows) look and feel - not wanted, just the title text.
+	private final TitledBorder titledBorder = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(), "No label selected");
 	private final DefaultListModel<Entry> listModel = new DefaultListModel<>();
 	private final JList<Entry> list = new JList<>(listModel);
 	private final ComputerFontListCellRenderer cellRenderer = new ComputerFontListCellRenderer();

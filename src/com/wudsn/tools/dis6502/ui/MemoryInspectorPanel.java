@@ -228,7 +228,10 @@ public final class MemoryInspectorPanel extends JPanel {
 			Actions.MemoryInspectorPopupMenu_ChangeType_Sbyte, Actions.MemoryInspectorPopupMenu_ChangeType_Dlist,
 			Actions.MemoryInspectorPopupMenu_ChangeType_Store, Actions.MemoryInspectorPopupMenu_ChangeType_Unknown };
 
-	private final TitledBorder titledBorder = BorderFactory.createTitledBorder("No segment selected.");
+	// Flat empty base border instead of createTitledBorder(String)'s L&F-default
+	// one, which paints a bevel/etched box around the whole panel on this
+	// project's native (Windows) look and feel - not wanted, just the title text.
+	private final TitledBorder titledBorder = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(), "No segment selected.");
 	private final MemoryInspectorGridPanel grid = new MemoryInspectorGridPanel();
 
 	/**
