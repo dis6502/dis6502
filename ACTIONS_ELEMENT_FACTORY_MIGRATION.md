@@ -1,4 +1,14 @@
-# Adopting WUDSN Base's Action / Actions / ElementFactory Pattern - Phase 1: Main Menu
+# Adopting WUDSN Base's Action / Actions / ElementFactory Pattern
+
+**Status: main menu and all three popup menus (`SegmentListPanel`,
+`DisassemblyPanel`, `MemoryInspectorPanel`) are done** - see each panel's
+own class javadoc and `com.wudsn.tools.dis6502.Actions`' javadoc for the
+concrete result, including how the popup migration diverged from the plan
+below in two ways (accelerators, mnemonics for items with none in the C++
+source) - both decided explicitly, not silently. What follows is this
+effort's original, main-menu-only plan, left as-is for the historical
+rationale/pattern explanation; the "Out of scope" section at the end has
+been updated to reflect what is now actually done vs. still open.
 
 ## Purpose and scope
 
@@ -303,18 +313,27 @@ debugging without implying a dispatch mechanism that isn't actually used.
   a sign the field contract was broken, not that `Dis6502.java` needed
   "updating" to match.
 
-## Out of scope (later phases, not this document)
+## Out of scope
 
-- The three popup menus (`MemoryInspectorPanel`, `DisassemblyPanel`,
-  `SegmentListPanel`) - larger, and some of their items have
-  dynamically-formatted labels (e.g. `"Navigate to Definition of Label
-  {0}"`), which `Action`/`ElementFactory` don't handle directly (the `{0}`
-  would need `TextUtility.format` applied to the label text *after*
-  `ElementFactory` builds the item, before `setText`, or a small local
-  helper - needs its own design pass).
+- ~~The three popup menus~~ **Done.** `SegmentListPanel`/`DisassemblyPanel`/
+  `MemoryInspectorPanel` all build their popup items from `Actions`/
+  `ElementFactory` too. The dynamically-formatted labels (e.g.
+  `"Navigate to Definition of Label {0}"`) turned out to need a small
+  local helper after all (`DisassemblyPanel.setDynamicLabel`): those seven
+  items stay as plain `JMenuItem`s (no fixed label to give
+  `ElementFactory.createMenuItem` at construction time), and the helper
+  applies `TextUtility.format` to the `Action`'s `"{0}"`-templated label,
+  then wraps the result in a temporary `Action` to reuse
+  `ElementFactory.setButtonTextAndMnemonic` for the mnemonic. Two
+  decisions were made explicitly along the way (see `Actions`' own class
+  javadoc for the full reasoning): popup items keep today's accelerators
+  only (no new ones wired for the many C++ `\tAccelerator` hints that were
+  never live in this port), and items with no `&` in the C++ source were
+  given a newly-chosen mnemonic anyway (unlike the main menu, where every
+  mnemonic added already existed in `dis6502.rc`).
 - Any toolbar (icons - `Action`/`ElementFactory` have no icon support at
-  all, as noted above).
+  all, as noted above) - still open, no toolbar exists in this port yet.
 - Dialogs (`ButtonBar_OK`/`ButtonBar_Cancel`/etc. from the shared
   `com.wudsn.tools.base.Actions` are ready to reuse there, matching
   `SimpleDialog`/`StandardDialog`/`ModalDialog`'s own existing usage in
-  `com.wudsn.tools.base.gui`).
+  `com.wudsn.tools.base.gui`) - still open.
