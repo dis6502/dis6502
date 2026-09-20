@@ -35,11 +35,10 @@ import com.wudsn.tools.dis6502.model.GuessCodeLogic;
 import com.wudsn.tools.dis6502.model.MemoryInspectorEditCharResult;
 import com.wudsn.tools.dis6502.model.MemoryInspectorEditCursorMovement;
 import com.wudsn.tools.dis6502.model.MemoryInspectorEditPane;
-import com.wudsn.tools.dis6502.model.MemoryInspectorSelection;
+import com.wudsn.tools.dis6502.model.MemoryInspectorState;
 import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentList;
-import com.wudsn.tools.dis6502.model.Workspace;
 
 /**
  * A read-only hex/ASCII dump of the currently selected segment, with a
@@ -174,20 +173,20 @@ import com.wudsn.tools.dis6502.model.Workspace;
  * popup that replaces the normal one - {@code MainMemoryInspector::
  * PerformCommands}'s modal gate on every other command while editing). Unlike
  * the C++ source, the actual cursor state and navigation/writing logic - not
- * just the on/off flag - live on {@link
- * com.wudsn.tools.dis6502.model.Workspace} ({@link
- * Workspace#moveMemoryInspectorEditCursor}/{@link
- * Workspace#typeMemoryInspectorEditChar}, applying {@code Char}'s {@link
+ * just the on/off flag - live on {@link #memoryInspectorState} ({@link
+ * MemoryInspectorState#moveEditCursor}/{@link
+ * MemoryInspectorState#typeEditChar}, applying {@code Char}'s {@link
  * MemoryType#SBYTE} ASCII transform via {@link
  * MemoryType#toSbyteInternalCode}), not here or in {@link
  * MemoryInspectorGridPanel} - a deliberate departure from the C++ design (see
- * {@code Workspace}'s own javadoc) so that logic can be exercised by a plain,
- * headless unit test. This class keeps only the Swing-specific glue: {@link
- * #handleEditKeyPressed}/{@link #handleEditKeyTyped} translate a raw {@link
- * java.awt.event.KeyEvent} into a semantic call on {@code Workspace}, then
- * mirror the result into {@link MemoryInspectorGridPanel} for painting (it
- * does not own this state either); this class also owns focus/mouse
- * handling, the popup-menu swap, and the blink timer. Two confirmed C++
+ * {@link MemoryInspectorState}'s own javadoc) so that logic can be exercised
+ * by a plain, headless unit test. This class keeps only the Swing-specific
+ * glue: {@link #handleEditKeyPressed}/{@link #handleEditKeyTyped} translate
+ * a raw {@link java.awt.event.KeyEvent} into a semantic call on {@link
+ * #memoryInspectorState}, then mirror the result into {@link
+ * MemoryInspectorGridPanel} for painting (it does not own this state
+ * either); this class also owns focus/mouse handling, the popup-menu swap,
+ * and the blink timer. Two confirmed C++
  * quirks are deliberately fixed here rather than replicated: typing past the
  * end of the buffer bypasses {@code MainController::QuitEditMode} in C++, so
  * its disassembly refresh is skipped on that one exit path only (see the
@@ -199,7 +198,7 @@ import com.wudsn.tools.dis6502.model.Workspace;
  * offset instead. A third quirk is deliberately NOT replicated: {@code
  * Char}'s printable-ASCII gate excludes {@code '~'}, {@code '{'}, {@code
  * '}'} for no evident reason (it looks like an unintentional leftover, not
- * designed behavior) - {@link Workspace#typeMemoryInspectorEditChar} accepts
+ * designed behavior) - {@link MemoryInspectorState#typeEditChar} accepts
  * the full printable range instead.
  *
  * @author Peter Dell
@@ -296,7 +295,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	private SelectionChangedListener selectionChangedListener;
 	private EditModeExitedListener editModeExitedListener;
 
-	private MemoryInspectorSelection memoryInspectorSelection;
+	private MemoryInspectorState memoryInspectorState;
 	private int selectionAnchorOffset = -1;
 
 	private Timer blinkTimer;
@@ -553,7 +552,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * by MainMemoryInspector to show MemoryInspectorPopupMenu.
 	 */
 	private void maybeShowPopup(MouseEvent e) {
-		if (!e.isPopupTrigger() || memoryInspectorSelection == null || !memoryInspectorSelection.hasSegment()) {
+		if (!e.isPopupTrigger() || memoryInspectorState == null || !memoryInspectorState.hasSegment()) {
 			return;
 		}
 		if (isEditMode()) {
@@ -571,12 +570,12 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * {@link #updatePopupMenuItemsState}.
 	 */
 	private void syncPopupMenuState() {
-		boolean hasSelection = memoryInspectorSelection != null && memoryInspectorSelection.hasSelection();
+		boolean hasSelection = memoryInspectorState != null && memoryInspectorState.hasSelection();
 		boolean[] present = new boolean[TYPE_SUBMENU_ORDER.length];
 		if (hasSelection) {
-			Segment segment = memoryInspectorSelection.getSegment();
-			int begin = memoryInspectorSelection.getBegin();
-			int end = memoryInspectorSelection.getEnd();
+			Segment segment = memoryInspectorState.getSegment();
+			int begin = memoryInspectorState.getBegin();
+			int end = memoryInspectorState.getEnd();
 			for (int offset = begin; offset <= end; offset++) {
 				MemoryType type = segment.getType(offset);
 				if (type == MemoryType.UNKNOWN) {
@@ -600,7 +599,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		for (int i = 0; i < TYPE_SUBMENU_ORDER.length; i++) {
 			boolean enabled = hasSelection;
 			if (enabled && (TYPE_SUBMENU_ORDER[i] == MemoryType.LOBYTE || TYPE_SUBMENU_ORDER[i] == MemoryType.HIBYTE)) {
-				enabled = memoryInspectorSelection.getBegin() > 0;
+				enabled = memoryInspectorState.getBegin() > 0;
 			}
 			typeMenuItems[i].setEnabled(enabled);
 			typeMenuItems[i].setState(present[i]);
@@ -658,15 +657,15 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * {@link #updateTitle}'s own C++ source, which only special-cases a null
 	 * segment, not this narrower {@code hasData} condition.
 	 */
-	public void segmentChanged(MemoryInspectorSelection memoryInspectorSelection) {
+	public void segmentChanged(MemoryInspectorState memoryInspectorState) {
 		quitEditMode(); // Ported from MainSegment::Selected/MainXRef's and Main::ClearWorkspace's QuitEditMode() calls.
-		this.memoryInspectorSelection = memoryInspectorSelection;
-		Segment segment = memoryInspectorSelection.getSegment();
+		this.memoryInspectorState = memoryInspectorState;
+		Segment segment = memoryInspectorState.getSegment();
 		boolean hasData = segment != null && !segment.isHeader(FileHeader.SDX_SYM_DEFINED)
 				&& !segment.isSDXRelocBlkWithoutData();
 
 		grid.setSegment(hasData ? segment : null);
-		memoryInspectorSelection.clearSelection();
+		memoryInspectorState.clearSelection();
 		updateTitle();
 		updatePopupMenuItemsState();
 		revalidate();
@@ -687,23 +686,23 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * {@link #clearSelection}).
 	 */
 	private void updateTitle() {
-		Segment segment = memoryInspectorSelection == null ? null : memoryInspectorSelection.getSegment();
+		Segment segment = memoryInspectorState == null ? null : memoryInspectorState.getSegment();
 		if (segment == null) {
 			titledBorder.setTitle("No segment selected.");
 			return;
 		}
 
-		int segmentNumber = memoryInspectorSelection.getSegmentIndex() + 1;
+		int segmentNumber = memoryInspectorState.getSegmentIndex() + 1;
 		String prefix;
 		int begin;
 		int end;
 		int size;
 		String title;
-		if (memoryInspectorSelection.hasSelection()) {
+		if (memoryInspectorState.hasSelection()) {
 			prefix = "Selection";
-			begin = segment.wBegin + memoryInspectorSelection.getBegin();
-			end = segment.wBegin + memoryInspectorSelection.getEnd();
-			size = memoryInspectorSelection.getSize();
+			begin = segment.wBegin + memoryInspectorState.getBegin();
+			end = segment.wBegin + memoryInspectorState.getEnd();
+			size = memoryInspectorState.getSize();
 			title = String.format("%s: $%04X-$%04X:$%04X / %d", prefix, begin, end, size, size);
 		} else {
 			prefix = "Segment";
@@ -727,12 +726,12 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	/** Ported from MemoryInspector::Select. */
 	public void select(int begin, int end) {
-		if (memoryInspectorSelection == null || memoryInspectorSelection.getSegment() == null
-				|| memoryInspectorSelection.getSegment().isEmpty()) {
+		if (memoryInspectorState == null || memoryInspectorState.getSegment() == null
+				|| memoryInspectorState.getSegment().isEmpty()) {
 			return;
 		}
-		memoryInspectorSelection.setSelection(begin, end);
-		highlightRange(memoryInspectorSelection.getBegin(), memoryInspectorSelection.getEnd());
+		memoryInspectorState.setSelection(begin, end);
+		highlightRange(memoryInspectorState.getBegin(), memoryInspectorState.getEnd());
 		updateTitle();
 		updatePopupMenuItemsState();
 		// highlightRange only repaints the grid, a child component - the
@@ -743,8 +742,8 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	/** Ported from MemoryInspector::ClearSelection. */
 	public void clearSelection() {
-		if (memoryInspectorSelection != null) {
-			memoryInspectorSelection.clearSelection();
+		if (memoryInspectorState != null) {
+			memoryInspectorState.clearSelection();
 		}
 		clearHighlight();
 		updateTitle();
@@ -756,16 +755,16 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * Ported from MemoryInspector::SelectAll: selects the whole segment.
 	 * {@code end} is passed as the segment's size (one past the last valid offset),
 	 * matching the C++ version -
-	 * {@link #select}/{@link MemoryInspectorSelection#setSelection} clamp it back
+	 * {@link #select}/{@link MemoryInspectorState#setSelection} clamp it back
 	 * down to the last valid offset, the same way the C++ version's own
-	 * {@code Select}/ {@code MemoryInspectorSelection::SetSelection} do.
+	 * {@code Select}/ {@code MemoryInspectorState::SetSelection} do.
 	 */
 	public void selectAll() {
-		if (memoryInspectorSelection == null || memoryInspectorSelection.getSegment() == null
-				|| memoryInspectorSelection.getSegment().isEmpty()) {
+		if (memoryInspectorState == null || memoryInspectorState.getSegment() == null
+				|| memoryInspectorState.getSegment().isEmpty()) {
 			return;
 		}
-		select(0, memoryInspectorSelection.getSegment().getSize());
+		select(0, memoryInspectorState.getSegment().getSize());
 	}
 
 	/**
@@ -777,23 +776,23 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * selected) once the segment list is exhausted.
 	 */
 	public void selectNextUnknownBlock() {
-		if (memoryInspectorSelection == null || memoryInspectorSelection.getSegment() == null
-				|| memoryInspectorSelection.getSegment().isEmpty() || !memoryInspectorSelection.getSegment().bBinary) {
+		if (memoryInspectorState == null || memoryInspectorState.getSegment() == null
+				|| memoryInspectorState.getSegment().isEmpty() || !memoryInspectorState.getSegment().bBinary) {
 			return;
 		}
 
-		int last = memoryInspectorSelection.hasSelection() ? memoryInspectorSelection.getBegin() + 1 : 0;
+		int last = memoryInspectorState.hasSelection() ? memoryInspectorState.getBegin() + 1 : 0;
 
-		SegmentList segmentList = memoryInspectorSelection.getWorkspace().getSegmentList();
+		SegmentList segmentList = memoryInspectorState.getWorkspace().getSegmentList();
 		int count = segmentList.getCount();
-		for (int segmentIndex = memoryInspectorSelection.getSegmentIndex(); segmentIndex < count; segmentIndex++) {
+		for (int segmentIndex = memoryInspectorState.getSegmentIndex(); segmentIndex < count; segmentIndex++) {
 			Segment segment = segmentList.getSegment(segmentIndex);
 			int end = segment.wEnd - segment.wBegin;
 
 			for (int offset = last; offset <= end; offset++) {
 				if (segment.isUnknown(offset)) {
-					if (memoryInspectorSelection.getSegmentIndex() != segmentIndex) {
-						memoryInspectorSelection.setSegmentIndex(segmentIndex);
+					if (memoryInspectorState.getSegmentIndex() != segmentIndex) {
+						memoryInspectorState.setSegmentIndex(segmentIndex);
 						segmentList.setSelectedIndex(segmentIndex);
 					}
 
@@ -825,15 +824,15 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * itself - see {@link DisassemblyPanel}.
 	 */
 	public void setType(MemoryType type) {
-		if (memoryInspectorSelection == null || !memoryInspectorSelection.hasSelection()) {
+		if (memoryInspectorState == null || !memoryInspectorState.hasSelection()) {
 			return;
 		}
-		Segment segment = memoryInspectorSelection.getSegment();
+		Segment segment = memoryInspectorState.getSegment();
 		if (!segment.bBinary) {
 			return;
 		}
-		int begin = memoryInspectorSelection.getBegin();
-		int size = memoryInspectorSelection.getSize();
+		int begin = memoryInspectorState.getBegin();
+		int size = memoryInspectorState.getSize();
 
 		if (begin > 0) {
 			if (segment.isType(begin - 1, MemoryType.LOBYTE) || segment.isType(begin - 1, MemoryType.HIBYTE)) {
@@ -857,15 +856,15 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * afterward.
 	 */
 	public void setUnknownBlockToByte() {
-		if (memoryInspectorSelection == null || !memoryInspectorSelection.hasSelection()) {
+		if (memoryInspectorState == null || !memoryInspectorState.hasSelection()) {
 			return;
 		}
-		Segment segment = memoryInspectorSelection.getSegment();
+		Segment segment = memoryInspectorState.getSegment();
 		if (!segment.bBinary) {
 			return;
 		}
-		int begin = memoryInspectorSelection.getBegin();
-		int size = memoryInspectorSelection.getSize();
+		int begin = memoryInspectorState.getBegin();
+		int size = memoryInspectorState.getSize();
 
 		for (int offset = begin; offset < begin + size; offset++) {
 			if (segment.isType(offset, MemoryType.UNKNOWN)
@@ -883,21 +882,21 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * for re-running the disassembly afterward.
 	 */
 	public void guess() {
-		if (memoryInspectorSelection == null || !memoryInspectorSelection.hasSelection()) {
+		if (memoryInspectorState == null || !memoryInspectorState.hasSelection()) {
 			return;
 		}
-		new GuessCodeLogic(memoryInspectorSelection.getWorkspace()).guess(memoryInspectorSelection.getSegment(),
-				memoryInspectorSelection.getBegin());
+		new GuessCodeLogic(memoryInspectorState.getWorkspace()).guess(memoryInspectorState.getSegment(),
+				memoryInspectorState.getBegin());
 	}
 
 	/**
-	 * Delegates to {@link Workspace#isMemoryInspectorEditMode()} - {@code false}
-	 * if there is no {@link #memoryInspectorSelection} yet (e.g. before the
+	 * Delegates to {@link MemoryInspectorState#isEditMode()} - {@code false}
+	 * if there is no {@link #memoryInspectorState} yet (e.g. before the
 	 * first {@link #segmentChanged}), since edit mode can only ever have been
 	 * entered once one exists.
 	 */
 	public boolean isEditMode() {
-		return memoryInspectorSelection != null && memoryInspectorSelection.getWorkspace().isMemoryInspectorEditMode();
+		return memoryInspectorState != null && memoryInspectorState.isEditMode();
 	}
 
 	/**
@@ -929,20 +928,19 @@ public final class MemoryInspectorPanel extends JPanel {
 	/**
 	 * This method decides WHERE to start editing (a fresh selection's first
 	 * byte, or an exact double-clicked position); {@link
-	 * Workspace#enterMemoryInspectorEditMode} then owns whether that is
-	 * actually allowed (a selected segment must exist and the offset must be
-	 * in range for it) and the resulting lock state itself.
+	 * MemoryInspectorState#enterEditMode} then owns whether that is actually
+	 * allowed (a selected segment must exist and the offset must be in range
+	 * for it) and the resulting lock state itself.
 	 */
 	private void enterEditModeAt(int offsetHint, MemoryInspectorEditPane paneHint) {
-		if (memoryInspectorSelection == null || !memoryInspectorSelection.hasSelection()) {
+		if (memoryInspectorState == null || !memoryInspectorState.hasSelection()) {
 			return;
 		}
-		int begin = memoryInspectorSelection.getBegin();
+		int begin = memoryInspectorState.getBegin();
 		select(begin, begin);
-		Workspace workspace = memoryInspectorSelection.getWorkspace();
 		int offset = offsetHint >= 0 ? offsetHint : begin;
 		MemoryInspectorEditPane pane = offsetHint >= 0 ? paneHint : MemoryInspectorEditPane.HEX_HIGH;
-		if (!workspace.enterMemoryInspectorEditMode(offset, pane)) {
+		if (!memoryInspectorState.enterEditMode(offset, pane)) {
 			return;
 		}
 		syncEditModeToGrid();
@@ -958,19 +956,18 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * typing past the end of the buffer, or the segment changing), so the
 	 * selection-resync below and {@link #editModeExitedListener} both fire
 	 * uniformly on every exit - see this class's javadoc for the two C++ exit
-	 * quirks this fixes. {@link Workspace#quitMemoryInspectorEditMode()} only
+	 * quirks this fixes. {@link MemoryInspectorState#quitEditMode()} only
 	 * releases the model-level lock; the UI-facing consequences (the
 	 * selection resync, the grid/blink-timer state, notifying {@link
 	 * #editModeExitedListener}) stay this method's job, not that one's.
 	 */
 	public void quitEditMode() {
-		if (memoryInspectorSelection == null) {
+		if (memoryInspectorState == null) {
 			return; // Edit mode can only ever have been entered once a segment/selection exists.
 		}
-		Workspace workspace = memoryInspectorSelection.getWorkspace();
-		boolean wasEditing = workspace.isMemoryInspectorEditMode();
-		int offset = workspace.getMemoryInspectorEditCursorOffset();
-		workspace.quitMemoryInspectorEditMode();
+		boolean wasEditing = memoryInspectorState.isEditMode();
+		int offset = memoryInspectorState.getEditCursorOffset();
+		memoryInspectorState.quitEditMode();
 		grid.setEditMode(false);
 		stopBlinkTimer();
 		if (wasEditing) {
@@ -983,11 +980,10 @@ public final class MemoryInspectorPanel extends JPanel {
 		}
 	}
 
-	/** Mirrors {@link Workspace}'s edit-mode state into {@link #grid} so it can paint the cursor - the grid itself does not own this state. */
+	/** Mirrors {@link MemoryInspectorState}'s edit-mode state into {@link #grid} so it can paint the cursor - the grid itself does not own this state. */
 	private void syncEditModeToGrid() {
-		Workspace workspace = memoryInspectorSelection.getWorkspace();
-		grid.setEditMode(workspace.isMemoryInspectorEditMode());
-		grid.setEditCursor(workspace.getMemoryInspectorEditCursorOffset(), workspace.getMemoryInspectorEditCursorPane());
+		grid.setEditMode(memoryInspectorState.isEditMode());
+		grid.setEditCursor(memoryInspectorState.getEditCursorOffset(), memoryInspectorState.getEditCursorPane());
 	}
 
 	private void startBlinkTimer() {
@@ -1006,7 +1002,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	/**
 	 * Translates a raw arrow/Home/End {@link KeyEvent} into a {@link
 	 * MemoryInspectorEditCursorMovement} and hands the actual navigation math
-	 * to {@link Workspace#moveMemoryInspectorEditCursor} - ported from {@code
+	 * to {@link MemoryInspectorState#moveEditCursor} - ported from {@code
 	 * MemoryInspectorControlImpl::KeyDown}'s edit-mode branch, now split so
 	 * that math is headlessly unit-testable, free of any Swing dependency.
 	 */
@@ -1018,7 +1014,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		if (movement == null) {
 			return;
 		}
-		memoryInspectorSelection.getWorkspace().moveMemoryInspectorEditCursor(movement);
+		memoryInspectorState.moveEditCursor(movement);
 		syncEditModeToGrid();
 		e.consume();
 	}
@@ -1044,7 +1040,7 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	/**
 	 * Hands the typed character straight to {@link
-	 * Workspace#typeMemoryInspectorEditChar} - ported from {@code
+	 * MemoryInspectorState#typeEditChar} - ported from {@code
 	 * MemoryInspectorControlImpl::Char}: hex-digit/ASCII data entry, plus Tab
 	 * to switch panes, now split so that logic is headlessly unit-testable,
 	 * free of any Swing dependency. Deliberately does not call {@link
@@ -1055,7 +1051,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		if (!isEditMode()) {
 			return;
 		}
-		MemoryInspectorEditCharResult result = memoryInspectorSelection.getWorkspace().typeMemoryInspectorEditChar(e.getKeyChar());
+		MemoryInspectorEditCharResult result = memoryInspectorState.typeEditChar(e.getKeyChar());
 		if (result == MemoryInspectorEditCharResult.NOT_HANDLED) {
 			return;
 		}
@@ -1078,13 +1074,13 @@ public final class MemoryInspectorPanel extends JPanel {
 		findMenuItem.setEnabled(canFind(true));
 		findNextMenuItem.setEnabled(canFind(false));
 
-		boolean hasSegment = memoryInspectorSelection != null && memoryInspectorSelection.hasSegment()
-				&& !memoryInspectorSelection.getSegment().isEmpty();
+		boolean hasSegment = memoryInspectorState != null && memoryInspectorState.hasSegment()
+				&& !memoryInspectorState.getSegment().isEmpty();
 		selectAllMenuItem.setEnabled(hasSegment);
 		selectNextUnknownBlockMenuItem.setEnabled(hasSegment);
 		selectSpritesMenuItem.setEnabled(hasSegment);
 
-		boolean hasSelection = memoryInspectorSelection != null && memoryInspectorSelection.hasSelection();
+		boolean hasSelection = memoryInspectorState != null && memoryInspectorState.hasSelection();
 		saveSelectionNoHeaderMenuItem.setEnabled(hasSelection);
 		saveSelectionHeaderMenuItem.setEnabled(hasSelection);
 		setUnknownBlockToByteMenuItem.setEnabled(hasSelection);
@@ -1092,11 +1088,11 @@ public final class MemoryInspectorPanel extends JPanel {
 		editCommentMenuItem.setEnabled(hasSelection);
 		editMenuItem.setEnabled(hasSelection);
 		assembleMenuItem.setEnabled(hasSelection);
-		startCodeTraceMenuItem.setEnabled(hasSelection && memoryInspectorSelection.getSegment()
-				.isType(memoryInspectorSelection.getBegin(), MemoryType.UNKNOWN));
+		startCodeTraceMenuItem.setEnabled(hasSelection && memoryInspectorState.getSegment()
+				.isType(memoryInspectorState.getBegin(), MemoryType.UNKNOWN));
 		splitAtSelectionMenuItem.setEnabled(hasSelection
-				&& memoryInspectorSelection.getWorkspace().getSegmentList().getCount() < SegmentList.MAX_SEGMENTS
-				&& memoryInspectorSelection.getSegment().canSplitAt(memoryInspectorSelection.getBegin()));
+				&& memoryInspectorState.getWorkspace().getSegmentList().getCount() < SegmentList.MAX_SEGMENTS
+				&& memoryInspectorState.getSegment().canSplitAt(memoryInspectorState.getBegin()));
 	}
 
 	private void highlightRange(int begin, int end) {
@@ -1122,7 +1118,7 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	/** Ported from MemoryInspector::CanFind. */
 	public boolean canFind(boolean first) {
-		if (memoryInspectorSelection == null || memoryInspectorSelection.getSegment() == null) {
+		if (memoryInspectorState == null || memoryInspectorState.getSegment() == null) {
 			return false;
 		}
 		if (!first && findSize == 0) {
@@ -1133,7 +1129,7 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	/** Ported from MemoryInspector::FindString. */
 	public boolean findString(String findAscii, boolean allSegments) {
-		findSegmentIndex = allSegments ? 0 : memoryInspectorSelection.getSegmentIndex();
+		findSegmentIndex = allSegments ? 0 : memoryInspectorState.getSegmentIndex();
 		findText = findAscii;
 		findOffset = 0;
 		findSize = findAscii.length();
@@ -1150,7 +1146,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	 */
 	public boolean findNextString() {
 		if (findSegmentIndex != SegmentList.NO_SEGMENT_INDEX) {
-			SegmentList segmentList = memoryInspectorSelection.getWorkspace().getSegmentList();
+			SegmentList segmentList = memoryInspectorState.getWorkspace().getSegmentList();
 			int count = segmentList.getCount();
 			for (int segmentIndex = findSegmentIndex; segmentIndex < count; segmentIndex++) {
 				Segment segment = segmentList.getSegment(segmentIndex);
@@ -1183,8 +1179,8 @@ public final class MemoryInspectorPanel extends JPanel {
 				findSegmentIndex = segmentIndex;
 				findOffset = offset + 1;
 
-				if (findSegmentIndex != memoryInspectorSelection.getSegmentIndex()) {
-					memoryInspectorSelection.getWorkspace().getSegmentList().setSelectedIndex(findSegmentIndex);
+				if (findSegmentIndex != memoryInspectorState.getSegmentIndex()) {
+					memoryInspectorState.getWorkspace().getSegmentList().setSelectedIndex(findSegmentIndex);
 				}
 				select(begin, end);
 				return true;

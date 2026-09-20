@@ -47,7 +47,7 @@ import com.wudsn.tools.dis6502.model.ImgInfo;
 import com.wudsn.tools.dis6502.model.ImgRWPacket;
 import com.wudsn.tools.dis6502.model.InstructionSet;
 import com.wudsn.tools.dis6502.model.MRUEntry;
-import com.wudsn.tools.dis6502.model.MemoryInspectorSelection;
+import com.wudsn.tools.dis6502.model.MemoryInspectorState;
 import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.OperandMode;
 import com.wudsn.tools.dis6502.model.ProfileLogic;
@@ -176,7 +176,7 @@ public final class Dis6502 {
 	private MainWindow mainWindow;
 	private MRUController mruController;
 	private DefaultFolders defaultFolders;
-	private MemoryInspectorSelection memoryInspectorSelection;
+	private MemoryInspectorState memoryInspectorState;
 	private File currentFile;
 	private File lastEquateFile;
 	private final int[] findFirstLineNumber = { 0 };
@@ -233,7 +233,7 @@ public final class Dis6502 {
 		workspace.setComputerSystemTypeID("ATARI800");
 		mruController = new MRUController(application);
 		mruController.load();
-		memoryInspectorSelection = new MemoryInspectorSelection(workspace);
+		memoryInspectorState = workspace.getMemoryInspectorState(); // Workspace owns this instance directly now, not a satellite object constructed here.
 
 		mainWindow = new MainWindow();
 		application.setLogPanel(mainWindow.logPanel);
@@ -360,8 +360,8 @@ public final class Dis6502 {
 
 	/** Ported from MemoryInspector::SegmentChanged's trigger (Main::HandleWorkspaceChanged's SEGMENTS/SELECTED_SEGMENT handling). */
 	private void updateMemoryInspectorSegment() {
-		memoryInspectorSelection.setSegmentIndex(workspace.getSegmentList().getSelectedIndex());
-		mainWindow.memoryInspectorPanel.segmentChanged(memoryInspectorSelection);
+		memoryInspectorState.setSegmentIndex(workspace.getSegmentList().getSelectedIndex());
+		mainWindow.memoryInspectorPanel.segmentChanged(memoryInspectorState);
 	}
 
 	/**
@@ -1011,10 +1011,10 @@ public final class Dis6502 {
 	 * start.
 	 */
 	private void performSplitAtSelection() {
-		if (memoryInspectorSelection.isEmpty()) {
+		if (memoryInspectorState.isEmpty()) {
 			return;
 		}
-		workspace.getSegmentList().splitSelectedSegment(memoryInspectorSelection.getBegin());
+		workspace.getSegmentList().splitSelectedSegment(memoryInspectorState.getBegin());
 	}
 
 	/**
@@ -1032,12 +1032,12 @@ public final class Dis6502 {
 		}
 		try (FileOutputStream outputStream = new FileOutputStream(fileChooser.getSelectedFile())) {
 			if (withHeader) {
-				int[] addressRange = memoryInspectorSelection.getAddressRange();
+				int[] addressRange = memoryInspectorState.getAddressRange();
 				writeWordLE(outputStream, FileHeader.ATARI_BINARY.getValue());
 				writeWordLE(outputStream, addressRange[0]);
 				writeWordLE(outputStream, addressRange[1]);
 			}
-			outputStream.write(memoryInspectorSelection.getByteSequence());
+			outputStream.write(memoryInspectorState.getByteSequence());
 		} catch (IOException ex) {
 			application.sendErrorMessage(ex);
 		}
@@ -1080,12 +1080,12 @@ public final class Dis6502 {
 	 * MemoryType} constant).
 	 */
 	private void performSetMemoryInspectorLoHiType(MemoryType type) {
-		if (memoryInspectorSelection.isEmpty()) {
+		if (memoryInspectorState.isEmpty()) {
 			return;
 		}
-		Segment segment = memoryInspectorSelection.getSegment();
-		int begin = memoryInspectorSelection.getBegin();
-		int size = memoryInspectorSelection.getSize();
+		Segment segment = memoryInspectorState.getSegment();
+		int begin = memoryInspectorState.getBegin();
+		int size = memoryInspectorState.getSize();
 
 		if (begin == 0) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(), Text.IDS_ERR_LOHI_FIRST, "Set Type", JOptionPane.ERROR_MESSAGE);
@@ -1132,11 +1132,11 @@ public final class Dis6502 {
 	 * through {@link UIApplication}.
 	 */
 	private void performCopyMemoryInspectorSelection() {
-		if (memoryInspectorSelection.isEmpty()) {
+		if (memoryInspectorState.isEmpty()) {
 			return;
 		}
 		StringBuilder hex = new StringBuilder();
-		for (byte value : memoryInspectorSelection.getByteSequence()) {
+		for (byte value : memoryInspectorState.getByteSequence()) {
 			hex.append(String.format("%02X", value & 0xFF));
 		}
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(hex.toString()), null);
@@ -1151,12 +1151,12 @@ public final class Dis6502 {
 	 * directly instead - see {@link #performEditDisassemblyComment}.
 	 */
 	private void performEditMemoryInspectorComment() {
-		if (memoryInspectorSelection.isEmpty()) {
+		if (memoryInspectorState.isEmpty()) {
 			return;
 		}
 		CommentDialog dialog = new CommentDialog(mainWindow.getFrame());
-		if (dialog.show(workspace.getSegmentList(), memoryInspectorSelection.getSegmentIndex(), memoryInspectorSelection.getBegin(),
-				memoryInspectorSelection.getSize())) {
+		if (dialog.show(workspace.getSegmentList(), memoryInspectorState.getSegmentIndex(), memoryInspectorState.getBegin(),
+				memoryInspectorState.getSize())) {
 			updateDisassembly(false);
 		}
 	}
@@ -1265,10 +1265,10 @@ public final class Dis6502 {
 	 * {@code AssembleDialog::Show}'s return value either.
 	 */
 	private void performShowAssembleDialog() {
-		if (memoryInspectorSelection.isEmpty()) {
+		if (memoryInspectorState.isEmpty()) {
 			return;
 		}
-		new AssembleDialog(mainWindow.getFrame()).show(workspace, memoryInspectorSelection.getSegment(), memoryInspectorSelection,
+		new AssembleDialog(mainWindow.getFrame()).show(workspace, memoryInspectorState.getSegment(), memoryInspectorState,
 				mainWindow.memoryInspectorPanel);
 		updateDisassembly(false);
 	}
@@ -1302,11 +1302,11 @@ public final class Dis6502 {
 	 * Select* action uses, so no {@link #updateDisassembly} call follows.
 	 */
 	private void performShowSelectSpritesDialog() {
-		if (!memoryInspectorSelection.hasSegment()) {
+		if (!memoryInspectorState.hasSegment()) {
 			return;
 		}
 		SelectSpritesDialog dialog = new SelectSpritesDialog(mainWindow.getFrame());
-		if (dialog.show(memoryInspectorSelection)) {
+		if (dialog.show(memoryInspectorState)) {
 			mainWindow.memoryInspectorPanel.select(dialog.getBegin(), dialog.getEnd());
 		}
 	}
@@ -1450,7 +1450,7 @@ public final class Dis6502 {
 	 * ({@code // TODO: This is Atari specific} in the original).
 	 */
 	private void performWriteBootDisk() {
-		Segment segment = memoryInspectorSelection.getSegment();
+		Segment segment = memoryInspectorState.getSegment();
 		if (segment == null) {
 			application.sendErrorMessage(Text.IDS_ERR_NO_SEGMENT);
 			return;
@@ -1637,16 +1637,16 @@ public final class Dis6502 {
 	 * single highlighted line, not a range (see that class's javadoc).
 	 */
 	private void performMemoryInspectorSelectionChanged() {
-		if (!memoryInspectorSelection.hasSelection()) {
+		if (!memoryInspectorState.hasSelection()) {
 			return;
 		}
 		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
 		if (disassemblyResult == null) {
 			return;
 		}
-		int segmentIndex = memoryInspectorSelection.getSegmentIndex();
+		int segmentIndex = memoryInspectorState.getSegmentIndex();
 		int lineNumber = 0;
-		for (int offset = memoryInspectorSelection.getBegin(); offset >= 0 && lineNumber == 0; offset--) {
+		for (int offset = memoryInspectorState.getBegin(); offset >= 0 && lineNumber == 0; offset--) {
 			lineNumber = disassemblyResult.selectLine(segmentIndex, offset);
 		}
 		if (lineNumber != 0) {

@@ -19,7 +19,7 @@ import javax.swing.JTextField;
 
 import com.wudsn.tools.dis6502.model.Assembler;
 import com.wudsn.tools.dis6502.model.Instruction;
-import com.wudsn.tools.dis6502.model.MemoryInspectorSelection;
+import com.wudsn.tools.dis6502.model.MemoryInspectorState;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.Workspace;
 
@@ -31,7 +31,7 @@ import com.wudsn.tools.dis6502.model.Workspace;
  * Ported from ui/AssembleDialog.h / AssembleDialog.cpp, folded into one
  * blocking {@link #show} call as is idiomatic for a Swing modal
  * {@link JDialog}, on top of the already-complete {@link Assembler#parseLine}.
- * {@link #performAssemble} re-reads {@code memoryInspectorSelection}'s
+ * {@link #performAssemble} re-reads {@code memoryInspectorState}'s
  * begin offset on every call (matching {@code
  * MemoryInspectorControl::GetNonEmptySelection} in {@code OnOK}), rather
  * than tracking its own copy, since a successful assemble advances that
@@ -62,7 +62,7 @@ public final class AssembleDialog extends JDialog {
 
 	private Workspace workspace;
 	private Segment segment;
-	private MemoryInspectorSelection memoryInspectorSelection;
+	private MemoryInspectorState memoryInspectorState;
 	private MemoryInspectorPanel memoryInspectorPanel;
 	private boolean assembledAny;
 
@@ -114,7 +114,7 @@ public final class AssembleDialog extends JDialog {
 
 	/** Ported from AssembleDialog::OnOK, minus the dialog-closing bug described in this class's javadoc. */
 	private void performAssemble() {
-		int beginOffset = memoryInspectorSelection.getBegin();
+		int beginOffset = memoryInspectorState.getBegin();
 		int address = segment.wBegin + beginOffset;
 
 		String line = instructionField.getText();
@@ -167,16 +167,16 @@ public final class AssembleDialog extends JDialog {
 	}
 
 	/** Ported from AssembleDialog::Show/InitDialog. Returns whether at least one instruction was actually assembled. */
-	public boolean show(Workspace workspace, Segment segment, MemoryInspectorSelection memoryInspectorSelection,
+	public boolean show(Workspace workspace, Segment segment, MemoryInspectorState memoryInspectorState,
 			MemoryInspectorPanel memoryInspectorPanel) {
 		this.workspace = workspace;
 		this.segment = segment;
-		this.memoryInspectorSelection = memoryInspectorSelection;
+		this.memoryInspectorState = memoryInspectorState;
 		this.memoryInspectorPanel = memoryInspectorPanel;
 
 		instructionField.setText("");
 		resultLabel.setText("Enter instruction, e.g. LDA #1");
-		addressLabel.setText(String.format("$%04X", (segment.wBegin + memoryInspectorSelection.getBegin()) & 0xFFFF));
+		addressLabel.setText(String.format("$%04X", (segment.wBegin + memoryInspectorState.getBegin()) & 0xFFFF));
 
 		assembledAny = false;
 		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.

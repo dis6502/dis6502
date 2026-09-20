@@ -20,7 +20,7 @@ import javax.swing.JScrollBar;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
-import com.wudsn.tools.dis6502.model.MemoryInspectorSelection;
+import com.wudsn.tools.dis6502.model.MemoryInspectorState;
 import com.wudsn.tools.dis6502.model.Segment;
 
 /**
@@ -162,15 +162,15 @@ public final class SelectSpritesDialog extends JDialog {
 	}
 
 	/** Ported from SelectSpritesDialog::Show/InitDialog/SelectGoto. */
-	public boolean show(MemoryInspectorSelection memoryInspectorSelection) {
-		segment = memoryInspectorSelection.getSegment();
+	public boolean show(MemoryInspectorState memoryInspectorState) {
+		segment = memoryInspectorState.getSegment();
 		spritePanel.setBuffer(segment.memoryBlock.getData());
 
 		int begin = 0;
 		int end = SpritePanel.NO_SELECTION;
-		if (memoryInspectorSelection.hasSelection()) {
-			begin = memoryInspectorSelection.getBegin();
-			end = memoryInspectorSelection.getEnd();
+		if (memoryInspectorState.hasSelection()) {
+			begin = memoryInspectorState.getBegin();
+			end = memoryInspectorState.getEnd();
 		}
 
 		indexScrollBar.setMinimum(0);

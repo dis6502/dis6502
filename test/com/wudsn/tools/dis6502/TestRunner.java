@@ -13,11 +13,11 @@ import com.wudsn.tools.dis6502.model.DisassemblyResultFileTest;
 import com.wudsn.tools.dis6502.model.DisassemblyResultTest;
 import com.wudsn.tools.dis6502.model.EquateListLogicTest;
 import com.wudsn.tools.dis6502.model.EquateTest;
+import com.wudsn.tools.dis6502.model.MemoryInspectorStateTest;
 import com.wudsn.tools.dis6502.model.MemoryInspectorTest;
 import com.wudsn.tools.dis6502.model.Profile1XTest;
 import com.wudsn.tools.dis6502.model.SegmentTest;
 import com.wudsn.tools.dis6502.model.Workspace;
-import com.wudsn.tools.dis6502.model.WorkspaceEditModeTest;
 
 /**
  * Runs the ported unit tests and reports a pass/fail summary.
@@ -35,7 +35,7 @@ import com.wudsn.tools.dis6502.model.WorkspaceEditModeTest;
  * MemoryInspectorTest}, and {@link AtariDiskImageTest} (the last two ported
  * from C++ test helpers with no independent entry point of their own - see
  * their own javadoc for how their concrete assertions were recovered from
- * {@code MainTest.cpp}), plus {@link WorkspaceEditModeTest} - a new
+ * {@code MainTest.cpp}), plus {@link MemoryInspectorStateTest} - a new
  * (not ported) test, since the in-place hex-editing it covers has no
  * concrete assertions to recover from any C++ test helper. {@code
  * CommonTest}/{@code FileIOTest}/{@code
@@ -86,7 +86,7 @@ public final class TestRunner {
 		runTest("EquateListLogicTest", EquateListLogicTest::testEquateListLogic);
 		runTest("MemoryInspectorTest", MemoryInspectorTest::testMemoryInspectorType);
 		runTest("AtariDiskImageTest", AtariDiskImageTest::testAtariDiskImage);
-		runTest("WorkspaceEditModeTest", WorkspaceEditModeTest::testWorkspaceEditMode);
+		runTest("MemoryInspectorStateTest", MemoryInspectorStateTest::testMemoryInspectorState);
 
 		if (failedCount == 0) {
 			log("INFO: All " + totalCount + " unit tests were successful.");
