@@ -7,6 +7,7 @@ package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -316,6 +317,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		grid.addMouseMotionListener(mouseHandler);
 
 		bindEditModeKeys();
+		bindPopupMenuAccelerators();
 		grid.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
@@ -352,6 +354,56 @@ public final class MemoryInspectorPanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				quitEditMode();
+			}
+		});
+	}
+
+	/**
+	 * Binds the remaining popup-menu accelerators from {@code dis6502.rc}'s
+	 * {@code ACCELERATORS} table (see POPUP_MENU_ACCELERATORS_PLAN.md) at the
+	 * window level, the same {@code WHEN_IN_FOCUSED_WINDOW} scope as
+	 * {@link #bindEditModeKeys}. Unlike that method, these bindings do not rely
+	 * on the item's own {@code Action}-provided accelerator (which {@code
+	 * ElementFactory.createMenuItem}/{@code createCheckBoxMenuItem} would
+	 * otherwise apply automatically) - an empirical smoke test written for that
+	 * plan's "Step 0" found a standalone {@code JPopupMenu}'s item accelerators
+	 * only fire while that specific popup instance is actually open on screen,
+	 * not window-wide as the C++ accelerator table requires, so
+	 * {@code Actions.java} deliberately leaves these items' accelerator fields
+	 * unset and every binding here calls {@code doClick()} on the
+	 * already-correctly-wired, already-visible item instead - the same
+	 * sanctioned exception to avoiding hidden {@code doClick()} indirection
+	 * {@link #bindEditModeKeys} documents, not a proxy to a hidden component.
+	 */
+	private void bindPopupMenuAccelerators() {
+		bindAccelerator(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK, startCodeTraceMenuItem);
+		bindAccelerator(KeyEvent.VK_F8, 0, assembleMenuItem);
+		bindAccelerator(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK, copySelectionMenuItem);
+		bindAccelerator(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK, findMenuItem);
+		bindAccelerator(KeyEvent.VK_F3, 0, findNextMenuItem);
+		bindAccelerator(KeyEvent.VK_F5, 0, selectNextUnknownBlockMenuItem);
+		bindAccelerator(KeyEvent.VK_F4, 0, selectSpritesMenuItem);
+		bindAccelerator(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK, selectAllMenuItem);
+
+		// Shift+<letter> for the Change Type submenu, in TYPE_SUBMENU_ORDER's order:
+		// Code, LowByte, HighByte, Byte, Word, Label, Symbol, Fixup, String, Sbyte,
+		// Dlist, Store, Unknown.
+		int[] typeKeyCodes = { KeyEvent.VK_C, KeyEvent.VK_O, KeyEvent.VK_I, KeyEvent.VK_B, KeyEvent.VK_W, KeyEvent.VK_L,
+				KeyEvent.VK_X, KeyEvent.VK_F, KeyEvent.VK_S, KeyEvent.VK_Y, KeyEvent.VK_D, KeyEvent.VK_A, KeyEvent.VK_U };
+		for (int i = 0; i < typeKeyCodes.length; i++) {
+			bindAccelerator(typeKeyCodes[i], InputEvent.SHIFT_DOWN_MASK, typeMenuItems[i]);
+		}
+	}
+
+	private int popupAcceleratorCounter;
+
+	private void bindAccelerator(int keyCode, int modifiers, JMenuItem item) {
+		String actionKey = "popupAccelerator" + popupAcceleratorCounter++;
+		grid.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(keyCode, modifiers), actionKey);
+		grid.getActionMap().put(actionKey, new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				item.doClick();
 			}
 		});
 	}

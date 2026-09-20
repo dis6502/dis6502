@@ -7,6 +7,7 @@ package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -219,6 +220,34 @@ public final class DisassemblyPanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				navigateToDefinitionOfSelectedLine();
+			}
+		});
+
+		// Ctrl+Shift+F/Shift+F3, from dis6502.rc's ACCELERATORS table (see
+		// POPUP_MENU_ACCELERATORS_PLAN.md), bound WHEN_IN_FOCUSED_WINDOW like
+		// MemoryInspectorPanel's own popup-menu accelerators - unlike Return
+		// above, these carry no risk of stealing a common key from an unrelated
+		// focused component, so no such narrowing is needed. Calling
+		// findButton/findNextButton.doClick() directly - not popupFindMenuItem/
+		// popupFindNextMenuItem.doClick() - sidesteps relying on those popup
+		// items' own liveness entirely: the same empirical finding documented in
+		// MemoryInspectorPanel.bindPopupMenuAccelerators applies here too (a
+		// standalone JPopupMenu's item accelerators only fire while that popup
+		// instance is open), and this panel's popup is rebuilt from scratch on
+		// every right-click besides.
+		grid.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK),
+				"find");
+		grid.getActionMap().put("find", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				findButton.doClick();
+			}
+		});
+		grid.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F3, InputEvent.SHIFT_DOWN_MASK), "findNext");
+		grid.getActionMap().put("findNext", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				findNextButton.doClick();
 			}
 		});
 	}

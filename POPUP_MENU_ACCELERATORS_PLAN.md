@@ -1,5 +1,21 @@
 # Plan: wire up the popup-menu accelerators left out of the Actions/ElementFactory migration
 
+**Status: implemented.** Step 0's empirical smoke test settled the open
+question: a standalone `JPopupMenu`'s item accelerators only fire while that
+specific popup instance is actually open on screen (confirmed for both
+`MemoryInspectorPanel`'s never-rebuilt popup and `DisassemblyPanel`'s
+rebuilt-per-click one) - useless for C++'s window-wide accelerator-table
+semantics. All items in this plan were wired the "Mechanism B" way:
+`Actions.java`'s accelerator fields are left unset, and each keystroke is
+bound via `InputMap`/`ActionMap` on `grid` (`WHEN_IN_FOCUSED_WINDOW`),
+calling `doClick()` on the already-correctly-wired, already-visible item -
+`MemoryInspectorPanel.bindPopupMenuAccelerators`/`DisassemblyPanel`'s
+constructor. Verified via a throwaway
+`PopupMenuAcceleratorWiringSmokeTest`/`AcceleratorLivenessSmokeTest` (never
+committed) covering: firing without the popup ever having opened, no
+double-fire on repeated presses, and Ctrl+C/Ctrl+A not being hijacked while a
+`JTextField` elsewhere in the same window has focus.
+
 ## Context
 
 `ACTIONS_ELEMENT_FACTORY_MIGRATION.md` moved `SegmentListPanel`/`DisassemblyPanel`/
