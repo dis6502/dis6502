@@ -18,6 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.dis6502.Actions;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.model.Assembler;
 import com.wudsn.tools.dis6502.model.Instruction;
@@ -59,8 +60,8 @@ public final class AssembleDialog extends JDialog {
 	private final JTextField instructionField = new JTextField(30);
 	private final JLabel addressLabel = new JLabel();
 	private final JLabel resultLabel = new JLabel("Enter instruction, e.g. LDA #1");
-	private final JButton assembleButton = new JButton("Assemble");
-	private final JButton closeButton = new JButton("Close");
+	private final JButton assembleButton = ElementFactory.createButton(Actions.AssembleDialog_Assemble, true);
+	private final JButton closeButton = ElementFactory.createButton(Actions.AssembleDialog_Close, true);
 
 	private Workspace workspace;
 	private Segment segment;

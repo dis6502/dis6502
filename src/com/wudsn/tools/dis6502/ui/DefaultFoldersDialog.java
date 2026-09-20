@@ -77,7 +77,9 @@ public final class DefaultFoldersDialog extends JDialog {
 			c.weightx = 1;
 			formPanel.add(field, c);
 
-			JButton browseButton = new JButton("Browse...");
+			// Fully qualified: com.wudsn.tools.base.Actions is already imported as "Actions" for ButtonBar_OK/Cancel below.
+			// No mnemonic: this same Action is reused for one button per row, all simultaneously visible.
+			JButton browseButton = ElementFactory.createButton(com.wudsn.tools.dis6502.Actions.DefaultFoldersDialog_Browse, false);
 			browseButton.addActionListener(e -> browse(folderType, field));
 			c.gridx = 2;
 			c.fill = GridBagConstraints.NONE;

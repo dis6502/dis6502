@@ -84,8 +84,10 @@ public final class DiskImageSectorsDialog extends JDialog {
 	private final JTextField startOffsetField = new JTextField(6);
 	private final JTextField endOffsetField = new JTextField(6);
 	private final JTextField addressField = new JTextField(6);
-	private final JButton addSectorButton = new JButton("Add Sector");
-	private final JButton removeSectorButton = new JButton("Remove Sector");
+	// Fully qualified: com.wudsn.tools.base.Actions is already imported as "Actions" for ButtonBar_OK/Cancel below.
+	private final JButton addSectorButton = ElementFactory.createButton(com.wudsn.tools.dis6502.Actions.DiskImageSectorsDialog_AddSector, true);
+	private final JButton removeSectorButton = ElementFactory.createButton(com.wudsn.tools.dis6502.Actions.DiskImageSectorsDialog_RemoveSector,
+			true);
 	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 	private final DefaultListModel<Item> itemsListModel = new DefaultListModel<>();
 	private final JList<Item> itemsList = new JList<>(itemsListModel);

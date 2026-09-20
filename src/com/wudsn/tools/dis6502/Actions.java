@@ -212,6 +212,22 @@ public final class Actions extends NLS {
 	public static Action MemoryInspectorPopupMenu_SaveSelectionHeader;
 	public static Action MemoryInspectorPopupMenu_QuitEditMode = new Action(KeyEvent.VK_ESCAPE, 0);
 
+	// Actions: Dialog command buttons that are not part of the shared
+	// ButtonBar_OK/ButtonBar_Cancel pattern (com.wudsn.tools.base.Actions).
+	// AssembleDialog's two labels are copied verbatim from the C++ ASSEMBLEBOX
+	// resource (see that class's own javadoc). DefaultFoldersDialog_Browse has
+	// no '&' mnemonic at all: the same Action is reused for one button per
+	// FolderType row (built via ElementFactory.createButton(action, false)),
+	// and every row is visible simultaneously, so a shared mnemonic would
+	// collide with itself across rows.
+	public static Action AssembleDialog_Assemble;
+	public static Action AssembleDialog_Close;
+	public static Action EquateDialog_AddModify;
+	public static Action EquateDialog_Delete;
+	public static Action DiskImageSectorsDialog_AddSector;
+	public static Action DiskImageSectorsDialog_RemoveSector;
+	public static Action DefaultFoldersDialog_Browse;
+
 	static {
 		initializeClass(Actions.class, null);
 	}

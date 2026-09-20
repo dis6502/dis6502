@@ -66,8 +66,9 @@ public final class EquateDialog extends JDialog {
 	private final DefaultListModel<String> listModel = new DefaultListModel<>();
 	private final JList<String> equateJList = new JList<>(listModel);
 	private final JTextField equateLineField = new JTextField();
-	private final JButton addButton = new JButton("Add/Modify");
-	private final JButton deleteButton = new JButton("Delete");
+	// Fully qualified: com.wudsn.tools.base.Actions is already imported as "Actions" for ButtonBar_OK/Cancel below.
+	private final JButton addButton = ElementFactory.createButton(com.wudsn.tools.dis6502.Actions.EquateDialog_AddModify, true);
+	private final JButton deleteButton = ElementFactory.createButton(com.wudsn.tools.dis6502.Actions.EquateDialog_Delete, true);
 
 	private boolean editable;
 	private boolean confirmed;
