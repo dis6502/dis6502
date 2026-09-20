@@ -11,20 +11,15 @@ import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 
 import com.wudsn.tools.base.Actions;
@@ -120,18 +115,8 @@ public final class AboutDialog extends JDialog {
 		// handles WM_KEYDOWN/VK_ESCAPE, relying on the OS-level modal dialog
 		// default of Esc mapping to IDCANCEL - which ProcessCommand treats the
 		// same as IDOK (both just close the dialog, matching okButton's own
-		// listener above). Swing has no such built-in mapping, so it is wired
-		// explicitly here, the same way EquateDialog wires its own Esc/cancel.
-		getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-				"close");
-		getRootPane().getActionMap().put("close", new AbstractAction() {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				okButton.doClick();
-			}
-		});
+		// listener above).
+		ElementUtilities.closeOnEscape(this, okButton::doClick);
 
 		pack();
 		setResizable(false);

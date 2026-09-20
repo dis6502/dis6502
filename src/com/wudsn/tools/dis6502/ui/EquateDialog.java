@@ -7,20 +7,15 @@ package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 
-import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -143,16 +138,7 @@ public final class EquateDialog extends JDialog {
 		setSize(480, 420);
 		setLocationRelativeTo(owner);
 
-		getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-				"cancel");
-		getRootPane().getActionMap().put("cancel", new AbstractAction() {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				cancelButton.doClick();
-			}
-		});
+		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	private void updateAddButtonEnabled() {
