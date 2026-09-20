@@ -100,8 +100,6 @@ public final class DataTypes extends NLS {
 
 	// DiskImageSectorsDialog.
 	public static DataType DiskImageSectorsDialog_DiskImageFile = new DataType(String.class);
-	public static DataType DiskImageSectorsDialog_StartOffset = new DataType(String.class);
-	public static DataType DiskImageSectorsDialog_EndOffset = new DataType(String.class);
 	public static DataType DiskImageSectorsDialog_Address = new DataType(String.class);
 
 	// EquateDialog.

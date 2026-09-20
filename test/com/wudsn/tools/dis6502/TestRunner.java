@@ -7,6 +7,7 @@ package com.wudsn.tools.dis6502;
 
 import com.wudsn.tools.dis6502.model.AssemblerTest;
 import com.wudsn.tools.dis6502.model.AtariDiskImageTest;
+import com.wudsn.tools.dis6502.model.ByteRangeSelectionTest;
 import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.ComputerSystemTest;
 import com.wudsn.tools.dis6502.model.DisassemblyResultFileTest;
@@ -35,8 +36,9 @@ import com.wudsn.tools.dis6502.model.Workspace;
  * MemoryInspectorTest}, and {@link AtariDiskImageTest} (the last two ported
  * from C++ test helpers with no independent entry point of their own - see
  * their own javadoc for how their concrete assertions were recovered from
- * {@code MainTest.cpp}), plus {@link MemoryInspectorStateTest} - a new
- * (not ported) test, since the in-place hex-editing it covers has no
+ * {@code MainTest.cpp}), plus {@link MemoryInspectorStateTest} and {@link
+ * ByteRangeSelectionTest} - new (not ported) tests, since the in-place
+ * hex-editing and standalone byte-range-selection logic they cover has no
  * concrete assertions to recover from any C++ test helper. {@code
  * CommonTest}/{@code FileIOTest}/{@code
  * StreamTest} are not ported for the same "only called from MainTest"
@@ -87,6 +89,7 @@ public final class TestRunner {
 		runTest("MemoryInspectorTest", MemoryInspectorTest::testMemoryInspectorType);
 		runTest("AtariDiskImageTest", AtariDiskImageTest::testAtariDiskImage);
 		runTest("MemoryInspectorStateTest", MemoryInspectorStateTest::testMemoryInspectorState);
+		runTest("ByteRangeSelectionTest", ByteRangeSelectionTest::testByteRangeSelection);
 		runTest("DataTypesTest", DataTypesTest::testDataTypes);
 
 		if (failedCount == 0) {

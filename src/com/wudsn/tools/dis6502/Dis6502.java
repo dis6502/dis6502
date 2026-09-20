@@ -815,6 +815,7 @@ public final class Dis6502 {
 		}
 
 		DiskImageSectorsDialog dialog = new DiskImageSectorsDialog(mainWindow.getFrame());
+		dialog.setComputerFont(ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight()));
 		if (!dialog.show(file.getPath(), info)) {
 			return;
 		}

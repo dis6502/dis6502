@@ -52,6 +52,9 @@ public interface MemoryInspectorState {
 
 	int getSize();
 
+	/** The extracted read-only view of the selection arithmetic - see {@link ByteRangeSelection}'s javadoc. */
+	ByteRangeSelection getSelection();
+
 	/** Returns the selection's begin/end addresses as a two-element array, or {@code null} if there is no segment. */
 	int[] getAddressRange();
 

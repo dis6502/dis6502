@@ -15,6 +15,7 @@ import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -23,7 +24,6 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.DocumentEvent;
@@ -35,6 +35,7 @@ import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.model.DiskImage;
 import com.wudsn.tools.dis6502.model.ImgInfo;
 import com.wudsn.tools.dis6502.model.ImgRWPacket;
+import com.wudsn.tools.dis6502.model.MutableByteRangeSelection;
 
 /**
  * A dialog for picking one or more byte ranges, from any sector of a disk
@@ -45,15 +46,22 @@ import com.wudsn.tools.dis6502.model.ImgRWPacket;
  * way {@link ProfileDialog} folds {@code ProfilesController} - the
  * controller's non-UI state ({@link ImgRWPacket}, the current sector
  * number/size, the picked items) has no reason to be a separate object
- * here. Two structural simplifications, matching the pattern already used
- * for {@link RawFileDialog}: the C++ version's sector hex dump is shown
- * via the not-yet-ported {@code MemoryInspectorControl}, with a
- * drag-selected byte range; this port shows a read-only hex dump and uses
- * explicit "Start Offset"/"End Offset" fields instead, defaulting to the
- * whole current sector. And sector navigation, a native scrollbar in C++
- * ({@code DiskImageSectorsController::ComputeScrolledSectorNumber}
- * translating {@code WM_HSCROLL} actions), is a plain {@link JSpinner}
- * here.
+ * here. The sector's bytes are shown via the same {@link
+ * MemoryInspectorGridPanel} the main Memory Inspector uses (fed by a {@link
+ * DiskSectorByteSource} rather than a {@code Segment}, and its own
+ * independent {@link MutableByteRangeSelection} rather than the workspace's),
+ * with the same drag-to-select behavior as the C++ version's {@code
+ * MemoryInspectorControl}-backed hex dump; unlike that C++ control, which
+ * notifies its owner via a {@code SELECTION_CHANGED WM_COMMAND}, {@link
+ * #performAddSector} simply reads the current selection synchronously,
+ * defaulting to the whole sector if nothing was dragged - matching {@code
+ * MemoryInspectorControl::GetSelection(..., bDefaultAll=true)}, which is
+ * exactly how the C++ dialog itself consumes the selection too (it never
+ * listens for that notification either). Sector navigation, a native
+ * scrollbar in C++ ({@code
+ * DiskImageSectorsController::ComputeScrolledSectorNumber} translating
+ * {@code WM_HSCROLL} actions), remains a plain {@link JSpinner} here -
+ * matching the pattern already used for {@link RawFileDialog}.
  * <p>
  * Found while porting the code that consumes {@link #getItems}
  * ({@code MainFile::OpenDiskImageSectors}): it builds a {@code ByteArray}
@@ -80,9 +88,8 @@ public final class DiskImageSectorsDialog extends JDialog {
 	private final JTextField diskImageFilePathField = new JTextField();
 	private final SpinnerNumberModel sectorSpinnerModel = new SpinnerNumberModel(1, 1, 1, 1);
 	private final JSpinner sectorSpinner = new JSpinner(sectorSpinnerModel);
-	private final JTextArea hexDumpArea = new JTextArea();
-	private final JTextField startOffsetField = new JTextField(6);
-	private final JTextField endOffsetField = new JTextField(6);
+	private final MemoryInspectorGridPanel grid = new MemoryInspectorGridPanel();
+	private final MutableByteRangeSelection selection = new MutableByteRangeSelection();
 	private final JTextField addressField = new JTextField(6);
 	// Fully qualified: com.wudsn.tools.base.Actions is already imported as "Actions" for ButtonBar_OK/Cancel below.
 	private final JButton addSectorButton = ElementFactory.createButton(com.wudsn.tools.dis6502.Actions.DiskImageSectorsDialog_AddSector, true);
@@ -103,9 +110,13 @@ public final class DiskImageSectorsDialog extends JDialog {
 		setTitle("Open Disk Image Sectors");
 
 		diskImageFilePathField.setEditable(false);
-		hexDumpArea.setEditable(false);
-		hexDumpArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 		itemsList.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+
+		grid.setSelection(selection);
+		grid.setDragSelectionListener((begin, end) -> {
+			selection.setSelection(begin, end, currentSectorSize);
+			grid.refreshSelection();
+		});
 
 		sectorSpinner.addChangeListener(e -> loadAndDisplaySector((Integer) sectorSpinner.getValue()));
 
@@ -160,22 +171,16 @@ public final class DiskImageSectorsDialog extends JDialog {
 		c.anchor = GridBagConstraints.WEST;
 		c.gridx = 0;
 		c.gridy = 0;
-		fieldsPanel.add(ElementFactory.createLabel(DataTypes.DiskImageSectorsDialog_StartOffset, startOffsetField), c);
-		c.gridx = 1;
-		fieldsPanel.add(startOffsetField, c);
-		c.gridx = 2;
-		fieldsPanel.add(ElementFactory.createLabel(DataTypes.DiskImageSectorsDialog_EndOffset, endOffsetField), c);
-		c.gridx = 3;
-		fieldsPanel.add(endOffsetField, c);
-		c.gridx = 4;
 		fieldsPanel.add(ElementFactory.createLabel(DataTypes.DiskImageSectorsDialog_Address, addressField), c);
-		c.gridx = 5;
+		c.gridx = 1;
 		fieldsPanel.add(addressField, c);
-		c.gridx = 6;
+		c.gridx = 2;
 		fieldsPanel.add(addSectorButton, c);
 
 		JPanel centerPanel = new JPanel(new BorderLayout(4, 4));
-		centerPanel.add(new JScrollPane(hexDumpArea), BorderLayout.CENTER);
+		JScrollPane gridScrollPane = new JScrollPane(grid);
+		gridScrollPane.setBorder(BorderFactory.createEmptyBorder());
+		centerPanel.add(gridScrollPane, BorderLayout.CENTER);
 
 		JPanel itemsPanel = new JPanel(new BorderLayout(4, 4));
 		itemsPanel.add(new JLabel("Sectors to Add (Sector / Address / Begin / Size):"), BorderLayout.NORTH);
@@ -198,8 +203,13 @@ public final class DiskImageSectorsDialog extends JDialog {
 		getContentPane().add(topPanel, BorderLayout.NORTH);
 		getContentPane().add(middlePanel, BorderLayout.CENTER);
 		getContentPane().add(southPanel, BorderLayout.SOUTH);
-		setSize(820, 520);
+		setSize(1000, 560);
 		setLocationRelativeTo(owner);
+	}
+
+	/** The font the sector's bytes are painted with - see {@link MemoryInspectorGridPanel#setComputerFont}. */
+	public void setComputerFont(ComputerFont computerFont) {
+		grid.setComputerFont(computerFont);
 	}
 
 	private void updateAddSectorButtonEnabled() {
@@ -228,18 +238,14 @@ public final class DiskImageSectorsDialog extends JDialog {
 			return;
 		}
 
-		int begin = getOffset(startOffsetField, 0);
-		int end = getOffset(endOffsetField, currentSectorSize - 1);
-		if (begin > end) {
-			int temp = begin;
-			begin = end;
-			end = temp;
-		}
-		if (begin < 0) {
-			begin = 0;
-		}
-		if (end > currentSectorSize - 1) {
-			end = currentSectorSize - 1;
+		// Matches MemoryInspectorControl::GetSelection(..., bDefaultAll=true): the
+		// whole current sector if nothing was dragged - begin/end are already
+		// swapped/clamped by MutableByteRangeSelection.setSelection at drag time.
+		int begin = 0;
+		int end = Math.max(currentSectorSize - 1, 0);
+		if (selection.hasSelection()) {
+			begin = selection.getBegin();
+			end = selection.getEnd();
 		}
 		int size = end - begin + 1;
 
@@ -270,37 +276,9 @@ public final class DiskImageSectorsDialog extends JDialog {
 		DiskImage.readAbsoluteSector(sector, sectorNumber, size);
 		currentSectorSize = size[0];
 
-		hexDumpArea.setText(buildHexDump(sector.sectorData, currentSectorSize));
-		hexDumpArea.setCaretPosition(0);
-		startOffsetField.setText("0");
-		endOffsetField.setText(String.valueOf(Math.max(currentSectorSize - 1, 0)));
-	}
-
-	private static String buildHexDump(byte[] buffer, int length) {
-		StringBuilder text = new StringBuilder();
-		for (int lineOffset = 0; lineOffset < length; lineOffset += 16) {
-			int lineEnd = Math.min(lineOffset + 16, length);
-			text.append(String.format("%04X: ", lineOffset));
-			for (int i = lineOffset; i < lineOffset + 16; i++) {
-				text.append(i < lineEnd ? String.format("%02X ", buffer[i] & 0xFF) : "   ");
-			}
-			text.append(' ');
-			for (int i = lineOffset; i < lineEnd; i++) {
-				int value = buffer[i] & 0xFF;
-				text.append(value >= 32 && value < 127 ? (char) value : '.');
-			}
-			text.append('\n');
-		}
-		return text.toString();
-	}
-
-	/** An unparseable value falls back to {@code defaultValue}, matching {@link RawFileDialog}'s offset fields. */
-	private static int getOffset(JTextField field, int defaultValue) {
-		try {
-			return Integer.parseInt(field.getText().trim());
-		} catch (NumberFormatException ex) {
-			return defaultValue;
-		}
+		grid.setByteSource(new DiskSectorByteSource(sector.sectorData, currentSectorSize, 0));
+		selection.clearSelection();
+		grid.refreshSelection();
 	}
 
 	/**

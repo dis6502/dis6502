@@ -58,7 +58,7 @@ public final class DataTypesTest {
 			DataTypes.DiskImageExecutableFileDialog_ExecutableFileName };
 
 	private static final DataType[] DISK_IMAGE_SECTORS_DIALOG = { DataTypes.DiskImageSectorsDialog_DiskImageFile,
-			DataTypes.DiskImageSectorsDialog_StartOffset, DataTypes.DiskImageSectorsDialog_EndOffset, DataTypes.DiskImageSectorsDialog_Address };
+			DataTypes.DiskImageSectorsDialog_Address };
 
 	private static final DataType[] EQUATE_DIALOG = { DataTypes.EquateDialog_Equate };
 

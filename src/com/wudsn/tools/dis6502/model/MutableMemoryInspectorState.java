@@ -60,9 +60,7 @@ public final class MutableMemoryInspectorState implements MemoryInspectorState {
 	private int segmentIndex;
 	private Segment segment;
 
-	private boolean selectionPresent;
-	private int begin;
-	private int end;
+	private final MutableByteRangeSelection selection = new MutableByteRangeSelection();
 
 	private boolean editMode;
 	private int editCursorOffset = -1;
@@ -107,14 +105,12 @@ public final class MutableMemoryInspectorState implements MemoryInspectorState {
 	}
 
 	public void clearSelection() {
-		selectionPresent = false;
-		begin = 0;
-		end = 0;
+		selection.clearSelection();
 	}
 
 	@Override
 	public boolean hasSelection() {
-		return hasSegment() && !segment.isEmpty() && selectionPresent;
+		return hasSegment() && !segment.isEmpty() && selection.hasSelection();
 	}
 
 	@Override
@@ -126,35 +122,17 @@ public final class MutableMemoryInspectorState implements MemoryInspectorState {
 		if (segment == null) {
 			throw new IllegalStateException("No segment selected yet. Cannot set selection range.");
 		}
-
-		int size = segment.getSize();
-
-		if (nBegin >= size) {
-			nBegin = size - 1;
-		}
-		if (nEnd >= size) {
-			nEnd = size - 1;
-		}
-
-		if (nBegin <= nEnd) {
-			this.begin = nBegin;
-			this.end = nEnd;
-		} else {
-			this.begin = nEnd;
-			this.end = nBegin;
-		}
-
-		this.selectionPresent = true;
+		selection.setSelection(nBegin, nEnd, segment.getSize());
 	}
 
 	@Override
 	public int getBegin() {
-		return begin;
+		return selection.getBegin();
 	}
 
 	@Override
 	public int getEnd() {
-		return end;
+		return selection.getEnd();
 	}
 
 	@Override
@@ -166,11 +144,16 @@ public final class MutableMemoryInspectorState implements MemoryInspectorState {
 	}
 
 	@Override
+	public ByteRangeSelection getSelection() {
+		return selection;
+	}
+
+	@Override
 	public int[] getAddressRange() {
 		if (segment == null) {
 			return null;
 		}
-		return new int[] { segment.wBegin + begin, segment.wBegin + end };
+		return new int[] { segment.wBegin + getBegin(), segment.wBegin + getEnd() };
 	}
 
 	@Override

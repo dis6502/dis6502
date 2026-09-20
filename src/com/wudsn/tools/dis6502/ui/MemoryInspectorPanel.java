@@ -55,12 +55,13 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * character transform for "internal" (Atari ANTIC screen code) mode is copied
  * verbatim from {@code MemoryInspectorControlImpl.cpp}'s paint routine, the one
  * piece of that routine's rendering this class replicates.
- * {@link #beginByteSelection}/{@link #extendByteSelection} port
- * {@code MemoryInspectorControlImpl::LButtonDown}/{@code
- * SetEndOfSelection} (via {@link MemoryInspectorGridPanel#offsetAtPoint}),
- * letting the user click or drag in the grid to select a byte range directly,
- * on top of every other way {@link #select} is already reached (Find, Select
- * All, Select Graphics, XRef navigation, a Split at Selection result).
+ * {@link MemoryInspectorGridPanel}'s own built-in drag-select mouse handling
+ * (a {@link MemoryInspectorGridPanel.DragSelectionListener} set up in this
+ * class's constructor, calling {@link #select}) ports {@code
+ * MemoryInspectorControlImpl::LButtonDown}/{@code SetEndOfSelection}, letting
+ * the user click or drag in the grid to select a byte range directly, on top
+ * of every other way {@link #select} is already reached (Find, Select All,
+ * Select Graphics, XRef navigation, a Split at Selection result).
  * {@link #findString}/{@link #findNextString}/{@link #canFind} from
  * {@code MemoryInspector::FindString}/{@code
  * FindNextString}/{@code CanFind}, triggered from {@link #findMenuItem}/
@@ -305,7 +306,6 @@ public final class MemoryInspectorPanel extends JPanel {
 	private EditModeExitedListener editModeExitedListener;
 
 	private MutableMemoryInspectorState memoryInspectorState;
-	private int selectionAnchorOffset = -1;
 
 	private Timer blinkTimer;
 
@@ -329,7 +329,6 @@ public final class MemoryInspectorPanel extends JPanel {
 		scrollPane.setBorder(BorderFactory.createEmptyBorder());
 		add(scrollPane, BorderLayout.CENTER);
 
-		grid.setFocusable(true);
 		buildPopupMenu();
 		editModePopupMenu.add(quitEditModeMenuItem);
 		MouseAdapter mouseHandler = new MouseAdapter() {
@@ -337,27 +336,11 @@ public final class MemoryInspectorPanel extends JPanel {
 			public void mousePressed(MouseEvent e) {
 				grid.requestFocusInWindow();
 				maybeShowPopup(e);
-				if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger() && !isEditMode()) {
-					beginByteSelection(e);
-				}
-			}
-
-			@Override
-			public void mouseDragged(MouseEvent e) {
-				if (SwingUtilities.isLeftMouseButton(e) && !isEditMode()) {
-					extendByteSelection(e);
-				}
 			}
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				maybeShowPopup(e);
-				if (SwingUtilities.isLeftMouseButton(e) && selectionAnchorOffset >= 0) {
-					selectionAnchorOffset = -1;
-					if (selectionChangedListener != null) {
-						selectionChangedListener.onSelectionChanged();
-					}
-				}
 			}
 
 			@Override
@@ -368,7 +351,19 @@ public final class MemoryInspectorPanel extends JPanel {
 			}
 		};
 		grid.addMouseListener(mouseHandler);
-		grid.addMouseMotionListener(mouseHandler);
+		grid.setDragSelectionListener(new MemoryInspectorGridPanel.DragSelectionListener() {
+			@Override
+			public void onDragSelectionChanged(int begin, int end) {
+				select(begin, end);
+			}
+
+			@Override
+			public void onDragSelectionFinished() {
+				if (selectionChangedListener != null) {
+					selectionChangedListener.onSelectionChanged();
+				}
+			}
+		});
 
 		bindEditModeKeys();
 		bindPopupMenuAccelerators();
@@ -480,40 +475,6 @@ public final class MemoryInspectorPanel extends JPanel {
 				}
 			}
 		});
-	}
-
-	/**
-	 * Ported from MemoryInspectorControlImpl::LButtonDown's non-edit-mode branch:
-	 * starts a new selection at the clicked byte.
-	 */
-	private void beginByteSelection(MouseEvent e) {
-		int offset = grid.offsetAtPoint(e.getX(), e.getY());
-		if (offset < 0) {
-			return;
-		}
-		selectionAnchorOffset = offset;
-		select(offset, offset);
-	}
-
-	/**
-	 * Ported from MemoryInspectorControlImpl::SetEndOfSelection's non-edit- mode
-	 * branch: extends the selection from the byte clicked in
-	 * {@link #beginByteSelection} to the point currently under the cursor. Swing
-	 * only delivers {@code mouseDragged} to the component that received the
-	 * matching {@code mousePressed} while the button stays down, the same effect
-	 * the C++ source gets from {@code SetCapture}/{@code
-	 * bMemoryInspectorCapture} - so unlike the C++ source, no explicit capture flag
-	 * is needed here.
-	 */
-	private void extendByteSelection(MouseEvent e) {
-		if (selectionAnchorOffset < 0) {
-			return;
-		}
-		int offset = grid.offsetAtPoint(e.getX(), e.getY());
-		if (offset < 0) {
-			return;
-		}
-		select(selectionAnchorOffset, offset);
 	}
 
 	private void buildPopupMenu() {
@@ -678,7 +639,8 @@ public final class MemoryInspectorPanel extends JPanel {
 				&& !segment.isSDXRelocBlkWithoutData();
 
 		grid.setMemoryInspectorState(memoryInspectorState);
-		grid.setSegment(hasData ? segment : null);
+		grid.setSelection(memoryInspectorState.getSelection());
+		grid.setByteSource(hasData ? new SegmentByteSource(segment) : null);
 		memoryInspectorState.clearSelection();
 		updateTitle();
 		updatePopupMenuItemsState();

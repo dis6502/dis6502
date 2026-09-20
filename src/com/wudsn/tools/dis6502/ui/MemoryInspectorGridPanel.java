@@ -13,16 +13,19 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import javax.swing.JPanel;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
+import com.wudsn.tools.dis6502.model.ByteRangeSelection;
 import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState.EditPane;
 import com.wudsn.tools.dis6502.model.MemoryType;
-import com.wudsn.tools.dis6502.model.Segment;
 
 /**
  * A read-only, custom-painted hex/ASCII dump of a segment's bytes, drawn with
@@ -39,14 +42,32 @@ import com.wudsn.tools.dis6502.model.Segment;
  * {@code PrintLine}/{@code ScrollUp}/{@code
  * ScrollDown}'s manual line-range/{@code BitBlt} scrolling.
  * {@link #offsetAtPoint} ports {@code LButtonDown}/{@code SetEndOfSelection}'s
- * pixel-to-byte mapping (the non-edit-mode case only), letting
- * {@link MemoryInspectorPanel} implement click/drag selection the idiomatic
- * Swing way, with
+ * pixel-to-byte mapping (the non-edit-mode case only), and this class's own
+ * built-in {@link DragSelectionListener} wiring (see {@link
+ * #setDragSelectionListener}) reproduces {@code LButtonDown}/{@code
+ * SetEndOfSelection}/{@code LButtonUp}'s anchor-and-drag tracking, but with
  * {@link java.awt.event.MouseListener}/{@link java.awt.event.MouseMotionListener}
  * instead of mouse capture and manual {@code SetCapture}/{@code ReleaseCapture}
- * bookkeeping. {@link #cellAtPoint} is that same mapping's edit-mode sibling,
+ * bookkeeping - Swing already delivers {@code mouseDragged} only to the
+ * component that received the matching {@code mousePressed} while the
+ * button stays down. Unlike the C++ source, dragging past the viewport's top
+ * or bottom edge does not auto-scroll (no {@code SetEndOfSelection}-style
+ * {@code VScroll} branch here); {@link #offsetAtPoint} simply clamps to the
+ * nearest visible line instead - a deliberate, minor simplification.
+ * {@link #cellAtPoint} is {@link #offsetAtPoint}'s edit-mode sibling,
  * additionally resolving which hex nibble or ASCII character a point falls in
  * ({@link EditPane}), needed to position the in-place edit cursor precisely.
+ * <p>
+ * Originally written only for the main Memory Inspector panel, this class is
+ * now shared by {@link MemoryInspectorPanel} (bytes via {@link
+ * SegmentByteSource}, selection via the current workspace's {@link
+ * com.wudsn.tools.dis6502.model.MutableMemoryInspectorState#getSelection()})
+ * and {@link DiskImageSectorsDialog} (bytes via {@link DiskSectorByteSource},
+ * selection via its own independent {@link
+ * com.wudsn.tools.dis6502.model.MutableByteRangeSelection}, and no {@link
+ * MemoryInspectorState} at all, so it never enters edit mode) - see {@link
+ * #setByteSource}/{@link #setSelection} vs. the narrower, edit-mode-only
+ * {@link #setMemoryInspectorState}.
  * <p>
  * {@link #getBytesPerLine} is responsive, not the fixed 16 it used to be:
  * ported from {@code Layout::Compute}'s own {@code
@@ -67,22 +88,24 @@ import com.wudsn.tools.dis6502.model.Segment;
  * owning any bytes-per-line concept of its own - a UI-computed fact like
  * this has no business being model state.
  * <p>
- * The selection range and edit-mode cursor are read live from {@link
- * #setMemoryInspectorState}'s {@link MemoryInspectorState} - this
- * class does not own or mirror that state as its own fields, it just paints
- * whatever it currently says (matching {@code Char}/{@code KeyDown}'s edit
- * mode and its blinking-cursor {@code WM_TIMER}, ported in {@link #paintLine}
- * and {@link #advanceBlinkPhase}) - see {@link MemoryInspectorPanel} for the
+ * The selection range is read live from {@link #setSelection}'s {@link
+ * ByteRangeSelection}, and the edit-mode cursor from {@link
+ * #setMemoryInspectorState}'s {@link MemoryInspectorState} - this class does
+ * not own or mirror either as its own fields, it just paints whatever they
+ * currently say (matching {@code Char}/{@code KeyDown}'s edit mode and its
+ * blinking-cursor {@code WM_TIMER}, ported in {@link #paintLine} and {@link
+ * #advanceBlinkPhase}) - see {@link MemoryInspectorPanel} for the
  * keyboard/focus/timer wiring that mutates the state and then calls {@link
  * #refreshSelection}/{@link #refreshEditMode}/{@link #refreshEditCursor} to
- * ask this class to notice. {@link #segment}, by contrast, stays an explicit,
- * separately-pushed field via {@link #setSegment} rather than read from
- * {@code MemoryInspectorState.getSegment()} directly: {@code
+ * ask this class to notice. {@link #byteSource}, by contrast, stays an
+ * explicit, separately-pushed field via {@link #setByteSource} rather than
+ * read from {@code MemoryInspectorState.getSegment()} directly: {@code
  * MemoryInspectorPanel} sometimes needs this class to show nothing even
  * though a segment actually is selected (an SDX symbol-table header, for
  * instance - see {@code MemoryInspectorPanel#segmentChanged}'s {@code
  * hasData} check), a decision that belongs to that class, not this pure
- * painter.
+ * painter; {@link DiskImageSectorsDialog} never calls {@link
+ * #setMemoryInspectorState} at all, since it has no edit mode.
  * <p>
  * {@code PrintLine}'s hex-byte/ASCII-column color, including its LOBYTE/
  * HIBYTE-adjacency-to-CODE-color rule, is ported verbatim (see
@@ -111,10 +134,11 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 	private static final Color HIGHLIGHT_COLOR = Color.YELLOW;
 
-	private Segment segment;
+	private HexGridByteSource byteSource;
 	private ComputerFont computerFont;
 	private boolean displayAsScreenCode;
 
+	private ByteRangeSelection selection;
 	private MemoryInspectorState memoryInspectorState;
 	private int previousEditCursorOffset = -1;
 	private int blinkPhase;
@@ -127,9 +151,76 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 		}
 	};
 
+	private DragSelectionListener dragSelectionListener;
+	private int selectionAnchorOffset = -1;
+
 	public MemoryInspectorGridPanel() {
 		setBackground(Color.WHITE);
+		setFocusable(true);
 		setComputerFont(ComputerFont.get(ComputerSystemType.ATARI800, false));
+
+		MouseAdapter dragHandler = new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger() && !isEditMode()) {
+					int offset = offsetAtPoint(e.getX(), e.getY());
+					if (offset >= 0) {
+						selectionAnchorOffset = offset;
+						notifyDragSelectionChanged(offset, offset);
+					}
+				}
+			}
+
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				if (SwingUtilities.isLeftMouseButton(e) && !isEditMode() && selectionAnchorOffset >= 0) {
+					int offset = offsetAtPoint(e.getX(), e.getY());
+					if (offset >= 0) {
+						notifyDragSelectionChanged(selectionAnchorOffset, offset);
+					}
+				}
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				if (SwingUtilities.isLeftMouseButton(e) && selectionAnchorOffset >= 0) {
+					selectionAnchorOffset = -1;
+					if (dragSelectionListener != null) {
+						dragSelectionListener.onDragSelectionFinished();
+					}
+				}
+			}
+		};
+		addMouseListener(dragHandler);
+		addMouseMotionListener(dragHandler);
+	}
+
+	private void notifyDragSelectionChanged(int begin, int end) {
+		if (dragSelectionListener != null) {
+			dragSelectionListener.onDragSelectionChanged(begin, end);
+		}
+	}
+
+	/**
+	 * Reports drag-select gestures on this grid - see this class's own
+	 * javadoc for why the mouse-anchor tracking itself lives here rather
+	 * than in each caller. {@link #onDragSelectionFinished} is only needed
+	 * by a caller that reacts to the drag ending (e.g. {@link
+	 * MemoryInspectorPanel} firing its own {@code SelectionChangedListener});
+	 * {@link DiskImageSectorsDialog} pulls the current selection
+	 * synchronously when its "Add Sector" button is clicked instead, so it
+	 * only implements {@link #onDragSelectionChanged}.
+	 */
+	public interface DragSelectionListener {
+
+		void onDragSelectionChanged(int begin, int end);
+
+		default void onDragSelectionFinished() {
+		}
+	}
+
+	public void setDragSelectionListener(DragSelectionListener dragSelectionListener) {
+		this.dragSelectionListener = dragSelectionListener;
 	}
 
 	/**
@@ -194,20 +285,31 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 		repaint();
 	}
 
-	public void setSegment(Segment segment) {
-		this.segment = segment;
+	public void setByteSource(HexGridByteSource byteSource) {
+		this.byteSource = byteSource;
 		this.previousEditCursorOffset = -1;
 		revalidate();
 		repaint();
 	}
 
 	/**
-	 * Points this panel at the {@link MemoryInspectorState} to read
-	 * the selection range and edit-mode cursor from at paint time - see this
-	 * class's own javadoc for why {@link #segment} stays a separate, explicit
-	 * field instead of also being read from here. Does not itself trigger a
-	 * repaint: call {@link #refreshSelection}/{@link #refreshEditMode}/{@link
-	 * #refreshEditCursor} once the state has actually changed.
+	 * Points this panel at the {@link ByteRangeSelection} to read the
+	 * selection range from at paint time - see this class's own javadoc for
+	 * why this is a separate field from {@link #setMemoryInspectorState}.
+	 * Does not itself trigger a repaint: call {@link #refreshSelection} once
+	 * the selection has actually changed.
+	 */
+	public void setSelection(ByteRangeSelection selection) {
+		this.selection = selection;
+	}
+
+	/**
+	 * Points this panel at the {@link MemoryInspectorState} to read the
+	 * edit-mode cursor from at paint time - see this class's own javadoc for
+	 * why {@link #byteSource} stays a separate, explicit field instead of
+	 * also being read from here. Does not itself trigger a repaint: call
+	 * {@link #refreshEditMode}/{@link #refreshEditCursor} once the state has
+	 * actually changed.
 	 */
 	public void setMemoryInspectorState(MemoryInspectorState memoryInspectorState) {
 		this.memoryInspectorState = memoryInspectorState;
@@ -229,8 +331,8 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	 */
 	public void refreshSelection() {
 		repaint();
-		if (memoryInspectorState != null && memoryInspectorState.hasSelection()) {
-			scrollLineToVisible(memoryInspectorState.getBegin() / bytesPerLine);
+		if (selection != null && selection.hasSelection()) {
+			scrollLineToVisible(selection.getBegin() / bytesPerLine);
 		}
 	}
 
@@ -331,7 +433,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	 * huge positive one. Returns {@code null} if there is no segment displayed.
 	 */
 	public CellHit cellAtPoint(int x, int y) {
-		if (segment == null || computerFont == null) {
+		if (byteSource == null || computerFont == null) {
 			return null;
 		}
 		int lines = lineCount();
@@ -369,7 +471,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	 * -1 if there is no segment displayed or it has no bytes.
 	 */
 	public int offsetAtPoint(int x, int y) {
-		if (segment == null || computerFont == null) {
+		if (byteSource == null || computerFont == null) {
 			return -1;
 		}
 		int lines = lineCount();
@@ -399,9 +501,9 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	 * LOBYTE/HIBYTE-adjacency-to-CODE-color rule).
 	 */
 	private MemoryType computeDisplayType(int offset, MemoryType oldType) {
-		MemoryType type = segment.getType(offset);
+		MemoryType type = byteSource.getType(offset);
 		if (offset > 0) {
-			MemoryType prevType = segment.getType(offset - 1);
+			MemoryType prevType = byteSource.getType(offset - 1);
 			if (oldType != MemoryType.LOBYTE && oldType != MemoryType.HIBYTE
 					&& (prevType == MemoryType.LOBYTE || prevType == MemoryType.HIBYTE)) {
 				type = prevType;
@@ -432,10 +534,10 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	}
 
 	private int lineCount() {
-		if (segment == null) {
+		if (byteSource == null) {
 			return 0;
 		}
-		int size = segment.getSize();
+		int size = byteSource.getSize();
 		return (size + bytesPerLine - 1) / bytesPerLine;
 	}
 
@@ -463,7 +565,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		if (segment == null) {
+		if (byteSource == null) {
 			return;
 		}
 
@@ -471,7 +573,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 		int cellW = computerFont.getGlyphWidth();
 		int cellH = computerFont.getGlyphHeight();
-		int size = segment.getSize();
+		int size = byteSource.getSize();
 		int lines = lineCount();
 
 		Rectangle clip = g2.getClipBounds();
@@ -490,14 +592,14 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 		int rowsInLine = lineEnd - lineStart;
 
 		// Address, e.g. "0600|".
-		String address = String.format("%04X|", segment.wBegin + lineStart);
+		String address = String.format("%04X|", byteSource.getBaseAddress() + lineStart);
 		computerFont.drawText(g2, address, Color.BLACK, 0, y);
 
 		boolean editMode = isEditMode();
 		int editCursorOffset = getEditCursorOffset();
-		boolean hasSelection = !editMode && memoryInspectorState != null && memoryInspectorState.hasSelection();
-		int selectionBegin = hasSelection ? memoryInspectorState.getBegin() : -1;
-		int selectionEnd = hasSelection ? memoryInspectorState.getEnd() : -1;
+		boolean hasSelection = !editMode && selection != null && selection.hasSelection();
+		int selectionBegin = hasSelection ? selection.getBegin() : -1;
+		int selectionEnd = hasSelection ? selection.getEnd() : -1;
 
 		MemoryType oldType = null;
 		for (int row = 0; row < bytesPerLine; row++) {
@@ -522,7 +624,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 				g2.fillRect(charX, y, cellW, cellH);
 			}
 
-			int value = segment.getData(offset) & 0xFF;
+			int value = byteSource.getData(offset) & 0xFF;
 			String hex = String.format("%02X ", value);
 			int displayValue = displayAsScreenCode ? toInternalCode(value) : value;
 
