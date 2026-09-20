@@ -199,7 +199,14 @@ public final class ProfileDialog extends JDialog {
 		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(new JScrollPane(contentPanel), BorderLayout.CENTER);
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-		setSize(760, 520);
+		// pack() instead of a fixed setSize(...): this dialog's three titled
+		// panels (17+7+8 rows) need more than 520px of height to show without
+		// scrolling, so a fixed size showed a spurious vertical scrollbar on
+		// first open - packing sizes the dialog to its actual content, and it
+		// stays resizable (no setResizable(false) here) if the user wants to
+		// shrink it afterward, at which point the JScrollPane's scrollbar is
+		// the correct, expected behavior.
+		pack();
 		setLocationRelativeTo(owner);
 	}
 
