@@ -30,7 +30,8 @@ import org.eclipse.osgi.util.NLS;
  * {@code IDC_*}/{@code IDM_*}/{@code ID_*}/{@code IDI_*}/{@code IDB_*}
  * constants in Resource.h identify dialog controls, menu commands, icons,
  * and bitmaps, not texts, and belong with the (not yet ported) UI layer
- * that uses them.
+ * that uses them. {@link #IDS_ABOUT_TEXT} is this file's one exception -
+ * see its own javadoc for why.
  * <p>
  * The single {@code STRINGTABLE} block in dis6502.rc is English-only, so
  * there is only a {@code Text.properties}, no locale-specific variant.
@@ -38,6 +39,18 @@ import org.eclipse.osgi.util.NLS;
  * @author Peter Dell
  */
 public final class Text extends NLS {
+
+	/**
+	 * The About dialog's body text ({@link
+	 * com.wudsn.tools.dis6502.ui.AboutDialog}), one line per {@code \n} -
+	 * split back into individual lines there. Not a ported {@code IDS_*}
+	 * mirror like every other field here: the C++ source's {@code ABOUTBOX}
+	 * resource embeds this text directly as literal {@code CTEXT} lines in
+	 * dis6502.rc, not a {@code STRINGTABLE} entry, so there is no real
+	 * resource ID to mirror - named in the same style anyway, for
+	 * consistency with the rest of this file.
+	 */
+	public static String IDS_ABOUT_TEXT;
 
 	public static String IDS_COMPUTER_MEM_ERR;
 	public static String IDS_COMPUTER_NOT_FOUND;
