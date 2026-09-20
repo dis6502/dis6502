@@ -343,6 +343,9 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.setUnknownBlockToByteMenuItem.addActionListener(e -> performSetUnknownBlockToByte());
 		mainWindow.memoryInspectorPanel.copySelectionMenuItem.addActionListener(e -> performCopyMemoryInspectorSelection());
 		mainWindow.memoryInspectorPanel.editCommentMenuItem.addActionListener(e -> performEditMemoryInspectorComment());
+		mainWindow.memoryInspectorPanel.editMenuItem.addActionListener(e -> mainWindow.memoryInspectorPanel.enterEditMode());
+		mainWindow.memoryInspectorPanel.quitEditModeMenuItem.addActionListener(e -> mainWindow.memoryInspectorPanel.quitEditMode());
+		mainWindow.memoryInspectorPanel.setEditModeExitedListener(this::performMemoryInspectorEditModeExited);
 		mainWindow.memoryInspectorPanel.assembleMenuItem.addActionListener(e -> performShowAssembleDialog());
 		mainWindow.memoryInspectorPanel.startCodeTraceMenuItem.addActionListener(e -> performGuessCode());
 
@@ -1261,6 +1264,21 @@ public final class Dis6502 {
 	/** Ported from MemoryInspector::Guess (IDM_DUMP_START_CODE_TRACE). */
 	private void performGuessCode() {
 		mainWindow.memoryInspectorPanel.guess();
+		updateDisassembly(false);
+	}
+
+	/**
+	 * Ported from MainController::QuitEditMode, fired whenever the Memory
+	 * Inspector's edit mode ends for any reason (Esc, the ad hoc Quit Edit
+	 * Mode popup item, switching segment/segment list/XRef selection,
+	 * clearing the workspace, or typing past the end of the buffer). Unlike
+	 * the C++ source, this fires - and therefore always refreshes the
+	 * disassembly - on every exit path uniformly, including typing off the
+	 * end of the buffer; see the TODO left in
+	 * MemoryInspectorControlImpl.cpp's Char method for the C++-side
+	 * inconsistency this fixes.
+	 */
+	private void performMemoryInspectorEditModeExited() {
 		updateDisassembly(false);
 	}
 

@@ -6,17 +6,24 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
 
 import com.wudsn.tools.dis6502.model.FileHeader;
@@ -139,11 +146,34 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * XRefSelectionListener} pattern. The submenu's checkmarks are ported from
  * {@code TypeSubMenu::Update} - which type(s) are actually present across the
  * selection, including its LOBYTE/HIBYTE-adjacency lookback for a byte whose
- * own stored type is unknown/invalid. "Edit bytes at selection", Cut, Paste
- * (before/after selection), and Delete are not in this menu, matching this
- * class's own note above on why Delete/Cut/ Paste Selection are not ported,
- * plus the general absence of any in-place hex-editing mode in this port (see
- * {@link MemoryInspectorGridPanel}'s javadoc).
+ * own stored type is unknown/invalid. Cut, Paste (before/after selection), and
+ * Delete are not in this menu, matching this class's own note above on why
+ * Delete/Cut/Paste Selection are not ported.
+ * <p>
+ * {@link #editMenuItem}/{@link #enterEditMode()}/{@link #quitEditMode()} and
+ * the keyboard handling wired up in the constructor port
+ * {@code MemoryInspector::SetEditMode}/{@code MainController::QuitEditMode}/
+ * {@code MemoryInspectorControlImpl::KeyDown}/{@code Char}/{@code Timer}/
+ * {@code LButtonDblClk} - in-place hex/ASCII editing of the selected byte(s),
+ * entered via F2, {@link #editMenuItem}, or a double-click, exited via Esc or
+ * {@link #quitEditModeMenuItem} (shown, while editing, in a separate ad hoc
+ * popup that replaces the normal one - {@code MainMemoryInspector::
+ * PerformCommands}'s modal gate on every other command while editing).
+ * {@link MemoryInspectorGridPanel#toSbyteInternalCode} and this class's
+ * key-typed handler apply {@code Char}'s {@link MemoryType#SBYTE} ASCII
+ * transform. Two confirmed C++ quirks are deliberately fixed here rather than
+ * replicated: typing past the end of the buffer bypasses {@code
+ * MainController::QuitEditMode} in C++, so its disassembly refresh is skipped
+ * on that one exit path only (see the TODO left in {@code
+ * MemoryInspectorControlImpl.cpp}'s {@code Char} method) - {@link
+ * #quitEditMode()} is the single exit point here, so every exit path refreshes
+ * uniformly; and C++ never resyncs the selection/title to the cursor's final
+ * position on exit, leaving it at wherever editing started - {@link
+ * #quitEditMode()} calls {@link #select} with the cursor's final offset
+ * instead. A third quirk is deliberately NOT replicated: {@code Char}'s
+ * printable-ASCII gate excludes {@code '~'}, {@code '{'}, {@code '}'} for no
+ * evident reason (it looks like an unintentional leftover, not designed
+ * behavior) - this port's key-typed handler accepts the full printable range.
  *
  * @author Peter Dell
  */
@@ -180,6 +210,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	public final JMenuItem startCodeTraceMenuItem = new JMenuItem("Start code trace at selection");
 	public final JMenuItem setUnknownBlockToByteMenuItem = new JMenuItem("Set current block of Unknown type to Byte");
 	public final JMenuItem editCommentMenuItem = new JMenuItem("Add/Edit comment...");
+	public final JMenuItem editMenuItem = new JMenuItem("Edit bytes at selection");
 	public final JMenuItem assembleMenuItem = new JMenuItem("Assemble at selection...");
 	public final JMenuItem copySelectionMenuItem = new JMenuItem("Copy");
 	public final JMenuItem selectNextUnknownBlockMenuItem = new JMenuItem("Select next block of Unknown type");
@@ -188,13 +219,27 @@ public final class MemoryInspectorPanel extends JPanel {
 	public final JMenuItem saveSelectionNoHeaderMenuItem = new JMenuItem("Save selection without header...");
 	public final JMenuItem saveSelectionHeaderMenuItem = new JMenuItem("Save selection with header...");
 
+	/**
+	 * The single item of the ad hoc popup shown, instead of {@link #popupMenu},
+	 * while edit mode is active - ported from {@code MemoryInspector::DrawMenu},
+	 * which likewise builds a separate menu rather than filtering the normal one,
+	 * since every other command is modally blocked while editing (see
+	 * {@code MainMemoryInspector::PerformCommands}).
+	 */
+	public final JMenuItem quitEditModeMenuItem = new JMenuItem("Quit memory inspector edit mode");
+
 	private final JPopupMenu popupMenu = new JPopupMenu();
+	private final JPopupMenu editModePopupMenu = new JPopupMenu();
 	private final JCheckBoxMenuItem[] typeMenuItems = new JCheckBoxMenuItem[TYPE_SUBMENU_ORDER.length];
 	private TypeSelectionListener typeSelectionListener;
 	private SelectionChangedListener selectionChangedListener;
+	private EditModeExitedListener editModeExitedListener;
 
 	private MemoryInspectorSelection memoryInspectorSelection;
 	private int selectionAnchorOffset = -1;
+
+	private boolean editMode;
+	private Timer blinkTimer;
 
 	private int findSegmentIndex = SegmentList.NO_SEGMENT_INDEX;
 	private int findOffset;
@@ -208,19 +253,22 @@ public final class MemoryInspectorPanel extends JPanel {
 
 		add(new JScrollPane(grid), BorderLayout.CENTER);
 
+		grid.setFocusable(true);
 		buildPopupMenu();
+		editModePopupMenu.add(quitEditModeMenuItem);
 		MouseAdapter mouseHandler = new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
+				grid.requestFocusInWindow();
 				maybeShowPopup(e);
-				if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger()) {
+				if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger() && !editMode) {
 					beginByteSelection(e);
 				}
 			}
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				if (SwingUtilities.isLeftMouseButton(e)) {
+				if (SwingUtilities.isLeftMouseButton(e) && !editMode) {
 					extendByteSelection(e);
 				}
 			}
@@ -235,11 +283,57 @@ public final class MemoryInspectorPanel extends JPanel {
 					}
 				}
 			}
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
+					enterEditModeAtPoint(e.getX(), e.getY());
+				}
+			}
 		};
 		grid.addMouseListener(mouseHandler);
 		grid.addMouseMotionListener(mouseHandler);
 
+		bindEditModeKeys();
+		grid.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				handleEditKeyPressed(e);
+			}
+
+			@Override
+			public void keyTyped(KeyEvent e) {
+				handleEditKeyTyped(e);
+			}
+		});
+
 		updatePopupMenuItemsState();
+	}
+
+	/**
+	 * Binds F2/Esc at the window level ({@code WHEN_IN_FOCUSED_WINDOW}, not
+	 * {@code WHEN_FOCUSED}) - matching the C++ source's accelerator table, where
+	 * {@code ID_DUMP_EDIT}/{@code ID_DUMP_QUIT_EDIT} work regardless of which
+	 * child control currently has focus, as long as the window is active.
+	 */
+	private void bindEditModeKeys() {
+		editMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
+		quitEditModeMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+
+		grid.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "editBytesAtSelection");
+		grid.getActionMap().put("editBytesAtSelection", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				enterEditMode();
+			}
+		});
+		grid.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "quitEditMode");
+		grid.getActionMap().put("quitEditMode", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				quitEditMode();
+			}
+		});
 	}
 
 	/**
@@ -301,6 +395,7 @@ public final class MemoryInspectorPanel extends JPanel {
 
 		popupMenu.addSeparator();
 		popupMenu.add(editCommentMenuItem);
+		popupMenu.add(editMenuItem);
 		popupMenu.add(assembleMenuItem);
 		popupMenu.add(copySelectionMenuItem);
 		popupMenu.add(splitAtSelectionMenuItem);
@@ -325,6 +420,10 @@ public final class MemoryInspectorPanel extends JPanel {
 	 */
 	private void maybeShowPopup(MouseEvent e) {
 		if (!e.isPopupTrigger() || memoryInspectorSelection == null || !memoryInspectorSelection.hasSegment()) {
+			return;
+		}
+		if (editMode) {
+			editModePopupMenu.show(grid, e.getX(), e.getY());
 			return;
 		}
 		updatePopupMenuItemsState();
@@ -406,6 +505,17 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
+	 * Reports that edit mode just ended, for any reason - ported from {@code
+	 * MainController::QuitEditMode}'s {@code UpdateDisassembly()} call. {@code
+	 * Dis6502} uses this to re-run the disassembly, matching
+	 * {@code performShowAssembleDialog}/{@code performGuessCode}'s own
+	 * mutate-then-refresh pattern.
+	 */
+	public void setEditModeExitedListener(EditModeExitedListener editModeExitedListener) {
+		this.editModeExitedListener = editModeExitedListener;
+	}
+
+	/**
 	 * Ported from MemoryInspector::SegmentChanged. Some segments (an SDX
 	 * symbol-table header, or an SDX relocation block with no data of its own) have
 	 * nothing to display, matching the C++ version's {@code
@@ -415,6 +525,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * segment, not this narrower {@code hasData} condition.
 	 */
 	public void segmentChanged(MemoryInspectorSelection memoryInspectorSelection) {
+		quitEditMode(); // Ported from MainSegment::Selected/MainXRef's and Main::ClearWorkspace's QuitEditMode() calls.
 		this.memoryInspectorSelection = memoryInspectorSelection;
 		Segment segment = memoryInspectorSelection.getSegment();
 		boolean hasData = segment != null && !segment.isHeader(FileHeader.SDX_SYM_DEFINED)
@@ -645,6 +756,240 @@ public final class MemoryInspectorPanel extends JPanel {
 				memoryInspectorSelection.getBegin());
 	}
 
+	public boolean isEditMode() {
+		return editMode;
+	}
+
+	/**
+	 * Ported from {@code MainMemoryInspector::Edit} (F2/{@code IDM_DUMP_EDIT}):
+	 * enters edit mode at the current selection's first byte, snapping a
+	 * multi-byte selection down to that one byte - matching {@code
+	 * MemoryInspector::SetEditMode}'s {@code IsEmpty()} guard and its
+	 * {@code SetSelection(nBegin, nBegin)} call - with the cursor starting on the
+	 * hex pane's high nibble.
+	 */
+	public void enterEditMode() {
+		enterEditModeAt(-1, MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH);
+	}
+
+	/**
+	 * Ported from {@code MemoryInspectorControlImpl::LButtonDblClk}'s two-step
+	 * sequence: enters edit mode the normal way (snapping to the selection's
+	 * first byte), then immediately repositions the cursor to the exact nibble/
+	 * character double-clicked.
+	 */
+	private void enterEditModeAtPoint(int x, int y) {
+		MemoryInspectorGridPanel.CellHit hit = grid.cellAtPoint(x, y);
+		if (hit == null) {
+			return;
+		}
+		enterEditModeAt(hit.offset, hit.pane);
+	}
+
+	private void enterEditModeAt(int offsetHint, int paneHint) {
+		if (memoryInspectorSelection == null || !memoryInspectorSelection.hasSelection()) {
+			return;
+		}
+		int begin = memoryInspectorSelection.getBegin();
+		select(begin, begin);
+		editMode = true;
+		grid.setEditMode(true);
+		grid.setEditCursor(offsetHint >= 0 ? offsetHint : begin, offsetHint >= 0 ? paneHint : MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH);
+		grid.requestFocusInWindow();
+		startBlinkTimer();
+	}
+
+	/**
+	 * Ported from {@code MainController::QuitEditMode}: leaves edit mode, if it
+	 * was active - a no-op otherwise, matching the C++ source's {@code
+	 * oldEditMode} check. Unlike the C++ source, this is the single exit point
+	 * for every way edit mode can end (Esc, {@link #quitEditModeMenuItem},
+	 * typing past the end of the buffer, or the segment changing), so the
+	 * selection-resync below and {@link #editModeExitedListener} both fire
+	 * uniformly on every exit - see this class's javadoc for the two C++ exit
+	 * quirks this fixes.
+	 */
+	public void quitEditMode() {
+		boolean wasEditing = editMode;
+		editMode = false;
+		grid.setEditMode(false);
+		stopBlinkTimer();
+		if (wasEditing) {
+			int offset = grid.getEditCursorOffset();
+			if (offset >= 0) {
+				select(offset, offset);
+			}
+			if (editModeExitedListener != null) {
+				editModeExitedListener.onEditModeExited();
+			}
+		}
+	}
+
+	private void startBlinkTimer() {
+		if (blinkTimer == null) {
+			blinkTimer = new Timer(250, e -> grid.advanceBlinkPhase());
+		}
+		blinkTimer.start();
+	}
+
+	private void stopBlinkTimer() {
+		if (blinkTimer != null) {
+			blinkTimer.stop();
+		}
+	}
+
+	/**
+	 * Ported from {@code MemoryInspectorControlImpl::KeyDown}'s edit-mode
+	 * branch: arrow/Home/End navigation, with no data change. The hex panes
+	 * (nibble 0/1) move nibble-wise on Left/Right (crossing to the adjacent
+	 * byte's far nibble at a boundary) and a whole line (16 bytes) on Up/Down,
+	 * resetting to the high nibble; the ASCII pane moves byte-wise for all six
+	 * keys, with no nibble concept.
+	 */
+	private void handleEditKeyPressed(KeyEvent e) {
+		if (!editMode) {
+			return;
+		}
+		Segment segment = memoryInspectorSelection.getSegment();
+		int size = segment.getSize();
+		int offset = grid.getEditCursorOffset();
+		int pane = grid.getEditCursorPane();
+		if (offset < 0) {
+			return;
+		}
+
+		int newOffset = offset;
+		int newPane = pane;
+		boolean handled = true;
+		switch (e.getKeyCode()) {
+		case KeyEvent.VK_HOME:
+			newOffset = 0;
+			newPane = pane < MemoryInspectorGridPanel.EDIT_PANE_ASCII ? MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH : pane;
+			break;
+		case KeyEvent.VK_END:
+			newOffset = size - 1;
+			newPane = pane < MemoryInspectorGridPanel.EDIT_PANE_ASCII ? MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH : pane;
+			break;
+		case KeyEvent.VK_UP:
+			if (offset - MemoryInspectorGridPanel.BYTES_PER_LINE >= 0) {
+				newOffset = offset - MemoryInspectorGridPanel.BYTES_PER_LINE;
+				newPane = pane < MemoryInspectorGridPanel.EDIT_PANE_ASCII ? MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH : pane;
+			}
+			break;
+		case KeyEvent.VK_DOWN:
+			if (offset + MemoryInspectorGridPanel.BYTES_PER_LINE < size) {
+				newOffset = offset + MemoryInspectorGridPanel.BYTES_PER_LINE;
+				newPane = pane < MemoryInspectorGridPanel.EDIT_PANE_ASCII ? MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH : pane;
+			}
+			break;
+		case KeyEvent.VK_LEFT:
+			if (pane == MemoryInspectorGridPanel.EDIT_PANE_ASCII) {
+				if (offset > 0) {
+					newOffset = offset - 1;
+				}
+			} else if (pane == MemoryInspectorGridPanel.EDIT_PANE_HEX_LOW) {
+				newPane = MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH;
+			} else if (offset > 0) {
+				newOffset = offset - 1;
+				newPane = MemoryInspectorGridPanel.EDIT_PANE_HEX_LOW;
+			}
+			break;
+		case KeyEvent.VK_RIGHT:
+			if (pane == MemoryInspectorGridPanel.EDIT_PANE_ASCII) {
+				if (offset + 1 < size) {
+					newOffset = offset + 1;
+				}
+			} else if (pane == MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH) {
+				newPane = MemoryInspectorGridPanel.EDIT_PANE_HEX_LOW;
+			} else if (offset + 1 < size) {
+				newOffset = offset + 1;
+				newPane = MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH;
+			}
+			break;
+		default:
+			handled = false;
+			break;
+		}
+
+		if (handled) {
+			grid.setEditCursor(newOffset, newPane);
+			e.consume();
+		}
+	}
+
+	/**
+	 * Ported from {@code MemoryInspectorControlImpl::Char}: hex-digit/ASCII data
+	 * entry, plus Tab to switch panes. Every valid keystroke writes immediately
+	 * via {@link Segment#setData} - there is no staging buffer or undo, matching
+	 * the C++ source.
+	 */
+	private void handleEditKeyTyped(KeyEvent e) {
+		if (!editMode) {
+			return;
+		}
+		Segment segment = memoryInspectorSelection.getSegment();
+		int offset = grid.getEditCursorOffset();
+		if (offset < 0 || offset >= segment.getSize()) {
+			return;
+		}
+		int pane = grid.getEditCursorPane();
+		char c = e.getKeyChar();
+
+		if (pane != MemoryInspectorGridPanel.EDIT_PANE_ASCII) {
+			if (c == '\t') {
+				grid.setEditCursor(offset, MemoryInspectorGridPanel.EDIT_PANE_ASCII);
+				e.consume();
+				return;
+			}
+			int nibble = Character.digit(c, 16);
+			if (nibble < 0) {
+				return;
+			}
+			int oldValue = segment.getData(offset) & 0xFF;
+			int updated = pane == MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH ? (oldValue & 0x0F) | (nibble << 4)
+					: (oldValue & 0xF0) | nibble;
+			segment.setData(offset, updated);
+			if (pane == MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH) {
+				grid.setEditCursor(offset, MemoryInspectorGridPanel.EDIT_PANE_HEX_LOW);
+			} else if (offset + 1 < segment.getSize()) {
+				grid.setEditCursor(offset + 1, MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH);
+			} else {
+				quitEditMode();
+				return;
+			}
+			e.consume();
+		} else {
+			if (c == '\t') {
+				grid.setEditCursor(offset, MemoryInspectorGridPanel.EDIT_PANE_HEX_HIGH);
+				e.consume();
+				return;
+			}
+			int toWrite;
+			if (c == '\r' || c == '\n') {
+				toWrite = 0x9B; // Atari end-of-line byte, written like any other typed character.
+			} else if (c >= ' ' && c < 128) {
+				// Deliberately NOT replicating MemoryInspectorControlImpl.cpp Char()'s
+				// exclusion of '~', '{', '}' from the printable range - there is no
+				// evident reason for it; it looks like an unintentional leftover rather
+				// than intended behavior, so this port allows the full printable range.
+				toWrite = c;
+				if (segment.isType(offset, MemoryType.SBYTE)) {
+					toWrite = MemoryInspectorGridPanel.toSbyteInternalCode(toWrite);
+				}
+			} else {
+				return;
+			}
+			segment.setData(offset, toWrite);
+			if (offset + 1 < segment.getSize()) {
+				grid.setEditCursor(offset + 1, MemoryInspectorGridPanel.EDIT_PANE_ASCII);
+			} else {
+				quitEditMode();
+				return;
+			}
+			e.consume();
+		}
+	}
+
 	/**
 	 * Ported from the enablement logic in MemoryInspectorPopupMenu::Update for
 	 * IDM_DUMP_FIND/IDM_DUMP_FIND_NEXT/IDM_DUMP_SELECT_ALL/
@@ -668,6 +1013,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		setUnknownBlockToByteMenuItem.setEnabled(hasSelection);
 		copySelectionMenuItem.setEnabled(hasSelection);
 		editCommentMenuItem.setEnabled(hasSelection);
+		editMenuItem.setEnabled(hasSelection);
 		assembleMenuItem.setEnabled(hasSelection);
 		startCodeTraceMenuItem.setEnabled(hasSelection && memoryInspectorSelection.getSegment()
 				.isType(memoryInspectorSelection.getBegin(), MemoryType.UNKNOWN));
@@ -785,6 +1131,11 @@ public final class MemoryInspectorPanel extends JPanel {
 	 */
 	public interface SelectionChangedListener {
 		void onSelectionChanged();
+	}
+
+	/** Reports that edit mode just ended - see {@link #setEditModeExitedListener}. */
+	public interface EditModeExitedListener {
+		void onEditModeExited();
 	}
 
 	/**

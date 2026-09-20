@@ -39,12 +39,14 @@ import com.wudsn.tools.dis6502.model.Segment;
  * Swing way, with
  * {@link java.awt.event.MouseListener}/{@link java.awt.event.MouseMotionListener}
  * instead of mouse capture and manual {@code SetCapture}/{@code ReleaseCapture}
- * bookkeeping; in-place hex/ASCII editing ({@code Char}/{@code KeyDown}'s edit
- * mode, with its blinking- cursor {@code WM_TIMER}) is not ported -
- * {@link MemoryInspectorPanel} predates this class and never had it (editing
- * goes through {@link AssembleDialog} instead), and this rewrite only replaces
- * how the existing byte grid is drawn and how its selection is set, not how
- * bytes are edited.
+ * bookkeeping. {@link #cellAtPoint} is that same mapping's edit-mode sibling,
+ * additionally resolving which hex nibble or ASCII character a point falls in
+ * ({@code EDIT_PANE_HEX_HIGH}/{@code _HEX_LOW}/{@code _ASCII}), needed to
+ * position the in-place edit cursor precisely; {@link #setEditMode}/
+ * {@link #setEditCursor}/{@link #advanceBlinkPhase} and this class's cursor
+ * painting in {@link #paintLine} port {@code Char}/{@code KeyDown}'s edit mode
+ * and its blinking-cursor {@code WM_TIMER} - see {@link MemoryInspectorPanel}
+ * for the keyboard/focus/timer wiring that drives them.
  * <p>
  * {@code PrintLine}'s hex-byte/ASCII-column color, including its LOBYTE/
  * HIBYTE-adjacency-to-CODE-color rule, is ported verbatim (see
@@ -75,11 +77,21 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 	private static final Color HIGHLIGHT_COLOR = Color.YELLOW;
 
+	/** Which part of a byte's cell the edit cursor is on - matches {@code wEditedPart} (0/1/2). */
+	public static final int EDIT_PANE_HEX_HIGH = 0;
+	public static final int EDIT_PANE_HEX_LOW = 1;
+	public static final int EDIT_PANE_ASCII = 2;
+
 	private Segment segment;
 	private ComputerFont computerFont;
 	private boolean displayAsScreenCode;
 	private int highlightBegin = -1;
 	private int highlightEnd = -1;
+
+	private boolean editMode;
+	private int editCursorOffset = -1;
+	private int editCursorPane = EDIT_PANE_HEX_HIGH;
+	private int blinkPhase;
 
 	public MemoryInspectorGridPanel() {
 		setBackground(Color.WHITE);
@@ -96,6 +108,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 		this.segment = segment;
 		this.highlightBegin = -1;
 		this.highlightEnd = -1;
+		this.editCursorOffset = -1;
 		revalidate();
 		repaint();
 	}
@@ -121,6 +134,146 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	private void scrollLineToVisible(int line) {
 		int cellH = computerFont.getGlyphHeight();
 		scrollRectToVisible(new Rectangle(0, line * cellH, 1, cellH));
+	}
+
+	/**
+	 * Ported from {@code MemoryInspector::SetEditMode}'s effect on the control:
+	 * switches the cursor-highlight painting on/off (mutually exclusive with the
+	 * plain selection highlight - see {@code !bEditMode}'s gate on
+	 * {@code PrintLine}'s selection-highlight block) and resets the blink phase,
+	 * matching {@code SetEditMode(TRUE, ...)}'s {@code SetTimerCount(0)}.
+	 */
+	public void setEditMode(boolean editMode) {
+		this.editMode = editMode;
+		this.blinkPhase = 0;
+		repaint();
+	}
+
+	public boolean isEditMode() {
+		return editMode;
+	}
+
+	/**
+	 * Moves the edit cursor to {@code offset}/{@code pane} (one of the
+	 * {@code EDIT_PANE_*} constants), scrolling it into view and repainting just
+	 * the old and new cursor lines - not the whole grid, unlike {@code
+	 * MemoryInspectorControlImpl::Refresh}'s full-panel repaint on every change.
+	 */
+	public void setEditCursor(int offset, int pane) {
+		int previousOffset = this.editCursorOffset;
+		this.editCursorOffset = offset;
+		this.editCursorPane = pane;
+		if (previousOffset >= 0 && previousOffset != offset) {
+			repaintCursorLine(previousOffset);
+		}
+		if (offset >= 0) {
+			scrollLineToVisible(offset / BYTES_PER_LINE);
+			repaintCursorLine(offset);
+		}
+	}
+
+	public int getEditCursorOffset() {
+		return editCursorOffset;
+	}
+
+	public int getEditCursorPane() {
+		return editCursorPane;
+	}
+
+	/**
+	 * Advances the blink phase (matching {@code wTimerCount = (wTimerCount+1)%4})
+	 * and repaints only the cursor's line, ported from {@code
+	 * MemoryInspectorControlImpl::Timer} - unlike that method, which calls
+	 * {@code Refresh()} to repaint the whole control on every 250ms tick, this
+	 * uses a targeted {@link #repaint(Rectangle)} since {@link #paintComponent}
+	 * already supports clip-rect-limited repainting.
+	 */
+	public void advanceBlinkPhase() {
+		blinkPhase = (blinkPhase + 1) % 4;
+		if (editCursorOffset >= 0) {
+			repaintCursorLine(editCursorOffset);
+		}
+	}
+
+	private void repaintCursorLine(int offset) {
+		if (computerFont == null) {
+			return;
+		}
+		int cellH = computerFont.getGlyphHeight();
+		int line = offset / BYTES_PER_LINE;
+		repaint(new Rectangle(0, line * cellH, totalUnits() * computerFont.getGlyphWidth(), cellH));
+	}
+
+	/** The result of {@link #cellAtPoint}: a byte offset plus which part of its cell was hit. */
+	public static final class CellHit {
+		public final int offset;
+		public final int pane;
+
+		CellHit(int offset, int pane) {
+			this.offset = offset;
+			this.pane = pane;
+		}
+	}
+
+	/**
+	 * Maps a point to the exact hex nibble or ASCII character under it, ported
+	 * from {@code MemoryInspectorControlImpl::LButtonDown}/{@code
+	 * SetEndOfSelection}'s edit-mode pixel math - {@link #offsetAtPoint}'s
+	 * sibling, used only for positioning the in-place edit cursor (double-click-
+	 * to-edit-at-position). Unlike the C++ source's {@code WORD} (unsigned
+	 * 16-bit) arithmetic, which relies on wraparound-then-clamp for an
+	 * out-of-range low x, this clamps both ends explicitly, since Java's signed
+	 * int arithmetic would otherwise produce a small negative row instead of a
+	 * huge positive one. Returns {@code null} if there is no segment displayed.
+	 */
+	public CellHit cellAtPoint(int x, int y) {
+		if (segment == null || computerFont == null) {
+			return null;
+		}
+		int lines = lineCount();
+		if (lines == 0) {
+			return null;
+		}
+		int cellW = computerFont.getGlyphWidth();
+		int cellH = computerFont.getGlyphHeight();
+		int line = Math.max(0, Math.min(lines - 1, y / cellH));
+
+		int startOfAsciiPaneInPixel = (BYTES_PER_LINE * 3 + 5) * cellW;
+		int row;
+		int pane;
+		if (x > startOfAsciiPaneInPixel) {
+			row = Math.max(0, x - 1 - startOfAsciiPaneInPixel) / cellW;
+			pane = EDIT_PANE_ASCII;
+		} else {
+			int relative = Math.max(0, x - 1 - 4 * cellW - cellW / 2);
+			row = relative / (3 * cellW);
+			pane = (relative % (3 * cellW)) > (3 * cellW) / 2 ? EDIT_PANE_HEX_LOW : EDIT_PANE_HEX_HIGH;
+		}
+		row = Math.max(0, Math.min(BYTES_PER_LINE - 1, row));
+
+		return new CellHit(line * BYTES_PER_LINE + row, pane);
+	}
+
+	/**
+	 * Ported from {@code MemoryInspectorControlImpl::Char}'s
+	 * {@code if (cType == SBYTE) { ... }} block - the ASCII-to-"internal"
+	 * (Atari screen code) transform applied when typing a character into a
+	 * {@link MemoryType#SBYTE}-typed byte's cell. This is the WRITE direction,
+	 * gated per-byte on its type and only ever given a typed ASCII character
+	 * (0-127); it is deliberately kept separate from {@link #toInternalCode},
+	 * the DISPLAY direction, which is driven by the global "display as screen
+	 * code" toggle and covers the full 0-255 byte range. The two are
+	 * mathematical inverses of each other on the 0-127 range but are distinct,
+	 * differently-shaped formulas in the C++ source, so they stay distinct here
+	 * too rather than sharing one generalized method.
+	 */
+	static int toSbyteInternalCode(int asciiChar) {
+		if (asciiChar < 32) {
+			return asciiChar + 64;
+		} else if (asciiChar < 96) {
+			return asciiChar - 32;
+		}
+		return asciiChar;
 	}
 
 	/**
@@ -270,7 +423,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 			oldType = type;
 			Color color = TYPE_COLORS[type.ordinal()];
 
-			boolean selected = highlightBegin != -1 && offset >= Math.min(highlightBegin, highlightEnd)
+			boolean selected = !editMode && highlightBegin != -1 && offset >= Math.min(highlightBegin, highlightEnd)
 					&& offset <= Math.max(highlightBegin, highlightEnd);
 			if (selected) {
 				g2.setColor(HIGHLIGHT_COLOR);
@@ -280,14 +433,66 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 
 			int value = segment.getData(offset) & 0xFF;
 			String hex = String.format("%02X ", value);
-			computerFont.drawText(g2, hex, color, hexX, y);
-
 			int displayValue = displayAsScreenCode ? toInternalCode(value) : value;
-			computerFont.drawGlyph(g2, displayValue, color, charX, y);
+
+			if (editMode && offset == editCursorOffset) {
+				paintCursorHexCell(g2, hex, color, hexX, cellW, cellH, y);
+				paintCursorAsciiCell(g2, displayValue, charX, cellW, cellH, y);
+			} else {
+				computerFont.drawText(g2, hex, color, hexX, y);
+				computerFont.drawGlyph(g2, displayValue, color, charX, y);
+			}
 		}
 
 		// Vertical bar separating the hex and ASCII columns.
 		computerFont.drawText(g2, "|", Color.BLACK, (5 + BYTES_PER_LINE * 3 - 1) * cellW, y);
+	}
+
+	/**
+	 * Paints the hex pane's two-nibble cell for the byte the edit cursor is on,
+	 * ported from {@code PrintLine}'s edit-cursor block (lines ~581-619): the
+	 * nibble actually being edited gets a yellow background and blinks (hidden
+	 * on {@code blinkPhase == 0}); if the ASCII pane is active instead, both
+	 * nibbles get a steady (non-blinking) yellow background; otherwise the
+	 * sibling nibble is left completely unhighlighted.
+	 */
+	private void paintCursorHexCell(Graphics2D g2, String hex, Color color, int hexX, int cellW, int cellH, int y) {
+		boolean asciiActive = editCursorPane == EDIT_PANE_ASCII;
+		paintCursorSubCell(g2, hex.charAt(0), color, hexX, y, cellW, cellH,
+				asciiActive || editCursorPane == EDIT_PANE_HEX_HIGH, editCursorPane == EDIT_PANE_HEX_HIGH);
+		paintCursorSubCell(g2, hex.charAt(1), color, hexX + cellW, y, cellW, cellH,
+				asciiActive || editCursorPane == EDIT_PANE_HEX_LOW, editCursorPane == EDIT_PANE_HEX_LOW);
+		computerFont.drawText(g2, String.valueOf(hex.charAt(2)), color, hexX + cellW * 2, y);
+	}
+
+	private void paintCursorSubCell(Graphics2D g2, char ch, Color color, int x, int y, int cellW, int cellH,
+			boolean highlighted, boolean blinking) {
+		if (!highlighted) {
+			computerFont.drawText(g2, String.valueOf(ch), color, x, y);
+			return;
+		}
+		g2.setColor(HIGHLIGHT_COLOR);
+		g2.fillRect(x, y, cellW, cellH);
+		if (!(blinking && blinkPhase == 0)) {
+			computerFont.drawText(g2, String.valueOf(ch), Color.BLACK, x, y);
+		}
+	}
+
+	/**
+	 * Paints the ASCII pane's one-character cell for the byte the edit cursor is
+	 * on, ported from {@code PrintLine}'s edit-cursor block (lines ~640-652):
+	 * always a yellow background while the cursor is on this byte's row, but the
+	 * glyph itself only blinks (hidden on {@code blinkPhase == 0}) when the
+	 * ASCII pane is the one actually being edited - otherwise it is shown
+	 * steadily.
+	 */
+	private void paintCursorAsciiCell(Graphics2D g2, int displayValue, int charX, int cellW, int cellH, int y) {
+		g2.setColor(HIGHLIGHT_COLOR);
+		g2.fillRect(charX, y, cellW, cellH);
+		boolean blinking = editCursorPane == EDIT_PANE_ASCII;
+		if (!(blinking && blinkPhase == 0)) {
+			computerFont.drawGlyph(g2, displayValue, Color.BLACK, charX, y);
+		}
 	}
 
 	private void drawBlank(Graphics2D g2, int x, int y, int width, int height) {
