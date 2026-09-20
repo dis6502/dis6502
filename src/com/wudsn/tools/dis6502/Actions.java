@@ -206,7 +206,7 @@ public final class Actions extends NLS {
 	public static Action MemoryInspectorPopupMenu_Find = new Action(KeyEvent.VK_F, KeyStroke.M1);
 	public static Action MemoryInspectorPopupMenu_FindNext = new Action(KeyEvent.VK_F3, 0);
 	public static Action MemoryInspectorPopupMenu_SelectNextUnknownBlock = new Action(KeyEvent.VK_F5, 0);
-	public static Action MemoryInspectorPopupMenu_SelectSprites = new Action(KeyEvent.VK_F4, 0);
+	public static Action MemoryInspectorPopupMenu_SelectGraphics = new Action(KeyEvent.VK_F4, 0);
 	public static Action MemoryInspectorPopupMenu_SelectAll = new Action(KeyEvent.VK_A, KeyStroke.M1);
 	public static Action MemoryInspectorPopupMenu_SaveSelectionNoHeader;
 	public static Action MemoryInspectorPopupMenu_SaveSelectionHeader;

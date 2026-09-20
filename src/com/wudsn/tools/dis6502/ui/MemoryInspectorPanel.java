@@ -60,7 +60,7 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * SetEndOfSelection} (via {@link MemoryInspectorGridPanel#offsetAtPoint}),
  * letting the user click or drag in the grid to select a byte range directly,
  * on top of every other way {@link #select} is already reached (Find, Select
- * All, Select Sprites, XRef navigation, a Split at Selection result).
+ * All, Select Graphics, XRef navigation, a Split at Selection result).
  * {@link #findString}/{@link #findNextString}/{@link #canFind} from
  * {@code MemoryInspector::FindString}/{@code
  * FindNextString}/{@code CanFind}, triggered from {@link #findMenuItem}/
@@ -114,11 +114,13 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * segment-buffer resizing, which does not exist in
  * {@link com.wudsn.tools.dis6502.model.MemoryBlock} yet.
  * <p>
- * {@link #selectSpritesMenuItem} (from {@code
+ * {@link #selectGraphicsMenuItem} (from {@code
  * MemoryInspector::ShowSelectSpritesDialog}/IDM_DUMP_SELECT_SPRITES, ported as
- * {@link SelectSpritesDialog}/{@link SpritePanel}/{@link SpriteMode}) is
- * non-mutating like the other Select* items - it just ends in a call to
- * {@link #select}, {@link SelectSpritesDialog}'s own javadoc has the details.
+ * {@link SelectGraphicsDialog}/{@link GraphicPanel}/{@link GraphicMode} -
+ * renamed from the C++ source's "Sprite" terminology, see {@code
+ * SelectGraphicsDialog}'s own javadoc for why) is non-mutating like the
+ * other Select* items - it just ends in a call to {@link #select}, {@link
+ * SelectGraphicsDialog}'s own javadoc has the details.
  * {@link #editCommentMenuItem} (from {@code MemoryInspector::AddComment}/
  * IDM_DUMP_EDIT_COMMENT, ported as {@link CommentDialog}) is wired only from
  * here rather than also from a plain disassembly-line click with no byte
@@ -274,8 +276,8 @@ public final class MemoryInspectorPanel extends JPanel {
 			"copySelectionMenuItem");
 	public final JMenuItem selectNextUnknownBlockMenuItem = ElementFactory
 			.createMenuItem(Actions.MemoryInspectorPopupMenu_SelectNextUnknownBlock, "selectNextUnknownBlockMenuItem");
-	public final JMenuItem selectSpritesMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_SelectSprites,
-			"selectSpritesMenuItem");
+	public final JMenuItem selectGraphicsMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_SelectGraphics,
+			"selectGraphicsMenuItem");
 	public final JMenuItem selectAllMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_SelectAll, "selectAllMenuItem");
 	public final JMenuItem saveSelectionNoHeaderMenuItem = ElementFactory
 			.createMenuItem(Actions.MemoryInspectorPopupMenu_SaveSelectionNoHeader, "saveSelectionNoHeaderMenuItem");
@@ -442,7 +444,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		bindAccelerator(Actions.MemoryInspectorPopupMenu_Find, findMenuItem);
 		bindAccelerator(Actions.MemoryInspectorPopupMenu_FindNext, findNextMenuItem);
 		bindAccelerator(Actions.MemoryInspectorPopupMenu_SelectNextUnknownBlock, selectNextUnknownBlockMenuItem);
-		bindAccelerator(Actions.MemoryInspectorPopupMenu_SelectSprites, selectSpritesMenuItem);
+		bindAccelerator(Actions.MemoryInspectorPopupMenu_SelectGraphics, selectGraphicsMenuItem);
 		bindAccelerator(Actions.MemoryInspectorPopupMenu_SelectAll, selectAllMenuItem);
 
 		for (int i = 0; i < TYPE_SUBMENU_ACTIONS.length; i++) {
@@ -543,7 +545,7 @@ public final class MemoryInspectorPanel extends JPanel {
 
 		popupMenu.addSeparator();
 		popupMenu.add(selectNextUnknownBlockMenuItem);
-		popupMenu.add(selectSpritesMenuItem);
+		popupMenu.add(selectGraphicsMenuItem);
 		popupMenu.add(selectAllMenuItem);
 
 		popupMenu.addSeparator();
@@ -1079,7 +1081,7 @@ public final class MemoryInspectorPanel extends JPanel {
 				&& !memoryInspectorState.getSegment().isEmpty();
 		selectAllMenuItem.setEnabled(hasSegment);
 		selectNextUnknownBlockMenuItem.setEnabled(hasSegment);
-		selectSpritesMenuItem.setEnabled(hasSegment);
+		selectGraphicsMenuItem.setEnabled(hasSegment);
 
 		boolean hasSelection = memoryInspectorState != null && memoryInspectorState.hasSelection();
 		saveSelectionNoHeaderMenuItem.setEnabled(hasSelection);

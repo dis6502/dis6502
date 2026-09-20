@@ -75,7 +75,7 @@ import com.wudsn.tools.dis6502.ui.ProfileDialog;
 import com.wudsn.tools.dis6502.ui.RawFileDialog;
 import com.wudsn.tools.dis6502.ui.SegmentPropertiesDialog;
 import com.wudsn.tools.dis6502.ui.SegmentWriteBootDiskDialog;
-import com.wudsn.tools.dis6502.ui.SelectSpritesDialog;
+import com.wudsn.tools.dis6502.ui.SelectGraphicsDialog;
 import com.wudsn.tools.dis6502.ui.UIApplication;
 import com.wudsn.tools.dis6502.ui.WorkspaceDialog;
 import com.wudsn.tools.dis6502.ui.XRefPanel;
@@ -156,10 +156,11 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * code trace at selection item, ported from
  * IDM_DUMP_START_CODE_TRACE/{@code MemoryInspector::Guess} via the new
  * {@code com.wudsn.tools.dis6502.model.GuessCodeLogic}.
- * {@link #performShowSelectSpritesDialog} wires the Select Sprites...
+ * {@link #performShowSelectGraphicsDialog} wires the Select Graphics...
  * item, ported from
  * IDM_DUMP_SELECT_SPRITES/{@code MemoryInspector::ShowSelectSpritesDialog}
- * via the new {@link SelectSpritesDialog}.
+ * via the new {@link SelectGraphicsDialog} - renamed from the C++
+ * source's "Sprite" terminology, see that class's own javadoc for why.
  *
  * @author Peter Dell
  */
@@ -336,7 +337,7 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.selectAllMenuItem.addActionListener(e -> mainWindow.memoryInspectorPanel.selectAll());
 		mainWindow.memoryInspectorPanel.selectNextUnknownBlockMenuItem
 				.addActionListener(e -> mainWindow.memoryInspectorPanel.selectNextUnknownBlock());
-		mainWindow.memoryInspectorPanel.selectSpritesMenuItem.addActionListener(e -> performShowSelectSpritesDialog());
+		mainWindow.memoryInspectorPanel.selectGraphicsMenuItem.addActionListener(e -> performShowSelectGraphicsDialog());
 		mainWindow.memoryInspectorPanel.saveSelectionNoHeaderMenuItem.addActionListener(e -> performSaveMemoryInspectorSelection(false));
 		mainWindow.memoryInspectorPanel.saveSelectionHeaderMenuItem.addActionListener(e -> performSaveMemoryInspectorSelection(true));
 		mainWindow.memoryInspectorPanel.setTypeSelectionListener(this::performSetMemoryInspectorType);
@@ -1301,11 +1302,11 @@ public final class Dis6502 {
 	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#select} every other
 	 * Select* action uses, so no {@link #updateDisassembly} call follows.
 	 */
-	private void performShowSelectSpritesDialog() {
+	private void performShowSelectGraphicsDialog() {
 		if (!memoryInspectorState.hasSegment()) {
 			return;
 		}
-		SelectSpritesDialog dialog = new SelectSpritesDialog(mainWindow.getFrame());
+		SelectGraphicsDialog dialog = new SelectGraphicsDialog(mainWindow.getFrame());
 		if (dialog.show(memoryInspectorState)) {
 			mainWindow.memoryInspectorPanel.select(dialog.getBegin(), dialog.getEnd());
 		}

@@ -19,8 +19,8 @@ import javax.swing.JPanel;
 
 /**
  * Renders a raw byte buffer as a picture in one of the 8 Atari ANTIC
- * graphics modes ({@link SpriteMode}), for visually picking out where a
- * sprite/character set/font starts and ends by eye - a byte range is
+ * graphics modes ({@link GraphicMode}), for visually picking out where a
+ * graphic/character set/font starts and ends by eye - a byte range is
  * selected by clicking or dragging down through the row it ends at.
  * <p>
  * Ported from ui/SpriteControlImpl.h/.cpp's pixel-decoding and mouse-
@@ -30,14 +30,14 @@ import javax.swing.JPanel;
  * identical per-mode {@code switch} cases (one call to one of two
  * bit-extraction macros, {@code SPRITE_GET_PIXEL_1}/{@code _2}, each);
  * this uses one generic loop parameterized by {@link
- * SpriteMode#bitsPerPixel}, painting directly into a {@link
+ * GraphicMode#bitsPerPixel}, painting directly into a {@link
  * BufferedImage} with real RGB colors instead of a mapped system
  * palette. The vertical scroll position ({@code wIndex}, the C++
  * control's own {@code WM_VSCROLL} handling) and the bytes-per-line
  * choice ({@code wNbBytes}, its {@code WM_HSCROLL} handling) are not
  * handled by this class at all - unlike the C++ control, which owns both
  * scrollbars itself, those are external {@link javax.swing.JScrollBar}/
- * {@link javax.swing.JSpinner} controls in {@link SelectSpritesDialog},
+ * {@link javax.swing.JSpinner} controls in {@link SelectGraphicsDialog},
  * which push their values in via {@link #setIndex}/{@link
  * #setNumberOfBytesPerLine} - the same "plain Swing controls instead of
  * a custom-painted control owning its own scrollbars" substitution this
@@ -52,7 +52,7 @@ import javax.swing.JPanel;
  *
  * @author Peter Dell
  */
-public final class SpritePanel extends JPanel {
+public final class GraphicPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
@@ -69,15 +69,15 @@ public final class SpritePanel extends JPanel {
 	private final BufferedImage image = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT, BufferedImage.TYPE_INT_RGB);
 
 	private byte[] buffer = new byte[0];
-	private SpriteMode mode = SpriteMode.ANTIC_F;
-	private int numberOfBytesPerLine = SpriteMode.ANTIC_F.bytesPerLine;
+	private GraphicMode mode = GraphicMode.ANTIC_F;
+	private int numberOfBytesPerLine = GraphicMode.ANTIC_F.bytesPerLine;
 	private int index;
 	private int end = NO_SELECTION;
 
 	private Runnable selectionChangedListener = () -> {
 	};
 
-	public SpritePanel() {
+	public GraphicPanel() {
 		setPreferredSize(new Dimension(IMAGE_WIDTH * ZOOM, IMAGE_HEIGHT * ZOOM));
 		setBackground(Color.BLACK);
 
@@ -112,12 +112,12 @@ public final class SpritePanel extends JPanel {
 		render();
 	}
 
-	public SpriteMode getMode() {
+	public GraphicMode getMode() {
 		return mode;
 	}
 
-	/** Ported from SpriteControlImpl::SetMode, minus the wNbBytes clamping - see SelectSpritesDialog's own use of this. */
-	public void setMode(SpriteMode mode) {
+	/** Ported from SpriteControlImpl::SetMode, minus the wNbBytes clamping - see SelectGraphicsDialog's own use of this. */
+	public void setMode(GraphicMode mode) {
 		this.mode = mode;
 		render();
 	}

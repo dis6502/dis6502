@@ -78,7 +78,7 @@ import com.wudsn.tools.dis6502.model.ComputerSystemType;
  * {@code Graphics2D} with {@link RenderingHints#VALUE_INTERPOLATION_NEAREST_NEIGHBOR}
  * scales it by simple pixel replication, which stays crisp and blocky at
  * any display scale instead of reintroducing hinting-related artifacts -
- * the same technique {@link SpritePanel#paintComponent} already uses for
+ * the same technique {@link GraphicPanel#paintComponent} already uses for
  * the same reason.
  * <p>
  * No TTF is available for Oric/Unknown - those fall back to a plain
@@ -100,7 +100,7 @@ import com.wudsn.tools.dis6502.model.ComputerSystemType;
  * passed to {@link Font#deriveFont}, not a separate scaling step those
  * callers used to do themselves) - the C++ source's own {@code "TODO:
  * Test this, the actual dialog is too small!"} comment already justified
- * that adjustment for {@link SpritePanel}, and the same reasoning applies
+ * that adjustment for {@link GraphicPanel}, and the same reasoning applies
  * here. {@link #getAwtFont()} exposes the plain derived {@link Font} for
  * components that just need normal Unicode text at the real system font's
  * style (e.g. {@link SegmentListPanel}'s segment metadata, which is

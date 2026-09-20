@@ -7,14 +7,17 @@ package com.wudsn.tools.dis6502.ui;
 
 /**
  * The characteristics of one Atari ANTIC graphics mode (8 through 15), as
- * used to render a raw byte buffer as a picture in {@link SpritePanel}.
+ * used to render a raw byte buffer as a picture in {@link GraphicPanel}.
  * <p>
  * Ported from the {@code wSpriteNbRows}/{@code wSpriteNbLines}/{@code
  * wSpriteNbColors}/{@code wSpriteNbBytesPerLine}/{@code
  * wSpriteNbPixelsPerByte}/{@code wSpritePixelWidth}/{@code
  * wSpritePixelHeight} parallel arrays in ui/SpriteControlImpl.cpp, and the
  * {@code IDS_SPRITE_ANTIC_8}..{@code _F} resource strings (dis6502.rc) for
- * {@link #label}. {@code colors} is kept for fidelity even though nothing
+ * {@link #label} - see {@link SelectGraphicsDialog}'s own javadoc for why
+ * this port renames the C++ source's "Sprite" naming to "Graphic"
+ * throughout, despite those citations staying accurate to the real C++
+ * identifiers. {@code colors} is kept for fidelity even though nothing
  * in this port (or, as far as {@link #bitsPerPixel} suggests, the C++
  * source either) actually uses it for pixel decoding - that is fixed per
  * mode via {@link #bitsPerPixel}, matching the C++ version's hardcoded
@@ -27,7 +30,7 @@ package com.wudsn.tools.dis6502.ui;
  *
  * @author Peter Dell
  */
-public enum SpriteMode {
+public enum GraphicMode {
 
 	ANTIC_8(8, "ANTIC 8 ( 40 x  24 Pixels, 4 Colors)", 4, 10, 4, 8, 8),
 	ANTIC_9(9, "ANTIC 9 ( 80 x  48 Pixels, 2 Colors)", 2, 10, 8, 4, 4),
@@ -50,7 +53,7 @@ public enum SpriteMode {
 	/** Height, in screen pixels, of one logical pixel in this mode - also the vertical step between displayed buffer lines. */
 	public final int pixelHeight;
 
-	SpriteMode(int anticMode, String label, int colors, int bytesPerLine, int pixelsPerByte, int pixelWidth, int pixelHeight) {
+	GraphicMode(int anticMode, String label, int colors, int bytesPerLine, int pixelsPerByte, int pixelWidth, int pixelHeight) {
 		this.anticMode = anticMode;
 		this.label = label;
 		this.colors = colors;
@@ -65,8 +68,8 @@ public enum SpriteMode {
 		return colors == 4 ? 2 : 1;
 	}
 
-	public static SpriteMode forAnticMode(int anticMode) {
-		for (SpriteMode mode : values()) {
+	public static GraphicMode forAnticMode(int anticMode) {
+		for (GraphicMode mode : values()) {
 			if (mode.anticMode == anticMode) {
 				return mode;
 			}
