@@ -53,7 +53,7 @@ public final class MainWindow {
 		// javadoc for why) being the app's own icon resource in the .rc; the window/taskbar
 		// icon has no dedicated C++ call site to port from - Win32 picks IDI_DIS6502 up
 		// automatically as the main window class's registered icon.
-		frame.setIconImage(ElementFactory.createImageIcon("images/dis6502.png").getImage());
+		frame.setIconImage(ElementFactory.createImageIcon("images/main-32x32.png").getImage());
 		frame.setJMenuBar(mainMenu.menuBar);
 		frame.setContentPane(createContentPane());
 		frame.setSize(1100, 750);

@@ -65,7 +65,7 @@ public final class AboutDialog extends JDialog {
 		contentPanel.setBackground(Color.WHITE);
 		contentPanel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 
-		ImageIcon dis6502Icon = ElementFactory.createImageIcon("images/dis6502.png");
+		ImageIcon dis6502Icon = ElementFactory.createImageIcon("images/main-32x32.png");
 		ImageIcon alfredBitmap = ElementFactory.createImageIcon("images/alfred.png");
 
 		JPanel headerPanel = new JPanel(new BorderLayout(8, 0));
