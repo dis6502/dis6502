@@ -10,7 +10,7 @@ import com.wudsn.tools.dis6502.model.Segment;
 
 /**
  * A {@link HexGridByteSource} backed by a workspace {@link Segment} - a thin
- * adapter, added only so {@link MemoryInspectorGridPanel} does not need to
+ * adapter, added only so {@link HexGridPanel} does not need to
  * depend on {@link Segment} directly; nothing was added to {@link Segment}'s
  * own public API for this.
  *

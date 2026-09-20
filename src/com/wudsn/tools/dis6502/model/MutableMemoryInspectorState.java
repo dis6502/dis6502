@@ -225,7 +225,7 @@ public final class MutableMemoryInspectorState implements MemoryInspectorState {
 	 * ASCII pane moves byte-wise for all six movements, with no nibble
 	 * concept. {@code bytesPerLine} is the grid's current line width - a
 	 * UI-computed fact ({@code
-	 * com.wudsn.tools.dis6502.ui.MemoryInspectorGridPanel#getBytesPerLine()})
+	 * com.wudsn.tools.dis6502.ui.HexGridPanel#getBytesPerLine()})
 	 * that this model class does not own, so it is passed in for the
 	 * {@code UP}/{@code DOWN} whole-line jump rather than hardcoded. Returns
 	 * {@code false} (a no-op) if edit mode is not active.

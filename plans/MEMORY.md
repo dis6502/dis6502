@@ -43,7 +43,8 @@ headless unit tests:
    callers. That class was later split further into a `MemoryInspectorState`
    read-only interface plus a `MutableMemoryInspectorState` implementation,
    so UI code that only needs to *read* the state (e.g.
-   `MemoryInspectorGridPanel`) can depend on the narrower interface.
+   `HexGridPanel`, then still named `MemoryInspectorGridPanel`) can depend
+   on the narrower interface.
 
 The durable takeaway: being conceptually "workspace-wide" does not mean a
 class's fields should physically live on `Workspace`. `Workspace` should
@@ -169,7 +170,7 @@ Windows ClearType/subpixel antialiasing blurs this small pixel-art font
 into illegible dots, even though the same rendering looks fine on the
 offscreen images used to develop and verify the font support. Every panel
 that shows this font (`SegmentListPanel`, `XRefPanel`,
-`MemoryInspectorGridPanel`, `DisassemblyGridPanel`, `LogPanel`) works around
+`HexGridPanel`, `DisassemblyGridPanel`, `LogPanel`) works around
 this the same way: paint the text explicitly via `ComputerFont#drawText`
 (which disables antialiasing before drawing) through a small custom cell
 renderer (`ComputerFontListCellRenderer`, shared by the `JList`-based

@@ -70,7 +70,7 @@ public interface MemoryInspectorState {
 	 * Which part of an edited byte's cell the Memory Inspector's edit-mode
 	 * cursor is on - matches the C++ source's {@code wEditedPart} (0/1/2). Used
 	 * by {@link MutableMemoryInspectorState}'s edit-mode state/methods and by
-	 * {@link com.wudsn.tools.dis6502.ui.MemoryInspectorGridPanel}'s cursor
+	 * {@link com.wudsn.tools.dis6502.ui.HexGridPanel}'s cursor
 	 * painting.
 	 */
 	enum EditPane {

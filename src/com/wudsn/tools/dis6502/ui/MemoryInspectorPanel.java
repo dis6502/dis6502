@@ -55,8 +55,8 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * character transform for "internal" (Atari ANTIC screen code) mode is copied
  * verbatim from {@code MemoryInspectorControlImpl.cpp}'s paint routine, the one
  * piece of that routine's rendering this class replicates.
- * {@link MemoryInspectorGridPanel}'s own built-in drag-select mouse handling
- * (a {@link MemoryInspectorGridPanel.DragSelectionListener} set up in this
+ * {@link HexGridPanel}'s own built-in drag-select mouse handling
+ * (a {@link HexGridPanel.DragSelectionListener} set up in this
  * class's constructor, calling {@link #select}) ports {@code
  * MemoryInspectorControlImpl::LButtonDown}/{@code SetEndOfSelection}, letting
  * the user click or drag in the grid to select a byte range directly, on top
@@ -140,11 +140,11 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * class's javadoc for what it does and a stale-reference issue found (but only
  * fixed in this port, not the C++ source, which needs an interactive GUI run to
  * confirm) while porting it. The hex dump itself is
- * {@link MemoryInspectorGridPanel}, a custom-painted, read-only grid using the
+ * {@link HexGridPanel}, a custom-painted, read-only grid using the
  * real per-computer-system bitmap glyphs from {@link ComputerFont} - see that
  * class's javadoc for why a real font asset is needed at all (a plain Java font
  * cannot display ATASCII/PETSCII characters) and
- * {@link MemoryInspectorGridPanel}'s own javadoc for exactly which parts of
+ * {@link HexGridPanel}'s own javadoc for exactly which parts of
  * {@code MemoryInspectorControlImpl.cpp}'s custom control this replicates (the
  * paint routine) and which it does not (mouse-drag selection, in-place editing
  * - neither existed in this port before this rewrite either).
@@ -181,14 +181,14 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * MutableMemoryInspectorState#typeEditChar}, applying {@code Char}'s {@link
  * MemoryType#SBYTE} ASCII transform via {@link
  * MemoryType#toSbyteInternalCode}), not here or in {@link
- * MemoryInspectorGridPanel} - a deliberate departure from the C++ design (see
+ * HexGridPanel} - a deliberate departure from the C++ design (see
  * {@link MutableMemoryInspectorState}'s own javadoc) so that logic can be exercised
  * by a plain, headless unit test. This class keeps only the Swing-specific
  * glue: {@link #handleEditKeyPressed}/{@link #handleEditKeyTyped} translate
  * a raw {@link java.awt.event.KeyEvent} into a semantic call on {@link
- * #memoryInspectorState}, then tell {@link MemoryInspectorGridPanel} to
- * notice via {@link MemoryInspectorGridPanel#refreshEditCursor}/{@link
- * MemoryInspectorGridPanel#refreshEditMode} - that class reads the current
+ * #memoryInspectorState}, then tell {@link HexGridPanel} to
+ * notice via {@link HexGridPanel#refreshEditCursor}/{@link
+ * HexGridPanel#refreshEditMode} - that class reads the current
  * selection/edit-mode values live off {@link #memoryInspectorState} itself
  * (through {@link com.wudsn.tools.dis6502.model.MemoryInspectorState},
  * narrowing what a pure painter can do to it) rather than being handed each
@@ -233,7 +233,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	// one, which paints a bevel/etched box around the whole panel on this
 	// project's native (Windows) look and feel - not wanted, just the title text.
 	private final TitledBorder titledBorder = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(), "No segment selected.");
-	private final MemoryInspectorGridPanel grid = new MemoryInspectorGridPanel();
+	private final HexGridPanel grid = new HexGridPanel();
 
 	/**
 	 * Toggles {@link #setDisplayAsScreenCode} - moved here from a {@code
@@ -351,7 +351,7 @@ public final class MemoryInspectorPanel extends JPanel {
 			}
 		};
 		grid.addMouseListener(mouseHandler);
-		grid.setDragSelectionListener(new MemoryInspectorGridPanel.DragSelectionListener() {
+		grid.setDragSelectionListener(new HexGridPanel.DragSelectionListener() {
 			@Override
 			public void onDragSelectionChanged(int begin, int end) {
 				select(begin, end);
@@ -894,7 +894,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * character double-clicked.
 	 */
 	private void enterEditModeAtPoint(int x, int y) {
-		MemoryInspectorGridPanel.CellHit hit = grid.cellAtPoint(x, y);
+		HexGridPanel.CellHit hit = grid.cellAtPoint(x, y);
 		if (hit == null) {
 			return;
 		}

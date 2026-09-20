@@ -25,7 +25,7 @@ import com.wudsn.tools.dis6502.model.DisassemblySectionType;
 /**
  * A read-only, custom-painted list of disassembly listing lines, drawn with
  * the real per-computer-system font from {@link ComputerFont} - the same
- * reason {@link MemoryInspectorGridPanel} needs it (see that class's/{@link
+ * reason {@link HexGridPanel} needs it (see that class's/{@link
  * ComputerFont}'s javadoc): the C++ source draws the disassembly listing
  * with the very same {@code ComputerFont}-derived font as the memory
  * inspector ({@code DisassemblyWindow.cpp}'s {@code
@@ -39,7 +39,7 @@ import com.wudsn.tools.dis6502.model.DisassemblySectionType;
  * <p>
  * Ported from ui/DisassemblyControlImpl.cpp's paint routine: virtualized
  * scrolling relies on Swing's clip-rect-based repaint the same way {@link
- * MemoryInspectorGridPanel} does, and inline editing/the full popup menu
+ * HexGridPanel} does, and inline editing/the full popup menu
  * are not ported - {@link DisassemblyPanel} predates this class and never
  * had them either; {@link #highlightLine}/{@link #scrollLineToVisible}
  * carry over from it, used for both search-result/cross-reference

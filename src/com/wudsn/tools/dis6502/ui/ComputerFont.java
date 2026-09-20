@@ -95,7 +95,7 @@ import com.wudsn.tools.dis6502.model.ComputerSystemType;
  * two systems.
  * <p>
  * {@link #getGlyphWidth}/{@link #getGlyphHeight} already include the 2x
- * on-screen scale {@link MemoryInspectorGridPanel}/{@link
+ * on-screen scale {@link HexGridPanel}/{@link
  * DisassemblyGridPanel} need for legibility (baked into the point size
  * passed to {@link Font#deriveFont}, not a separate scaling step those
  * callers used to do themselves) - the C++ source's own {@code "TODO:

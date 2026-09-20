@@ -28,16 +28,17 @@ import com.wudsn.tools.dis6502.model.MemoryInspectorState.EditPane;
 import com.wudsn.tools.dis6502.model.MemoryType;
 
 /**
- * A read-only, custom-painted hex/ASCII dump of a segment's bytes, drawn with
- * the real per-computer-system font from {@link ComputerFont} instead of a Java
- * system font - so every byte value (not just the ones that happen to coincide
- * with printable ASCII) renders as its actual Atari ATASCII/C64 PETSCII
- * character, matching what dis6502.exe itself shows.
+ * A read-only, custom-painted hex/ASCII dump of a {@link #setByteSource}'s
+ * bytes, drawn with the real per-computer-system font from {@link
+ * ComputerFont} instead of a Java system font - so every byte value (not
+ * just the ones that happen to coincide with printable ASCII) renders as its
+ * actual Atari ATASCII/C64 PETSCII character, matching what dis6502.exe
+ * itself shows.
  * <p>
  * Ported from ui/MemoryInspectorControlImpl.cpp's {@code PrintLine} (address,
  * hex bytes color-coded by {@link MemoryType}, and the ASCII/ ATASCII column) -
- * not the rest of that class: this renders every line of the segment as one
- * plain (if tall) component inside a {@link javax.swing.JScrollPane}, relying
+ * not the rest of that class: this renders every line of the byte source as
+ * one plain (if tall) component inside a {@link javax.swing.JScrollPane}, relying
  * on Swing's own clip-rect-based repaint for virtualization instead of
  * {@code PrintLine}/{@code ScrollUp}/{@code
  * ScrollDown}'s manual line-range/{@code BitBlt} scrolling.
@@ -122,7 +123,7 @@ import com.wudsn.tools.dis6502.model.MemoryType;
  *
  * @author Peter Dell
  */
-public final class MemoryInspectorGridPanel extends JPanel implements Scrollable {
+public final class HexGridPanel extends JPanel implements Scrollable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -154,7 +155,7 @@ public final class MemoryInspectorGridPanel extends JPanel implements Scrollable
 	private DragSelectionListener dragSelectionListener;
 	private int selectionAnchorOffset = -1;
 
-	public MemoryInspectorGridPanel() {
+	public HexGridPanel() {
 		setBackground(Color.WHITE);
 		setFocusable(true);
 		setComputerFont(ComputerFont.get(ComputerSystemType.ATARI800, false));

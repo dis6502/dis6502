@@ -137,8 +137,10 @@ here - both repos continue to change.
   plain numeric Start/End Offset `JTextField`s instead, because a reusable,
   generic version of the memory inspector's grid control didn't exist yet
   (`MemoryInspectorGridPanel` was specific to the main Memory Inspector
-  panel, hard-typed to `Segment`/`MemoryInspectorState`).
-- **Fix**: generalized `MemoryInspectorGridPanel` behind two new small
+  panel, hard-typed to `Segment`/`MemoryInspectorState`; renamed
+  `HexGridPanel` the same day once generalized, see below - used by its
+  current name throughout the rest of this entry).
+- **Fix**: generalized the grid behind two new small
   abstractions and moved its drag-select mouse handling onto the grid
   itself (previously duplicated per-caller in `MemoryInspectorPanel`):
   - `HexGridByteSource` (new `ui` interface: `getSize()`/`getData()`/
@@ -158,7 +160,7 @@ here - both repos continue to change.
     owns a second, fully independent instance - never touching
     `Workspace`, matching how the C++ `MemoryInspectorControl` is one
     reusable class with an independent instance per window.
-  - `MemoryInspectorGridPanel.DragSelectionListener` (`onDragSelectionChanged`/
+  - `HexGridPanel.DragSelectionListener` (`onDragSelectionChanged`/
     `onDragSelectionFinished`) plus a `MouseAdapter` built into the grid's
     own constructor reproduce the anchor-tracking drag logic that used to
     live in `MemoryInspectorPanel` (`beginByteSelection`/
@@ -170,7 +172,7 @@ here - both repos continue to change.
     `MemoryInspectorControl::GetSelection(..., bDefaultAll=true)` - the C++
     dialog never listens for `SELECTION_CHANGED` either.
   - Auto-scroll-past-viewport-edge while dragging stays out of scope
-    (recorded in `MemoryInspectorGridPanel`'s class javadoc) - this was
+    (recorded in `HexGridPanel`'s class javadoc) - this was
     already a pre-existing, shipped divergence from C++'s
     `SetEndOfSelection`/`VScroll` behavior (`offsetAtPoint` just clamps),
     now simply shared by two callers instead of one, not a new gap.
@@ -181,7 +183,7 @@ here - both repos continue to change.
   extracted swap/clamp arithmetic), and an ad hoc off-screen smoke test
   (scratch, not committed, per the porting guide's testing-strategy
   convention) that constructs `DiskImageSectorsDialog`, paints
-  `MemoryInspectorGridPanel` with a synthetic `DiskSectorByteSource`, and
+  `HexGridPanel` with a synthetic `DiskSectorByteSource`, and
   confirms `offsetAtPoint` returns in-range offsets - full interactive
   drag-select/rendering verification in the real running app is still a
   manual follow-up.

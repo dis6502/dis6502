@@ -133,7 +133,7 @@ public final class MemoryInspectorStateTest {
 	 * Confirms {@code bytesPerLine} is genuinely read from the call site
 	 * rather than a leftover hardcoded 16 - the caller,
 	 * {@code com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}, passes
-	 * whatever {@code MemoryInspectorGridPanel#getBytesPerLine()} currently
+	 * whatever {@code HexGridPanel#getBytesPerLine()} currently
 	 * reports, which can be 8 once the grid's own responsive layout has
 	 * narrowed it.
 	 */

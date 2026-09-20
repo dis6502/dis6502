@@ -11,7 +11,7 @@ import com.wudsn.tools.dis6502.model.MemoryType;
  * A {@link HexGridByteSource} backed by a raw disk sector buffer, used by
  * {@link DiskImageSectorsDialog}. A disk sector has no {@link MemoryType}
  * classification, so {@link #getType} always returns {@link
- * MemoryType#UNKNOWN} - {@link MemoryInspectorGridPanel} already paints that
+ * MemoryType#UNKNOWN} - {@link HexGridPanel} already paints that
  * type in plain black, so no separate "coloring off" mode is needed.
  *
  * @author Peter Dell

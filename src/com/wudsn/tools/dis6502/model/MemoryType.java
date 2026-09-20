@@ -72,7 +72,7 @@ public enum MemoryType {
 	 * byte's cell, used by {@link MutableMemoryInspectorState#typeEditChar}. This
 	 * is the WRITE direction, gated per-byte on its type and only ever given a
 	 * typed ASCII character (0-127); it is deliberately kept separate from
-	 * {@code com.wudsn.tools.dis6502.ui.MemoryInspectorGridPanel}'s
+	 * {@code com.wudsn.tools.dis6502.ui.HexGridPanel}'s
 	 * {@code toInternalCode}, the DISPLAY direction, which is driven by the
 	 * global "display as screen code" toggle and covers the full 0-255 byte
 	 * range. The two are mathematical inverses of each other on the 0-127

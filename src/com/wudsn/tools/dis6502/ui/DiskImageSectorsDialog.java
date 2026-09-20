@@ -47,7 +47,7 @@ import com.wudsn.tools.dis6502.model.MutableByteRangeSelection;
  * controller's non-UI state ({@link ImgRWPacket}, the current sector
  * number/size, the picked items) has no reason to be a separate object
  * here. The sector's bytes are shown via the same {@link
- * MemoryInspectorGridPanel} the main Memory Inspector uses (fed by a {@link
+ * HexGridPanel} the main Memory Inspector uses (fed by a {@link
  * DiskSectorByteSource} rather than a {@code Segment}, and its own
  * independent {@link MutableByteRangeSelection} rather than the workspace's),
  * with the same drag-to-select behavior as the C++ version's {@code
@@ -88,7 +88,7 @@ public final class DiskImageSectorsDialog extends JDialog {
 	private final JTextField diskImageFilePathField = new JTextField();
 	private final SpinnerNumberModel sectorSpinnerModel = new SpinnerNumberModel(1, 1, 1, 1);
 	private final JSpinner sectorSpinner = new JSpinner(sectorSpinnerModel);
-	private final MemoryInspectorGridPanel grid = new MemoryInspectorGridPanel();
+	private final HexGridPanel grid = new HexGridPanel();
 	private final MutableByteRangeSelection selection = new MutableByteRangeSelection();
 	private final JTextField addressField = new JTextField(6);
 	// Fully qualified: com.wudsn.tools.base.Actions is already imported as "Actions" for ButtonBar_OK/Cancel below.
@@ -207,7 +207,7 @@ public final class DiskImageSectorsDialog extends JDialog {
 		setLocationRelativeTo(owner);
 	}
 
-	/** The font the sector's bytes are painted with - see {@link MemoryInspectorGridPanel#setComputerFont}. */
+	/** The font the sector's bytes are painted with - see {@link HexGridPanel#setComputerFont}. */
 	public void setComputerFont(ComputerFont computerFont) {
 		grid.setComputerFont(computerFont);
 	}
