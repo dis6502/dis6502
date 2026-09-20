@@ -188,6 +188,58 @@ here - both repos continue to change.
   drag-select/rendering verification in the real running app is still a
   manual follow-up.
 
+### 7. The main window's part-window headers are missing their C++ background coloring - and three of the five have no header at all
+
+- C++'s `Main::PaintMainWindow` (`src/ui/Main.cpp:322-429`) paints a colored
+  title bar above each of the five part windows, each with its own flat
+  background color and black (or, for the memory inspector, focus-dependent
+  black/gray) text:
+  - Segment List: `RGB(255,255,0)` (yellow) - `Main.cpp:336`
+  - Disassembly: `RGB(0,255,0)` (green) - `Main.cpp:365`
+  - Memory Inspector ("Dump"): `RGB(0,255,255)` (cyan) - `Main.cpp:375`
+  - Cross-reference ("XRef"): `RGB(255,192,192)` (light pink) - `Main.cpp:410`
+  - Log: `RGB(192,192,255)` (light lavender) - `Main.cpp:418`
+
+  (Confirmed against a real build's screenshot, not just the source -
+  matches exactly.)
+- **In Java, only two of the five panels show a header at all**, and neither
+  is colored:
+  - `MemoryInspectorPanel` (`MemoryInspectorPanel.java:235`) and `XRefPanel`
+    (`XRefPanel.java:48`) each use a plain `javax.swing.border.TitledBorder`
+    (`BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),
+    ...)`) - correct title text, but rendered in the Look and Feel's default
+    title color/font, with no per-panel background color at all.
+  - `SegmentListPanel`, `DisassemblyPanel`, and `LogPanel` have **no header
+    of any kind** - no `TitledBorder`, no label, nothing; confirmed by grep,
+    no `JLabel`/`TitledBorder` usage exists in any of the three files.
+- **The C++ title text itself was already ported into `Text.properties` but
+  is entirely unused**: `Text.IDS_SEGMENT_TITLE`/
+  `IDS_SEGMENT_TITLE_NO_SEGMENTS_LOADED`, `IDS_DIS_TITLE`, and `IDS_LOG_TITLE`
+  (`Text.java`/`Text.properties`) have zero references anywhere under `ui/`
+  or in `Dis6502.java` - confirmed by grep. (`MemoryInspectorPanel`'s and
+  `XRefPanel`'s own title text is built from hardcoded literals/`String
+  .format` calls instead of the matching `IDS_DUMP_TITLE_*`/`IDS_XREF_TITLE_*`
+  constants that were also already ported - a smaller, related loose end
+  worth fixing alongside this.)
+- **Impact**: beyond the missing color-coding itself, three of the five
+  panels in the main window currently show no title/status line at all,
+  where C++ always shows one (e.g. "No segments loaded" / "Disassembly" /
+  "Log") - a bigger functional gap than "just" cosmetic coloring, since the
+  segment-list and log panels lose useful at-a-glance status text (segment
+  count/filename, a static "Disassembly" label) as well as the color coding.
+- **Fix shape**: give each of the five part panels a `TitledBorder` (as
+  `MemoryInspectorPanel`/`XRefPanel` already do) with a custom
+  `Font`/background matching the C++ RGB values above - `TitledBorder`
+  doesn't support a background fill directly, so this likely needs either a
+  small custom `Border`/header `JPanel` (a colored `JLabel` strip above each
+  scroll pane, matching how `Main.cpp` paints a filled rectangle behind the
+  text) rather than `TitledBorder`'s outline-only title. Wire
+  `SegmentListPanel`/`DisassemblyPanel`/`LogPanel` up to the already-ported
+  `Text.IDS_SEGMENT_TITLE*`/`IDS_DIS_TITLE`/`IDS_LOG_TITLE` constants at the
+  same time, and switch `MemoryInspectorPanel`/`XRefPanel` to their matching
+  `IDS_DUMP_TITLE_*`/`IDS_XREF_TITLE_*` constants instead of the current
+  hardcoded literals, for full fidelity.
+
 ## Divergences where the Java port fixed a real C++ bug (not a Java gap)
 
 Per the porting guide's bug-handling policy, these are intentional
@@ -396,8 +448,12 @@ doesn't support, without a separate decision to add a genuinely new feature:
    blocked on `MemoryBlock` gaining real resize support; needs a scoping
    decision (faithful-but-broken port vs. a fixed reimplementation) before
    any code is written, per the porting guide's process-lesson rule.
-6. **Gap #4** (`LogPanel` columns/coloring) - cosmetic, low risk, low
+6. **Gap #7** (part-window header coloring, and three panels missing a
+   header entirely) - moderate effort (touches all five main-window panels),
+   but more than cosmetic: three panels currently show no status text at
+   all, where C++ always does.
+7. **Gap #4** (`LogPanel` columns/coloring) - cosmetic, low risk, low
    urgency.
-7. **Gap #5** (`MainUITest.cpp` self-test harness) - needs an explicit
+8. **Gap #5** (`MainUITest.cpp` self-test harness) - needs an explicit
    "superseded by JUnit, won't port" decision recorded somewhere (this
    document or a class javadoc) rather than staying an implicit gap.
