@@ -273,7 +273,7 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 		for (WorkspaceProperty property : propertyChangeEvents) {
 			text.append(property).append(' ');
 		}
-		Log.logInfo("Workspace.flushEvents: Properties {0}", new Object[] { text });
+		// Log.logInfo("Workspace.flushEvents: Properties {0}", new Object[] { text });
 
 		List<WorkspaceProperty> events = new ArrayList<>(propertyChangeEvents);
 		propertyChangeEvents.clear();

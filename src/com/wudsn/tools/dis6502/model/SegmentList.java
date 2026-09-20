@@ -659,7 +659,7 @@ public final class SegmentList implements Xml.Serializable {
 		for (Property property : propertyChangeEvents) {
 			text.append(property).append(' ');
 		}
-		Log.logInfo("SegmentList.flushEvents: Properties {0}", new Object[] { text });
+		// Log.logInfo("SegmentList.flushEvents: Properties {0}", new Object[] { text });
 
 		List<Property> events = new ArrayList<>(propertyChangeEvents);
 		for (SegmentListChangedListener listener : listeners) {
