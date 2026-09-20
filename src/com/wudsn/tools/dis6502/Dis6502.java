@@ -252,6 +252,9 @@ public final class Dis6502 {
 			if (properties.contains(WorkspaceProperty.SYSTEM_EQUATES) || properties.contains(WorkspaceProperty.USER_EQUATES)) {
 				updateEquatesMenuState();
 			}
+			if (properties.contains(WorkspaceProperty.SEGMENTS)) {
+				updateFileMenuState();
+			}
 			if (properties.contains(WorkspaceProperty.SELECTED_SEGMENT)) {
 				updateMemoryInspectorSegment();
 			}
@@ -352,6 +355,7 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.startCodeTraceMenuItem.addActionListener(e -> performGuessCode());
 
 		refreshMRUMenus();
+		updateFileMenuState();
 		updateEquatesMenuState();
 		updateFonts();
 		updateMemoryInspectorSegment();
@@ -389,6 +393,25 @@ public final class Dis6502 {
 		mainWindow.mainMenu.clearUserEquatesMenuItem.setEnabled(hasUserEquates);
 		mainWindow.mainMenu.saveUserEquatesMenuItem.setEnabled(hasUserEquates);
 		mainWindow.mainMenu.exportUserEquatesMenuItem.setEnabled(hasUserEquates);
+	}
+
+	/**
+	 * Disables Save Disassembly Files/Write Boot Disk while the workspace has
+	 * no segments. In the C++ source's {@code WM_INITMENU} handler ({@code
+	 * ui/Main.cpp}), {@code ID_FILE_SAVE_DISASSEMBLY_FILES} is not gated at
+	 * all, and {@code ID_FILE_SAVE_DISK_IMAGE_BOOT_SECTORS} ("Write Boot
+	 * Disk" here - see {@link Actions}'s own javadoc for the naming) is gated
+	 * on the memory inspector's current selection having a segment, not on
+	 * the segment list's own emptiness. This port gates both directly on the
+	 * segment list instead, matching {@code ID_FILE_SAVE_WORKSPACE}/{@code
+	 * _AS}'s own existing C++ gating condition - simpler, and avoiding the
+	 * awkwardness the C++ source's own {@code // TODO Move to segment context
+	 * menu} comment on that line already flags.
+	 */
+	private void updateFileMenuState() {
+		boolean hasSegments = !workspace.getSegmentList().isEmpty();
+		mainWindow.mainMenu.saveDisassemblyFilesMenuItem.setEnabled(hasSegments);
+		mainWindow.mainMenu.writeBootDiskMenuItem.setEnabled(hasSegments);
 	}
 
 	/** Repopulates the "Recent Workspaces"/"Recent Files" menus from {@link #mruController}. */
