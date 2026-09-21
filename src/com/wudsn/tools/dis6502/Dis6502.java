@@ -24,6 +24,7 @@ import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.wudsn.tools.base.repository.Message;
 import com.wudsn.tools.dis6502.model.AtariDisk;
 import com.wudsn.tools.dis6502.model.AtariError;
 import com.wudsn.tools.dis6502.model.AtariFile;
@@ -545,6 +546,7 @@ public final class Dis6502 {
 			return;
 		}
 		File file = fileChooser.getSelectedFile();
+		application.sendMessage(getFileTypeOpenMessage(fileType), file.getPath());
 
 		if (!add) {
 			workspace.init();
@@ -589,6 +591,7 @@ public final class Dis6502 {
 			return;
 		}
 		File file = fileChooser.getSelectedFile();
+		application.sendMessage(Messages.I022, file.getPath());
 
 		RawFileDialog dialog = new RawFileDialog(mainWindow.getFrame());
 		boolean confirmed;
@@ -673,6 +676,7 @@ public final class Dis6502 {
 		if (!confirmed) {
 			return;
 		}
+		application.sendMessage(Messages.I019, dialog.getExecutableFileName(), file.getPath());
 
 		byte[] fileBuffer;
 		try {
@@ -736,6 +740,7 @@ public final class Dis6502 {
 			return;
 		}
 		File file = fileChooser.getSelectedFile();
+		application.sendMessage(Messages.I018, file.getPath());
 
 		ImgInfo info = new ImgInfo();
 		DiskImage.getInfo(file.getPath(), info);
@@ -822,6 +827,7 @@ public final class Dis6502 {
 		if (items.isEmpty()) {
 			return;
 		}
+		application.sendMessage(Messages.I020, String.valueOf(items.size()), file.getPath());
 
 		if (!add) {
 			workspace.init();
@@ -868,6 +874,20 @@ public final class Dis6502 {
 			return "Cassette Image File";
 		default:
 			return "File";
+		}
+	}
+
+	/** {@link #performOpenFile}'s per-{@link FileType} "opening file" log message, matching {@code MainFile::OpenFile}'s dispatch to {@code OpenExecutableFile}/{@code OpenRomImageFile}/{@code OpenCassetteImageFile}. */
+	private static Message getFileTypeOpenMessage(FileType fileType) {
+		switch (fileType) {
+		case EXECUTABLE_FILE:
+			return Messages.I021;
+		case ROM_IMAGE_FILE:
+			return Messages.I023;
+		case CASSETTE_IMAGE_FILE:
+			return Messages.I017;
+		default:
+			throw new IllegalArgumentException("Parameter 'fileType' has unsupported value " + fileType + ".");
 		}
 	}
 
@@ -1470,7 +1490,7 @@ public final class Dis6502 {
 		}
 		File file = fileChooser.getSelectedFile();
 		try {
-			new DisassemblyResultFile().saveListing(workspace.getDisassemblyResult(), workspace.getProfile(), file);
+			new DisassemblyResultFile(application).saveListing(workspace.getDisassemblyResult(), workspace.getProfile(), file);
 		} catch (IOException ex) {
 			application.sendErrorMessage(ex);
 		}

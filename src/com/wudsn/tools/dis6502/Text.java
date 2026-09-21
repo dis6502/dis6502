@@ -95,14 +95,6 @@ public final class Text extends NLS {
 	public static String IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_INFO;
 	public static String IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_PASS;
 	public static String IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_SEGMENT;
-	public static String IDS_LOG_OPEN_CASSETTE_FILE;
-	public static String IDS_LOG_OPEN_DISK_IMAGE_BOOT_SECTORS;
-	public static String IDS_LOG_OPEN_DISK_IMAGE_EXECUTABLE_FILE;
-	public static String IDS_LOG_OPEN_DISK_IMAGE_SECTORS;
-	public static String IDS_LOG_OPEN_EXECUTABLE_FILE;
-	public static String IDS_LOG_OPEN_RAW_FILE;
-	public static String IDS_LOG_OPEN_ROM_IMAGE_FILE;
-	public static String IDS_LOG_SAVE_DISASSEMBLY;
 	public static String IDS_LOG_TITLE;
 	public static String IDS_MAIN_FILE_NEW_WORKSPACE_MESSAGE;
 	public static String IDS_MAIN_FILE_NEW_WORKSPACE_TITLE;

@@ -83,6 +83,38 @@ public final class Messages extends NLS {
 	/** {@link Dis6502#performNewWorkspace}'s "new workspace prepared" log line - moved from {@code Text.IDS_MAIN_FILE_LOG_NEW_WORKSPACE_PREPARED}. */
 	public static Message I016;
 
+	/** {@link Dis6502#performOpenFile}'s "opening file" log line for a cassette image - moved from {@code Text.IDS_LOG_OPEN_CASSETTE_FILE}. */
+	public static Message I017;
+
+	/** {@link Dis6502#performOpenDiskImageBootSectors}'s "opening file" log line - moved from {@code Text.IDS_LOG_OPEN_DISK_IMAGE_BOOT_SECTORS}. */
+	public static Message I018;
+
+	/** {@link Dis6502#performOpenDiskImageExecutableFile}'s "opening file" log line - moved from {@code Text.IDS_LOG_OPEN_DISK_IMAGE_EXECUTABLE_FILE}. */
+	public static Message I019;
+
+	/**
+	 * {@link Dis6502#performOpenDiskImageSectors}'s "opening file" log line -
+	 * moved from {@code Text.IDS_LOG_OPEN_DISK_IMAGE_SECTORS}, fixing a real
+	 * bug found while moving it: the C++ resource string ({@code dis6502.rc})
+	 * uses {@code {0}} twice (item count and disk path) instead of {@code {0}}/
+	 * {@code {1}}, even though the C++ call site already passes two distinct
+	 * arguments - fixed here and, separately, in the C++ {@code .rc} source
+	 * too (see that repo's own commit).
+	 */
+	public static Message I020;
+
+	/** {@link Dis6502#performOpenFile}'s "opening file" log line for an executable file - moved from {@code Text.IDS_LOG_OPEN_EXECUTABLE_FILE}. */
+	public static Message I021;
+
+	/** {@link Dis6502#performOpenRawFile}'s "opening file" log line - moved from {@code Text.IDS_LOG_OPEN_RAW_FILE}. */
+	public static Message I022;
+
+	/** {@link Dis6502#performOpenFile}'s "opening file" log line for a ROM image - moved from {@code Text.IDS_LOG_OPEN_ROM_IMAGE_FILE}. */
+	public static Message I023;
+
+	/** {@link com.wudsn.tools.dis6502.model.DisassemblyResultFile#openWriter}'s "saving file" log line - moved from {@code Text.IDS_LOG_SAVE_DISASSEMBLY}. */
+	public static Message I024;
+
 	static {
 		initializeClass(Messages.class, null);
 	}

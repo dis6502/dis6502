@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import com.wudsn.tools.dis6502.Application;
+
 /**
  * Ported from DisassemblyResultFileTest.h / DisassemblyResultFileTest.cpp.
  * Like the C++ version, this only exercises {@code saveListing} for every
@@ -70,7 +72,7 @@ public final class DisassemblyResultFileTest {
 		}
 		File file = new File(variantFolder, "DisassemblyResultFileTest.asm");
 		Assert.log("Saving disassembly result to " + file.getPath());
-		DisassemblyResultFile disassemblyResultFile = new DisassemblyResultFile();
+		DisassemblyResultFile disassemblyResultFile = new DisassemblyResultFile(new Application());
 		disassemblyResultFile.saveListing(result, profile, file);
 	}
 }

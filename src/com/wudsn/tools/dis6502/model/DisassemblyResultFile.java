@@ -9,6 +9,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 
+import com.wudsn.tools.dis6502.Application;
+import com.wudsn.tools.dis6502.Messages;
+
 /**
  * Saves a {@link DisassemblyResult} as one or more source listing files,
  * per {@link Profile}'s include-file settings: no includes at all, all
@@ -17,11 +20,15 @@ import java.util.Iterator;
  * <p>
  * Ported from DisassemblyResultFile.h / DisassemblyResultFile.cpp. The
  * C++ version logs each opened file through the global {@code Application}
- * object in {@code OpenWriter}; that is not ported yet (see {@link
- * DisassemblyProgressMonitor}'s similarly deferred logging hooks), so
- * {@link #openWriter} is kept as a real method - matching the C++ call
- * sites that go through it rather than {@code DisassemblyResultWriter}
- * directly - as the natural place to add it later.
+ * object in {@code OpenWriter} ({@code IDS_LOG_SAVE_DISASSEMBLY}, now
+ * {@link Messages#I024}); {@link #openWriter} stays the real method - not
+ * inlined into {@code DisassemblyResultWriter} directly - matching exactly
+ * which C++ call sites go through {@code OpenWriter} (the main file and
+ * the single-include-file case) and which open their include file
+ * directly instead, with no log line ({@link
+ * #saveListingWithIncludesInMainFile}/{@link
+ * #saveListingWithIncludeInEachFile}'s per-chunk include files) - see
+ * {@link DisassemblyProgressMonitor} for logging that is still deferred.
  *
  * @author Peter Dell
  */
@@ -56,10 +63,17 @@ public final class DisassemblyResultFile {
 		return createIncludeFile(mainFile, 0);
 	}
 
+	private final Application application;
+
 	private DisassemblyResult result;
 	private Profile profile;
 
+	public DisassemblyResultFile(Application application) {
+		this.application = application;
+	}
+
 	private void openWriter(DisassemblyResultWriter writer, File file) throws IOException {
+		application.sendMessage(Messages.I024, file.getPath());
 		writer.openFile(file);
 	}
 
