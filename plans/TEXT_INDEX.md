@@ -1,7 +1,7 @@
 # Text Index
 
-Generated: 2026-09-21 03:56 (local time)
-Commit: `382ba4088144feca9cfe1a24f5e4894dd4953497`
+Generated: 2026-09-21 03:56 (local time), commit `382ba4088144feca9cfe1a24f5e4894dd4953497`
+Last updated: 2026-09-21 13:52 (local time), commit `1e4397c5f3cf31dc32c20729d01ed2c87fe12a16`
 
 ## Purpose
 
@@ -32,155 +32,59 @@ Not exhaustive: it can't see arguments that are themselves the result of
 another method call building the string elsewhere, and it doesn't cover
 every possible text sink (e.g. `JLabel`/`JButton` literal constructors -
 those are already covered by the `ElementFactory`/`DataTypes` convention
-this codebase uses instead, so none turned up here). 112 hits found as of
-the commit above, split below into two groups by what they're worth doing
-about; entries struck through and marked MIGRATED have since been moved to
-a repository class (the count in each section heading is the original
-as-scanned total, not a live count - see each struck-through entry for what
-replaced it).
+this codebase uses instead, so none turned up here).
 
-**Update (same day, pass 1):** all 13 literal `setTitle(...)` dialog-window-title
-call sites in group A were migrated to `<DialogName>_Title` fields in
-`Texts.java`/`Texts.properties` (`EquateDialog`'s two conditional variants
-became `EquateDialog_EditTitle`/`EquateDialog_DisplayTitle`). `setDialogTitle`
-(JFileChooser titles) and `JOptionPane` title/message arguments were left
-untouched - out of scope for that request.
+**Status**: this list only shows what's still outstanding - entries that
+have been migrated to `Text.java`/`Texts.java`/`Messages.java` are removed
+once done rather than kept struck through (see git history for what moved
+where and when: all 13 dialog `setTitle(...)` calls, every static
+`JOptionPane` title, and every static/parameterizable `JOptionPane` message
+in group A have been migrated as of the commit above). What remains below
+is either out-of-scope by design (dynamic titles built from a variable,
+which can't be a single static field; internal/defensive exception text
+with no C++ resource and no user-facing dialog) or simply not yet done
+(group B in full - internal exception/invariant messages were never
+requested to move).
 
-**Update (same day, pass 2):** every static-literal `JOptionPane` *title*
-argument was migrated too (messages deliberately left as-is for now, per
-that request). Titles whose text exactly matched an already-migrated
-dialog's own `<DialogName>_Title` field (`DiskImageExecutableFileDialog`,
-`RawFileDialog`, `SegmentPropertiesDialog`, `SegmentWriteBootDiskDialog`,
-and `EquateRangeDialog`'s local `title` variable, which had a stray
-lowercase "range") now reuse that same field instead of getting a
-duplicate one. New fields were added for titles with no existing dialog
-counterpart: `Dis6502_OpenWorkspaceTitle`, `Dis6502_OpenFileTitle`,
-`Dis6502_ClearEquatesTitle`, `Dis6502_SetTypeTitle` (all in the
-non-dialog `Dis6502` controller class), and `ProfileDialog_LoadTitle`.
-Dynamic (concatenated) titles - `Dis6502.java:559`/`:723`'s "Add "/"Open "
-+ a variable - were left alone, matching how the equivalent dynamic
-`setDialogTitle` calls were already handled in pass 1.
+## A) User-facing dialog titles/messages still outstanding
 
-**Update (same day, pass 3):** every remaining static/parameterizable
-`JOptionPane` *message* in group A that wasn't already a `Text`/`Messages`
-field was migrated to a new `Messages.E0xx` field (`E038`-`E048`), keeping
-the existing `JOptionPane` display exactly as before - only the text
-source changed, no new `application.sendMessage(...)` logging was added.
-Two pairs of call sites that built the identical message template by hand
-now share one field: `E038` ("Could not open workspace '{0}'. See the log
-for details.") covers both `Dis6502.java:432` and `:510`; `E040` ("Could
-not {0} file '{1}'. See the log for details.", parameterized on the
-add/open verb as well as the path) covers both `:559` and `:723`, which
-previously built the same text two different ways by hand. The dynamic
-titles at those same two call sites were still left alone (see pass 2).
-`SegmentWriteBootDiskDialog.java:150`'s message (`ex.getMessage()`) and
-its own `:163` `IOException` text were left as-is - the first is already
-a variable, not a literal; the second is the deliberately-not-ported case
-noted below.
-
-## A) User-facing dialog titles/messages (50 hits)
-
-These are what a user actually sees - dialog titles, `JOptionPane` message
-text, tooltips. Most are Java-invented text with no C++ resource (dialog
-titles the port itself chose), so per `Text.java`/`Texts.java`'s split these
-belong in `Texts.java` if kept as plain text, or in `Messages.java` if they
-ever need a severity (error dialogs whose message is also worth logging).
-A few (flagged inline) are ported `IDS_ERR_*`/`IDS_LOG_*`-style messages
-built by hand via concatenation instead of a `Text`/`Messages` field with a
-`{0}` placeholder - worth cross-checking against `build/find-text-matches.py`'s
-section D output.
+Everything remaining here is a dynamically-built title (`"Add "`/`"Open "`
++ a variable, which can't become one static field) or a `JFileChooser`
+`setDialogTitle(...)` call - a separate sink from a `JDialog`'s own
+`setTitle(...)`, never in scope for the title-migration work - plus two
+defensive `IllegalArgumentException`s that are really internal checks
+(see group B) and one deliberately-unported C++-parity literal.
 
 ### Dis6502.java
 
 - `:227` `IllegalArgumentException` - `"Parameter 'args' must not be null."`
-- `:432` `JOptionPane.showMessageDialog` - message ~~`"Could not open workspace '"` + path + `"'. See the log for details."`~~ MIGRATED -> `Messages.E038.format(path)`, title MIGRATED -> `Texts.Dis6502_OpenWorkspaceTitle`
-- `:456` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E039.format(path)`, title MIGRATED -> `Texts.Dis6502_OpenFileTitle`
-- `:510` `JOptionPane.showMessageDialog` - message MIGRATED -> reuses `Messages.E038` (same text as `:432`), title MIGRATED -> `Texts.Dis6502_OpenWorkspaceTitle`
-- `:542` `setDialogTitle` - `'Add '`/`'Open '` (+ suffix built elsewhere) - out of scope (JFileChooser title, dynamic)
-- `:559` `JOptionPane.showMessageDialog` - message ~~`'Could not '` + add/open + `" file '"` + path + `"'. See the log for details."`~~ MIGRATED -> `Messages.E040.format(add ? "add" : "open", path)` (a 2-placeholder field, verb + path, shared with `:723` below); title `'Add '`/`'Open '` - left as-is (dynamic, same as the `setDialogTitle` case above)
-- `:587` `setDialogTitle` - `'Add '`/`'Open '` + `'Raw File'` - out of scope
-- `:644` `setDialogTitle` - `'Add '`/`'Open '` + `'Disk Image Executable File'` - out of scope
-- `:704` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E041.format()`, title MIGRATED -> reuses `Texts.DiskImageExecutableFileDialog_Title`
-- `:723` `JOptionPane.showMessageDialog` - message MIGRATED -> reuses `Messages.E040` (same template as `:559`); title `'Add '`/`'Open '` + `'Disk Image Executable File'` - left as-is (dynamic)
-- `:750` `setDialogTitle` - `'Add '`/`'Open '` + `'Disk Image Boot Sectors'` - out of scope
-- `:815` `setDialogTitle` - `'Add '`/`'Open '` + `'Disk Image Sectors'` - out of scope
+- `:542` `setDialogTitle` - `'Add '`/`'Open '` (+ suffix built elsewhere) - dynamic, out of scope
+- `:559` `JOptionPane.showMessageDialog` - title `'Add '`/`'Open '` + `fileTypeDisplayName` - dynamic, out of scope (message already migrated to `Messages.E040`)
+- `:587` `setDialogTitle` - `'Add '`/`'Open '` + `'Raw File'` - dynamic, out of scope
+- `:644` `setDialogTitle` - `'Add '`/`'Open '` + `'Disk Image Executable File'` - dynamic, out of scope
+- `:723` `JOptionPane.showMessageDialog` - title `'Add '`/`'Open '` + `'Disk Image Executable File'` - dynamic, out of scope (message already migrated, shares `Messages.E040`)
+- `:750` `setDialogTitle` - `'Add '`/`'Open '` + `'Disk Image Boot Sectors'` - dynamic, out of scope
+- `:815` `setDialogTitle` - `'Add '`/`'Open '` + `'Disk Image Sectors'` - dynamic, out of scope
 - `:899` `IllegalArgumentException` - `"Parameter 'fileType' has unsupported value "` + value + `'.'`
-- `:911` `JOptionPane.showConfirmDialog` - title ~~`'Clear Equates'`~~ MIGRATED -> `Texts.Dis6502_ClearEquatesTitle`
-- `:952` `setDialogTitle` - `'Open User Equates File'` - out of scope
+- `:952` `setDialogTitle` - `'Open User Equates File'` - `JFileChooser` title, out of scope
 - `:969` `setDialogTitle` - `'Export User Equates File'`/`'Save User Equates File'` - out of scope
 - `:1007` `setDialogTitle` - `'Save Segment'` - out of scope
 - `:1027` `setDialogTitle` - `'Save All Segments'` - out of scope
 - `:1095` `setDialogTitle` - `'Save Selection (With Header)'`/`'Save Selection (No Header)'` - out of scope
-- `:1157`, `:1161`, `:1168` `JOptionPane.showMessageDialog` - message is `Messages.E025`/`E031`/`E032` (not touched), title ~~`'Set Type'`~~ MIGRATED -> `Texts.Dis6502_SetTypeTitle`
 - `:1465` `setDialogTitle` - `'Save Workspace File As'` - out of scope
 - `:1496` `setDialogTitle` - `'Save Disassembly Files'` - out of scope
 
-### ui/AssembleDialog.java
-
-- ~~`:75` `setTitle` - `'Assemble'`~~ MIGRATED -> `Texts.AssembleDialog_Title`
-
-### ui/CommentDialog.java
-
-- ~~`:57` `setTitle` - `'Comment'`~~ MIGRATED -> `Texts.CommentDialog_Title`
-
-### ui/DiskImageExecutableFileDialog.java
-
-- ~~`:69` `setTitle` - `'Open Disk Image Executable File'`~~ MIGRATED -> `Texts.DiskImageExecutableFileDialog_Title`
-
-### ui/DiskImageSectorsDialog.java
-
-- ~~`:110` `setTitle` - `'Open Disk Image Sectors'`~~ MIGRATED -> `Texts.DiskImageSectorsDialog_Title`
-
-### ui/EquateDialog.java
-
-- ~~`:216` `setTitle` - `'Edit Equates'`/`'Display Equates'`~~ MIGRATED -> `Texts.EquateDialog_EditTitle`/`Texts.EquateDialog_DisplayTitle`
-
-### ui/EquateRangeDialog.java
-
-- ~~`:58` `setTitle` - `'Define Address Range'`~~ MIGRATED -> `Texts.EquateRangeDialog_Title`
-- `:132` `JOptionPane.showMessageDialog` - message ~~`'Invalid start address.'`~~ MIGRATED -> `Messages.E042.format()`; title was a local `String title = "Define address range";` (lowercase "range", a near-duplicate of the dialog's own window title) - MIGRATED to reuse `Texts.EquateRangeDialog_Title` directly (also fixes that stray capitalization mismatch)
-- `:134` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E043.format()` (title as above)
-- `:136` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E044.format()` (title as above)
-- `:138` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E045.format()` (title as above)
-- `:142` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E046.format()` (title as above)
-
-### ui/LowHighByteDialog.java
-
-- ~~`:55` `setTitle` - `'Low/High Byte'`~~ MIGRATED -> `Texts.LowHighByteDialog_Title`
-
-### ui/MemoryInspectorFindStringDialog.java
-
-- ~~`:71` `setTitle` - `'Find String in Dump Window'`~~ MIGRATED -> `Texts.MemoryInspectorFindStringDialog_Title`
-
 ### ui/ProfileDialog.java
 
-- ~~`:140` `setTitle` - `'Profile'`~~ MIGRATED -> `Texts.ProfileDialog_Title`
-- `:512` `setDialogTitle` - `'Load Profile File'` - out of scope (JFileChooser title)
-- `:527` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E047.format(path)`, title MIGRATED -> `Texts.ProfileDialog_LoadTitle`
+- `:512` `setDialogTitle` - `'Load Profile File'` - out of scope
 - `:535` `setDialogTitle` - `'Save Profile File'` - out of scope
-
-### ui/RawFileDialog.java
-
-- ~~`:75` `setTitle` - `'Open Raw File'`~~ MIGRATED -> `Texts.RawFileDialog_Title`
-- `:220` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E048.format()`, title MIGRATED -> reuses `Texts.RawFileDialog_Title`
-
-### ui/SegmentPropertiesDialog.java
-
-- ~~`:62` `setTitle` - `'Segment Properties'`~~ MIGRATED -> `Texts.SegmentPropertiesDialog_Title`
-- `:131` `JOptionPane.showMessageDialog` - title ~~`'Segment Properties'`~~ MIGRATED -> reuses `Texts.SegmentPropertiesDialog_Title` (message is `Messages.E037`, not touched)
 
 ### ui/SegmentWriteBootDiskDialog.java
 
-- ~~`:76` `setTitle` - `'Write Boot Disk'`~~ MIGRATED -> `Texts.SegmentWriteBootDiskDialog_Title`
-- `:141` `setDialogTitle` - `'Write Boot Disk'` - out of scope (JFileChooser title)
-- `:150` `JOptionPane.showMessageDialog` - title ~~`'Write Boot Disk'`~~ MIGRATED -> reuses `Texts.SegmentWriteBootDiskDialog_Title` (message is `ex.getMessage()`, not touched)
+- `:141` `setDialogTitle` - `'Write Boot Disk'` - out of scope
 - `:163` `IOException` - `'No directory entries found in the disk image.'` (deliberately not ported to a `Text`/`Messages` field - matches C++'s own `WriteBootDisk`, which throws this exact literal with a `// TODO: Error message` comment, i.e. C++ hasn't given it a `STRINGTABLE` entry either)
 
-### ui/SelectGraphicsDialog.java
-
-- ~~`:79` `setTitle` - `'Select Graphics'`~~ MIGRATED -> `Texts.SelectGraphicsDialog_Title`
-
-## B) Internal exception/invariant messages (62 hits)
+## B) Internal exception/invariant messages (62 hits, none migrated)
 
 These are defensive/programming-error messages (`IllegalStateException`,
 `IllegalArgumentException`, internal `IOException`s for malformed input
@@ -189,8 +93,9 @@ data) that are not shown to the user through any dialog and have no C++
 if an invariant is ever violated. Per `Text.java`'s own scope rule ("every
 field must trace back to a real C++ resource ID") and `Texts.java`'s rule
 ("UI text this port introduces"), none of these belong in either class as
-currently scoped; listed here for completeness since the request was for
-every inline text-sink location, not just user-visible ones.
+currently scoped; listed here for completeness since the original request
+was for every inline text-sink location, not just user-visible ones. No
+work has been done on this group.
 
 - `model/Atari5200.java:73` `IOException` - `'Only 32k ROMs are supported.'`
 - `model/Atari800.java:181` `IOException` - `'Unsupported file header '` + value + `'.'`
@@ -245,7 +150,6 @@ every inline text-sink location, not just user-visible ones.
 - `model/Segment.java:459` `IllegalStateException` - `'Cannot allocate symbol in empty segment.'`
 - `model/Workspace.java:164` `IllegalArgumentException` - `'Invalid processor type: '` + type + `'.'`
 - `model/Xml.java:134` `IOException` - `"Mismatched root element: expected '"` + a + `"' but found '"` + b + `"'."`
-- `model/SegmentListInserter.java` - none (its "no free segment" message now goes through `Messages.E035.format()`, see recent migration - not a hit here since it's no longer a raw literal)
 - `ui/ComputerFont.java:216` `IOException` - `'Font resource not found: '` + name
 - `ui/ElementUtilities.java:70`, `:102` `RuntimeException` - `"No '&' contained in label text '"` + text + `"'."`
 - `ui/ElementUtilities.java:75`, `:107` `RuntimeException` - `"Mnemonic character '"` + c + `"' contained in label text '"` + text + `"' is not between 'A' and 'Z'."`
@@ -253,8 +157,8 @@ every inline text-sink location, not just user-visible ones.
 
 ## Summary
 
-| Group | Count |
-|---|---|
-| A) User-facing dialog titles/messages | 50 |
-| B) Internal exception/invariant messages | 62 |
-| **Total sink hits found** | **112** |
+| Group | Originally found | Migrated | Still outstanding |
+|---|---|---|---|
+| A) User-facing dialog titles/messages | 50 | 30 | 20 (7 dynamic titles built from a variable, 10 static `JFileChooser` `setDialogTitle` calls - a different sink than a `JDialog`'s own `setTitle`, never in scope, 2 internal `IllegalArgumentException`s that really belong in group B, 1 deliberately-unported literal matching an un-fixed C++ `// TODO`) |
+| B) Internal exception/invariant messages | 62 | 0 | 62 |
+| **Total** | **112** | **30** | **82** |
