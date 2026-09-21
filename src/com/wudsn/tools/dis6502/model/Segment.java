@@ -453,7 +453,7 @@ public final class Segment implements Xml.Serializable {
 		Xml.setByteAttributeHex(element, "SDXControlByte", bSDXControlByte);
 		Xml.setStringAttribute(element, "SDXSymbol", sdxSymbol);
 
-		Xml.setStringAttribute(element, "ProcessorType", processorType.name());
+		Xml.setStringAttribute(element, "ProcessorType", processorType.getKey());
 
 		Element contentElement = Xml.addChildElement(element, "Content");
 		memoryBlock.serializeTo(contentElement);
@@ -486,12 +486,7 @@ public final class Segment implements Xml.Serializable {
 		bSDXControlByte = Xml.getByteAttribute(element, "SDXControlByte", bSDXControlByte);
 		sdxSymbol = Xml.getStringAttribute(element, "SDXSymbol", sdxSymbol);
 
-		String processorTypeString = Xml.getStringAttribute(element, "ProcessorType", "");
-		try {
-			processorType = ProcessorType.valueOf(processorTypeString);
-		} catch (IllegalArgumentException e) {
-			processorType = ProcessorType.UNKNOWN;
-		}
+		processorType = ProcessorType.fromKey(Xml.getStringAttribute(element, "ProcessorType", ""));
 		if (processorType == ProcessorType.UNKNOWN) {
 			processorType = ProcessorType.MOS6502;
 		}

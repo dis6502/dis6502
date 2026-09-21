@@ -16,7 +16,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -115,8 +115,8 @@ public final class ComputerFont {
 	private static final int ZOOM = 1;
 	private static final int NATIVE_HEIGHT = 8; // Pixels, matching the original 8px raster cell height.
 
-	private static final Map<ComputerSystemType, ComputerFont> NORMAL_INSTANCES = new EnumMap<>(ComputerSystemType.class);
-	private static final Map<ComputerSystemType, ComputerFont> DOUBLE_HEIGHT_INSTANCES = new EnumMap<>(ComputerSystemType.class);
+	private static final Map<ComputerSystemType, ComputerFont> NORMAL_INSTANCES = new HashMap<>(); // A value set, not an enum.
+	private static final Map<ComputerSystemType, ComputerFont> DOUBLE_HEIGHT_INSTANCES = new HashMap<>();
 
 	private static Font atariClassicBase;
 	private static Font c64ClassicBase;
@@ -153,17 +153,12 @@ public final class ComputerFont {
 	}
 
 	private static ComputerFont create(ComputerSystemType type, boolean doubleHeight) {
-		switch (type) {
-		case ATARI5200:
-		case ATARI800:
+		if (type == ComputerSystemType.ATARI5200 || type == ComputerSystemType.ATARI800) {
 			return derive(getAtariClassicBase(), doubleHeight, 0xE000);
-		case C64:
+		} else if (type == ComputerSystemType.C64) {
 			return derive(getC64ClassicBase(), doubleHeight, 0x100);
-		case ORIC:
-		case UNKNOWN:
-		default:
-			return derive(new Font(Font.MONOSPACED, Font.PLAIN, 1), doubleHeight, -1);
 		}
+		return derive(new Font(Font.MONOSPACED, Font.PLAIN, 1), doubleHeight, -1); // Oric, unknown.
 	}
 
 	/**

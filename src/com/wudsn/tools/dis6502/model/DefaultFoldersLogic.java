@@ -26,8 +26,8 @@ public final class DefaultFoldersLogic {
 		this.application = application;
 	}
 
-	public DefaultFolders createDefaultFolders(ComputerSystemTypeInfo computerSystemTypeInfo) {
-		DefaultFolders defaultFolders = new DefaultFolders(computerSystemTypeInfo);
+	public DefaultFolders createDefaultFolders(ComputerSystemType computerSystemType) {
+		DefaultFolders defaultFolders = new DefaultFolders(computerSystemType);
 
 		// Set default for all folder paths based on application module path.
 		String folderPath = application.getModuleFilePath("");
@@ -48,7 +48,7 @@ public final class DefaultFoldersLogic {
 
 	public void load(DefaultFolders defaultFolders) {
 		ApplicationSettingsSection settings = application
-				.getSettingsSection(defaultFolders.getComputerSystemTypeInfo().id);
+				.getSettingsSection(defaultFolders.getComputerSystemType().getId());
 
 		for (FolderType folderType : FOLDER_TYPES) {
 			String folderPath = settings.getString(folderType.getKey(), "");
@@ -60,7 +60,7 @@ public final class DefaultFoldersLogic {
 
 	public void save(DefaultFolders defaultFolders) {
 		ApplicationSettingsSection settings = application
-				.getSettingsSection(defaultFolders.getComputerSystemTypeInfo().id);
+				.getSettingsSection(defaultFolders.getComputerSystemType().getId());
 
 		for (FolderType folderType : FOLDER_TYPES) {
 			settings.writeString(folderType.getKey(), defaultFolders.getFolderPath(folderType));

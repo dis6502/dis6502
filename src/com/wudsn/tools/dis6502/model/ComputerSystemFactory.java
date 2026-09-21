@@ -15,17 +15,6 @@ package com.wudsn.tools.dis6502.model;
  */
 public final class ComputerSystemFactory {
 
-	private static final ComputerSystemTypeInfo UNKNOWN_INFO = new ComputerSystemTypeInfo(ComputerSystemType.UNKNOWN,
-			"UNKNOWN", "Unknown", "Unknown");
-	private static final ComputerSystemTypeInfo ATARI800_INFO = new ComputerSystemTypeInfo(
-			ComputerSystemType.ATARI800, "ATARI800", "Atari 800", "Atari800");
-	private static final ComputerSystemTypeInfo ATARI5200_INFO = new ComputerSystemTypeInfo(
-			ComputerSystemType.ATARI5200, "ATARI5200", "Atari 5200", "Atari5200");
-	private static final ComputerSystemTypeInfo C64_INFO = new ComputerSystemTypeInfo(ComputerSystemType.C64, "C64",
-			"C64", "C64");
-	private static final ComputerSystemTypeInfo ORIC_INFO = new ComputerSystemTypeInfo(ComputerSystemType.ORIC,
-			"ORIC", "Oric", "Oric");
-
 	private final Atari800 atari800;
 	private final Atari5200 atari5200;
 	private final C64 c64;
@@ -33,59 +22,26 @@ public final class ComputerSystemFactory {
 	private final Unknown unknown;
 
 	public ComputerSystemFactory() {
-		atari800 = new Atari800(getComputerSystemTypeInfo(ComputerSystemType.ATARI800));
-		atari5200 = new Atari5200(getComputerSystemTypeInfo(ComputerSystemType.ATARI5200));
-		c64 = new C64(getComputerSystemTypeInfo(ComputerSystemType.C64));
-		oric = new Oric(getComputerSystemTypeInfo(ComputerSystemType.ORIC));
-		unknown = new Unknown(getComputerSystemTypeInfo(ComputerSystemType.UNKNOWN));
-	}
-
-	public ComputerSystemType getComputerSystemType(String id) {
-		switch (id) {
-		case "ATARI5200":
-			return ComputerSystemType.ATARI5200;
-		case "ATARI800":
-			return ComputerSystemType.ATARI800;
-		case "C64":
-			return ComputerSystemType.C64;
-		case "ORIC":
-			return ComputerSystemType.ORIC;
-		default:
-			return ComputerSystemType.UNKNOWN;
-		}
-	}
-
-	public ComputerSystemTypeInfo getComputerSystemTypeInfo(ComputerSystemType type) {
-		switch (type) {
-		case UNKNOWN:
-			return UNKNOWN_INFO;
-		case ATARI800:
-			return ATARI800_INFO;
-		case ATARI5200:
-			return ATARI5200_INFO;
-		case C64:
-			return C64_INFO;
-		case ORIC:
-			return ORIC_INFO;
-		default:
-			throw new IllegalArgumentException("Unknown computer system type: " + type + ".");
-		}
+		atari800 = new Atari800(ComputerSystemType.ATARI800);
+		atari5200 = new Atari5200(ComputerSystemType.ATARI5200);
+		c64 = new C64(ComputerSystemType.C64);
+		oric = new Oric(ComputerSystemType.ORIC);
+		unknown = new Unknown(ComputerSystemType.UNKNOWN);
 	}
 
 	public ComputerSystem getComputerSystem(ComputerSystemType type) {
-		switch (type) {
-		case UNKNOWN:
+		// An if chain, not a switch: ComputerSystemType is a ValueSet, not an enum.
+		if (type == ComputerSystemType.UNKNOWN) {
 			return unknown;
-		case ATARI800:
+		} else if (type == ComputerSystemType.ATARI800) {
 			return atari800;
-		case ATARI5200:
+		} else if (type == ComputerSystemType.ATARI5200) {
 			return atari5200;
-		case C64:
+		} else if (type == ComputerSystemType.C64) {
 			return c64;
-		case ORIC:
+		} else if (type == ComputerSystemType.ORIC) {
 			return oric;
-		default:
-			throw new IllegalArgumentException("Invalid computer system type: " + type + ".");
 		}
+		throw new IllegalArgumentException("Invalid computer system type: " + type + ".");
 	}
 }

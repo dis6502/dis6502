@@ -49,8 +49,8 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 
 	private ComputerSystem computerSystem;
 
-	private final InstructionSet instructionSetMOS6502 = new InstructionSetMOS6502("MOS 6502");
-	private final InstructionSet instructionSetMOS65C02 = new InstructionSetMOS65C02("MOS 65C02");
+	private final InstructionSet instructionSetMOS6502 = new InstructionSetMOS6502();
+	private final InstructionSet instructionSetMOS65C02 = new InstructionSetMOS65C02();
 
 	private final EquateList systemEquateList = new EquateList(WorkspaceProperty.SYSTEM_EQUATES);
 	private final EquateList userEquateList = new EquateList(WorkspaceProperty.USER_EQUATES);
@@ -134,7 +134,7 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 	}
 
 	public void setComputerSystemTypeID(String id) {
-		ComputerSystemType computerSystemType = computerSystemFactory.getComputerSystemType(id);
+		ComputerSystemType computerSystemType = ComputerSystemType.fromId(id);
 		if (computerSystemType == ComputerSystemType.UNKNOWN) {
 			computerSystemType = ComputerSystemType.ATARI800;
 		}
@@ -154,14 +154,13 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 	}
 
 	public InstructionSet getInstructionSet(ProcessorType processorType) {
-		switch (processorType) {
-		case MOS6502:
+		// An if chain, not a switch: ProcessorType is a ValueSet, not an enum.
+		if (processorType == ProcessorType.MOS6502) {
 			return instructionSetMOS6502;
-		case MOS65C02:
+		} else if (processorType == ProcessorType.MOS65C02) {
 			return instructionSetMOS65C02;
-		default:
-			throw new IllegalArgumentException("Invalid processor type: " + processorType + ".");
 		}
+		throw new IllegalArgumentException("Invalid processor type: " + processorType.getKey() + ".");
 	}
 
 	public Profile getProfile() {
@@ -305,7 +304,7 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 
 	@Override
 	public void serializeTo(Element element) {
-		Xml.setStringAttribute(element, "ComputerSystemTypeID", computerSystem.getTypeInfo().id);
+		Xml.setStringAttribute(element, "ComputerSystemTypeID", computerSystem.getType().getId());
 
 		Element profileElement = Xml.addChildElement(element, "Profile");
 		profile.serializeTo(profileElement);

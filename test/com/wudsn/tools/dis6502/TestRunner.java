@@ -26,6 +26,7 @@ import com.wudsn.tools.dis6502.model.SegmentTest;
 import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogicTest;
 import com.wudsn.tools.dis6502.ui.FileChoosersTest;
+import com.wudsn.tools.dis6502.ui.ValueSetsTest;
 
 /**
  * Runs the ported unit tests and reports a pass/fail summary.
@@ -118,6 +119,7 @@ public final class TestRunner {
 		runTest("FileChoosersTest", FileChoosersTest::testFileChoosers);
 		runTest("EncodingTest", EncodingTest::testEncoding);
 		runTest("FolderTypeTest", FolderTypeTest::testFolderType);
+		runTest("ValueSetsTest", ValueSetsTest::testValueSets);
 		runTest("ReassemblyRoundTripTest", ReassemblyRoundTripTest::testReassemblyRoundTrip);
 
 		if (failedCount == 0) {

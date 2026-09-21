@@ -40,7 +40,7 @@ public final class FolderTypeTest {
 		Assert.boolEquals(FolderType.getValues().get(9) == FolderType.DISASSEMBLY_FILES, true);
 
 		// As a key of the default folders.
-		DefaultFolders defaultFolders = new DefaultFolders(new ComputerSystemFactory().getComputerSystemTypeInfo(ComputerSystemType.C64));
+		DefaultFolders defaultFolders = new DefaultFolders(ComputerSystemType.C64);
 		Assert.stringEquals(defaultFolders.getFolderPath(FolderType.WORKSPACE_FILES), "");
 		defaultFolders.setFolderPath(FolderType.WORKSPACE_FILES, "some-folder");
 		Assert.stringEquals(defaultFolders.getFolderPath(FolderType.WORKSPACE_FILES), "some-folder");

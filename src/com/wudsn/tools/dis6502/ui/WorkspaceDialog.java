@@ -6,26 +6,21 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JDialog;
-import javax.swing.JList;
 import javax.swing.JPanel;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ValueSetField;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Texts;
-import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.ComputerSystemType;
-import com.wudsn.tools.dis6502.model.ComputerSystemTypeInfo;
 import com.wudsn.tools.dis6502.model.Workspace;
 
 /**
@@ -42,7 +37,8 @@ public final class WorkspaceDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
 
-	private final JComboBox<ComputerSystemTypeInfo> computerSystemComboBox = new JComboBox<>();
+	private final ValueSetField<ComputerSystemType> computerSystemField = new ValueSetField<ComputerSystemType>(
+			ComputerSystemType.getSelectableValues());
 
 	private Workspace workspace;
 	private boolean confirmed;
@@ -52,17 +48,6 @@ public final class WorkspaceDialog extends JDialog {
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setTitle(Texts.WorkspaceDialog_Title);
 
-		computerSystemComboBox.setRenderer(new DefaultListCellRenderer() {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
-					boolean cellHasFocus) {
-				String text = value instanceof ComputerSystemTypeInfo ? ((ComputerSystemTypeInfo) value).text : "";
-				return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
-			}
-		});
-
 		JPanel formPanel = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.insets = new Insets(4, 4, 4, 4);
@@ -70,11 +55,11 @@ public final class WorkspaceDialog extends JDialog {
 
 		c.gridx = 0;
 		c.gridy = 0;
-		formPanel.add(ElementFactory.createLabel(DataTypes.WorkspaceDialog_ComputerSystem, computerSystemComboBox), c);
+		formPanel.add(ElementFactory.createLabel(DataTypes.WorkspaceDialog_ComputerSystem, computerSystemField), c);
 		c.gridx = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1;
-		formPanel.add(computerSystemComboBox, c);
+		formPanel.add(computerSystemField, c);
 
 		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 		okButton.addActionListener(e -> performOK());
@@ -94,9 +79,9 @@ public final class WorkspaceDialog extends JDialog {
 
 	/** Ported from WorkspaceDialog::OnOK. */
 	private void performOK() {
-		ComputerSystemTypeInfo selected = (ComputerSystemTypeInfo) computerSystemComboBox.getSelectedItem();
+		ComputerSystemType selected = computerSystemField.getValue();
 		if (selected != null) {
-			workspace.setComputerSystemType(selected.type);
+			workspace.setComputerSystemType(selected);
 		}
 		confirmed = true;
 		setVisible(false);
@@ -106,17 +91,12 @@ public final class WorkspaceDialog extends JDialog {
 	public boolean show(Workspace workspace) {
 		this.workspace = workspace;
 
-		ComputerSystemFactory computerSystemFactory = workspace.getComputerSystemFactory();
-		computerSystemComboBox.removeAllItems();
-		computerSystemComboBox.addItem(computerSystemFactory.getComputerSystemTypeInfo(ComputerSystemType.ATARI5200));
-		computerSystemComboBox.addItem(computerSystemFactory.getComputerSystemTypeInfo(ComputerSystemType.ATARI800));
-		computerSystemComboBox.addItem(computerSystemFactory.getComputerSystemTypeInfo(ComputerSystemType.C64));
-		computerSystemComboBox.addItem(computerSystemFactory.getComputerSystemTypeInfo(ComputerSystemType.ORIC));
-		computerSystemComboBox.setSelectedItem(workspace.getComputerSystem().getTypeInfo());
+		// An unknown system is not on offer - leave the first one selected then.
+		ComputerSystemType computerSystemType = workspace.getComputerSystem().getType();
+		if (ComputerSystemType.getSelectableValues().contains(computerSystemType)) {
+			computerSystemField.setValue(computerSystemType);
+		}
 
-		// Packed here, not in the constructor: the combo box is still empty at
-		// construction time, so packing then sized the dialog too narrow to
-		// show the populated item text once items were added afterwards.
 		pack();
 		setLocationRelativeTo(getOwner());
 

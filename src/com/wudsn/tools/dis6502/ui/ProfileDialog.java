@@ -31,7 +31,7 @@ import com.wudsn.tools.base.repository.DataType;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Texts;
-import com.wudsn.tools.dis6502.model.ComputerSystemTypeInfo;
+import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.Encoding;
 import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.Profile;
@@ -130,7 +130,7 @@ public final class ProfileDialog extends JDialog {
 	private final ProfileLogic profileLogic;
 	private final FileChoosers fileChoosers;
 	private final Profile workingProfile = new Profile();
-	private ComputerSystemTypeInfo computerSystemTypeInfo;
+	private ComputerSystemType computerSystemType;
 	private File lastProfileFile;
 	private boolean confirmed;
 
@@ -508,7 +508,7 @@ public final class ProfileDialog extends JDialog {
 		lastProfileFile = file;
 
 		Profile loadedProfile = new Profile();
-		if (profileLogic.loadAndSetDefaultProfile(loadedProfile, computerSystemTypeInfo, lastProfileFile.getPath())) {
+		if (profileLogic.loadAndSetDefaultProfile(loadedProfile, computerSystemType, lastProfileFile.getPath())) {
 			setDialogValues(loadedProfile);
 			getDialogValues(workingProfile);
 		} else {
@@ -538,8 +538,8 @@ public final class ProfileDialog extends JDialog {
 	 * that is a real behavioral improvement over the C++ version, not just
 	 * an implementation detail.
 	 */
-	public boolean show(Profile profile, ComputerSystemTypeInfo computerSystemTypeInfo) {
-		this.computerSystemTypeInfo = computerSystemTypeInfo;
+	public boolean show(Profile profile, ComputerSystemType computerSystemType) {
+		this.computerSystemType = computerSystemType;
 
 		setDialogValues(profile);
 		getDialogValues(workingProfile);

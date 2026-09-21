@@ -14,16 +14,16 @@ package com.wudsn.tools.dis6502.model;
  */
 public abstract class InstructionSet {
 
-	private final String name;
+	private final ProcessorType processorType;
 	private final Instruction[] instructions;
 
-	protected InstructionSet(String name, Instruction[] instructions) {
+	protected InstructionSet(ProcessorType processorType, Instruction[] instructions) {
 		if (instructions.length != 256) {
 			throw new IllegalArgumentException(
 					"Parameter 'instructions' must have exactly 256 entries. Actual length is "
 							+ instructions.length + ".");
 		}
-		this.name = name;
+		this.processorType = processorType;
 		this.instructions = instructions;
 	}
 
@@ -35,8 +35,9 @@ public abstract class InstructionSet {
 		return instructions[opcode & 0xFF];
 	}
 
-	public String getName() {
-		return name;
+	/** The processor this is the instruction set of. */
+	public ProcessorType getProcessorType() {
+		return processorType;
 	}
 
 	public boolean isDualAddressingMode(int opcode) {

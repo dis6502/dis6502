@@ -10,12 +10,9 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -24,6 +21,7 @@ import javax.swing.JTextField;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ValueSetField;
 import com.wudsn.tools.base.repository.DataType;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Messages;
@@ -47,12 +45,11 @@ public final class SegmentPropertiesDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
 
-	private static final List<ProcessorType> PROCESSOR_TYPES = List.of(ProcessorType.MOS6502, ProcessorType.MOS65C02);
 
 	private final JTextField addressField = new JTextField(6);
 	private final JCheckBox binaryCheckBox = checkBox(DataTypes.SegmentPropertiesDialog_Binary);
 	private final JTextField labelPrefixField = new JTextField(10);
-	private final JComboBox<String> processorComboBox = new JComboBox<>();
+	private final ValueSetField<ProcessorType> processorField = new ValueSetField<ProcessorType>(ProcessorType.getSelectableValues());
 
 	private Segment segment;
 	private boolean confirmed;
@@ -89,11 +86,11 @@ public final class SegmentPropertiesDialog extends JDialog {
 		c.gridy = 2;
 		c.fill = GridBagConstraints.NONE;
 		c.weightx = 0;
-		formPanel.add(ElementFactory.createLabel(DataTypes.SegmentPropertiesDialog_Processor, processorComboBox), c);
+		formPanel.add(ElementFactory.createLabel(DataTypes.SegmentPropertiesDialog_Processor, processorField), c);
 		c.gridx = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1;
-		formPanel.add(processorComboBox, c);
+		formPanel.add(processorField, c);
 
 		c.gridx = 1;
 		c.gridy = 3;
@@ -137,7 +134,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 		segment.wEnd = end;
 		segment.bBinary = binaryCheckBox.isSelected();
 		segment.labelPrefix = labelPrefixField.getText();
-		segment.processorType = PROCESSOR_TYPES.get(processorComboBox.getSelectedIndex());
+		segment.processorType = processorField.getValue();
 
 		confirmed = true;
 		setVisible(false);
@@ -160,20 +157,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 		binaryCheckBox.setSelected(segment.bBinary);
 		labelPrefixField.setText(segment.labelPrefix);
 
-		processorComboBox.removeAllItems();
-		List<String> names = new ArrayList<>();
-		int selectedIndex = 0;
-		for (int i = 0; i < PROCESSOR_TYPES.size(); i++) {
-			ProcessorType processorType = PROCESSOR_TYPES.get(i);
-			names.add(workspace.getInstructionSet(processorType).getName());
-			if (processorType == segment.processorType) {
-				selectedIndex = i;
-			}
-		}
-		for (String name : names) {
-			processorComboBox.addItem(name);
-		}
-		processorComboBox.setSelectedIndex(selectedIndex);
+		processorField.setValue(segment.processorType);
 
 		// Packed here, not in the constructor: the combo box is still empty at
 		// construction time, so packing then sized the dialog too narrow to

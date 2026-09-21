@@ -20,15 +20,15 @@ import java.util.Map;
  */
 public final class DefaultFolders {
 
-	private final ComputerSystemTypeInfo computerSystemTypeInfo;
+	private final ComputerSystemType computerSystemType;
 	private final Map<String, String> folders = new HashMap<>();
 
-	public DefaultFolders(ComputerSystemTypeInfo computerSystemTypeInfo) {
-		this.computerSystemTypeInfo = computerSystemTypeInfo;
+	public DefaultFolders(ComputerSystemType computerSystemType) {
+		this.computerSystemType = computerSystemType;
 	}
 
-	public ComputerSystemTypeInfo getComputerSystemTypeInfo() {
-		return computerSystemTypeInfo;
+	public ComputerSystemType getComputerSystemType() {
+		return computerSystemType;
 	}
 
 	public String getFolderPath(FolderType folderType) {

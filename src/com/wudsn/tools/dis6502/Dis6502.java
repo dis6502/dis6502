@@ -35,7 +35,6 @@ import com.wudsn.tools.dis6502.model.AtariError;
 import com.wudsn.tools.dis6502.model.AtariFile;
 import com.wudsn.tools.dis6502.model.ComputerSystem;
 import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
-import com.wudsn.tools.dis6502.model.ComputerSystemTypeInfo;
 import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.DefaultFolders;
 import com.wudsn.tools.dis6502.model.DefaultFoldersLogic;
@@ -237,7 +236,7 @@ public final class Dis6502 {
 	void run(String[] args) {
 		application = new UIApplication();
 		ComputerSystemFactory computerSystemFactory = new ComputerSystemFactory();
-		CommandLineArguments commandLineArguments = CommandLineArguments.parse(args, computerSystemFactory);
+		CommandLineArguments commandLineArguments = CommandLineArguments.parse(args);
 		workspaceLogic = new WorkspaceLogic(application);
 		equateListLogic = new EquateListLogic(application);
 		defaultFoldersLogic = new DefaultFoldersLogic(application);
@@ -593,7 +592,7 @@ public final class Dis6502 {
 		currentFile = null;
 
 		if (new WorkspaceDialog(mainWindow.getFrame()).show(workspace)) {
-			application.sendMessage(Messages.I016, workspace.getComputerSystem().getTypeInfo().text);
+			application.sendMessage(Messages.I016, workspace.getComputerSystem().getType().getText());
 		}
 		loadSystemEquatesIfEmpty(); // Already done by the workspace listener if the dialog changed the computer system.
 
@@ -642,7 +641,7 @@ public final class Dis6502 {
 					return false;
 				}
 				if (fileType == FileType.ANY_FILE) {
-					application.sendMessage(Messages.I073, file.getPath(), workspace.getComputerSystem().getTypeInfo().text);
+					application.sendMessage(Messages.I073, file.getPath(), workspace.getComputerSystem().getType().getText());
 					fileType = FileType.RAW_FILE;
 				}
 			}
@@ -791,7 +790,7 @@ public final class Dis6502 {
 		case OK:
 			break;
 		case DISK_NOT_FOUND:
-			application.sendErrorMessage("Could not read disk image \"" + file.getPath() + "\": " + error.getErrorText());
+			application.sendMessage(Messages.E092, file.getPath(), error.getErrorText());
 			return false;
 		case NO_ENTRY_FOUND:
 			application.sendMessage(Messages.E033, file.getPath());
@@ -1643,12 +1642,12 @@ public final class Dis6502 {
 	 * are saved and the new one's loaded.
 	 */
 	private DefaultFolders getDefaultFolders() {
-		ComputerSystemTypeInfo typeInfo = workspace.getComputerSystem().getTypeInfo();
-		if (defaultFolders == null || defaultFolders.getComputerSystemTypeInfo().type != typeInfo.type) {
+		ComputerSystemType computerSystemType = workspace.getComputerSystem().getType();
+		if (defaultFolders == null || defaultFolders.getComputerSystemType() != computerSystemType) {
 			if (defaultFolders != null) {
 				defaultFoldersLogic.save(defaultFolders);
 			}
-			defaultFolders = defaultFoldersLogic.createDefaultFolders(typeInfo);
+			defaultFolders = defaultFoldersLogic.createDefaultFolders(computerSystemType);
 			defaultFoldersLogic.load(defaultFolders);
 		}
 		return defaultFolders;
@@ -1657,7 +1656,7 @@ public final class Dis6502 {
 	/** Ported from Main::ShowProfileDialog. */
 	private void performShowProfile() {
 		ProfileDialog dialog = new ProfileDialog(mainWindow.getFrame(), profileLogic, fileChoosers);
-		if (dialog.show(workspace.getProfile(), workspace.getComputerSystem().getTypeInfo())) {
+		if (dialog.show(workspace.getProfile(), workspace.getComputerSystem().getType())) {
 			workspace.notifyProfileChanged();
 			updateDisassembly(true); // Matches Main::HandleWorkspaceChanged's forced refresh on a PROFILE change.
 		}
@@ -1973,7 +1972,7 @@ public final class Dis6502 {
 
 	/** Ported from Main::SetMainWindowTitle. */
 	private void updateTitle() {
-		String computerSystemText = workspace.getComputerSystem().getTypeInfo().text;
+		String computerSystemText = workspace.getComputerSystem().getType().getText();
 		String title = currentFile == null ? TextUtility.format(Texts.Dis6502_WindowTitleNoWorkspaceLoaded, computerSystemText)
 				: TextUtility.format(Texts.Dis6502_WindowTitle, computerSystemText, currentFile.getPath());
 		mainWindow.getFrame().setTitle(title);

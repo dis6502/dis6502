@@ -326,6 +326,29 @@ public final class Messages extends NLS {
 	/** {@link Dis6502#openFile}'s "file type could not be determined, offering it as a raw file" log line - Java-native, the C++ version silently ignores such a file. */
 	public static Message I073;
 
+	// {@link com.wudsn.tools.dis6502.model.AtariError#getErrorText}'s texts, one per error, in the order of that enum.
+	public static Message I074; // OK
+	public static Message E075; // NO_ENTRY_FOUND
+	public static Message E076; // END_OF_FILE
+	public static Message E077; // DISK_NOT_FOUND
+	public static Message E078; // DIRECTORY_NOT_FOUND
+	public static Message E079; // DIRECTORY_READ
+	public static Message E080; // DIRECTORY_WRITE
+	public static Message E081; // INVALID_VTOC_ENTRY
+	public static Message E082; // SECTOR_NOT_FOUND
+	public static Message E083; // FILE_READ
+	public static Message E084; // FILE_WRITE
+	public static Message E085; // FILE_CORRUPTED
+	public static Message E086; // FILE_ALREADY_EXISTS
+	public static Message E087; // NO_FREE_SECTOR
+	public static Message E088; // BITMAP_READ
+	public static Message E089; // BITMAP_WRITE
+	public static Message E090; // SECTOR_ALREADY_FREE
+	public static Message E091; // FILE_SEEK
+
+	/** {@link Dis6502#openDiskImageExecutableFile}'s "disk image could not be read" log line: the file, and the {@link com.wudsn.tools.dis6502.model.AtariError}'s text. */
+	public static Message E092;
+
 	static {
 		initializeClass(Messages.class, null);
 	}

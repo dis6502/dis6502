@@ -62,8 +62,8 @@ public final class C64 extends ComputerSystem {
 		BASE_ADDRESSES = Set.copyOf(baseAddresses);
 	}
 
-	public C64(ComputerSystemTypeInfo computerSystemTypeInfo) {
-		super(computerSystemTypeInfo);
+	public C64(ComputerSystemType computerSystemType) {
+		super(computerSystemType);
 		returnCharacter = 0x0d;
 		supportedFileTypes = List.of(FileType.RAW_FILE, FileType.EXECUTABLE_FILE);
 	}

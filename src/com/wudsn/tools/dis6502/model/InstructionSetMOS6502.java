@@ -15,8 +15,8 @@ package com.wudsn.tools.dis6502.model;
  */
 public final class InstructionSetMOS6502 extends InstructionSet {
 
-	public InstructionSetMOS6502(String name) {
-		super(name, new Instruction[] {
+	public InstructionSetMOS6502() {
+		super(ProcessorType.MOS6502, new Instruction[] {
 			new Instruction(0x00, "BRK", false, LabelAccess.READ_WRITE, OperandMode.Implied),
 			new Instruction(0x01, "ORA", false, LabelAccess.READ, OperandMode.IndexedIndirect),
 			new Instruction(0x02, "cim", true, LabelAccess.READ_WRITE, OperandMode.Implied),

@@ -43,8 +43,8 @@ public final class Oric extends ComputerSystem {
 
 	private static final int END_OF_SYNC = 0x24;
 
-	public Oric(ComputerSystemTypeInfo computerSystemTypeInfo) {
-		super(computerSystemTypeInfo);
+	public Oric(ComputerSystemType computerSystemType) {
+		super(computerSystemType);
 		returnCharacter = 0x0d;
 		supportedFileTypes = List.of(FileType.RAW_FILE, FileType.EXECUTABLE_FILE);
 	}

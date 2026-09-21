@@ -127,7 +127,7 @@ public final class DefaultFoldersDialog extends JDialog {
 	 * back into {@code defaultFolders}, only if the user clicked OK.
 	 */
 	public boolean show(DefaultFolders defaultFolders) {
-		setTitle(TextUtility.format(Texts.DefaultFoldersDialog_Title, defaultFolders.getComputerSystemTypeInfo().text));
+		setTitle(TextUtility.format(Texts.DefaultFoldersDialog_Title, defaultFolders.getComputerSystemType().getText()));
 		for (FolderType folderType : EDITABLE_FOLDER_TYPES) {
 			fields.get(folderType).setText(defaultFolders.getFolderPath(folderType));
 		}

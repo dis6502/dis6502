@@ -7,7 +7,6 @@ package com.wudsn.tools.dis6502;
 
 import java.io.File;
 
-import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.ComputerSystemType;
 
 /**
@@ -42,7 +41,7 @@ public final class CommandLineArguments {
 		this.file = file;
 	}
 
-	public static CommandLineArguments parse(String[] args, ComputerSystemFactory computerSystemFactory) {
+	public static CommandLineArguments parse(String[] args) {
 		if (args == null) {
 			throw new IllegalArgumentException("Parameter 'args' must not be null.");
 		}
@@ -51,7 +50,7 @@ public final class CommandLineArguments {
 		int index = 0;
 		if (args.length > 0 && (args[0].startsWith("/") || args[0].startsWith("-"))) {
 			String id = args[0].substring(1).toUpperCase();
-			if (computerSystemFactory.getComputerSystemType(id) != ComputerSystemType.UNKNOWN) {
+			if (ComputerSystemType.fromId(id) != ComputerSystemType.UNKNOWN) {
 				computerSystemTypeID = id;
 				index = 1;
 			}

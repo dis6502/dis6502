@@ -75,8 +75,8 @@ public final class Atari800 extends ComputerSystem {
 			0x0222 /* VVBLKI */, 0x0224 /* VVBLKD */, 0x0226 /* CDTMA1 */, 0x0228 /* CDTMA2 */, 0x0236 /* BRKKY */,
 			0x0238 /* VPIRQ */, 0x02E0 /* RUNAD */, 0x02E2 /* INITAD */);
 
-	public Atari800(ComputerSystemTypeInfo computerSystemTypeInfo) {
-		super(computerSystemTypeInfo);
+	public Atari800(ComputerSystemType computerSystemType) {
+		super(computerSystemType);
 		returnCharacter = 0x9B;
 		supportedFileTypes = List.of(FileType.RAW_FILE, FileType.EXECUTABLE_FILE, FileType.ROM_IMAGE_FILE,
 				FileType.CASSETTE_IMAGE_FILE, FileType.DISK_IMAGE_EXECUTABLE_FILE, FileType.DISK_IMAGE_BOOT_SECTORS,

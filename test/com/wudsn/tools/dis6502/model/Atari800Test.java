@@ -108,7 +108,7 @@ public final class Atari800Test {
 		Assert.longEquals(actual.bSDXBlockNumber, expected.bSDXBlockNumber);
 		Assert.longEquals(actual.bSDXControlByte, expected.bSDXControlByte);
 		Assert.stringEquals(actual.sdxSymbol, expected.sdxSymbol);
-		Assert.stringEquals(actual.processorType.name(), expected.processorType.name());
+		Assert.stringEquals(actual.processorType.getKey(), expected.processorType.getKey());
 
 		Assert.longEquals(actual.memoryBlock.getSize(), expected.memoryBlock.getSize());
 		for (int i = 0; i < expected.memoryBlock.getSize(); i++) {

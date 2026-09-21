@@ -227,13 +227,20 @@ was first folded into fields of a Java `enum FileType` with hard-coded English
 texts, the user corrected it ("Keep separate FileType and FileTypeInfo to
 support localization of the texts"); the `ValueSet` pattern above then turned
 out to be the intended way to have both - one type, localizable texts - and
-`FileType`, `FolderType` and `Encoding` were all converted to it (with
+`FileType`, `FolderType`, `Encoding`, `ComputerSystemType`, `ProcessorType`
+and `ui/GraphicMode` were all converted to it (with
 `FileType`'s default extension, filter extensions and folder type as extra
 attributes of each value, and its filter text simply being its
 `FolderType`'s text). The rule that remains: no new hard-coded English UI
 strings in model classes - texts come from `ValueSets.properties` (values of a
 type), `Texts.properties`, `Messages.properties`, `Actions.properties` or
-`DataTypes.properties`.
+`DataTypes.properties`. Texts nobody selects from - error descriptions like
+`AtariError.getErrorText()` - are not value sets but `Messages` entries.
+Which enums deliberately stay enums: those that are never shown as text and
+are used in `switch` statements or as file format values (`MemoryType`,
+`FileHeader`, `OperandMode`, `FixupType`, `EquateType`,
+`DisassemblySectionType`, the event kinds `WorkspaceProperty`/
+`SegmentList.Property`, and internal state enums).
 
 ## Swing UI conventions
 

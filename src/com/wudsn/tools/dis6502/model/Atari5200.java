@@ -31,8 +31,8 @@ public final class Atari5200 extends ComputerSystem {
 			0x020E /* VBRK */, 0x0210 /* VSERIN */, 0x0212 /* VSEROR */, 0x0214 /* VSEROC */, 0x0216 /* VTIMR1 */,
 			0x0218 /* VTIMR2 */, 0x021A /* VTIMR4 */);
 
-	public Atari5200(ComputerSystemTypeInfo computerSystemTypeInfo) {
-		super(computerSystemTypeInfo);
+	public Atari5200(ComputerSystemType computerSystemType) {
+		super(computerSystemType);
 		returnCharacter = 0x9b;
 		supportedFileTypes = List.of(FileType.RAW_FILE, FileType.ROM_IMAGE_FILE);
 	}

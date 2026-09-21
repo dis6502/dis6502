@@ -16,8 +16,8 @@ import java.util.List;
  */
 public final class Unknown extends ComputerSystem {
 
-	public Unknown(ComputerSystemTypeInfo computerSystemTypeInfo) {
-		super(computerSystemTypeInfo);
+	public Unknown(ComputerSystemType computerSystemType) {
+		super(computerSystemType);
 		returnCharacter = 0x0a;
 		supportedFileTypes = List.of(FileType.RAW_FILE);
 	}

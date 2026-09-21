@@ -12,7 +12,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -22,6 +21,7 @@ import javax.swing.SpinnerNumberModel;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ValueSetField;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState;
@@ -64,7 +64,7 @@ public final class SelectGraphicsDialog extends JDialog {
 	private static final long serialVersionUID = 1L;
 
 	private final GraphicPanel graphicPanel = new GraphicPanel();
-	private final JComboBox<GraphicMode> modeComboBox = new JComboBox<>(GraphicMode.values());
+	private final ValueSetField<GraphicMode> modeField = new ValueSetField<GraphicMode>(GraphicMode.class);
 	private final JScrollBar indexScrollBar = new JScrollBar(JScrollBar.VERTICAL);
 	private final JSpinner numberOfBytesPerLineSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 1, 1));
 	private final JLabel addressLabel = new JLabel();
@@ -79,7 +79,7 @@ public final class SelectGraphicsDialog extends JDialog {
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setTitle(Texts.SelectGraphicsDialog_Title);
 
-		modeComboBox.addActionListener(e -> performModeChanged());
+		modeField.addActionListener(e -> performModeChanged());
 		indexScrollBar.getModel().addChangeListener(e -> {
 			graphicPanel.setIndex(indexScrollBar.getValue());
 			updateAddressLabel();
@@ -97,11 +97,11 @@ public final class SelectGraphicsDialog extends JDialog {
 
 		c.gridx = 0;
 		c.gridy = 0;
-		southPanel.add(ElementFactory.createLabel(DataTypes.SelectGraphicsDialog_GraphicMode, modeComboBox), c);
+		southPanel.add(ElementFactory.createLabel(DataTypes.SelectGraphicsDialog_GraphicMode, modeField), c);
 		c.gridx = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1;
-		southPanel.add(modeComboBox, c);
+		southPanel.add(modeField, c);
 
 		c.gridx = 0;
 		c.gridy = 1;
@@ -142,7 +142,7 @@ public final class SelectGraphicsDialog extends JDialog {
 
 	/** Ported from SelectSpritesDialog::SelectMode. */
 	private void performModeChanged() {
-		GraphicMode mode = (GraphicMode) modeComboBox.getSelectedItem();
+		GraphicMode mode = modeField.getValue();
 		graphicPanel.setMode(mode);
 
 		int current = (Integer) numberOfBytesPerLineSpinner.getValue();
@@ -197,7 +197,7 @@ public final class SelectGraphicsDialog extends JDialog {
 		graphicPanel.setIndex(begin);
 		graphicPanel.setSelection(end);
 
-		modeComboBox.setSelectedItem(GraphicMode.ANTIC_F); // Matches the C++ constructor's wSpriteMode = 15 default.
+		modeField.setValue(GraphicMode.ANTIC_F); // Matches the C++ constructor's wSpriteMode = 15 default.
 		performModeChanged();
 
 		confirmed = false;

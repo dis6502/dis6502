@@ -37,20 +37,16 @@ import java.util.List;
  */
 public abstract class ComputerSystem {
 
-	protected final ComputerSystemTypeInfo computerSystemTypeInfo;
+	protected final ComputerSystemType computerSystemType;
 	protected int returnCharacter;
 	protected List<FileType> supportedFileTypes = new ArrayList<>();
 
-	protected ComputerSystem(ComputerSystemTypeInfo computerSystemTypeInfo) {
-		this.computerSystemTypeInfo = computerSystemTypeInfo;
+	protected ComputerSystem(ComputerSystemType computerSystemType) {
+		this.computerSystemType = computerSystemType;
 	}
 
 	public ComputerSystemType getType() {
-		return computerSystemTypeInfo.type;
-	}
-
-	public ComputerSystemTypeInfo getTypeInfo() {
-		return computerSystemTypeInfo;
+		return computerSystemType;
 	}
 
 	/** Gets the return character used to indicate line ends in strings. */
@@ -98,7 +94,7 @@ public abstract class ComputerSystem {
 
 	/** The classpath name of this system's resource file with the given extension (e.g. {@code ".equ"}), relative to this class. */
 	public String getResourceNameByExtension(String extension) {
-		return "systems/" + computerSystemTypeInfo.fileName + extension;
+		return "systems/" + computerSystemType.getFileName() + extension;
 	}
 
 	/**

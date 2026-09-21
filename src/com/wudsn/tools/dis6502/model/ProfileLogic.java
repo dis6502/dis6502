@@ -30,8 +30,8 @@ public final class ProfileLogic {
 		this.application = application;
 	}
 
-	public void loadDefaultProfile(Profile profile, ComputerSystemTypeInfo computerSystemTypeInfo) {
-		ApplicationSettingsSection settingsSection = application.getSettingsSection(computerSystemTypeInfo.id);
+	public void loadDefaultProfile(Profile profile, ComputerSystemType computerSystemType) {
+		ApplicationSettingsSection settingsSection = application.getSettingsSection(computerSystemType.getId());
 		String filePath = settingsSection.getString("LastProfile", "");
 		if (!filePath.isEmpty()) {
 			load(profile, filePath);
@@ -59,10 +59,10 @@ public final class ProfileLogic {
 		}
 	}
 
-	public boolean loadAndSetDefaultProfile(Profile profile, ComputerSystemTypeInfo computerSystemTypeInfo,
+	public boolean loadAndSetDefaultProfile(Profile profile, ComputerSystemType computerSystemType,
 			String filePath) {
 		if (load(profile, filePath)) {
-			ApplicationSettingsSection settingsSection = application.getSettingsSection(computerSystemTypeInfo.id);
+			ApplicationSettingsSection settingsSection = application.getSettingsSection(computerSystemType.getId());
 			settingsSection.writeString("LastProfile", filePath);
 			return true;
 		}

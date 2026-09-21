@@ -221,22 +221,6 @@ public final class Texts extends NLS {
 	/** {@link com.wudsn.tools.dis6502.ui.SegmentListPanel}'s header text when empty - moved from {@code Text.IDS_SEGMENT_TITLE_NO_SEGMENTS_LOADED}. */
 	public static String SegmentListPanel_NoSegmentsLoadedTitle;
 
-	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_8}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_8}. */
-	public static String GraphicMode_Antic8;
-	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_9}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_9}. */
-	public static String GraphicMode_Antic9;
-	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_A}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_A}. */
-	public static String GraphicMode_AnticA;
-	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_B}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_B}. */
-	public static String GraphicMode_AnticB;
-	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_C}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_C}. */
-	public static String GraphicMode_AnticC;
-	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_D}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_D}. */
-	public static String GraphicMode_AnticD;
-	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_E}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_E}. */
-	public static String GraphicMode_AnticE;
-	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_F}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_F}. */
-	public static String GraphicMode_AnticF;
 
 	/** {@link com.wudsn.tools.dis6502.ui.XRefPanel}'s header text for exactly one reference - moved from {@code Text.IDS_XREF_TITLE_LABEL_REFERENCE}. */
 	public static String XRefPanel_LabelReferenceTitle;
