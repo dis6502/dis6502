@@ -47,47 +47,38 @@ import com.wudsn.tools.base.repository.NLS;
  */
 public final class Text extends NLS {
 
-	public static String IDS_COMPUTER_MEM_ERR;
-	public static String IDS_COMPUTER_NOT_FOUND;
-	public static String IDS_COMPUTER_NOT_LOADED;
 	public static String IDS_DEFAULT_FOLDERS_DIALOG_SUB_TITLE;
 	public static String IDS_DEFAULT_FOLDERS_DIALOG_TITLE;
-	public static String IDS_DIS_POPUP_MENU_ADDR_RANGE_DEF;
-	public static String IDS_DIS_POPUP_MENU_ADDR_RANGE_REF;
-	public static String IDS_DIS_POPUP_MENU_FIND_DEF;
-	public static String IDS_DIS_POPUP_MENU_FIND_REF1;
-	public static String IDS_DIS_POPUP_MENU_FIND_REF2;
-	public static String IDS_DIS_POPUP_MENU_REN_DEF;
-	public static String IDS_DIS_POPUP_MENU_REN_REF;
 	public static String IDS_DIS_TITLE;
 	public static String IDS_DUMP_TITLE_SEGMENT;
 	public static String IDS_DUMP_TITLE_SEGMENT_NO_SEGMENT_SELECTED;
 	public static String IDS_DUMP_TITLE_SELECTION;
 	public static String IDS_EQUATES_CONFIRM_CLEAR_SYSTEM_EQUATES;
 	public static String IDS_EQUATES_CONFIRM_CLEAR_USER_EQUATES;
-	public static String IDS_ERR_ATARI_FILE;
-	public static String IDS_ERR_FNT_NOT_FOUND;
-	public static String IDS_ERR_LABEL_OVEFLOW;
-	public static String IDS_ERR_NO_GUESS_MEMORY;
-	public static String IDS_ERR_NO_LABEL_MEMORY;
-	public static String IDS_EXPORT_USER_EQU;
-	public static String IDS_FILE_IO_ERR_WRITING_FILE;
-	public static String IDS_FILE_IO_EX_OPENING_FILE_FOR_READ_ACCESS;
-	public static String IDS_FILE_IO_EX_OPENING_FILE_FOR_READ_WRITE_ACCESS;
-	public static String IDS_FILE_IO_EX_OPENING_FILE_FOR_WRITE_ACCESS;
-	public static String IDS_FILE_SYSTEM_LOGIC_OPEN_FILE_TITLE;
-	public static String IDS_FILE_SYSTEM_LOGIC_SAVE_FILE_TITLE;
 	public static String IDS_FIND_STRING_DIALOG_STRING_NOT_FOUND_MESSAGE;
 	public static String IDS_FIND_STRING_DIALOG_TITLE;
+	/**
+	 * Ported but not yet wired up: {@code DisassemblyProgressMonitor}'s
+	 * base-class logging (matching C++'s {@code DisassemblyProgressMonitor::
+	 * SendInfo}) is a documented TODO on that class - see its own javadoc.
+	 */
 	public static String IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_INFO;
+	/** See {@link #IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_INFO}'s note - same TODO, the "pass" log line. */
 	public static String IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_PASS;
+	/** See {@link #IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_INFO}'s note - same TODO, the "segment" log line. */
 	public static String IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_SEGMENT;
 	public static String IDS_LOG_TITLE;
 	public static String IDS_MAIN_FILE_NEW_WORKSPACE_MESSAGE;
 	public static String IDS_MAIN_FILE_NEW_WORKSPACE_TITLE;
-	public static String IDS_MAIN_FILE_OPEN_WORKSPACE_FILE_MESSAGE;
 	public static String IDS_MAIN_FILE_OPEN_WORKSPACE_FILE_TITLE;
+	/**
+	 * Ported but not yet wired up: C++'s main window title includes the
+	 * current computer system's name ({@code Main::UpdateTitle}); {@link
+	 * Dis6502#updateTitle} doesn't show it at all yet - a real gap, not
+	 * dead text.
+	 */
 	public static String IDS_MAIN_WINDOW_TITLE;
+	/** See {@link #IDS_MAIN_WINDOW_TITLE}'s note - same gap, the no-file-loaded variant. */
 	public static String IDS_MAIN_WINDOW_TITLE_NO_WORKSPACE_LOADED;
 	public static String IDS_SEGMENT_TITLE;
 	public static String IDS_SEGMENT_TITLE_NO_SEGMENTS_LOADED;

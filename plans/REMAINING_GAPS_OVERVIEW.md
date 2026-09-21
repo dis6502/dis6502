@@ -238,6 +238,59 @@ here - both repos continue to change.
   correct colors and text, matching the reference C++ screenshot exactly
   (including the corrected XRef wording).
 
+### 8. Main window title never shows the current computer system's name
+
+- **Found**: while auditing `Text.java` for constants no longer referenced
+  anywhere in the Java source (2026-09-21) - `Text.IDS_MAIN_WINDOW_TITLE`/
+  `IDS_MAIN_WINDOW_TITLE_NO_WORKSPACE_LOADED` are still real, actively-used
+  C++ resources with no Java call site at all, unlike most of the other
+  candidates that audit turned up (those had a working Java equivalent
+  under a different mechanism - this one genuinely doesn't).
+- **C++**: `Main::SetMainWindowTitle` (`src/ui/Main.cpp:89-101`) sets the
+  title to `Text::Format(IDS_MAIN_WINDOW_TITLE_NO_WORKSPACE_LOADED,
+  computerSystemText)` ("6502 Disassembler for {0}") when no file is
+  loaded, or `Text::Format(IDS_MAIN_WINDOW_TITLE, computerSystemText,
+  filePath)` ("6502 Disassembler for {0} {1}") once one is - always
+  including `Workspace::GetComputerSystem()->GetTypeInfo()->text` (e.g.
+  "Atari 800").
+- **Java**: `Dis6502.updateTitle()` (`Dis6502.java:1748-1754`) just sets
+  `"dis6502"` plus `" - " + currentFile.getName()` if a file is open - the
+  computer system name is never shown at all, and the file portion uses
+  just the file name rather than C++'s full path (a second, smaller
+  divergence).
+- **Fix sketch**: `workspace.getComputerSystem().getTypeInfo().text` is
+  already used elsewhere in this exact class (`Dis6502.java:484`, in
+  `performNewWorkspace`'s log message) - wiring it into `updateTitle()`
+  (and deciding whether to keep the Java convention of a short file name
+  vs. C++'s full path) should be a small, self-contained change. Not yet
+  implemented as part of this audit since it wasn't the audit's purpose -
+  listed here for a future session.
+
+### 9. `DisassemblyProgressMonitor`'s base-class logging is still an unwired no-op
+
+- **Found**: same `Text.java` audit as gap #8 -
+  `Text.IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_INFO`/`_PASS`/`_SEGMENT` are
+  real, actively-used C++ resources with no Java call site.
+- **C++**: `DisassemblyProgressMonitor::SetPass`/`SetSegmentNumber`/
+  `SendInfo` log through the global `Application` object.
+- **Java**: `DisassemblyProgressMonitor.setPass`/`setSegmentNumber`/
+  `sendInfo` (`model/DisassemblyProgressMonitor.java:45-53`) are no-ops by
+  design - the class javadoc already documents this as deliberate,
+  written before this port had an `Application`-based logging mechanism
+  ("that is not ported yet, so they default to no-ops here - override
+  them once application-level logging exists"). `Application` (with
+  `sendMessage`/`sendInfoMessage`) has existed for a while now, so this
+  TODO is actionable, just never revisited.
+- **Caveat, lowering priority**: in C++ itself, the real GUI path
+  (`DisassemblyProgressDialog`) overrides `SetPass`/`SetSegmentNumber` to
+  update its own UI labels without ever calling into the logging base -
+  only the plain `DisassemblyProgressMonitor` used directly by
+  `MainTest.cpp` (C++'s unit-test harness) exercises the logging path at
+  all, so this is a low real-world-impact gap, not a user-visible one.
+- Not implemented as part of this audit - listed here for a future
+  session; the existing javadoc TODO already documents the decision to
+  defer it.
+
 ## Divergences where the Java port fixed a real C++ bug (not a Java gap)
 
 Per the porting guide's bug-handling policy, these are intentional
@@ -453,3 +506,9 @@ doesn't support, without a separate decision to add a genuinely new feature:
 8. **Gap #5** (`MainUITest.cpp` self-test harness) - needs an explicit
    "superseded by JUnit, won't port" decision recorded somewhere (this
    document or a class javadoc) rather than staying an implicit gap.
+9. **Gap #8** (main window title missing computer system name) - small,
+   self-contained fix; found 2026-09-21 while auditing `Text.java` for
+   unreferenced constants.
+10. **Gap #9** (`DisassemblyProgressMonitor` logging never wired up) -
+    low real-world impact (C++'s own GUI path barely exercises it either);
+    found alongside gap #8.
