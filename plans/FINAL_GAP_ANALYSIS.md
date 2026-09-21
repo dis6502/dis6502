@@ -182,19 +182,39 @@ disk image via its file/sector picker. Java's `openRecentFile` calls
 `workspaceLogic.addFile` directly for every file type. Not run-tested here -
 verify what a recent `RAW_FILE`/`DISK_IMAGE_*` entry actually produces.
 
-## C64 support is a stub in C++ too (found while writing `C64.equ`)
+## C64 support was a stub in C++ too (found while writing `C64.equ`)
 
-Not port gaps - identical in C++ - but worth knowing now that the Java
-version is the future one:
-- `C64.readExecutableFile` never sets `segment.bBinary`, so a loaded `.prg`
-  is a "Raw" segment and is not disassembled until the user ticks Binary in
-  Segment Properties.
-- `C64.BASE_ADDRESSES`/`VECTOR_ADDRESSES` are a single `0x0200 /* DUMMY
-  EXAMPLE */` entry, so code trace never recognises `LDA #<irq / STA CINV /
-  LDA #>irq / STA CINV+1` as an address pair. The real candidates are now
-  all named in `C64.equ` (`CINV`, `CBINV`, `NMINV`, the `$0300`-`$0333`
-  vectors, `NMIVEC`/`RESVEC`/`IRQVEC`).
-- `C64.guessFileType` always returns `UNKNOWN_FILE` (matters for gaps C/D).
+Not port gaps - identical in C++ - but fixed here, since the Java version is
+the future one:
+- ~~`C64.readExecutableFile` never sets `segment.bBinary`~~ - FIXED
+  2026-09-21: a loaded `.prg` is now a binary segment and is disassembled
+  without a detour through Segment Properties.
+- ~~`C64.BASE_ADDRESSES`/`VECTOR_ADDRESSES` are a single `0x0200 /* DUMMY
+  EXAMPLE */` entry~~ - FIXED 2026-09-21: the real C64 code vectors
+  (`KEYLOG`, the `$0300`-`$0333` BASIC/KERNAL vectors, `USRADD`,
+  `NMIVEC`/`RESVEC`/`IRQVEC`) and, as base addresses, additionally the data
+  pointers `MEMSTR`/`MEMSIZK`. 16 bit hardware registers that are no
+  addresses (CIA timers, SID frequency) are deliberately excluded.
+- ~~Address lookups ignore every segment without an Atari file header~~ -
+  FIXED 2026-09-21, and **not C64-specific**: `SegmentList.findByAddr`/
+  `findSegmentByFixedAddr` and `Segment.isSplittable` tested for
+  `ATARI_BINARY`/`SDX_FIXED_BLK`, so "Start code trace" silently did nothing
+  and "Split at selection" was unavailable for every `RAW` or `ORIC_BINARY`
+  segment - C64, Atari 5200, Oric, ROM images and raw files alike. Replaced
+  by the new `Segment.hasFixedAddress()` (everything except the SDX
+  relocatable/symbol/fix-up blocks). Found because the vector fix above had
+  no effect without it. Atari behavior is unchanged (all four
+  reassembly round-trips still byte-exact).
+- Still open: `C64.guessFileType` always returns `UNKNOWN_FILE` (matters for
+  gaps C/D).
+- Cosmetic, still open: `DisassemblyLine.systemAddress == 0` doubles as the
+  "not an address line, always write it" sentinel, so a system label at
+  `$0000` (`D6510`) is written to every C64 listing even when unreferenced.
+
+Verified by `ComputerSystemTest.testC64Addresses`/
+`testC64CodeTraceFollowsVector` (a `.prg` whose IRQ handler is reachable only
+through `LDA #< / STA CINV / LDA #> / STA CINV+1` is traced into the
+handler, with the two loads retagged as low/high byte).
 
 ## Minor divergences (listed for completeness, no action suggested)
 

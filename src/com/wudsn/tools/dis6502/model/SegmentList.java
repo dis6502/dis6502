@@ -175,8 +175,7 @@ public final class SegmentList implements Xml.Serializable {
 		int segmentCount = getCount();
 		for (int segmentIndex = 0; segmentIndex < segmentCount; segmentIndex++) {
 			Segment segment = segmentList.get(segmentIndex);
-			if (segment.isHeader(FileHeader.ATARI_BINARY) || segment.isHeader(FileHeader.SDX_FIXED_BLK)
-					|| segment.isHeader(FileHeader.SDX_RELOC_BLK)) {
+			if (segment.hasFixedAddress() || segment.isHeader(FileHeader.SDX_RELOC_BLK)) {
 				if (segment.wBegin <= address && segment.wEnd >= address) {
 					return segmentIndex;
 				}
@@ -197,7 +196,7 @@ public final class SegmentList implements Xml.Serializable {
 		int segmentCount = getCount();
 		for (int i = 0; i < segmentCount; i++) {
 			Segment otherSegment = segmentList.get(i);
-			if (otherSegment.isHeader(FileHeader.ATARI_BINARY) || otherSegment.isHeader(FileHeader.SDX_FIXED_BLK)) {
+			if (otherSegment.hasFixedAddress()) {
 				if (otherSegment.containsAddress(address)) {
 					return i;
 				}

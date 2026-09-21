@@ -161,8 +161,24 @@ public final class Segment implements Xml.Serializable {
 		return builder.toString();
 	}
 
+	/**
+	 * Whether {@link #wBegin}/{@link #wEnd} are this segment's real, fixed
+	 * memory addresses - true for everything except the SpartaDOS X
+	 * relocatable/symbol/fix-up blocks. The C++ version tested for {@link
+	 * FileHeader#ATARI_BINARY}/{@link FileHeader#SDX_FIXED_BLK} instead,
+	 * which silently excluded every segment without an Atari file header
+	 * ({@link FileHeader#RAW}: C64, Atari 5200, ROM images, raw files; {@link
+	 * FileHeader#ORIC_BINARY}) from address lookups - so code trace could
+	 * never find them and they could not be split - although their load
+	 * address is just as fixed.
+	 */
+	public boolean hasFixedAddress() {
+		return isHeader(FileHeader.RAW) || isHeader(FileHeader.ATARI_BINARY) || isHeader(FileHeader.SDX_FIXED_BLK)
+				|| isHeader(FileHeader.ORIC_BINARY);
+	}
+
 	public boolean isSplittable() {
-		return (isHeader(FileHeader.ATARI_BINARY) || isHeader(FileHeader.SDX_FIXED_BLK)) && !isEmpty();
+		return hasFixedAddress() && !isEmpty();
 	}
 
 	public boolean canSplitAt(int offset) {
