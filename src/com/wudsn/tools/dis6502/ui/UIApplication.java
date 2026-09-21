@@ -46,7 +46,7 @@ public final class UIApplication extends Application {
 	protected void sendErrorLogMessage(String text) {
 		super.sendErrorLogMessage(text);
 		if (logPanel != null) {
-			logPanel.appendLine("ERROR: " + text);
+			logPanel.appendErrorLine("ERROR: " + text);
 		}
 	}
 }
