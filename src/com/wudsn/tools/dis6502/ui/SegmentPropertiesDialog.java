@@ -26,6 +26,7 @@ import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.base.repository.DataType;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Text;
 import com.wudsn.tools.dis6502.model.ProcessorType;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.Workspace;
@@ -127,8 +128,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 		int end = begin + segment.getSize() - 1; // TODO Will not work with >64K.
 
 		if (begin > end) { // In case of 64K overflow.
-			JOptionPane.showMessageDialog(this, "Error: Start address too high.\nThe segment would overlap in memory.",
-					"Segment Properties", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, Text.IDS_ERR_SEGMENT_OVERLAP, "Segment Properties", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 

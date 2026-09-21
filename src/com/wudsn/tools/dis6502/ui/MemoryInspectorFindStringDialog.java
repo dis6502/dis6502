@@ -24,9 +24,11 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import com.wudsn.tools.base.Actions;
+import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.base.repository.DataType;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Text;
 
 /**
  * A dialog for searching the memory inspector for a byte sequence, typed
@@ -205,8 +207,9 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 			confirmed = true;
 			setVisible(false);
 		} else {
-			JOptionPane.showMessageDialog(this, "String \"" + findStringDialog.getAsciiString() + "\" not found.", "Find String",
-					JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(this,
+					TextUtility.format(Text.IDS_FIND_STRING_DIALOG_STRING_NOT_FOUND_MESSAGE, findStringDialog.getAsciiString()),
+					Text.IDS_FIND_STRING_DIALOG_TITLE, JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
 

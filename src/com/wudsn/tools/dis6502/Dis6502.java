@@ -24,6 +24,7 @@ import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.repository.Message;
 import com.wudsn.tools.dis6502.model.AtariDisk;
 import com.wudsn.tools.dis6502.model.AtariError;
@@ -496,7 +497,7 @@ public final class Dis6502 {
 		}
 
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle("Open Workspace File");
+		fileChooser.setDialogTitle(Text.IDS_MAIN_FILE_OPEN_WORKSPACE_FILE_TITLE);
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Workspace Files (*.wrk)", "wrk"));
 		if (currentFile != null) {
 			fileChooser.setCurrentDirectory(currentFile.getParentFile());
@@ -1056,8 +1057,9 @@ public final class Dis6502 {
 	private void performMemoryInspectorFindNext() {
 		if (!mainWindow.memoryInspectorPanel.findNextString()) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					"String \"" + mainWindow.memoryInspectorPanel.getFindString() + "\" not found.", "Find String",
-					JOptionPane.INFORMATION_MESSAGE);
+					TextUtility.format(Text.IDS_FIND_STRING_DIALOG_STRING_NOT_FOUND_MESSAGE,
+							mainWindow.memoryInspectorPanel.getFindString()),
+					Text.IDS_FIND_STRING_DIALOG_TITLE, JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
 
@@ -1620,8 +1622,9 @@ public final class Dis6502 {
 		if (found) {
 			mainWindow.disassemblyPanel.navigateToLine(findFirstLineNumber[0]);
 		} else {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(), "String \"" + findString + "\" not found.", "Find String",
-					JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(mainWindow.getFrame(),
+					TextUtility.format(Text.IDS_FIND_STRING_DIALOG_STRING_NOT_FOUND_MESSAGE, findString),
+					Text.IDS_FIND_STRING_DIALOG_TITLE, JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
 

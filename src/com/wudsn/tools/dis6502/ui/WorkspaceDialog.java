@@ -22,6 +22,7 @@ import javax.swing.JPanel;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Text;
 import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.ComputerSystemTypeInfo;
@@ -49,7 +50,7 @@ public final class WorkspaceDialog extends JDialog {
 	public WorkspaceDialog(Frame owner) {
 		super(owner, true);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("New Workspace");
+		setTitle(Text.IDS_MAIN_FILE_NEW_WORKSPACE_TITLE);
 
 		computerSystemComboBox.setRenderer(new DefaultListCellRenderer() {
 			private static final long serialVersionUID = 1L;
