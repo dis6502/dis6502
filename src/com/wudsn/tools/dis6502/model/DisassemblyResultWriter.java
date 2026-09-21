@@ -130,14 +130,12 @@ public final class DisassemblyResultWriter implements AutoCloseable {
 	}
 
 	private void writeString(String value) throws IOException {
-		switch (profile.outputEncoding) {
-		case UNKNOWN:
-			throw new IllegalStateException("Invalid encoding.");
-
-		case BINARY:
+		// An if chain, not a switch: Encoding is a ValueSet, not an enum.
+		Encoding encoding = profile.outputEncoding;
+		if (encoding == Encoding.BINARY) {
 			throw new IOException(Messages.E062.format());
 
-		case ASCII: {
+		} else if (encoding == Encoding.ASCII) {
 			byte[] buffer = new byte[value.length()];
 			for (int i = 0; i < value.length(); i++) {
 				char c = value.charAt(i);
@@ -149,14 +147,14 @@ public final class DisassemblyResultWriter implements AutoCloseable {
 				}
 			}
 			outputStream.write(buffer);
-			break;
-		}
 
-		case ATASCII: {
+		} else if (encoding == Encoding.ATASCII) {
 			byte[] buffer = new byte[value.length()];
 			for (int i = 0; i < value.length(); i++) {
 				char c = value.charAt(i);
-				if (c <= 2555) {
+				// 255, not the C++ version's 2555 (a typo there): anything above does not fit into the
+				// one byte an ATASCII character is, and was silently truncated to some other character.
+				if (c <= 255) {
 					buffer[i] = (byte) c;
 				} else {
 					throw new IOException(Messages.E063.format(String.valueOf(c), String.valueOf((int) c), String.valueOf(i), value,
@@ -164,25 +162,22 @@ public final class DisassemblyResultWriter implements AutoCloseable {
 				}
 			}
 			outputStream.write(buffer);
-			break;
-		}
 
-		case UTF8: {
+		} else if (encoding == Encoding.UTF8) {
 			outputStream.write(value.getBytes(StandardCharsets.UTF_8));
-			break;
-		}
+
+		} else {
+			throw new IllegalStateException("Invalid encoding.");
 		}
 	}
 
 	private static String getNewline(Encoding encoding) {
-		switch (encoding) {
-		case ASCII:
-		case UTF8:
+		if (encoding == Encoding.ASCII || encoding == Encoding.UTF8) {
 			return System.lineSeparator();
-		case ATASCII:
-			return "";
-		default:
-			return "";
 		}
+		if (encoding == Encoding.ATASCII) {
+			return ""; // The ATASCII end of line character.
+		}
+		return "";
 	}
 }

@@ -275,12 +275,7 @@ public final class Profile implements Xml.Serializable {
 		outputEncoding = Encoding.fromKey(outputEncodingString);
 
 		// Ignore unsuitable encodings.
-		switch (outputEncoding) {
-		case ASCII:
-		case ATASCII:
-		case UTF8:
-			break;
-		default:
+		if (!Encoding.getOutputValues().contains(outputEncoding)) {
 			outputEncoding = Encoding.ASCII;
 		}
 		omitUnreferencedSystemLabels = Xml.getBoolAttribute(element, "OmitUnreferencedSystemLabels",

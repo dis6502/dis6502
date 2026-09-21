@@ -16,7 +16,6 @@ import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
@@ -27,6 +26,7 @@ import javax.swing.JTextField;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ValueSetField;
 import com.wudsn.tools.base.repository.DataType;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Messages;
@@ -75,7 +75,6 @@ public final class ProfileDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
 
-	private static final Encoding[] OUTPUT_ENCODINGS = { Encoding.ASCII, Encoding.ATASCII, Encoding.UTF8 };
 
 	// General.
 	private final JTextField commentField = new JTextField(4);
@@ -118,7 +117,7 @@ public final class ProfileDialog extends JDialog {
 	private final JTextField dsSyntaxField = new JTextField(6);
 
 	// Disassembly Listing.
-	private final JComboBox<Encoding> outputEncodingComboBox = new JComboBox<>(OUTPUT_ENCODINGS);
+	private final ValueSetField<Encoding> outputEncodingField = new ValueSetField<Encoding>(Encoding.getOutputValues());
 	private final JCheckBox removeUnusedLabelsCheckBox = checkBox(DataTypes.Profile_OmitUnreferencedSystemLabels);
 	private final JCheckBox includeAllowedCheckBox = checkBox(DataTypes.Profile_DirectiveINCLUDEAllowed);
 	private final JTextField includeHeadField = new JTextField(8);
@@ -257,7 +256,7 @@ public final class ProfileDialog extends JDialog {
 		JPanel panel = new JPanel(new GridBagLayout());
 		panel.setBorder(BorderFactory.createTitledBorder("Disassembly Listing"));
 		int row = 0;
-		addLabeledField(panel, row++, DataTypes.Profile_OutputEncoding, outputEncodingComboBox);
+		addLabeledField(panel, row++, DataTypes.Profile_OutputEncoding, outputEncodingField);
 		addFullWidth(panel, row++, removeUnusedLabelsCheckBox);
 		addFullWidth(panel, row++, includeAllowedCheckBox);
 		addLabeledField(panel, row++, DataTypes.Profile_DirectiveINCLUDEHead, includeHeadField, DataTypes.Profile_DirectiveINCLUDETail, includeTailField);
@@ -412,7 +411,7 @@ public final class ProfileDialog extends JDialog {
 		dsSyntaxField.setEnabled(profile.directiveDSAllowed);
 		dsSyntaxField.setText(profile.directiveDS);
 
-		outputEncodingComboBox.setSelectedItem(isKnownOutputEncoding(profile.outputEncoding) ? profile.outputEncoding : Encoding.ASCII);
+		outputEncodingField.setValue(Encoding.getOutputValues().contains(profile.outputEncoding) ? profile.outputEncoding : Encoding.ASCII);
 		removeUnusedLabelsCheckBox.setSelected(profile.omitUnreferencedSystemLabels);
 		boolean includeAllowed = profile.directiveINCLUDEAllowed;
 		includeAllowedCheckBox.setSelected(includeAllowed);
@@ -432,15 +431,6 @@ public final class ProfileDialog extends JDialog {
 		}
 		maxIncludeLinesField.setEnabled(includeAllowed && !profile.directiveINCLUDEAllEquatesInOneIncludeFile);
 		maxIncludeLinesField.setText(String.valueOf(profile.directiveINCLUDEMaximumNumberOfLinesPerFile));
-	}
-
-	private static boolean isKnownOutputEncoding(Encoding encoding) {
-		for (Encoding candidate : OUTPUT_ENCODINGS) {
-			if (candidate == encoding) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	/** Ported from ProfileDialog::GetDialogValues. */
@@ -487,7 +477,7 @@ public final class ProfileDialog extends JDialog {
 		profile.directiveDSAllowed = dsAllowedCheckBox.isSelected();
 		profile.directiveDS = dsSyntaxField.getText();
 
-		Encoding selectedEncoding = (Encoding) outputEncodingComboBox.getSelectedItem();
+		Encoding selectedEncoding = outputEncodingField.getValue();
 		profile.outputEncoding = selectedEncoding != null ? selectedEncoding : Encoding.ASCII;
 		profile.omitUnreferencedSystemLabels = removeUnusedLabelsCheckBox.isSelected();
 

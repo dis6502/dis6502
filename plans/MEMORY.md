@@ -194,6 +194,27 @@ needed a dedicated shade-plugin filter to strip its `META-INF` signature
 files when building the uber-jar - that filter was removed too once the
 dependency was gone).
 
+### For a type whose values are shown to the user, use the WUDSN Base `ValueSet` pattern
+
+When the Profile dialog's encoding drop-down showed raw enum names (`UTF8`)
+and an `EncodingInfo` lookup class was proposed, the user pointed to the
+established mechanism instead: "Check the 'ValuesSets' pattern in 'WUDSN
+Base' for handling enums with texts."
+
+How to apply: the type is a class extending
+`com.wudsn.tools.base.repository.ValueSet` (not a Java `enum`) with `public
+static final` instances, a static `getValues()`, and a static initializer
+ending in `initializeClass(TheType.class, ValueSets.class)` -
+`com.wudsn.tools.base.atari.Platform` is the model, `model/Encoding.java` the
+first one here. Texts live in the one shared `ValueSets.properties` next to
+this project's `ValueSets` container class, keyed `SimpleClassName_ID`
+(`Encoding_UTF8=UTF-8`); `toString()` returns the text, and
+`com.wudsn.tools.base.gui.ValueSetField` is the ready-made combo box. A
+`ValueSet` cannot be used in a `switch` - use an `if` chain on identity. The
+persistence key is the `id`, never the text. More generally: before inventing
+a text-lookup helper, look in WUDSN Base for an existing repository pattern
+(`ValueSet`, `DataType`, `Action`, `Message`, `Texts`).
+
 ### Keep type enums free of display texts - texts live in a separate Info class backed by `Texts`
 
 User-visible texts must stay localizable, so they do not belong in a type

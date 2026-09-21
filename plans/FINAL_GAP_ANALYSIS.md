@@ -347,6 +347,8 @@ handler, with the two loads retagged as low/high byte).
    XML persistence) instead of implying pending work. The remaining "is not
    ported" notes describe deliberate decisions and are accurate.
 
-Nothing in this document is open any more. One observation left for a
-future decision, not a gap: the Profile dialog's encoding combo shows the
-enum names (`UTF8`) where C++ shows `EncodingInfo`'s texts (`UTF-8`).
+Nothing in this document is open any more. The one observation left over -
+the Profile dialog's encoding combo showing enum names (`UTF8`) where C++
+shows `EncodingInfo`'s texts (`UTF-8`) - was fixed on 2026-09-22 by making
+`Encoding` a WUDSN Base `ValueSet` (texts in `ValueSets.properties`, the
+combo a `ValueSetField`); see `plans/MEMORY.md` for the pattern.
