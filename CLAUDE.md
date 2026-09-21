@@ -33,4 +33,11 @@ be rediscovered:
   fidelity rules), so the same guidance is visible to anyone working in this
   repository, not just a future Claude session.
 
+- [`plans/FINAL_GAP_ANALYSIS.md`](plans/FINAL_GAP_ANALYSIS.md) - the second,
+  entry-point-driven audit of C++ features missing in the port; every gap
+  in it is closed (status: done).
+- [`plans/FURTHER_IMPROVEMENTS.md`](plans/FURTHER_IMPROVEMENTS.md) - what is
+  left now that porting is over: unverified-on-screen items, remaining
+  hard-coded UI strings, known limits, test coverage gaps, housekeeping.
+
 New planning/guidance documents for future work should also go in `plans/`.
