@@ -30,8 +30,9 @@ import com.wudsn.tools.base.repository.Message;
  * subclass. Since {@link Text}'s fields already hold their resolved text
  * once the class is loaded (see its javadoc), that whole indirection is
  * unnecessary here: methods take the already-resolved {@code String} (e.g.
- * {@link Text#IDS_LOG_OPEN_WORK}) directly, so {@code SendXxxMessageWithID}
- * becomes {@code sendXxxMessage}. Message sending is also not a singleton
+ * {@link Text#IDS_LOG_TITLE}) directly, so {@code SendXxxMessageWithID}
+ * becomes {@code sendXxxMessage} - or, for a {@link Messages} field, {@link
+ * #sendMessage}. Message sending is also not a singleton
  * accessed through a {@code g_Application} global here - callers that need
  * it (like {@link com.wudsn.tools.dis6502.model.WorkspaceLogic}) take an
  * {@code Application} instance through their constructor instead.

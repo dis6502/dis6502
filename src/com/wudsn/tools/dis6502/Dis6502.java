@@ -481,8 +481,7 @@ public final class Dis6502 {
 		currentFile = null;
 
 		if (new WorkspaceDialog(mainWindow.getFrame()).show(workspace)) {
-			application.sendInfoMessage(Text.IDS_MAIN_FILE_LOG_NEW_WORKSPACE_PREPARED,
-					workspace.getComputerSystem().getTypeInfo().text);
+			application.sendMessage(Messages.I016, workspace.getComputerSystem().getTypeInfo().text);
 		}
 
 		mainWindow.segmentListPanel.refresh();
@@ -954,7 +953,7 @@ public final class Dis6502 {
 	private void performMergeSegments() {
 		if (workspace.getSegmentList().getCount() > 1) {
 			int mergedCount = workspace.getSegmentList().mergeSegments();
-			application.sendInfoMessage(Text.IDS_LOG_SEGMENTS_MERGED, String.valueOf(mergedCount));
+			application.sendMessage(Messages.I015, String.valueOf(mergedCount));
 		}
 	}
 

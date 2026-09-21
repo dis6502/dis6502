@@ -16,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.Messages;
-import com.wudsn.tools.dis6502.Text;
 
 /**
  * Loads and saves the modern text equates file format for an
@@ -52,7 +51,7 @@ public final class EquateListLogic {
 	/** Loads equates from a text equates file, appending to {@code equateList}. Returns {@code false}, and logs, instead of throwing. */
 	public boolean load(EquateList equateList, String filePath) {
 		equateList.clear();
-		application.sendInfoMessage(Text.IDS_LOG_OPEN_EQUATE_FILE, filePath);
+		application.sendMessage(Messages.I009, filePath);
 
 		try (BufferedReader reader = new BufferedReader(
 				new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8))) {
@@ -68,7 +67,7 @@ public final class EquateListLogic {
 			return false;
 		}
 
-		application.sendInfoMessage(Text.IDS_EQUATE_LIST_LOADED, String.valueOf(equateList.getCount()),
+		application.sendMessage(Messages.I008, String.valueOf(equateList.getCount()),
 				String.valueOf(equateList.getLabelCount()));
 		equateList.notifyListeners();
 		return true;
@@ -76,7 +75,7 @@ public final class EquateListLogic {
 
 	/** Saves equates to a text equates file, or (if {@code xasm}) an XASM 3.0.0 label table. Logs instead of throwing. */
 	public void save(EquateList equateList, String filePath, boolean xasm) {
-		application.sendInfoMessage(Text.IDS_LOG_SAVE_EQUATE_FILE, filePath);
+		application.sendMessage(Messages.I012, filePath);
 
 		try (Writer writer = new OutputStreamWriter(new FileOutputStream(filePath),
 				xasm ? StandardCharsets.US_ASCII : StandardCharsets.UTF_8)) {

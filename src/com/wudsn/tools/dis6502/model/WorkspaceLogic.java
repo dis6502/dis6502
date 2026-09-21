@@ -15,7 +15,6 @@ import java.nio.charset.StandardCharsets;
 
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.Messages;
-import com.wudsn.tools.dis6502.Text;
 
 /**
  * Loads and saves a {@link Workspace}, and adds files to it. Ported from
@@ -63,7 +62,7 @@ public final class WorkspaceLogic {
 	public boolean load(Workspace workspace, String filePath) {
 		workspace.init();
 
-		application.sendInfoMessage(Text.IDS_LOG_OPEN_WORK, filePath);
+		application.sendMessage(Messages.I011, filePath);
 
 		File file = new File(filePath);
 		workspace.beginUpdate();
@@ -112,7 +111,7 @@ public final class WorkspaceLogic {
 
 	/** Saves a workspace to disk. Returns {@code false}, and logs, instead of throwing. */
 	public boolean save(Workspace workspace, String filePath) {
-		application.sendInfoMessage(Text.IDS_LOG_SAVE_WORKSPACE_FILE, filePath);
+		application.sendMessage(Messages.I014, filePath);
 		workspace.setFilePath(filePath);
 
 		try (OutputStream outputStream = new FileOutputStream(filePath)) {

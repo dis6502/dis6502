@@ -65,7 +65,6 @@ public final class Text extends NLS {
 	public static String IDS_DUMP_TITLE_SELECTION;
 	public static String IDS_EQUATES_CONFIRM_CLEAR_SYSTEM_EQUATES;
 	public static String IDS_EQUATES_CONFIRM_CLEAR_USER_EQUATES;
-	public static String IDS_EQUATE_LIST_LOADED;
 	public static String IDS_ERR_ATARI_FILE;
 	public static String IDS_ERR_BAD_MODE_FOR_LOHI;
 	public static String IDS_ERR_FNT_NOT_FOUND;
@@ -100,19 +99,11 @@ public final class Text extends NLS {
 	public static String IDS_LOG_OPEN_DISK_IMAGE_BOOT_SECTORS;
 	public static String IDS_LOG_OPEN_DISK_IMAGE_EXECUTABLE_FILE;
 	public static String IDS_LOG_OPEN_DISK_IMAGE_SECTORS;
-	public static String IDS_LOG_OPEN_EQUATE_FILE;
 	public static String IDS_LOG_OPEN_EXECUTABLE_FILE;
-	public static String IDS_LOG_OPEN_PROFILE_FILE;
 	public static String IDS_LOG_OPEN_RAW_FILE;
 	public static String IDS_LOG_OPEN_ROM_IMAGE_FILE;
-	public static String IDS_LOG_OPEN_WORK;
 	public static String IDS_LOG_SAVE_DISASSEMBLY;
-	public static String IDS_LOG_SAVE_EQUATE_FILE;
-	public static String IDS_LOG_SAVE_PROFILE_FILE;
-	public static String IDS_LOG_SAVE_WORKSPACE_FILE;
-	public static String IDS_LOG_SEGMENTS_MERGED;
 	public static String IDS_LOG_TITLE;
-	public static String IDS_MAIN_FILE_LOG_NEW_WORKSPACE_PREPARED;
 	public static String IDS_MAIN_FILE_NEW_WORKSPACE_MESSAGE;
 	public static String IDS_MAIN_FILE_NEW_WORKSPACE_TITLE;
 	public static String IDS_MAIN_FILE_OPEN_WORKSPACE_FILE_MESSAGE;

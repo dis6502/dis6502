@@ -14,7 +14,6 @@ import java.nio.file.Files;
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.ApplicationSettingsSection;
 import com.wudsn.tools.dis6502.Messages;
-import com.wudsn.tools.dis6502.Text;
 
 /**
  * Loads and saves a {@link Profile}, trying the legacy binary format
@@ -41,7 +40,7 @@ public final class ProfileLogic {
 
 	/** Loads a profile from disk (the legacy binary format or the modern XML format). Returns {@code false}, and logs, instead of throwing. */
 	public boolean load(Profile profile, String filePath) {
-		application.sendInfoMessage(Text.IDS_LOG_OPEN_PROFILE_FILE, filePath);
+		application.sendMessage(Messages.I010, filePath);
 
 		try {
 			File file = new File(filePath);
@@ -71,7 +70,7 @@ public final class ProfileLogic {
 	}
 
 	public void save(Profile profile, String filePath) {
-		application.sendInfoMessage(Text.IDS_LOG_SAVE_PROFILE_FILE, filePath);
+		application.sendMessage(Messages.I013, filePath);
 
 		try (OutputStream outputStream = new FileOutputStream(filePath)) {
 			Xml.save(profile, "Profile", outputStream);

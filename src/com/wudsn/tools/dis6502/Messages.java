@@ -56,6 +56,33 @@ public final class Messages extends NLS {
 	 */
 	public static Message E007;
 
+	/** {@link com.wudsn.tools.dis6502.model.EquateListLogic#load}'s equate-count summary - moved from {@code Text.IDS_EQUATE_LIST_LOADED}. */
+	public static Message I008;
+
+	/** {@link com.wudsn.tools.dis6502.model.EquateListLogic#load}'s "opening file" log line - moved from {@code Text.IDS_LOG_OPEN_EQUATE_FILE}. */
+	public static Message I009;
+
+	/** {@link com.wudsn.tools.dis6502.model.ProfileLogic#load}'s "opening file" log line - moved from {@code Text.IDS_LOG_OPEN_PROFILE_FILE}. */
+	public static Message I010;
+
+	/** {@link com.wudsn.tools.dis6502.model.WorkspaceLogic#load}'s "opening file" log line - moved from {@code Text.IDS_LOG_OPEN_WORK}. */
+	public static Message I011;
+
+	/** {@link com.wudsn.tools.dis6502.model.EquateListLogic#save}'s "saving file" log line - moved from {@code Text.IDS_LOG_SAVE_EQUATE_FILE}. */
+	public static Message I012;
+
+	/** {@link com.wudsn.tools.dis6502.model.ProfileLogic#save}'s "saving file" log line - moved from {@code Text.IDS_LOG_SAVE_PROFILE_FILE}. */
+	public static Message I013;
+
+	/** {@link com.wudsn.tools.dis6502.model.WorkspaceLogic#save}'s "saving file" log line - moved from {@code Text.IDS_LOG_SAVE_WORKSPACE_FILE}. */
+	public static Message I014;
+
+	/** {@link Dis6502#performMergeSegments}'s merged-count summary - moved from {@code Text.IDS_LOG_SEGMENTS_MERGED}. */
+	public static Message I015;
+
+	/** {@link Dis6502#performNewWorkspace}'s "new workspace prepared" log line - moved from {@code Text.IDS_MAIN_FILE_LOG_NEW_WORKSPACE_PREPARED}. */
+	public static Message I016;
+
 	static {
 		initializeClass(Messages.class, null);
 	}
