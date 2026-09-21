@@ -6,6 +6,7 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -19,8 +20,10 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 
+import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.Actions;
+import com.wudsn.tools.dis6502.Text;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentList;
 import com.wudsn.tools.dis6502.model.Workspace;
@@ -119,11 +122,14 @@ public final class SegmentListPanel extends JPanel {
 	private final DefaultListModel<Segment> listModel = new DefaultListModel<>();
 	private final JList<Segment> list = new JList<>(listModel);
 	private final ComputerFontListCellRenderer<Segment> cellRenderer = new ComputerFontListCellRenderer<>();
+	private final PartHeaderPanel header = new PartHeaderPanel(new Color(255, 255, 0));
 	private Workspace workspace;
 	private boolean updating;
+	private String fileName = "";
 
 	public SegmentListPanel() {
 		super(new BorderLayout());
+		add(header, BorderLayout.NORTH);
 		list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		list.setCellRenderer(cellRenderer);
 		list.addListSelectionListener(e -> {
@@ -166,6 +172,25 @@ public final class SegmentListPanel extends JPanel {
 	public void setComputerFont(ComputerFont computerFont) {
 		list.setFont(computerFont.getAwtFont());
 		cellRenderer.setComputerFont(computerFont);
+		header.setComputerFont(computerFont);
+	}
+
+	/**
+	 * The currently loaded file's name, shown in {@link #header} - ported
+	 * from {@code Main::PaintMainWindow}'s {@code
+	 * std::filesystem::path(binPath).filename()}. Call whenever {@code
+	 * Dis6502}'s own current-file state changes; pass {@code null} once
+	 * there is none.
+	 */
+	public void setFileName(String fileName) {
+		this.fileName = fileName == null ? "" : fileName;
+		updateHeaderText();
+	}
+
+	/** Ported from Main::PaintMainWindow's segment list title block (IDS_SEGMENT_TITLE/IDS_SEGMENT_TITLE_NO_SEGMENTS_LOADED). */
+	private void updateHeaderText() {
+		boolean empty = workspace == null || workspace.getSegmentList().isEmpty();
+		header.setText(empty ? Text.IDS_SEGMENT_TITLE_NO_SEGMENTS_LOADED : TextUtility.format(Text.IDS_SEGMENT_TITLE, fileName));
 	}
 
 	/** Ported from MainSegment::RButtonDownProc (the "no edit mode" branch - there is no memory inspector edit mode to check here yet). */
@@ -242,6 +267,7 @@ public final class SegmentListPanel extends JPanel {
 			} else {
 				list.setSelectedIndex(selectedIndex);
 			}
+			updateHeaderText();
 		} finally {
 			updating = false;
 		}

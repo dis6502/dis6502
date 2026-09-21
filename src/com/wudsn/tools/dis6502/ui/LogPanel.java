@@ -6,6 +6,7 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.RenderingHints;
 
 import javax.swing.BorderFactory;
@@ -14,13 +15,17 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
+import com.wudsn.tools.dis6502.Text;
+
 /**
  * A scrolling, read-only log of application messages.
  * <p>
  * Ported from ui/LogListWindow.h / LogListWindow.cpp, simplified from a
  * multi-column, color-coded list view to a plain text area for this first
  * pass - the C++ version's per-entry severity coloring/columns are not
- * ported yet.
+ * ported yet. {@link #header}, the lavender {@code RGB(192,192,255)} title
+ * bar above it, is ported separately from {@code Main::PaintMainWindow}'s
+ * own title-bar painting - see {@link PartHeaderPanel}'s javadoc.
  * <p>
  * {@link #setComputerFont} is ported from {@code PartWindow::ApplyLayout}'s
  * blanket {@code SetFont(...)} call - {@code LogListWindow} is a plain
@@ -46,10 +51,13 @@ public final class LogPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
+	private final PartHeaderPanel header = new PartHeaderPanel(new Color(192, 192, 255));
 	private final JTextArea textArea = new JTextArea();
 
 	public LogPanel() {
 		super(new BorderLayout());
+		header.setText(Text.IDS_LOG_TITLE);
+		add(header, BorderLayout.NORTH);
 		textArea.setEditable(false);
 		textArea.setFont(new java.awt.Font(java.awt.Font.MONOSPACED, java.awt.Font.PLAIN, 12));
 		textArea.putClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
@@ -63,6 +71,7 @@ public final class LogPanel extends JPanel {
 	/** Ported from PartWindow::ApplyLayout's SetFont(partLayout->GetLayout()->GetFont()) - call whenever the workspace's computer system or double-height setting changes. */
 	public void setComputerFont(ComputerFont computerFont) {
 		textArea.setFont(computerFont.getAwtFont());
+		header.setComputerFont(computerFont);
 	}
 
 	/** May be called from any thread. */

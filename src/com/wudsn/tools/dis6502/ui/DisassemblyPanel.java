@@ -6,6 +6,7 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -32,6 +33,7 @@ import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.base.repository.Action;
 import com.wudsn.tools.dis6502.Actions;
+import com.wudsn.tools.dis6502.Text;
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblyResult;
 import com.wudsn.tools.dis6502.model.Equate;
@@ -144,6 +146,7 @@ public final class DisassemblyPanel extends JPanel {
 	public final JMenuItem addrRangeDefMenuItem = new JMenuItem();
 	public final JMenuItem addrRangeRefMenuItem = new JMenuItem();
 
+	private final PartHeaderPanel header = new PartHeaderPanel(new Color(0, 255, 0));
 	private final JPopupMenu popupMenu = new JPopupMenu();
 	private final JMenuItem popupFindMenuItem = ElementFactory.createMenuItem(Actions.DisassemblyPopupMenu_Find, "popupFindMenuItem");
 	private final JMenuItem popupFindNextMenuItem = ElementFactory.createMenuItem(Actions.DisassemblyPopupMenu_FindNext,
@@ -161,6 +164,7 @@ public final class DisassemblyPanel extends JPanel {
 
 	public DisassemblyPanel() {
 		super(new BorderLayout());
+		header.setText(Text.IDS_DIS_TITLE);
 
 		JPanel findButtonsPanel = new JPanel();
 		findButtonsPanel.add(findButton);
@@ -170,7 +174,11 @@ public final class DisassemblyPanel extends JPanel {
 		findPanel.add(findField, BorderLayout.CENTER);
 		findPanel.add(findButtonsPanel, BorderLayout.EAST);
 
-		add(findPanel, BorderLayout.NORTH);
+		JPanel topPanel = new JPanel(new BorderLayout());
+		topPanel.add(header, BorderLayout.NORTH);
+		topPanel.add(findPanel, BorderLayout.SOUTH);
+		add(topPanel, BorderLayout.NORTH);
+
 		JScrollPane scrollPane = new JScrollPane(grid);
 		// Splitters already separate the part windows - the scroll pane's own
 		// L&F-default border would just draw a redundant line right next to them.
@@ -525,6 +533,7 @@ public final class DisassemblyPanel extends JPanel {
 	/** Ported from DisassemblyWindow's use of WorkspaceFont::GetResizedFont - call whenever the workspace's computer system or double-height setting changes. */
 	public void setComputerFont(ComputerFont computerFont) {
 		grid.setComputerFont(computerFont);
+		header.setComputerFont(computerFont);
 	}
 
 	/** See {@link DisassemblyGridPanel#setLineNumbersActive} - call alongside every {@link #refresh}, matching {@code MainDisassembly::RefreshDisControl}. */

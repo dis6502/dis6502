@@ -1724,5 +1724,6 @@ public final class Dis6502 {
 			title += " - " + currentFile.getName();
 		}
 		mainWindow.getFrame().setTitle(title);
+		mainWindow.segmentListPanel.setFileName(currentFile == null ? null : currentFile.getName());
 	}
 }

@@ -6,6 +6,7 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -13,7 +14,9 @@ import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.border.TitledBorder;
+
+import com.wudsn.tools.base.common.TextUtility;
+import com.wudsn.tools.dis6502.Text;
 
 /**
  * A list of the disassembly lines matching the current search string
@@ -42,10 +45,7 @@ public final class XRefPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
-	// Flat empty base border instead of createTitledBorder(String)'s L&F-default
-	// one, which paints a bevel/etched box around the whole panel on this
-	// project's native (Windows) look and feel - not wanted, just the title text.
-	private final TitledBorder titledBorder = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(), "No label selected");
+	private final PartHeaderPanel header = new PartHeaderPanel(new Color(255, 192, 192));
 	private final DefaultListModel<Entry> listModel = new DefaultListModel<>();
 	private final JList<Entry> list = new JList<>(listModel);
 	private final ComputerFontListCellRenderer<Entry> cellRenderer = new ComputerFontListCellRenderer<>();
@@ -54,7 +54,8 @@ public final class XRefPanel extends JPanel {
 
 	public XRefPanel() {
 		super(new BorderLayout());
-		setBorder(titledBorder);
+		header.setText(Text.IDS_XREF_TITLE_NO_LABEL_SELECTED);
+		add(header, BorderLayout.NORTH);
 		list.setCellRenderer(cellRenderer);
 		JScrollPane scrollPane = new JScrollPane(list);
 		// Splitters already separate the part windows - the scroll pane's own
@@ -80,19 +81,25 @@ public final class XRefPanel extends JPanel {
 	public void setComputerFont(ComputerFont computerFont) {
 		list.setFont(computerFont.getAwtFont());
 		cellRenderer.setComputerFont(computerFont);
+		header.setComputerFont(computerFont);
 	}
 
 	/**
 	 * Ported from MainXRef::UpdateList. {@code entries} is empty (matching
 	 * an empty {@code findString} in C++) to show "No label selected"
-	 * instead of a reference count/list.
+	 * instead of a reference count/list. Now built from the actual {@code
+	 * Text.IDS_XREF_TITLE_*} resources instead of a hand-written literal -
+	 * switching to them also fixed the wording ("No label selected" vs.
+	 * the resource's "No Label Selected", "N Reference(s) to" vs. the
+	 * resource's "N reference(s) for") to match the C++ source exactly.
 	 */
 	public void updateList(String findString, List<Entry> entries) {
 		listModel.clear();
 		if (findString.isEmpty() || entries.isEmpty()) {
-			titledBorder.setTitle("No label selected");
+			header.setText(Text.IDS_XREF_TITLE_NO_LABEL_SELECTED);
 		} else {
-			titledBorder.setTitle(entries.size() + (entries.size() == 1 ? " Reference to \"" : " References to \"") + findString + "\"");
+			String pattern = entries.size() == 1 ? Text.IDS_XREF_TITLE_LABEL_REFERENCE : Text.IDS_XREF_TITLE_LABEL_REFERENCES;
+			header.setText(TextUtility.format(pattern, String.valueOf(entries.size()), findString));
 			for (Entry entry : entries) {
 				listModel.addElement(entry);
 			}

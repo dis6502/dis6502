@@ -6,6 +6,7 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
@@ -25,11 +26,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-import javax.swing.border.TitledBorder;
 
+import com.wudsn.tools.base.common.HexUtility;
+import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.base.repository.Action;
 import com.wudsn.tools.dis6502.Actions;
+import com.wudsn.tools.dis6502.Text;
 import com.wudsn.tools.dis6502.model.FileHeader;
 import com.wudsn.tools.dis6502.model.GuessCodeLogic;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState.EditCharResult;
@@ -229,10 +232,7 @@ public final class MemoryInspectorPanel extends JPanel {
 			Actions.MemoryInspectorPopupMenu_ChangeType_Sbyte, Actions.MemoryInspectorPopupMenu_ChangeType_Dlist,
 			Actions.MemoryInspectorPopupMenu_ChangeType_Store, Actions.MemoryInspectorPopupMenu_ChangeType_Unknown };
 
-	// Flat empty base border instead of createTitledBorder(String)'s L&F-default
-	// one, which paints a bevel/etched box around the whole panel on this
-	// project's native (Windows) look and feel - not wanted, just the title text.
-	private final TitledBorder titledBorder = BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(), "No segment selected.");
+	private final PartHeaderPanel header = new PartHeaderPanel(new Color(0, 255, 255));
 	private final HexGridPanel grid = new HexGridPanel();
 
 	/**
@@ -317,11 +317,15 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	public MemoryInspectorPanel() {
 		super(new BorderLayout());
-		setBorder(titledBorder);
+		header.setText(Text.IDS_DUMP_TITLE_SEGMENT_NO_SEGMENT_SELECTED);
 
-		JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		headerPanel.add(displayAsScreenCodeButton);
-		add(headerPanel, BorderLayout.NORTH);
+		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		buttonPanel.add(displayAsScreenCodeButton);
+
+		JPanel topPanel = new JPanel(new BorderLayout());
+		topPanel.add(header, BorderLayout.NORTH);
+		topPanel.add(buttonPanel, BorderLayout.SOUTH);
+		add(topPanel, BorderLayout.NORTH);
 
 		JScrollPane scrollPane = new JScrollPane(grid);
 		// Splitters already separate the part windows - the scroll pane's own
@@ -587,6 +591,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	 */
 	public void setComputerFont(ComputerFont computerFont) {
 		grid.setComputerFont(computerFont);
+		header.setComputerFont(computerFont);
 	}
 
 	/**
@@ -659,35 +664,41 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * from scratch on every {@code WM_PAINT} using whatever the selection happens
 	 * to be at that moment, this is called explicitly wherever the segment or
 	 * selection changes ({@link #segmentChanged}, {@link #select},
-	 * {@link #clearSelection}).
+	 * {@link #clearSelection}). Built from the actual {@code
+	 * Text.IDS_DUMP_TITLE_*} resources rather than a hand-written {@code
+	 * String.format} - switching to them fixed a real divergence found in
+	 * the process: the old "Selection" branch never included the segment
+	 * number the "Segment" branch did, unlike {@code
+	 * IDS_DUMP_TITLE_SELECTION}'s own {@code "Selection {0}: ..."}, which
+	 * C++ does include.
 	 */
 	private void updateTitle() {
 		Segment segment = memoryInspectorState == null ? null : memoryInspectorState.getSegment();
 		if (segment == null) {
-			titledBorder.setTitle("No segment selected.");
+			header.setText(Text.IDS_DUMP_TITLE_SEGMENT_NO_SEGMENT_SELECTED);
 			return;
 		}
 
-		int segmentNumber = memoryInspectorState.getSegmentIndex() + 1;
-		String prefix;
-		int begin;
-		int end;
-		int size;
+		String segmentNumber = String.valueOf(memoryInspectorState.getSegmentIndex() + 1);
 		String title;
 		if (memoryInspectorState.hasSelection()) {
-			prefix = "Selection";
-			begin = segment.wBegin + memoryInspectorState.getBegin();
-			end = segment.wBegin + memoryInspectorState.getEnd();
-			size = memoryInspectorState.getSize();
-			title = String.format("%s: $%04X-$%04X:$%04X / %d", prefix, begin, end, size, size);
+			int begin = segment.wBegin + memoryInspectorState.getBegin();
+			int end = segment.wBegin + memoryInspectorState.getEnd();
+			int size = memoryInspectorState.getSize();
+			title = TextUtility.format(Text.IDS_DUMP_TITLE_SELECTION, segmentNumber, hex(begin), hex(end), hex(size),
+					String.valueOf(size));
 		} else {
-			prefix = "Segment";
-			begin = segment.wBegin;
-			end = segment.wEnd;
-			size = segment.getSize();
-			title = String.format("%s %d: $%04X-$%04X:$%04X / %d", prefix, segmentNumber, begin, end, size, size);
+			int begin = segment.wBegin;
+			int end = segment.wEnd;
+			int size = segment.getSize();
+			title = TextUtility.format(Text.IDS_DUMP_TITLE_SEGMENT, segmentNumber, hex(begin), hex(end), hex(size),
+					String.valueOf(size));
 		}
-		titledBorder.setTitle(title);
+		header.setText(title);
+	}
+
+	private static String hex(int value) {
+		return HexUtility.getLongValueHexString(value, 4);
 	}
 
 	/**
@@ -710,10 +721,6 @@ public final class MemoryInspectorPanel extends JPanel {
 		grid.refreshSelection();
 		updateTitle();
 		updatePopupMenuItemsState();
-		// grid.refreshSelection() only repaints the grid, a child component -
-		// the titled border's text is painted by this panel itself, so it
-		// needs its own repaint to actually show the new title on screen.
-		repaint();
 	}
 
 	/** Ported from MemoryInspector::ClearSelection. */
@@ -724,7 +731,6 @@ public final class MemoryInspectorPanel extends JPanel {
 		grid.refreshSelection();
 		updateTitle();
 		updatePopupMenuItemsState();
-		repaint();
 	}
 
 	/**
