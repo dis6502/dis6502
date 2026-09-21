@@ -61,6 +61,23 @@ Dynamic (concatenated) titles - `Dis6502.java:559`/`:723`'s "Add "/"Open "
 + a variable - were left alone, matching how the equivalent dynamic
 `setDialogTitle` calls were already handled in pass 1.
 
+**Update (same day, pass 3):** every remaining static/parameterizable
+`JOptionPane` *message* in group A that wasn't already a `Text`/`Messages`
+field was migrated to a new `Messages.E0xx` field (`E038`-`E048`), keeping
+the existing `JOptionPane` display exactly as before - only the text
+source changed, no new `application.sendMessage(...)` logging was added.
+Two pairs of call sites that built the identical message template by hand
+now share one field: `E038` ("Could not open workspace '{0}'. See the log
+for details.") covers both `Dis6502.java:432` and `:510`; `E040` ("Could
+not {0} file '{1}'. See the log for details.", parameterized on the
+add/open verb as well as the path) covers both `:559` and `:723`, which
+previously built the same text two different ways by hand. The dynamic
+titles at those same two call sites were still left alone (see pass 2).
+`SegmentWriteBootDiskDialog.java:150`'s message (`ex.getMessage()`) and
+its own `:163` `IOException` text were left as-is - the first is already
+a variable, not a literal; the second is the deliberately-not-ported case
+noted below.
+
 ## A) User-facing dialog titles/messages (50 hits)
 
 These are what a user actually sees - dialog titles, `JOptionPane` message
@@ -76,15 +93,15 @@ section D output.
 ### Dis6502.java
 
 - `:227` `IllegalArgumentException` - `"Parameter 'args' must not be null."`
-- `:432` `JOptionPane.showMessageDialog` - message `"Could not open workspace '"` + path + `"'. See the log for details."` (not yet migrated), title ~~`'Open Workspace'`~~ MIGRATED -> `Texts.Dis6502_OpenWorkspaceTitle`
-- `:456` `JOptionPane.showMessageDialog` - message not yet migrated, title ~~`'Open File'`~~ MIGRATED -> `Texts.Dis6502_OpenFileTitle`
-- `:510` `JOptionPane.showMessageDialog` - message not yet migrated, title ~~`'Open Workspace'`~~ MIGRATED -> `Texts.Dis6502_OpenWorkspaceTitle` (shares the field with `:432`, same text)
+- `:432` `JOptionPane.showMessageDialog` - message ~~`"Could not open workspace '"` + path + `"'. See the log for details."`~~ MIGRATED -> `Messages.E038.format(path)`, title MIGRATED -> `Texts.Dis6502_OpenWorkspaceTitle`
+- `:456` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E039.format(path)`, title MIGRATED -> `Texts.Dis6502_OpenFileTitle`
+- `:510` `JOptionPane.showMessageDialog` - message MIGRATED -> reuses `Messages.E038` (same text as `:432`), title MIGRATED -> `Texts.Dis6502_OpenWorkspaceTitle`
 - `:542` `setDialogTitle` - `'Add '`/`'Open '` (+ suffix built elsewhere) - out of scope (JFileChooser title, dynamic)
-- `:559` `JOptionPane.showMessageDialog` - message not yet migrated, title `'Add '`/`'Open '` - left as-is (dynamic, built from a per-file-type variable, same as the `setDialogTitle` case above)
+- `:559` `JOptionPane.showMessageDialog` - message ~~`'Could not '` + add/open + `" file '"` + path + `"'. See the log for details."`~~ MIGRATED -> `Messages.E040.format(add ? "add" : "open", path)` (a 2-placeholder field, verb + path, shared with `:723` below); title `'Add '`/`'Open '` - left as-is (dynamic, same as the `setDialogTitle` case above)
 - `:587` `setDialogTitle` - `'Add '`/`'Open '` + `'Raw File'` - out of scope
 - `:644` `setDialogTitle` - `'Add '`/`'Open '` + `'Disk Image Executable File'` - out of scope
-- `:704` `JOptionPane.showMessageDialog` - message `'File in disk image is empty.'` not yet migrated, title ~~`'Open Disk Image Executable File'`~~ MIGRATED -> reuses `Texts.DiskImageExecutableFileDialog_Title` (identical text to that dialog's own window title)
-- `:723` `JOptionPane.showMessageDialog` - message not yet migrated, title `'Add '`/`'Open '` + `'Disk Image Executable File'` - left as-is (dynamic)
+- `:704` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E041.format()`, title MIGRATED -> reuses `Texts.DiskImageExecutableFileDialog_Title`
+- `:723` `JOptionPane.showMessageDialog` - message MIGRATED -> reuses `Messages.E040` (same template as `:559`); title `'Add '`/`'Open '` + `'Disk Image Executable File'` - left as-is (dynamic)
 - `:750` `setDialogTitle` - `'Add '`/`'Open '` + `'Disk Image Boot Sectors'` - out of scope
 - `:815` `setDialogTitle` - `'Add '`/`'Open '` + `'Disk Image Sectors'` - out of scope
 - `:899` `IllegalArgumentException` - `"Parameter 'fileType' has unsupported value "` + value + `'.'`
@@ -121,11 +138,11 @@ section D output.
 ### ui/EquateRangeDialog.java
 
 - ~~`:58` `setTitle` - `'Define Address Range'`~~ MIGRATED -> `Texts.EquateRangeDialog_Title`
-- `:132` `JOptionPane.showMessageDialog` - message `'Invalid start address.'` not yet migrated; title was a local `String title = "Define address range";` (lowercase "range", a near-duplicate of the dialog's own window title) - now MIGRATED to reuse `Texts.EquateRangeDialog_Title` directly (also fixes that stray capitalization mismatch)
-- `:134` `JOptionPane.showMessageDialog` - `'Invalid end address.'` (message not yet migrated; title as above)
-- `:136` `JOptionPane.showMessageDialog` - `'Start address greater than end address.'` (message not yet migrated; title as above)
-- `:138` `JOptionPane.showMessageDialog` - `'No base equate selected.'` (message not yet migrated; title as above)
-- `:142` `JOptionPane.showMessageDialog` - `'Equate address is inside range.'` (message not yet migrated; title as above)
+- `:132` `JOptionPane.showMessageDialog` - message ~~`'Invalid start address.'`~~ MIGRATED -> `Messages.E042.format()`; title was a local `String title = "Define address range";` (lowercase "range", a near-duplicate of the dialog's own window title) - MIGRATED to reuse `Texts.EquateRangeDialog_Title` directly (also fixes that stray capitalization mismatch)
+- `:134` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E043.format()` (title as above)
+- `:136` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E044.format()` (title as above)
+- `:138` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E045.format()` (title as above)
+- `:142` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E046.format()` (title as above)
 
 ### ui/LowHighByteDialog.java
 
@@ -139,13 +156,13 @@ section D output.
 
 - ~~`:140` `setTitle` - `'Profile'`~~ MIGRATED -> `Texts.ProfileDialog_Title`
 - `:512` `setDialogTitle` - `'Load Profile File'` - out of scope (JFileChooser title)
-- `:527` `JOptionPane.showMessageDialog` - message `"Could not load profile '"` + path + `"'. See the log for details."` not yet migrated, title ~~`'Load Profile'`~~ MIGRATED -> `Texts.ProfileDialog_LoadTitle`
+- `:527` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E047.format(path)`, title MIGRATED -> `Texts.ProfileDialog_LoadTitle`
 - `:535` `setDialogTitle` - `'Save Profile File'` - out of scope
 
 ### ui/RawFileDialog.java
 
 - ~~`:75` `setTitle` - `'Open Raw File'`~~ MIGRATED -> `Texts.RawFileDialog_Title`
-- `:220` `JOptionPane.showMessageDialog` - message `'File is empty.'` not yet migrated, title ~~`'Open Raw File'`~~ MIGRATED -> reuses `Texts.RawFileDialog_Title`
+- `:220` `JOptionPane.showMessageDialog` - message MIGRATED -> `Messages.E048.format()`, title MIGRATED -> reuses `Texts.RawFileDialog_Title`
 
 ### ui/SegmentPropertiesDialog.java
 

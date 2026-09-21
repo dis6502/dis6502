@@ -429,8 +429,7 @@ public final class Dis6502 {
 			return;
 		}
 		if (!workspaceLogic.load(workspace, entry.getFilePath())) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					"Could not open workspace '" + entry.getFilePath() + "'. See the log for details.",
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E038.format(entry.getFilePath()),
 					Texts.Dis6502_OpenWorkspaceTitle, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
@@ -453,9 +452,8 @@ public final class Dis6502 {
 		currentFile = null;
 
 		if (!workspaceLogic.addFile(workspace, entry.getFileType(), entry.getFilePath())) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					"Could not open file '" + entry.getFilePath() + "'. See the log for details.", Texts.Dis6502_OpenFileTitle,
-					JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E039.format(entry.getFilePath()),
+					Texts.Dis6502_OpenFileTitle, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 		mruController.addFile(entry.getFilePath(), entry.getFileType());
@@ -507,9 +505,8 @@ public final class Dis6502 {
 		}
 		File file = fileChooser.getSelectedFile();
 		if (!workspaceLogic.load(workspace, file.getPath())) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					"Could not open workspace '" + file.getPath() + "'. See the log for details.", Texts.Dis6502_OpenWorkspaceTitle,
-					JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E038.format(file.getPath()),
+					Texts.Dis6502_OpenWorkspaceTitle, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 		currentFile = file;
@@ -556,8 +553,7 @@ public final class Dis6502 {
 		}
 
 		if (!workspaceLogic.addFile(workspace, fileType, file.getPath())) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					"Could not " + (add ? "add" : "open") + " file '" + file.getPath() + "'. See the log for details.",
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E040.format(add ? "add" : "open", file.getPath()),
 					(add ? "Add " : "Open ") + fileTypeDisplayName, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
@@ -701,7 +697,7 @@ public final class Dis6502 {
 			return;
 		}
 		if (fileBuffer.length == 0) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(), "File in disk image is empty.",
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E041.format(),
 					Texts.DiskImageExecutableFileDialog_Title, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
@@ -721,8 +717,7 @@ public final class Dis6502 {
 		}
 		if (!success) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					"Could not " + (add ? "add" : "open") + " file '" + dialog.getExecutableFileName()
-							+ "'. See the log for details.",
+					Messages.E040.format(add ? "add" : "open", dialog.getExecutableFileName()),
 					(add ? "Add " : "Open ") + "Disk Image Executable File", JOptionPane.ERROR_MESSAGE);
 			return;
 		}

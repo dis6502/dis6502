@@ -29,6 +29,7 @@ import javax.swing.event.DocumentListener;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Texts;
 
 /**
@@ -218,7 +219,7 @@ public final class RawFileDialog extends JDialog {
 	public boolean show(File file) throws IOException {
 		fileBuffer = Files.readAllBytes(file.toPath());
 		if (fileBuffer.length == 0) {
-			JOptionPane.showMessageDialog(this, "File is empty.", Texts.RawFileDialog_Title, JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, Messages.E048.format(), Texts.RawFileDialog_Title, JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
 

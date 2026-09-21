@@ -162,6 +162,48 @@ public final class Messages extends NLS {
 	/** {@link com.wudsn.tools.dis6502.ui.SegmentPropertiesDialog#performOK}'s "segment overlap" error - moved from {@code Text.IDS_ERR_SEGMENT_OVERLAP}. */
 	public static Message E037;
 
+	/**
+	 * {@link Dis6502#openRecentWorkspace}/{@link Dis6502#performOpenWorkspace}'s
+	 * "could not open workspace" error dialog message - Java-invented text,
+	 * no C++ resource to move from (unlike every field above).
+	 */
+	public static Message E038;
+
+	/** {@link Dis6502#openRecentFile}'s "could not open file" error dialog message. */
+	public static Message E039;
+
+	/**
+	 * {@link Dis6502#performOpenFile}/{@link Dis6502#performOpenDiskImageExecutableFile}'s
+	 * "could not add/open file" error dialog message - one field for both,
+	 * parameterized on the add/open verb as well as the file path, since
+	 * both call sites build the exact same template text by hand today.
+	 */
+	public static Message E040;
+
+	/** {@link Dis6502#performOpenDiskImageExecutableFile}'s "file in disk image is empty" error dialog message. */
+	public static Message E041;
+
+	/** {@link com.wudsn.tools.dis6502.ui.EquateRangeDialog#performOK}'s "invalid start address" error dialog message. */
+	public static Message E042;
+
+	/** {@link com.wudsn.tools.dis6502.ui.EquateRangeDialog#performOK}'s "invalid end address" error dialog message. */
+	public static Message E043;
+
+	/** {@link com.wudsn.tools.dis6502.ui.EquateRangeDialog#performOK}'s "start address greater than end address" error dialog message. */
+	public static Message E044;
+
+	/** {@link com.wudsn.tools.dis6502.ui.EquateRangeDialog#performOK}'s "no base equate selected" error dialog message. */
+	public static Message E045;
+
+	/** {@link com.wudsn.tools.dis6502.ui.EquateRangeDialog#performOK}'s "equate address is inside range" error dialog message. */
+	public static Message E046;
+
+	/** {@link com.wudsn.tools.dis6502.ui.ProfileDialog#performLoadProfile}'s "could not load profile" error dialog message. */
+	public static Message E047;
+
+	/** {@link com.wudsn.tools.dis6502.ui.RawFileDialog#show}'s "file is empty" error dialog message. */
+	public static Message E048;
+
 	static {
 		initializeClass(Messages.class, null);
 	}

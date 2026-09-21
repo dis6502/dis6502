@@ -31,6 +31,7 @@ import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.base.repository.DataType;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.ComputerSystemTypeInfo;
 import com.wudsn.tools.dis6502.model.Encoding;
@@ -525,8 +526,8 @@ public final class ProfileDialog extends JDialog {
 			setDialogValues(loadedProfile);
 			getDialogValues(workingProfile);
 		} else {
-			JOptionPane.showMessageDialog(this, "Could not load profile '" + lastProfileFile.getPath() + "'. See the log for details.",
-					Texts.ProfileDialog_LoadTitle, JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, Messages.E047.format(lastProfileFile.getPath()), Texts.ProfileDialog_LoadTitle,
+					JOptionPane.ERROR_MESSAGE);
 		}
 	}
 

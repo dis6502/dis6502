@@ -24,6 +24,7 @@ import javax.swing.JTextField;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.Equate;
 import com.wudsn.tools.dis6502.model.EquateList;
@@ -130,17 +131,17 @@ public final class EquateRangeDialog extends JDialog {
 
 		String title = Texts.EquateRangeDialog_Title;
 		if (startAddress == 0) {
-			JOptionPane.showMessageDialog(this, "Invalid start address.", title, JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, Messages.E042.format(), title, JOptionPane.ERROR_MESSAGE);
 		} else if (endAddress == 0) {
-			JOptionPane.showMessageDialog(this, "Invalid end address.", title, JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, Messages.E043.format(), title, JOptionPane.ERROR_MESSAGE);
 		} else if (startAddress > endAddress) {
-			JOptionPane.showMessageDialog(this, "Start address greater than end address.", title, JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, Messages.E044.format(), title, JOptionPane.ERROR_MESSAGE);
 		} else if (selectedEquate == null) {
-			JOptionPane.showMessageDialog(this, "No base equate selected.", title, JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, Messages.E045.format(), title, JOptionPane.ERROR_MESSAGE);
 		} else {
 			int baseAddress = selectedEquate.getLabelValue();
 			if (baseAddress >= startAddress && baseAddress <= endAddress) {
-				JOptionPane.showMessageDialog(this, "Equate address is inside range.", title, JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, Messages.E046.format(), title, JOptionPane.ERROR_MESSAGE);
 			} else {
 				userEquateList.setRange(selectedEquate.getLabel(), baseAddress, startAddress, endAddress);
 				confirmed = true;
