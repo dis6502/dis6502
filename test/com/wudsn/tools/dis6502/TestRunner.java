@@ -107,6 +107,7 @@ public final class TestRunner {
 		runTest("MemoryInspectorStateTest", MemoryInspectorStateTest::testMemoryInspectorState);
 		runTest("ByteRangeSelectionTest", ByteRangeSelectionTest::testByteRangeSelection);
 		runTest("DataTypesTest", DataTypesTest::testDataTypes);
+		runTest("CommandLineArgumentsTest", CommandLineArgumentsTest::testCommandLineArguments);
 		runTest("ReassemblyRoundTripTest", ReassemblyRoundTripTest::testReassemblyRoundTrip);
 
 		if (failedCount == 0) {

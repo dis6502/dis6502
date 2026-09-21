@@ -85,14 +85,14 @@ public final class Messages extends NLS {
 	/** {@link Dis6502#performOpenFile}'s "opening file" log line for a cassette image - moved from {@code Text.IDS_LOG_OPEN_CASSETTE_FILE}. */
 	public static Message I017;
 
-	/** {@link Dis6502#performOpenDiskImageBootSectors}'s "opening file" log line - moved from {@code Text.IDS_LOG_OPEN_DISK_IMAGE_BOOT_SECTORS}. */
+	/** {@link Dis6502#openDiskImageBootSectors}'s "opening file" log line - moved from {@code Text.IDS_LOG_OPEN_DISK_IMAGE_BOOT_SECTORS}. */
 	public static Message I018;
 
-	/** {@link Dis6502#performOpenDiskImageExecutableFile}'s "opening file" log line - moved from {@code Text.IDS_LOG_OPEN_DISK_IMAGE_EXECUTABLE_FILE}. */
+	/** {@link Dis6502#openDiskImageExecutableFile}'s "opening file" log line - moved from {@code Text.IDS_LOG_OPEN_DISK_IMAGE_EXECUTABLE_FILE}. */
 	public static Message I019;
 
 	/**
-	 * {@link Dis6502#performOpenDiskImageSectors}'s "opening file" log line -
+	 * {@link Dis6502#openDiskImageSectors}'s "opening file" log line -
 	 * moved from {@code Text.IDS_LOG_OPEN_DISK_IMAGE_SECTORS}, fixing a real
 	 * bug found while moving it: the C++ resource string ({@code dis6502.rc})
 	 * uses {@code {0}} twice (item count and disk path) instead of {@code {0}}/
@@ -105,7 +105,7 @@ public final class Messages extends NLS {
 	/** {@link Dis6502#performOpenFile}'s "opening file" log line for an executable file - moved from {@code Text.IDS_LOG_OPEN_EXECUTABLE_FILE}. */
 	public static Message I021;
 
-	/** {@link Dis6502#performOpenRawFile}'s "opening file" log line - moved from {@code Text.IDS_LOG_OPEN_RAW_FILE}. */
+	/** {@link Dis6502#openRawFile}'s "opening file" log line - moved from {@code Text.IDS_LOG_OPEN_RAW_FILE}. */
 	public static Message I022;
 
 	/** {@link Dis6502#performOpenFile}'s "opening file" log line for a ROM image - moved from {@code Text.IDS_LOG_OPEN_ROM_IMAGE_FILE}. */
@@ -138,10 +138,10 @@ public final class Messages extends NLS {
 	/** {@link Dis6502#performSetMemoryInspectorLoHiType}'s "LOBYTE/HIBYTE on multi-byte selection" error - moved from {@code Text.IDS_ERR_MULTI_LOHI}. */
 	public static Message E032;
 
-	/** {@link Dis6502#performOpenDiskImageExecutableFile}'s "no file found in disk image" error - moved from {@code Text.IDS_ERR_NO_ATARI_FILE}. */
+	/** {@link Dis6502#openDiskImageExecutableFile}'s "no file found in disk image" error - moved from {@code Text.IDS_ERR_NO_ATARI_FILE}. */
 	public static Message E033;
 
-	/** {@link Dis6502#performOpenDiskImageBootSectors}'s "disk image is not bootable" error - moved from {@code Text.IDS_ERR_NO_BOOT}. */
+	/** {@link Dis6502#openDiskImageBootSectors}'s "disk image is not bootable" error - moved from {@code Text.IDS_ERR_NO_BOOT}. */
 	public static Message E034;
 
 	/**
@@ -155,14 +155,14 @@ public final class Messages extends NLS {
 	 */
 	public static Message E035;
 
-	/** {@link Dis6502#performOpenDiskImageExecutableFile}'s "disk image corrupted" fallback error - moved from {@code Text.IDS_ERR_READING_ATR}. */
+	/** {@link Dis6502#openDiskImageExecutableFile}'s "disk image corrupted" fallback error - moved from {@code Text.IDS_ERR_READING_ATR}. */
 	public static Message E036;
 
 	/** {@link com.wudsn.tools.dis6502.ui.SegmentPropertiesDialog#performOK}'s "segment overlap" error - moved from {@code Text.IDS_ERR_SEGMENT_OVERLAP}. */
 	public static Message E037;
 
 	/**
-	 * {@link Dis6502#openRecentWorkspace}/{@link Dis6502#performOpenWorkspace}'s
+	 * {@link Dis6502#openRecentWorkspace}/{@link Dis6502#openWorkspaceFile}'s
 	 * "could not open workspace" error dialog message - Java-invented text,
 	 * no C++ resource to move from (unlike every field above).
 	 */
@@ -172,14 +172,14 @@ public final class Messages extends NLS {
 	public static Message E039;
 
 	/**
-	 * {@link Dis6502#performOpenFile}/{@link Dis6502#performOpenDiskImageExecutableFile}'s
+	 * {@link Dis6502#performOpenFile}/{@link Dis6502#openDiskImageExecutableFile}'s
 	 * "could not add file" error dialog message - shared by both call
 	 * sites' {@code add == true} case; see {@link #E049} for the
 	 * {@code add == false} ("could not open file") case.
 	 */
 	public static Message E040;
 
-	/** {@link Dis6502#performOpenDiskImageExecutableFile}'s "file in disk image is empty" error dialog message. */
+	/** {@link Dis6502#openDiskImageExecutableFile}'s "file in disk image is empty" error dialog message. */
 	public static Message E041;
 
 	/** {@link com.wudsn.tools.dis6502.ui.EquateRangeDialog#performOK}'s "invalid start address" error dialog message. */
@@ -204,7 +204,7 @@ public final class Messages extends NLS {
 	public static Message E048;
 
 	/**
-	 * {@link Dis6502#performOpenFile}/{@link Dis6502#performOpenDiskImageExecutableFile}'s
+	 * {@link Dis6502#performOpenFile}/{@link Dis6502#openDiskImageExecutableFile}'s
 	 * "could not open file" error dialog message - the {@code add == false}
 	 * counterpart of {@link #E040}, split out from it into its own field
 	 * (was previously one field parameterized on the add/open verb).
@@ -322,6 +322,9 @@ public final class Messages extends NLS {
 
 	/** {@link Dis6502#performPasteMemoryInspectorSelection}'s "would exceed the 64 KB segment size limit" error - Java-native, no C++ equivalent (see gap #3's history). */
 	public static Message E072;
+
+	/** {@link Dis6502#openFile}'s "file type could not be determined, offering it as a raw file" log line - Java-native, the C++ version silently ignores such a file. */
+	public static Message I073;
 
 	static {
 		initializeClass(Messages.class, null);

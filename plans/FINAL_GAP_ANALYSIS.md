@@ -104,7 +104,28 @@ the workspace back to Atari 800 before parsing, so a C64 `.prg`/Oric `.tap`
 is parsed with the Atari loader. C64, Oric and Atari 5200 are only reachable
 through "Add File" or an existing `.wrk`.
 
-### C. Command line is ignored - MEDIUM
+### C. ~~Command line is ignored~~ - FIXED 2026-09-21
+
+**Fix (C, D and I together)**: every way of opening a file now goes through
+one dispatcher, `Dis6502.openFile(file, fileType, add)` (the counterpart of
+`MainFile::OpenFile`): the File menu's Open/Add items (now all one
+`performOpenFile`), Recent Files/Workspaces, the command line and drag and
+drop. `FileType.UNKNOWN_FILE` is resolved by the `.wrk` extension, then by
+`ComputerSystem.guessFileType`; a file that still cannot be classified is
+offered as a raw file via `RawFileDialog` instead of being silently ignored
+as in C++. `C64.guessFileType` now recognizes a `.prg`.
+- **C**: new `CommandLineArguments` parses `[/SYSTEMID] [file]` (`-` also
+  accepted; the first argument is only a system ID if it names one, so a Unix
+  absolute path stays a file).
+- **D**: a `TransferHandler` on the main window - anywhere, not just the
+  segment list; with several files the first is opened and the rest added.
+- **I**: a recent raw file/disk image reopens through its dialog again.
+
+Verified by `CommandLineArgumentsTest`, new `guessFileType` assertions, and
+live against the running app (command line `/c64 HelloWorld.prg`; dropping
+two `.xex` files; an untyped `.wrk`; an unrecognizable file ending up in the
+raw file dialog, and cancelling that leaving the workspace untouched).
+Original finding:
 
 C++ accepts `dis6502.exe [/SYSTEMID] [file]`: the system ID (`/ATARI800`,
 `/ATARI5200`, `/C64`, `/ORIC`, ...) selects the initial computer system, and
@@ -116,7 +137,7 @@ The detection itself (`ComputerSystem.guessFileType`, all five systems) is
 fully ported - it just has no caller. (`/TEST:` and `/DEBUG` are
 deliberately out of scope - see gap #5's history.)
 
-### D. No drag and drop - MEDIUM
+### D. ~~No drag and drop~~ - FIXED 2026-09-21 (see C)
 
 C++ accepts a single file dropped on the segment list
 (`MainSegment::DropFilesProc`) and opens it with automatic type detection -
@@ -174,7 +195,7 @@ C++ `WM_INITMENU`:
 - enables Save Workspace/Save As only when there are segments; Java leaves
   both always enabled.
 
-### I. Recent Files bypasses the per-type dialogs - LOW/MEDIUM
+### I. ~~Recent Files bypasses the per-type dialogs~~ - FIXED 2026-09-21 (see C)
 
 C++ routes a Recent Files pick through the same `OpenFile` dispatcher as the
 menu, so a raw file reopens via `RawFileDialog` (load address, header) and a
@@ -205,8 +226,8 @@ the future one:
   relocatable/symbol/fix-up blocks). Found because the vector fix above had
   no effect without it. Atari behavior is unchanged (all four
   reassembly round-trips still byte-exact).
-- Still open: `C64.guessFileType` always returns `UNKNOWN_FILE` (matters for
-  gaps C/D).
+- ~~`C64.guessFileType` always returns `UNKNOWN_FILE`~~ - FIXED 2026-09-21
+  with gaps C/D: a load address that fits into memory makes it a `.prg`.
 - Cosmetic, still open: `DisassemblyLine.systemAddress == 0` doubles as the
   "not an address line, always write it" sentinel, so a system label at
   `$0000` (`D6510`) is written to every C64 listing even when unreferenced.
@@ -261,9 +282,7 @@ handler, with the two loads retagged as low/high byte).
 
 1. ~~**B**~~ - done.
 2. ~~**A**~~ - done, including a genuine `C64.equ`.
-3. **C + D together** - one `openFile(path, UNKNOWN_FILE, add)` dispatcher
-   serves both, and fixes **I** for free if Recent Files is routed through
-   it too.
+3. ~~**C + D**, and **I**~~ - done.
 4. **E, F** - disassembly navigation/retyping conveniences.
 5. **G, H** - file dialog polish and menu gating.
 6. Javadoc sweep for the stale "not ported" notes.

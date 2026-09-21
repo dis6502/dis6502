@@ -77,7 +77,7 @@ import com.wudsn.tools.dis6502.model.MutableByteRangeSelection;
  * environment cannot do, so the C++ source is unchanged; this Java port
  * implements the evidently-intended behavior directly: {@link #readSector}
  * returns the sector's full data, and the caller (see {@code
- * Dis6502.performOpenDiskImageSectors}) copies {@code item.size} bytes
+ * Dis6502.openDiskImageSectors}) copies {@code item.size} bytes
  * starting at {@code item.begin} out of that.
  *
  * @author Peter Dell

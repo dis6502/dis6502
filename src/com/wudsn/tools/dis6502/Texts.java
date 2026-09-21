@@ -88,7 +88,7 @@ public final class Texts extends NLS {
 	/** {@link com.wudsn.tools.dis6502.ui.SelectGraphicsDialog}'s window title. */
 	public static String SelectGraphicsDialog_Title;
 
-	/** {@link Dis6502#openRecentWorkspace}/{@link Dis6502#performOpenWorkspace}'s "could not open workspace" error dialog title. */
+	/** {@link Dis6502#openRecentWorkspace}/{@link Dis6502#openWorkspaceFile}'s "could not open workspace" error dialog title. */
 	public static String Dis6502_OpenWorkspaceTitle;
 	/** {@link Dis6502#openRecentFile}'s "could not open file" error dialog title. */
 	public static String Dis6502_OpenFileTitle;
@@ -123,7 +123,7 @@ public final class Texts extends NLS {
 	/** {@link com.wudsn.tools.dis6502.ui.ProfileDialog#performSaveProfile}'s {@code JFileChooser} title. */
 	public static String ProfileDialog_SaveFileTitle;
 	/**
-	 * {@link Dis6502#performOpenRawFile}'s {@code JFileChooser} title for
+	 * {@link Dis6502#openRawFile}'s {@code JFileChooser} title for
 	 * {@code add == true}; the {@code add == false} case reuses {@link
 	 * com.wudsn.tools.dis6502.ui.RawFileDialog}'s own {@link
 	 * com.wudsn.tools.dis6502.Texts#RawFileDialog_Title} ("Open Raw File" -
@@ -131,19 +131,19 @@ public final class Texts extends NLS {
 	 */
 	public static String Dis6502_AddRawFileTitle;
 	/**
-	 * {@link Dis6502#performOpenDiskImageExecutableFile}'s {@code
+	 * {@link Dis6502#openDiskImageExecutableFile}'s {@code
 	 * JFileChooser}/error-dialog title for {@code add == true}; the {@code
 	 * add == false} case reuses {@link
 	 * com.wudsn.tools.dis6502.Texts#DiskImageExecutableFileDialog_Title}
 	 * ("Open Disk Image Executable File" - identical text).
 	 */
 	public static String Dis6502_AddDiskImageExecutableFileTitle;
-	/** {@link Dis6502#performOpenDiskImageBootSectors}'s {@code JFileChooser} title for {@code add == true}. */
+	/** {@link Dis6502#openDiskImageBootSectors}'s {@code JFileChooser} title for {@code add == true}. */
 	public static String Dis6502_AddDiskImageBootSectorsTitle;
-	/** {@link Dis6502#performOpenDiskImageBootSectors}'s {@code JFileChooser} title for {@code add == false}. */
+	/** {@link Dis6502#openDiskImageBootSectors}'s {@code JFileChooser} title for {@code add == false}. */
 	public static String Dis6502_OpenDiskImageBootSectorsTitle;
 	/**
-	 * {@link Dis6502#performOpenDiskImageSectors}'s {@code JFileChooser}
+	 * {@link Dis6502#openDiskImageSectors}'s {@code JFileChooser}
 	 * title for {@code add == true}; the {@code add == false} case reuses
 	 * {@link com.wudsn.tools.dis6502.Texts#DiskImageSectorsDialog_Title}
 	 * ("Open Disk Image Sectors" - identical text).
@@ -209,7 +209,7 @@ public final class Texts extends NLS {
 	/** {@link Dis6502#confirmClearWorkspace}'s confirmation message - moved from {@code Text.IDS_MAIN_FILE_NEW_WORKSPACE_MESSAGE}. */
 	public static String Dis6502_NewWorkspaceMessage;
 
-	/** {@link Dis6502#performOpenWorkspace}'s {@code JFileChooser} title - moved from {@code Text.IDS_MAIN_FILE_OPEN_WORKSPACE_FILE_TITLE}. */
+	/** {@link Dis6502#openWorkspaceFile}'s {@code JFileChooser} title - moved from {@code Text.IDS_MAIN_FILE_OPEN_WORKSPACE_FILE_TITLE}. */
 	public static String Dis6502_OpenWorkspaceFileTitle;
 	/** {@link Dis6502#updateTitle}'s main window title once a file is open - moved from {@code Text.IDS_MAIN_WINDOW_TITLE}. */
 	public static String Dis6502_WindowTitle;
@@ -246,7 +246,7 @@ public final class Texts extends NLS {
 	public static String XRefPanel_NoLabelSelectedTitle;
 
 	/**
-	 * {@link Dis6502#performOpenWorkspace}/{@link Dis6502#performSaveWorkspaceAs}'s
+	 * {@link Dis6502#openWorkspaceFile}/{@link Dis6502#performSaveWorkspaceAs}'s
 	 * {@code JFileChooser} file filter description, passed to {@link
 	 * com.wudsn.tools.base.common.FileUtility#createFileExtensionFileFilter}
 	 * (which appends the {@code " (*.wrk)"} suffix itself - this field holds

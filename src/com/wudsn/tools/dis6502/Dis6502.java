@@ -23,6 +23,7 @@ import java.util.List;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 
 import com.wudsn.tools.base.common.FileUtility;
@@ -100,7 +101,7 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * Exit, opening/adding an executable, ROM image, cassette image, raw, disk image
  * executable, disk image boot sectors, or disk image sectors file (see
  * {@link RawFileDialog}/{@link DiskImageExecutableFileDialog}/{@link
- * #performOpenDiskImageBootSectors}/{@link DiskImageSectorsDialog}),
+ * #openDiskImageBootSectors}/{@link DiskImageSectorsDialog}),
  * loading/saving/clearing/exporting/editing equates and defining a user
  * equate address range (see {@link EquateDialog}/{@link
  * EquateRangeDialog}), the View menu's Display as Screen Code/No
@@ -225,18 +226,16 @@ public final class Dis6502 {
 	}
 
 	void run(String[] args) {
-		if (args == null) {
-			throw new IllegalArgumentException("Parameter 'args' must not be null.");
-		}
-
 		application = new UIApplication();
 		ComputerSystemFactory computerSystemFactory = new ComputerSystemFactory();
+		CommandLineArguments commandLineArguments = CommandLineArguments.parse(args, computerSystemFactory);
 		workspaceLogic = new WorkspaceLogic(application);
 		equateListLogic = new EquateListLogic(application);
 		defaultFoldersLogic = new DefaultFoldersLogic(application);
 		profileLogic = new ProfileLogic(application);
 		workspace = new Workspace(computerSystemFactory);
-		workspace.setComputerSystemTypeID("ATARI800");
+		workspace.setComputerSystemTypeID(
+				commandLineArguments.computerSystemTypeID != null ? commandLineArguments.computerSystemTypeID : "ATARI800");
 		mruController = new MRUController(application);
 		mruController.load();
 		memoryInspectorState = workspace.getMemoryInspectorState(); // Workspace owns this instance directly now, not a satellite object constructed here.
@@ -279,21 +278,21 @@ public final class Dis6502 {
 		});
 
 		mainWindow.mainMenu.newWorkspaceMenuItem.addActionListener(e -> performNewWorkspace());
-		mainWindow.mainMenu.openWorkspaceMenuItem.addActionListener(e -> performOpenWorkspace());
+		mainWindow.mainMenu.openWorkspaceMenuItem.addActionListener(e -> performOpenFile(FileType.WORKSPACE_FILE, false));
 		mainWindow.mainMenu.openCassetteImageFileMenuItem.addActionListener(e -> performOpenFile(FileType.CASSETTE_IMAGE_FILE, false));
 		mainWindow.mainMenu.addCassetteImageFileMenuItem.addActionListener(e -> performOpenFile(FileType.CASSETTE_IMAGE_FILE, true));
 		mainWindow.mainMenu.openExecutableFileMenuItem.addActionListener(e -> performOpenFile(FileType.EXECUTABLE_FILE, false));
 		mainWindow.mainMenu.addExecutableFileMenuItem.addActionListener(e -> performOpenFile(FileType.EXECUTABLE_FILE, true));
 		mainWindow.mainMenu.openROMImageFileMenuItem.addActionListener(e -> performOpenFile(FileType.ROM_IMAGE_FILE, false));
 		mainWindow.mainMenu.addROMImageFileMenuItem.addActionListener(e -> performOpenFile(FileType.ROM_IMAGE_FILE, true));
-		mainWindow.mainMenu.openRawFileMenuItem.addActionListener(e -> performOpenRawFile(false));
-		mainWindow.mainMenu.addRawFileMenuItem.addActionListener(e -> performOpenRawFile(true));
-		mainWindow.mainMenu.openDiskImageExecutableFileMenuItem.addActionListener(e -> performOpenDiskImageExecutableFile(false));
-		mainWindow.mainMenu.addDiskImageExecutableFileMenuItem.addActionListener(e -> performOpenDiskImageExecutableFile(true));
-		mainWindow.mainMenu.openDiskImageBootSectorsMenuItem.addActionListener(e -> performOpenDiskImageBootSectors(false));
-		mainWindow.mainMenu.addDiskImageBootSectorsMenuItem.addActionListener(e -> performOpenDiskImageBootSectors(true));
-		mainWindow.mainMenu.openDiskImageSectorsMenuItem.addActionListener(e -> performOpenDiskImageSectors(false));
-		mainWindow.mainMenu.addDiskImageSectorsMenuItem.addActionListener(e -> performOpenDiskImageSectors(true));
+		mainWindow.mainMenu.openRawFileMenuItem.addActionListener(e -> performOpenFile(FileType.RAW_FILE, false));
+		mainWindow.mainMenu.addRawFileMenuItem.addActionListener(e -> performOpenFile(FileType.RAW_FILE, true));
+		mainWindow.mainMenu.openDiskImageExecutableFileMenuItem.addActionListener(e -> performOpenFile(FileType.DISK_IMAGE_EXECUTABLE_FILE, false));
+		mainWindow.mainMenu.addDiskImageExecutableFileMenuItem.addActionListener(e -> performOpenFile(FileType.DISK_IMAGE_EXECUTABLE_FILE, true));
+		mainWindow.mainMenu.openDiskImageBootSectorsMenuItem.addActionListener(e -> performOpenFile(FileType.DISK_IMAGE_BOOT_SECTORS, false));
+		mainWindow.mainMenu.addDiskImageBootSectorsMenuItem.addActionListener(e -> performOpenFile(FileType.DISK_IMAGE_BOOT_SECTORS, true));
+		mainWindow.mainMenu.openDiskImageSectorsMenuItem.addActionListener(e -> performOpenFile(FileType.DISK_IMAGE_SECTORS, false));
+		mainWindow.mainMenu.addDiskImageSectorsMenuItem.addActionListener(e -> performOpenFile(FileType.DISK_IMAGE_SECTORS, true));
 		mainWindow.mainMenu.saveWorkspaceMenuItem.addActionListener(e -> performSaveWorkspace());
 		mainWindow.mainMenu.saveWorkspaceAsMenuItem.addActionListener(e -> performSaveWorkspaceAs());
 		mainWindow.mainMenu.saveDisassemblyFilesMenuItem.addActionListener(e -> performSaveDisassemblyFiles());
@@ -372,7 +371,56 @@ public final class Dis6502 {
 		updateFonts();
 		updateMemoryInspectorSegment();
 		updateTitle();
+		mainWindow.getFrame().setTransferHandler(new FileDropHandler());
 		mainWindow.setVisible(true);
+
+		if (commandLineArguments.file != null) {
+			openFile(commandLineArguments.file, FileType.UNKNOWN_FILE, false);
+		}
+	}
+
+	/**
+	 * Files dropped anywhere on the main window: the first one is opened,
+	 * any further ones are added to it, each with its type guessed by {@link
+	 * #openFile}. The C++ version ({@code MainSegment::DropFilesProc}) only
+	 * accepts a drop on the segment list, and only of exactly one file.
+	 */
+	private final class FileDropHandler extends TransferHandler {
+
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public boolean canImport(TransferSupport support) {
+			return support.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
+		}
+
+		@Override
+		public boolean importData(TransferSupport support) {
+			if (!canImport(support)) {
+				return false;
+			}
+			final List<File> files = new ArrayList<>();
+			try {
+				for (Object file : (List<?>) support.getTransferable().getTransferData(DataFlavor.javaFileListFlavor)) {
+					files.add((File) file);
+				}
+			} catch (UnsupportedFlavorException | IOException ex) {
+				application.sendErrorMessage(ex);
+				return false;
+			}
+			// Opening may show modal dialogs - do that after the drop itself has completed,
+			// so the drag source (e.g. the Windows Explorer) is not kept waiting for them.
+			EventQueue.invokeLater(() -> {
+				boolean add = false;
+				for (File file : files) {
+					if (!openFile(file, FileType.UNKNOWN_FILE, add) && !add) {
+						return; // Without the first file, there is nothing to add the others to.
+					}
+					add = true;
+				}
+			});
+			return true;
+		}
 	}
 
 	/**
@@ -447,46 +495,19 @@ public final class Dis6502 {
 		mruController.fillMenu(mainWindow.mainMenu.recentFilesMenu, false, this::openRecentFile);
 	}
 
-	/** Ported from MRUController's use in MainController::OnCommand for a "Recent Workspaces" selection. */
+	/** A "Recent Workspaces" selection - routed through {@link #openFile} like every other way of opening a file. */
 	private void openRecentWorkspace(MRUEntry entry) {
-		if (!confirmClearWorkspace()) {
-			return;
-		}
-		if (!workspaceLogic.load(workspace, entry.getFilePath())) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E038.format(entry.getFilePath()),
-					Texts.Dis6502_OpenWorkspaceTitle, JOptionPane.ERROR_MESSAGE);
-			return;
-		}
-		loadSystemEquatesIfEmpty();
-		currentFile = new File(entry.getFilePath());
-		mruController.addFile(entry.getFilePath(), FileType.WORKSPACE_FILE);
-		mruController.save();
-		refreshMRUMenus();
-		mainWindow.segmentListPanel.refresh();
-		updateDisassembly(true);
-		updateTitle();
+		openFile(new File(entry.getFilePath()), FileType.WORKSPACE_FILE, false);
 	}
 
-	/** Ported from MRUController's use in MainController::OnCommand for a "Recent Files" selection. */
+	/**
+	 * A "Recent Files" selection - routed through {@link #openFile}, so a
+	 * raw file or disk image reopens through the same dialog (load address,
+	 * file-within-the-image, sectors) the menu item that first opened it
+	 * uses, matching {@code MainController::OnCommand}.
+	 */
 	private void openRecentFile(MRUEntry entry) {
-		if (!confirmClearWorkspace()) {
-			return;
-		}
-		workspace.init();
-		loadSystemEquatesIfEmpty();
-		currentFile = null;
-
-		if (!workspaceLogic.addFile(workspace, entry.getFileType(), entry.getFilePath())) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E039.format(entry.getFilePath()),
-					Texts.Dis6502_OpenFileTitle, JOptionPane.ERROR_MESSAGE);
-			return;
-		}
-		mruController.addFile(entry.getFilePath(), entry.getFileType());
-		mruController.save();
-		refreshMRUMenus();
-		mainWindow.segmentListPanel.refresh();
-		updateDisassembly(true);
-		updateTitle();
+		openFile(new File(entry.getFilePath()), entry.getFileType(), false);
 	}
 
 	/**
@@ -515,107 +536,153 @@ public final class Dis6502 {
 		updateTitle();
 	}
 
-	private void performOpenWorkspace() {
-		if (!confirmClearWorkspace()) {
-			return;
-		}
-
+	/**
+	 * The File menu's Open/Add items: lets the user pick a file, then hands
+	 * it to {@link #openFile} - the single entry point every way of opening
+	 * a file shares (menu, Recent Files/Workspaces, command line, drag and
+	 * drop).
+	 */
+	private void performOpenFile(FileType fileType, boolean add) {
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(Texts.Dis6502_OpenWorkspaceFileTitle);
-		fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".wrk", Texts.Dis6502_WorkspaceFilesFilterDescription));
+		fileChooser.setDialogTitle(getFileTypeOpenTitle(fileType, add));
+		if (fileType == FileType.WORKSPACE_FILE) {
+			fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".wrk", Texts.Dis6502_WorkspaceFilesFilterDescription));
+		}
 		if (currentFile != null) {
 			fileChooser.setCurrentDirectory(currentFile.getParentFile());
 		}
 		if (fileChooser.showOpenDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
 			return;
 		}
-		File file = fileChooser.getSelectedFile();
-		if (!workspaceLogic.load(workspace, file.getPath())) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E038.format(file.getPath()),
-					Texts.Dis6502_OpenWorkspaceTitle, JOptionPane.ERROR_MESSAGE);
-			return;
-		}
-		loadSystemEquatesIfEmpty();
-		currentFile = file;
-		mruController.addFile(file.getPath(), FileType.WORKSPACE_FILE);
-		mruController.save();
-		refreshMRUMenus();
-		mainWindow.segmentListPanel.refresh();
-		updateDisassembly(true);
-		updateTitle();
+		openFile(fileChooser.getSelectedFile(), fileType, add);
 	}
 
 	/**
-	 * Opens or adds a file of the given type. Ported from MainFile::OpenFile
-	 * (and the individual OpenXxxFile methods it dispatches to), scoped to
-	 * the file types {@link ComputerSystem#readFile} handles without a
-	 * dedicated selection dialog of its own - {@link
-	 * FileType#EXECUTABLE_FILE}, {@link FileType#ROM_IMAGE_FILE}, {@link
-	 * FileType#CASSETTE_IMAGE_FILE}. {@link FileType#RAW_FILE} is handled by
-	 * {@link #performOpenRawFile} instead (it needs {@link RawFileDialog});
-	 * the three disk image file types still need their own not-yet-ported
-	 * dialog (a file-within-the-image picker) - see the class javadoc.
+	 * Opens (replacing the workspace's content, after {@link
+	 * #confirmClearWorkspace}) or adds a file of the given type. Ported from
+	 * MainFile::OpenFile: {@link FileType#UNKNOWN_FILE} - used by the command
+	 * line and by drag and drop, which only have a path - is resolved via
+	 * {@link ComputerSystem#guessFileType(File)} for the workspace's current
+	 * computer system, then by the {@code .wrk} extension. Unlike the C++
+	 * version, which silently does nothing with a file it cannot classify,
+	 * such a file is offered as a raw file: {@link RawFileDialog} lets the
+	 * user say where it belongs in memory, and every system supports that.
+	 * Returns whether the file was actually opened/added.
 	 */
-	private void performOpenFile(FileType fileType, boolean add) {
+	boolean openFile(File file, FileType fileType, boolean add) {
+		if (fileType == FileType.UNKNOWN_FILE) {
+			if (file.getName().toLowerCase().endsWith(".wrk")) {
+				fileType = FileType.WORKSPACE_FILE;
+			} else {
+				try {
+					fileType = workspace.getComputerSystem().guessFileType(file);
+				} catch (IOException ex) {
+					application.sendErrorMessage(ex);
+					return false;
+				}
+				if (fileType == FileType.UNKNOWN_FILE) {
+					application.sendMessage(Messages.I073, file.getPath(), workspace.getComputerSystem().getTypeInfo().text);
+					fileType = FileType.RAW_FILE;
+				}
+			}
+		}
+		if (fileType == FileType.WORKSPACE_FILE) {
+			add = false; // A workspace always replaces the current one.
+		}
 		if (!add && !confirmClearWorkspace()) {
-			return;
-		}
-		String fileTypeOpenTitle = getFileTypeOpenTitle(fileType, add);
-
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(fileTypeOpenTitle);
-		if (currentFile != null) {
-			fileChooser.setCurrentDirectory(currentFile.getParentFile());
-		}
-		if (fileChooser.showOpenDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
-			return;
-		}
-		File file = fileChooser.getSelectedFile();
-		application.sendMessage(getFileTypeOpenMessage(fileType), file.getPath());
-
-		if (!add) {
-			workspace.init();
-			loadSystemEquatesIfEmpty();
-			currentFile = null;
+			return false;
 		}
 
-		if (!workspaceLogic.addFile(workspace, fileType, file.getPath())) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					(add ? Messages.E040 : Messages.E049).format(file.getPath()),
-					fileTypeOpenTitle, JOptionPane.ERROR_MESSAGE);
-			return;
+		boolean opened;
+		switch (fileType) {
+		case WORKSPACE_FILE:
+			opened = openWorkspaceFile(file);
+			break;
+		case EXECUTABLE_FILE:
+		case ROM_IMAGE_FILE:
+		case CASSETTE_IMAGE_FILE:
+			opened = openReadableFile(file, fileType, add);
+			break;
+		case RAW_FILE:
+			opened = openRawFile(file, add);
+			break;
+		case DISK_IMAGE_EXECUTABLE_FILE:
+			opened = openDiskImageExecutableFile(file, add);
+			break;
+		case DISK_IMAGE_BOOT_SECTORS:
+			opened = openDiskImageBootSectors(file, add);
+			break;
+		case DISK_IMAGE_SECTORS:
+			opened = openDiskImageSectors(file, add);
+			break;
+		default:
+			throw new IllegalArgumentException("Parameter 'fileType' has unsupported value " + fileType + ".");
+		}
+		if (!opened) {
+			return false;
 		}
 
+		if (fileType == FileType.WORKSPACE_FILE) {
+			currentFile = file;
+		}
 		mruController.addFile(file.getPath(), fileType);
 		mruController.save();
 		refreshMRUMenus();
 		mainWindow.segmentListPanel.refresh();
 		updateDisassembly(true);
 		updateTitle();
+		return true;
+	}
+
+	/** Every {@code openXxx} method's "replace, don't add" step, done as late as possible so a cancelled dialog or unreadable file leaves the workspace alone. */
+	private void clearWorkspaceUnlessAdding(boolean add) {
+		if (!add) {
+			workspace.init();
+			loadSystemEquatesIfEmpty();
+			currentFile = null;
+		}
+	}
+
+	private boolean openWorkspaceFile(File file) {
+		if (!workspaceLogic.load(workspace, file.getPath())) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E038.format(file.getPath()),
+					Texts.Dis6502_OpenWorkspaceTitle, JOptionPane.ERROR_MESSAGE);
+			return false;
+		}
+		loadSystemEquatesIfEmpty();
+		return true;
 	}
 
 	/**
-	 * Opens or adds a raw (headerless) file, via {@link RawFileDialog} for
-	 * picking the byte range and load address. Ported from
-	 * MainFile::OpenRawFile: unlike {@link #performOpenFile}, which routes
-	 * through {@code WorkspaceLogic.addFile}/{@code ComputerSystem.readFile},
-	 * this calls {@code WorkspaceLogic.addRawSegment} directly, since a raw
-	 * file has no format for a {@link ComputerSystem} to parse.
+	 * The file types {@link ComputerSystem#readFile} handles without a
+	 * dedicated selection dialog of its own - {@link
+	 * FileType#EXECUTABLE_FILE}, {@link FileType#ROM_IMAGE_FILE}, {@link
+	 * FileType#CASSETTE_IMAGE_FILE}. Ported from MainFile::OpenExecutableFile/
+	 * OpenRomImageFile/OpenCassetteImageFile.
 	 */
-	private void performOpenRawFile(boolean add) {
-		if (!add && !confirmClearWorkspace()) {
-			return;
-		}
+	private boolean openReadableFile(File file, FileType fileType, boolean add) {
+		application.sendMessage(getFileTypeOpenMessage(fileType), file.getPath());
 
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(add ? Texts.Dis6502_AddRawFileTitle : Texts.RawFileDialog_Title);
-		if (currentFile != null) {
-			fileChooser.setCurrentDirectory(currentFile.getParentFile());
+		clearWorkspaceUnlessAdding(add);
+
+		if (!workspaceLogic.addFile(workspace, fileType, file.getPath())) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(),
+					(add ? Messages.E040 : Messages.E049).format(file.getPath()),
+					getFileTypeOpenTitle(fileType, add), JOptionPane.ERROR_MESSAGE);
+			return false;
 		}
-		if (fileChooser.showOpenDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
-			return;
-		}
-		File file = fileChooser.getSelectedFile();
+		return true;
+	}
+
+	/**
+	 * A raw (headerless) file, via {@link RawFileDialog} for picking the
+	 * byte range and load address. Ported from MainFile::OpenRawFile: unlike
+	 * {@link #openReadableFile}, which routes through {@code
+	 * WorkspaceLogic.addFile}/{@code ComputerSystem.readFile}, this calls
+	 * {@code WorkspaceLogic.addRawSegment} directly, since a raw file has no
+	 * format for a {@link ComputerSystem} to parse.
+	 */
+	private boolean openRawFile(File file, boolean add) {
 		application.sendMessage(Messages.I022, file.getPath());
 
 		RawFileDialog dialog = new RawFileDialog(mainWindow.getFrame());
@@ -624,56 +691,32 @@ public final class Dis6502 {
 			confirmed = dialog.show(file);
 		} catch (IOException ex) {
 			application.sendErrorMessage(ex);
-			return;
+			return false;
 		}
 		if (!confirmed) {
-			return;
+			return false;
 		}
 
-		if (!add) {
-			workspace.init();
-			loadSystemEquatesIfEmpty();
-			currentFile = null;
-		}
+		clearWorkspaceUnlessAdding(add);
 
 		workspaceLogic.addRawSegment(workspace, dialog.getFileBuffer(), dialog.getBegin(), dialog.getResultSize(), dialog.getAddress());
-
-		mruController.addFile(file.getPath(), FileType.RAW_FILE);
-		mruController.save();
-		refreshMRUMenus();
-		mainWindow.segmentListPanel.refresh();
-		updateDisassembly(true);
-		updateTitle();
+		return true;
 	}
 
 	/**
-	 * Opens or adds an executable file picked from within an Atari DOS 2.x
-	 * disk image, via {@link DiskImageExecutableFileDialog}. Ported from
+	 * An executable file picked from within an Atari DOS 2.x disk image, via
+	 * {@link DiskImageExecutableFileDialog}. Ported from
 	 * MainFile::OpenDiskImageExecutableFile: the picked file's bytes are
 	 * read directly through the already-ported {@link
 	 * AtariDisk#readFile(String)} and fed to {@code WorkspaceLogic.addFile}
-	 * the same way {@link #performOpenFile} feeds it a real file's {@link
+	 * the same way {@link #openReadableFile} feeds it a real file's {@link
 	 * InputStream} - unlike the C++ version, which needs its own {@code
 	 * DiskImageFileInputStream} wrapper to stream a disk image file's
 	 * sectors on demand, {@link AtariDisk#readFile(String)} already returns
 	 * the whole file as a {@code byte[]}, so a plain {@link
 	 * ByteArrayInputStream} is enough.
 	 */
-	private void performOpenDiskImageExecutableFile(boolean add) {
-		if (!add && !confirmClearWorkspace()) {
-			return;
-		}
-
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(add ? Texts.Dis6502_AddDiskImageExecutableFileTitle : Texts.DiskImageExecutableFileDialog_Title);
-		if (currentFile != null) {
-			fileChooser.setCurrentDirectory(currentFile.getParentFile());
-		}
-		if (fileChooser.showOpenDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
-			return;
-		}
-		File file = fileChooser.getSelectedFile();
-
+	private boolean openDiskImageExecutableFile(File file, boolean add) {
 		AtariDisk atariDisk = new AtariDisk(file.getPath());
 		AtariFile info = new AtariFile();
 		AtariError error;
@@ -681,7 +724,7 @@ public final class Dis6502 {
 			error = atariDisk.findFirst(info);
 		} catch (IOException ex) {
 			application.sendErrorMessage(ex);
-			return;
+			return false;
 		}
 		// Ported from MainFile::OpenDiskImageExecutableFile's switch, log-only
 		// like the C++ original (no dialog). The DISK_NOT_FOUND case there logs
@@ -695,13 +738,13 @@ public final class Dis6502 {
 			break;
 		case DISK_NOT_FOUND:
 			application.sendErrorMessage("Could not read disk image \"" + file.getPath() + "\": " + error.getErrorText());
-			return;
+			return false;
 		case NO_ENTRY_FOUND:
 			application.sendMessage(Messages.E033, file.getPath());
-			return;
+			return false;
 		default:
 			application.sendMessage(Messages.E036);
-			return;
+			return false;
 		}
 
 		DiskImageExecutableFileDialog dialog = new DiskImageExecutableFileDialog(mainWindow.getFrame());
@@ -710,10 +753,10 @@ public final class Dis6502 {
 			confirmed = dialog.show(atariDisk);
 		} catch (IOException ex) {
 			application.sendErrorMessage(ex);
-			return;
+			return false;
 		}
 		if (!confirmed) {
-			return;
+			return false;
 		}
 		application.sendMessage(Messages.I019, dialog.getExecutableFileName(), file.getPath());
 
@@ -722,69 +765,45 @@ public final class Dis6502 {
 			fileBuffer = atariDisk.readFile(dialog.getExecutableFileName());
 		} catch (IOException ex) {
 			application.sendErrorMessage(ex);
-			return;
+			return false;
 		}
 		if (fileBuffer.length == 0) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E041.format(),
 					Texts.DiskImageExecutableFileDialog_Title, JOptionPane.ERROR_MESSAGE);
-			return;
+			return false;
 		}
 
-		if (!add) {
-			workspace.init();
-			loadSystemEquatesIfEmpty();
-			currentFile = null;
-		}
+		clearWorkspaceUnlessAdding(add);
 
 		boolean success;
 		try (InputStream inputStream = new ByteArrayInputStream(fileBuffer)) {
 			success = workspaceLogic.addFile(workspace, FileType.EXECUTABLE_FILE, inputStream, fileBuffer.length);
 		} catch (IOException ex) {
 			application.sendErrorMessage(ex);
-			return;
+			return false;
 		}
 		if (!success) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
 					(add ? Messages.E040 : Messages.E049).format(dialog.getExecutableFileName()),
-					add ? Texts.Dis6502_AddDiskImageExecutableFileTitle : Texts.DiskImageExecutableFileDialog_Title,
-					JOptionPane.ERROR_MESSAGE);
-			return;
+					getFileTypeOpenTitle(FileType.DISK_IMAGE_EXECUTABLE_FILE, add), JOptionPane.ERROR_MESSAGE);
+			return false;
 		}
-
-		mruController.addFile(file.getPath(), FileType.DISK_IMAGE_EXECUTABLE_FILE);
-		mruController.save();
-		refreshMRUMenus();
-		mainWindow.segmentListPanel.refresh();
-		updateDisassembly(true);
-		updateTitle();
+		return true;
 	}
 
 	/**
-	 * Opens or adds a disk image's Atari DOS boot sectors as a single
-	 * segment. Ported from MainFile::OpenDiskImageBootSectors; the actual
-	 * segment construction (including reading any boot sectors beyond the
-	 * first) is {@link WorkspaceLogic#addDiskImageBootSectorsSegment}.
+	 * A disk image's Atari DOS boot sectors as a single segment. Ported from
+	 * MainFile::OpenDiskImageBootSectors; the actual segment construction
+	 * (including reading any boot sectors beyond the first) is {@link
+	 * WorkspaceLogic#addDiskImageBootSectorsSegment}.
 	 */
-	private void performOpenDiskImageBootSectors(boolean add) {
-		if (!add && !confirmClearWorkspace()) {
-			return;
-		}
-
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(add ? Texts.Dis6502_AddDiskImageBootSectorsTitle : Texts.Dis6502_OpenDiskImageBootSectorsTitle);
-		if (currentFile != null) {
-			fileChooser.setCurrentDirectory(currentFile.getParentFile());
-		}
-		if (fileChooser.showOpenDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
-			return;
-		}
-		File file = fileChooser.getSelectedFile();
+	private boolean openDiskImageBootSectors(File file, boolean add) {
 		application.sendMessage(Messages.I018, file.getPath());
 
 		ImgInfo info = new ImgInfo();
 		DiskImage.getInfo(file.getPath(), info);
 		if (DiskImage.displayError(application, info.result)) {
-			return;
+			return false;
 		}
 
 		ImgRWPacket sector = new ImgRWPacket();
@@ -797,76 +816,48 @@ public final class Dis6502 {
 		// keeps checking the disk-image-level result from GetInfo() instead of
 		// the sector read that just happened), not reproduced here.
 		if (DiskImage.displayError(application, sector.result)) {
-			return;
+			return false;
 		}
 		if ((sector.sectorData[1] & 0xFF) == 0) {
 			application.sendMessage(Messages.E034, file.getPath());
-			return;
+			return false;
 		}
 
-		if (!add) {
-			workspace.init();
-			loadSystemEquatesIfEmpty();
-			currentFile = null;
-		}
+		clearWorkspaceUnlessAdding(add);
 
 		workspaceLogic.addDiskImageBootSectorsSegment(workspace, file.getPath(), sector.sectorData);
-
-		mruController.addFile(file.getPath(), FileType.DISK_IMAGE_BOOT_SECTORS);
-		mruController.save();
-		refreshMRUMenus();
-		mainWindow.segmentListPanel.refresh();
-		updateDisassembly(true);
-		updateTitle();
+		return true;
 	}
 
 	/**
-	 * Opens or adds one or more disk image sectors (or byte ranges within
-	 * them) as segments, via {@link DiskImageSectorsDialog}. Ported from
+	 * One or more disk image sectors (or byte ranges within them) as
+	 * segments, via {@link DiskImageSectorsDialog}. Ported from
 	 * MainFile::OpenDiskImageSectors, kept inline here rather than folded
 	 * into {@link WorkspaceLogic} (unlike {@link
-	 * #performOpenDiskImageBootSectors}'s segment building) since the C++
-	 * source itself keeps this loop in {@code MainFile}, not in a separate
-	 * method - see {@link DiskImageSectorsDialog}'s javadoc for the bug
-	 * found (but not fixed in C++) while porting this loop's body.
+	 * #openDiskImageBootSectors}'s segment building) since the C++ source
+	 * itself keeps this loop in {@code MainFile}, not in a separate method -
+	 * see {@link DiskImageSectorsDialog}'s javadoc for the bug found (but not
+	 * fixed in C++) while porting this loop's body.
 	 */
-	private void performOpenDiskImageSectors(boolean add) {
-		if (!add && !confirmClearWorkspace()) {
-			return;
-		}
-
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(add ? Texts.Dis6502_AddDiskImageSectorsTitle : Texts.DiskImageSectorsDialog_Title);
-		if (currentFile != null) {
-			fileChooser.setCurrentDirectory(currentFile.getParentFile());
-		}
-		if (fileChooser.showOpenDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
-			return;
-		}
-		File file = fileChooser.getSelectedFile();
-
+	private boolean openDiskImageSectors(File file, boolean add) {
 		ImgInfo info = new ImgInfo();
 		DiskImage.getInfo(file.getPath(), info);
 		if (DiskImage.displayError(application, info.result)) {
-			return;
+			return false;
 		}
 
 		DiskImageSectorsDialog dialog = new DiskImageSectorsDialog(mainWindow.getFrame());
 		dialog.setComputerFont(ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight()));
 		if (!dialog.show(file.getPath(), info)) {
-			return;
+			return false;
 		}
 		List<DiskImageSectorsDialog.Item> items = dialog.getItems();
 		if (items.isEmpty()) {
-			return;
+			return false;
 		}
 		application.sendMessage(Messages.I020, String.valueOf(items.size()), file.getPath());
 
-		if (!add) {
-			workspace.init();
-			loadSystemEquatesIfEmpty();
-			currentFile = null;
-		}
+		clearWorkspaceUnlessAdding(add);
 
 		SegmentListInserter segmentListInserter = workspace.getSegmentList().createInserter();
 		try {
@@ -885,32 +876,36 @@ public final class Dis6502 {
 		} catch (RuntimeException ex) {
 			segmentListInserter.cancel();
 			application.sendErrorMessage(ex);
-			return;
+			return false;
 		}
-
-		mruController.addFile(file.getPath(), FileType.DISK_IMAGE_SECTORS);
-		mruController.save();
-		refreshMRUMenus();
-		mainWindow.segmentListPanel.refresh();
-		updateDisassembly(true);
-		updateTitle();
+		return true;
 	}
 
-	/** {@link #performOpenFile}'s per-{@link FileType}/add-or-open dialog title. Ported ad hoc; the C++ source's fuller {@code FileTypeFactory} text lookup is not ported. */
+	/** The per-{@link FileType}/add-or-open dialog title. Ported ad hoc; the C++ source's fuller {@code FileTypeFactory} text lookup is not ported. */
 	private static String getFileTypeOpenTitle(FileType fileType, boolean add) {
 		switch (fileType) {
+		case WORKSPACE_FILE:
+			return Texts.Dis6502_OpenWorkspaceFileTitle;
 		case EXECUTABLE_FILE:
 			return add ? Texts.Dis6502_AddExecutableFileTitle : Texts.Dis6502_OpenExecutableFileTitle;
 		case ROM_IMAGE_FILE:
 			return add ? Texts.Dis6502_AddRomImageFileTitle : Texts.Dis6502_OpenRomImageFileTitle;
 		case CASSETTE_IMAGE_FILE:
 			return add ? Texts.Dis6502_AddCassetteImageFileTitle : Texts.Dis6502_OpenCassetteImageFileTitle;
+		case RAW_FILE:
+			return add ? Texts.Dis6502_AddRawFileTitle : Texts.RawFileDialog_Title;
+		case DISK_IMAGE_EXECUTABLE_FILE:
+			return add ? Texts.Dis6502_AddDiskImageExecutableFileTitle : Texts.DiskImageExecutableFileDialog_Title;
+		case DISK_IMAGE_BOOT_SECTORS:
+			return add ? Texts.Dis6502_AddDiskImageBootSectorsTitle : Texts.Dis6502_OpenDiskImageBootSectorsTitle;
+		case DISK_IMAGE_SECTORS:
+			return add ? Texts.Dis6502_AddDiskImageSectorsTitle : Texts.DiskImageSectorsDialog_Title;
 		default:
 			throw new IllegalArgumentException("Parameter 'fileType' has unsupported value " + fileType + ".");
 		}
 	}
 
-	/** {@link #performOpenFile}'s per-{@link FileType} "opening file" log message, matching {@code MainFile::OpenFile}'s dispatch to {@code OpenExecutableFile}/{@code OpenRomImageFile}/{@code OpenCassetteImageFile}. */
+	/** {@link #openReadableFile}'s per-{@link FileType} "opening file" log message, matching {@code MainFile::OpenFile}'s dispatch to {@code OpenExecutableFile}/{@code OpenRomImageFile}/{@code OpenCassetteImageFile}. */
 	private static Message getFileTypeOpenMessage(FileType fileType) {
 		switch (fileType) {
 		case EXECUTABLE_FILE:
