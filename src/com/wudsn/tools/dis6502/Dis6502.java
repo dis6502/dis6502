@@ -1745,11 +1745,11 @@ public final class Dis6502 {
 		dialog.setVisible(true);
 	}
 
+	/** Ported from Main::SetMainWindowTitle. */
 	private void updateTitle() {
-		String title = "dis6502";
-		if (currentFile != null) {
-			title += " - " + currentFile.getName();
-		}
+		String computerSystemText = workspace.getComputerSystem().getTypeInfo().text;
+		String title = currentFile == null ? TextUtility.format(Text.IDS_MAIN_WINDOW_TITLE_NO_WORKSPACE_LOADED, computerSystemText)
+				: TextUtility.format(Text.IDS_MAIN_WINDOW_TITLE, computerSystemText, currentFile.getPath());
 		mainWindow.getFrame().setTitle(title);
 		mainWindow.segmentListPanel.setFileName(currentFile == null ? null : currentFile.getName());
 	}
