@@ -31,12 +31,9 @@ import com.wudsn.tools.dis6502.Application;
  * showNonASCIIChararactersAsBytes} true, {@code showZPAbsoluteAsByte}/{@code
  * showOpcodeAsComment} false - matching the values C++'s {@code DEV}/{@code
  * FAST} test mode used) - a deliberate scope reduction, not an oversight;
- * see the gap #5 proposal for why. {@code omitUnreferencedSystemLabels} is
- * still forced to {@code false}, matching {@code ExecuteUnitTestItem}
- * exactly, since {@link WorkspaceLogic} has no ported {@code
- * loadSystemEquates} yet (a separate, pre-existing gap - see {@code
- * Dis6502#confirmClearWorkspace}'s javadoc) and every disassembled label
- * would otherwise be considered unreferenced and omitted.
+ * see the gap #5 proposal for why. The real Atari 800 system equates are
+ * loaded the same way the application does it, so the listing references
+ * genuine OS/hardware labels and must still reassemble byte-exactly.
  *
  * @author Peter Dell
  */
@@ -71,10 +68,10 @@ public final class ReassemblyRoundTripTest {
 				: workspaceLogic.addFile(workspace, fileType, inFilePath);
 		Assert.boolEquals(loaded, true);
 
-		// Matches ExecuteUnitTestItem's override - without it every disassembled
-		// label would count as "unreferenced" and be omitted, since this port has
-		// no WorkspaceLogic.loadSystemEquates yet to load real system labels.
-		workspace.getProfile().omitUnreferencedSystemLabels = false;
+		// A workspace file may carry its own system equates; a plain executable never does.
+		if (workspace.getSystemEquateList().isEmpty()) {
+			workspaceLogic.loadSystemEquates(workspace);
+		}
 
 		Disassembly disassembly = new Disassembly();
 		disassembly.setWorkspace(workspace);

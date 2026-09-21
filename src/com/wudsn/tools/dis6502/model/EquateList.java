@@ -273,6 +273,14 @@ public final class EquateList implements Xml.Serializable {
 				if (baseEquate != null) {
 					baseEquate.addLabelReference(referencedAccess);
 				}
+				// "IOCB0+ICCOM" uses ICCOM just as much as IOCB0 - without this, ICCOM is
+				// omitted as unreferenced and the listing no longer assembles.
+				if (equate.getOffsetLabel() != null) {
+					Equate offsetEquate = getEquateByLabel(equate.getOffsetLabel());
+					if (offsetEquate != null) {
+						offsetEquate.addLabelReference(referencedAccess);
+					}
+				}
 			}
 		}
 	}

@@ -33,12 +33,9 @@ import com.wudsn.tools.dis6502.Messages;
  * Workspace::Format::WORKSPACE36} in C++); there is no {@code
  * Workspace::Format} parameter, since nothing needs to write the legacy
  * format going forward.</li>
- * <li>{@code LoadSystemEquates} is not ported: it needs both {@code
- * EquateListLogic} (not ported) and {@code ComputerSystem}'s {@code
- * GetResourceFilePathByExtension} (also not ported - see {@code
- * ComputerSystem}'s javadoc - it needs an application install-folder path
- * that only the not-yet-ported {@code Application.GetModuleFilePath}
- * would provide).</li>
+ * <li>{@link #loadSystemEquates} reads the computer system's {@code .equ}
+ * file from the classpath instead of from an application install folder -
+ * see {@link ComputerSystem#openResourceByExtension}.</li>
  * </ul>
  * Found and fixed a bug while porting {@link #load}: the C++ version's
  * error path calls {@code Workspace::Init} without first matching the
@@ -56,6 +53,29 @@ public final class WorkspaceLogic {
 
 	public WorkspaceLogic(Application application) {
 		this.application = application;
+	}
+
+	/**
+	 * Replaces the workspace's system equates with the ones shipped for its
+	 * current computer system (the hardware/OS labels that make a
+	 * disassembly read {@code STA COLBK} instead of {@code STA $D01A}). A
+	 * system without an equates file simply ends up with an empty list: the
+	 * unknown system, and also the C64 - the C++ version's {@code C64.equ}
+	 * turned out to be a stale copy of {@code Atari800.equ} (a mislabeled
+	 * asset, just like its {@code C64.fon} - see {@code ComputerFont}), which
+	 * would label the VIC-II's {@code $D01A} as Atari's {@code COLBK}, so it
+	 * is deliberately not shipped until a genuine C64 file exists.
+	 */
+	public void loadSystemEquates(Workspace workspace) {
+		ComputerSystem computerSystem = workspace.getComputerSystem();
+		EquateList systemEquateList = workspace.getSystemEquateList();
+		InputStream inputStream = computerSystem.openResourceByExtension(".equ");
+		if (inputStream == null) {
+			systemEquateList.clear();
+			return;
+		}
+		new EquateListLogic(application).load(systemEquateList, inputStream,
+				computerSystem.getResourceNameByExtension(".equ"));
 	}
 
 	/** Loads a workspace from disk. Returns {@code false}, and logs, instead of throwing. */

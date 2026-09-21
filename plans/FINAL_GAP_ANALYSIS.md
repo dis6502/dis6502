@@ -29,7 +29,35 @@ points inward:
 
 ## Confirmed gaps, by user impact
 
-### A. System equates are never loaded - HIGH
+### A. ~~System equates are never loaded~~ - FIXED 2026-09-21
+
+**Fix**: `Atari800.equ`, `Atari5200.equ` and `Oric.equ` now ship as classpath
+resources (`model/systems/`), read through the new
+`ComputerSystem.openResourceByExtension` and
+`WorkspaceLogic.loadSystemEquates`. `Dis6502.loadSystemEquatesIfEmpty` calls
+it at startup, on a computer system change, after the workspace is cleared
+for a new/opened file, and after a workspace load - "if empty" so that a
+`.wrk` carrying its own system equates keeps them.
+
+Two findings along the way:
+- **`C64.equ` is deliberately not shipped.** The C++ file is a stale copy of
+  `Atari800.equ` (16 differing lines) - it would label the VIC-II's `$D01A`
+  as Atari's `COLBK`. Same mislabeled-asset problem as `C64.fon`. The C64
+  gets no system equates until a genuine file is written - an open,
+  optional follow-up.
+- **Fixed a disassembler defect C++ only works around.** With the default
+  profile (`omitUnreferencedSystemLabels = true`), `STA IOCB0+ICCOM,X` marked
+  `IOCB0` as referenced but not the constant `ICCOM`, so `ICCOM` was omitted
+  and the listing did not assemble - which is why C++'s own test suite forces
+  the option off (`// TODO Make them work instead`). `Equate` now records a
+  symbolic offset label and `EquateList.setBaseLabelsReferenced` marks it
+  too. `ReassemblyRoundTripTest` no longer needs the override: all four
+  fixtures reassemble byte-exactly with real system equates and the default
+  profile.
+
+Verified with the full `TestRunner` suite (new
+`WorkspaceLogicTest.testLoadSystemEquates`) and live against the running
+app. Original finding:
 
 C++ loads `systems/<system>/<System>.equ` (`Atari800.equ`, `Atari5200.equ`,
 `C64.equ`, `Oric.equ`) into the workspace's system equate list whenever the
@@ -193,10 +221,7 @@ verify what a recent `RAW_FILE`/`DISK_IMAGE_*` entry actually produces.
 ## Suggested order
 
 1. ~~**B**~~ - done.
-2. **A** - ship the four `.equ` files as resources, add
-   `WorkspaceLogic.loadSystemEquates`, call it on system-type change and
-   after clear-for-open; then drop the workaround in
-   `ReassemblyRoundTripTest`.
+2. ~~**A**~~ - done (optional follow-up: author a genuine `C64.equ`).
 3. **C + D together** - one `openFile(path, UNKNOWN_FILE, add)` dispatcher
    serves both, and fixes **I** for free if Recent Files is routed through
    it too.

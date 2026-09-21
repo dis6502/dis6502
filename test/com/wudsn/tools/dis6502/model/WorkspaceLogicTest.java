@@ -27,6 +27,7 @@ public final class WorkspaceLogicTest {
 	public static void testWorkspaceLogic() {
 		testLoad();
 		testSplitAtRebasesComments();
+		testLoadSystemEquates();
 
 		Assert.log("WorkspaceLogicTest completed");
 	}
@@ -39,6 +40,43 @@ public final class WorkspaceLogicTest {
 
 		Assert.boolEquals(workspaceLogic.load(workspace, FIXTURE_PATH), true);
 		Assert.boolEquals(workspace.getSegmentList().getCount() > 0, true);
+	}
+
+	/**
+	 * New (not ported): every computer system that ships a system equates
+	 * file must load it, a system without one must end up empty, and
+	 * switching systems must replace - not append to - the previous system's
+	 * equates. The C64 deliberately ships none - see {@link
+	 * WorkspaceLogic#loadSystemEquates}.
+	 */
+	private static void testLoadSystemEquates() {
+		Application application = new Application();
+		WorkspaceLogic workspaceLogic = new WorkspaceLogic(application);
+		Workspace workspace = new Workspace(new ComputerSystemFactory());
+		EquateList systemEquateList = workspace.getSystemEquateList();
+
+		workspace.setComputerSystemType(ComputerSystemType.ATARI800);
+		workspaceLogic.loadSystemEquates(workspace);
+		Assert.longEquals(systemEquateList.getCount(), 899); // One equate (label, comment or empty line) per line of Atari800.equ.
+		Equate colbk = systemEquateList.getEquateByLabel("COLBK");
+		Assert.notNull(colbk);
+		Assert.longEquals(colbk.getLabelValue(), 0xD01A);
+
+		workspace.setComputerSystemType(ComputerSystemType.C64);
+		workspaceLogic.loadSystemEquates(workspace);
+		Assert.boolEquals(systemEquateList.isEmpty(), true);
+
+		workspace.setComputerSystemType(ComputerSystemType.ATARI5200);
+		workspaceLogic.loadSystemEquates(workspace);
+		Assert.longEquals(systemEquateList.getCount(), 159);
+
+		workspace.setComputerSystemType(ComputerSystemType.ORIC);
+		workspaceLogic.loadSystemEquates(workspace);
+		Assert.longEquals(systemEquateList.getCount(), 50);
+
+		workspace.setComputerSystemType(ComputerSystemType.UNKNOWN);
+		workspaceLogic.loadSystemEquates(workspace);
+		Assert.boolEquals(systemEquateList.isEmpty(), true);
 	}
 
 	/**

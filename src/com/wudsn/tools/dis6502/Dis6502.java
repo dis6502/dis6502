@@ -263,6 +263,9 @@ public final class Dis6502 {
 			if (properties.contains(WorkspaceProperty.SELECTED_SEGMENT)) {
 				updateMemoryInspectorSegment();
 			}
+			if (properties.contains(WorkspaceProperty.COMPUTER_SYSTEM_TYPE)) {
+				loadSystemEquatesIfEmpty();
+			}
 			if (properties.contains(WorkspaceProperty.FONT) || properties.contains(WorkspaceProperty.COMPUTER_SYSTEM_TYPE)) {
 				updateFonts();
 			}
@@ -362,6 +365,7 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.assembleMenuItem.addActionListener(e -> performShowAssembleDialog());
 		mainWindow.memoryInspectorPanel.startCodeTraceMenuItem.addActionListener(e -> performGuessCode());
 
+		loadSystemEquatesIfEmpty(); // The computer system was set before the workspace listener above existed.
 		refreshMRUMenus();
 		updateFileMenuState();
 		updateEquatesMenuState();
@@ -369,6 +373,21 @@ public final class Dis6502 {
 		updateMemoryInspectorSegment();
 		updateTitle();
 		mainWindow.setVisible(true);
+	}
+
+	/**
+	 * Gives the workspace the system equates shipped for its computer system
+	 * (see {@link WorkspaceLogic#loadSystemEquates}) unless it already has
+	 * some. Called wherever the list can have become empty or stale: at
+	 * startup, when the computer system changes, after the workspace is
+	 * cleared for a new/opened file, and after a workspace file is loaded. A
+	 * workspace file that carries its own system equates keeps them - that is
+	 * what the "if empty" is for; one that carries none gets the shipped ones.
+	 */
+	private void loadSystemEquatesIfEmpty() {
+		if (workspace.getSystemEquateList().isEmpty()) {
+			workspaceLogic.loadSystemEquates(workspace);
+		}
 	}
 
 	/** Ported from MemoryInspector::SegmentChanged's trigger (Main::HandleWorkspaceChanged's SEGMENTS/SELECTED_SEGMENT handling). */
@@ -438,6 +457,7 @@ public final class Dis6502 {
 					Texts.Dis6502_OpenWorkspaceTitle, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
+		loadSystemEquatesIfEmpty();
 		currentFile = new File(entry.getFilePath());
 		mruController.addFile(entry.getFilePath(), FileType.WORKSPACE_FILE);
 		mruController.save();
@@ -453,6 +473,7 @@ public final class Dis6502 {
 			return;
 		}
 		workspace.init();
+		loadSystemEquatesIfEmpty();
 		currentFile = null;
 
 		if (!workspaceLogic.addFile(workspace, entry.getFileType(), entry.getFilePath())) {
@@ -487,6 +508,7 @@ public final class Dis6502 {
 		if (new WorkspaceDialog(mainWindow.getFrame()).show(workspace)) {
 			application.sendMessage(Messages.I016, workspace.getComputerSystem().getTypeInfo().text);
 		}
+		loadSystemEquatesIfEmpty(); // Already done by the workspace listener if the dialog changed the computer system.
 
 		mainWindow.segmentListPanel.refresh();
 		mainWindow.disassemblyPanel.refresh(null);
@@ -513,6 +535,7 @@ public final class Dis6502 {
 					Texts.Dis6502_OpenWorkspaceTitle, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
+		loadSystemEquatesIfEmpty();
 		currentFile = file;
 		mruController.addFile(file.getPath(), FileType.WORKSPACE_FILE);
 		mruController.save();
@@ -552,6 +575,7 @@ public final class Dis6502 {
 
 		if (!add) {
 			workspace.init();
+			loadSystemEquatesIfEmpty();
 			currentFile = null;
 		}
 
@@ -608,6 +632,7 @@ public final class Dis6502 {
 
 		if (!add) {
 			workspace.init();
+			loadSystemEquatesIfEmpty();
 			currentFile = null;
 		}
 
@@ -707,6 +732,7 @@ public final class Dis6502 {
 
 		if (!add) {
 			workspace.init();
+			loadSystemEquatesIfEmpty();
 			currentFile = null;
 		}
 
@@ -780,6 +806,7 @@ public final class Dis6502 {
 
 		if (!add) {
 			workspace.init();
+			loadSystemEquatesIfEmpty();
 			currentFile = null;
 		}
 
@@ -837,6 +864,7 @@ public final class Dis6502 {
 
 		if (!add) {
 			workspace.init();
+			loadSystemEquatesIfEmpty();
 			currentFile = null;
 		}
 
@@ -1542,11 +1570,11 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from Main::PromptToClearWorkspace, simplified: always passes
-	 * {@code loadSystemEquates=false} (system equate loading - {@code
-	 * WorkspaceLogic.loadSystemEquates} - is not ported yet, see its
-	 * javadoc). Returns {@code false} if the caller should abort (the user
-	 * cancelled, or a requested save failed).
+	 * Ported from Main::PromptToClearWorkspace, minus the clearing itself and
+	 * its {@code loadSystemEquates} parameter - callers clear the workspace
+	 * and call {@link #loadSystemEquatesIfEmpty} themselves. Returns {@code
+	 * false} if the caller should abort (the user cancelled, or a requested
+	 * save failed).
 	 */
 	private boolean confirmClearWorkspace() {
 		if (workspace.getSegmentList().isEmpty()) {

@@ -69,6 +69,7 @@ public final class Equate implements Xml.Serializable {
 	private String comment;
 
 	private String baseLabel; // Transient.
+	private String offsetLabel; // Transient. Only set if the offset of a range label is itself a label ("IOCB0+ICCOM"), not a number ("VDSLST+1").
 	private boolean defined; // Transient.
 	private int referencedLabelAccess; // Transient, referenced types of access.
 
@@ -138,6 +139,10 @@ public final class Equate implements Xml.Serializable {
 			}
 			if (index >= 0) {
 				baseLabel = label.substring(0, index);
+				String offset = label.substring(index + 1);
+				if (!offset.isEmpty() && !Character.isDigit(offset.charAt(0)) && offset.charAt(0) != '$') {
+					offsetLabel = offset;
+				}
 			}
 			break;
 		}
@@ -219,6 +224,11 @@ public final class Equate implements Xml.Serializable {
 
 	public String getBaseLabel() {
 		return baseLabel;
+	}
+
+	/** The symbolic offset of a range label ({@code "ICCOM"} for {@code "IOCB0+ICCOM"}), or {@code null} if there is none or it is numeric. */
+	public String getOffsetLabel() {
+		return offsetLabel;
 	}
 
 	public boolean isRange() {

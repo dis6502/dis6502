@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -50,11 +51,27 @@ public final class EquateListLogic {
 
 	/** Loads equates from a text equates file, appending to {@code equateList}. Returns {@code false}, and logs, instead of throwing. */
 	public boolean load(EquateList equateList, String filePath) {
-		equateList.clear();
-		application.sendMessage(Messages.I009, filePath);
+		try {
+			return load(equateList, new FileInputStream(filePath), filePath);
+		} catch (IOException ex) {
+			equateList.clear();
+			application.sendMessage(Messages.I009, filePath);
+			application.sendErrorMessage(ex);
+			return false;
+		}
+	}
 
-		try (BufferedReader reader = new BufferedReader(
-				new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8))) {
+	/**
+	 * Same as {@link #load(EquateList, String)}, from an already-open stream
+	 * (closed by this method) - used for the system equates, which are
+	 * classpath resources rather than files. {@code displayName} is only
+	 * used for logging.
+	 */
+	public boolean load(EquateList equateList, InputStream inputStream, String displayName) {
+		equateList.clear();
+		application.sendMessage(Messages.I009, displayName);
+
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
 			String line;
 			while ((line = reader.readLine()) != null) {
 				EquateList.EquateResult result = equateList.addEquate(line);

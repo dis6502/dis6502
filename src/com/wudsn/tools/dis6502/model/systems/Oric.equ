@@ -1,0 +1,50 @@
+; OS EQUATES
+; ----------
+;
+; Syntax:
+; Use '=' for addresses
+; and '#' for values
+;
+; OS VARIABLES FOR ORIC
+;
+; PAGE 0
+;
+LINWID   =   $0031
+TXTTAB   =   $0094
+TXTTAB+1 =   $0095
+VARTAB   =   $009C
+VARTAB+1 =   $009D
+ARYTAB   =   $009E
+ARYTAB+1 =   $009F
+STREND   =   $00A0
+STREND+1 =   $00A1
+MEMSIZ   =   $00A6
+MEMSIZ+1 =   $00A7
+;
+; PAGE 2
+;
+KEYAD    =   $0208
+KBSTAT   =   $0209
+CAPLCK   =   $020C
+PAT      =   $0213
+CURX     =   $0219
+CURY     =   $021A
+GRA      =   $021F
+SXTNK    =   $0220
+XVDU     =   $0238
+XVDU+1   =   $0239
+XGETKY   =   $023B
+XGETKY+1 =   $023C
+XPRTCH   =   $023E
+XPRTCH+1 =   $023F
+XSTOUT   =   $0241
+XSTOUT+1 =   $0242
+INTFS    =   $0244
+INTFS+1  =   $0245
+NMIJP    =   $0247
+KBREP    =   $024E
+KBSPEED  =   $024F
+BAPARM   =   $02E0
+BAPARM+1 =   $02E1
+ASMADD   =   $02FC
+ASMADD+1 =   $02FD
