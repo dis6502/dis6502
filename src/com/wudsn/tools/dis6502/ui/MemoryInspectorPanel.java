@@ -318,6 +318,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	private TypeSelectionListener typeSelectionListener;
 	private SelectionChangedListener selectionChangedListener;
 	private EditModeExitedListener editModeExitedListener;
+	private Runnable editModeEnteredListener;
 
 	private MutableMemoryInspectorState memoryInspectorState;
 
@@ -647,6 +648,11 @@ public final class MemoryInspectorPanel extends JPanel {
 		this.editModeExitedListener = editModeExitedListener;
 	}
 
+	/** Reports that edit mode just began - {@code Dis6502} disables the File menu's open/add/save commands for its duration. */
+	public void setEditModeEnteredListener(Runnable editModeEnteredListener) {
+		this.editModeEnteredListener = editModeEnteredListener;
+	}
+
 	/**
 	 * Ported from MemoryInspector::SegmentChanged. Some segments (an SDX
 	 * symbol-table header, or an SDX relocation block with no data of its own) have
@@ -949,6 +955,9 @@ public final class MemoryInspectorPanel extends JPanel {
 		grid.refreshEditCursor();
 		grid.requestFocusInWindow();
 		startBlinkTimer();
+		if (editModeEnteredListener != null) {
+			editModeEnteredListener.run();
+		}
 	}
 
 	/**

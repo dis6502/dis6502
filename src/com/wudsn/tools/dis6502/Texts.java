@@ -245,20 +245,37 @@ public final class Texts extends NLS {
 	/** {@link com.wudsn.tools.dis6502.ui.XRefPanel}'s header text when no label is selected - moved from {@code Text.IDS_XREF_TITLE_NO_LABEL_SELECTED}. */
 	public static String XRefPanel_NoLabelSelectedTitle;
 
-	/**
-	 * {@link Dis6502#openWorkspaceFile}/{@link Dis6502#performSaveWorkspaceAs}'s
-	 * {@code JFileChooser} file filter description, passed to {@link
-	 * com.wudsn.tools.base.common.FileUtility#createFileExtensionFileFilter}
-	 * (which appends the {@code " (*.wrk)"} suffix itself - this field holds
-	 * just the plain description).
-	 */
-	public static String Dis6502_WorkspaceFilesFilterDescription;
-	/** {@link Dis6502#performOpenUserEquates}/{@link Dis6502#performSaveUserEquates}'s {@code JFileChooser} file filter description (see {@link #Dis6502_WorkspaceFilesFilterDescription}'s note on the suffix). */
-	public static String Dis6502_EquateFilesFilterDescription;
-	/** {@link Dis6502#performSaveDisassemblyFiles}'s {@code JFileChooser} file filter description (see {@link #Dis6502_WorkspaceFilesFilterDescription}'s note on the suffix). */
-	public static String Dis6502_AssemblerFilesFilterDescription;
-	/** {@link com.wudsn.tools.dis6502.ui.ProfileDialog#performLoadProfile}/{@link com.wudsn.tools.dis6502.ui.ProfileDialog#performSaveProfile}'s {@code JFileChooser} file filter description (see {@link #Dis6502_WorkspaceFilesFilterDescription}'s note on the suffix). */
-	public static String ProfileDialog_ProfileFilesFilterDescription;
+	// {@link com.wudsn.tools.dis6502.model.FileTypeInfo}'s texts, one pair per {@link com.wudsn.tools.dis6502.model.FileType}:
+	// _Text is the singular display text, _FilterText the plural a file chooser's filter shows (which appends
+	// the " (*.xex, ...)" suffix itself).
+	public static String FileType_UNKNOWN_FILE_Text;
+	public static String FileType_UNKNOWN_FILE_FilterText;
+	public static String FileType_RAW_FILE_Text;
+	public static String FileType_RAW_FILE_FilterText;
+	public static String FileType_EXECUTABLE_FILE_Text;
+	public static String FileType_EXECUTABLE_FILE_FilterText;
+	public static String FileType_ROM_IMAGE_FILE_Text;
+	public static String FileType_ROM_IMAGE_FILE_FilterText;
+	public static String FileType_CASSETTE_IMAGE_FILE_Text;
+	public static String FileType_CASSETTE_IMAGE_FILE_FilterText;
+	public static String FileType_DISK_IMAGE_EXECUTABLE_FILE_Text;
+	public static String FileType_DISK_IMAGE_EXECUTABLE_FILE_FilterText;
+	public static String FileType_DISK_IMAGE_BOOT_SECTORS_Text;
+	public static String FileType_DISK_IMAGE_BOOT_SECTORS_FilterText;
+	public static String FileType_DISK_IMAGE_SECTORS_Text;
+	public static String FileType_DISK_IMAGE_SECTORS_FilterText;
+	public static String FileType_WORKSPACE_FILE_Text;
+	public static String FileType_WORKSPACE_FILE_FilterText;
+	public static String FileType_EQUATES_FILE_Text;
+	public static String FileType_EQUATES_FILE_FilterText;
+	public static String FileType_PROFILE_FILE_Text;
+	public static String FileType_PROFILE_FILE_FilterText;
+	public static String FileType_DISASSEMBLY_FILE_Text;
+	public static String FileType_DISASSEMBLY_FILE_FilterText;
+
+	/** {@link com.wudsn.tools.dis6502.ui.FileChoosers}' "file exists, overwrite?" confirmation. */
+	public static String FileChoosers_OverwriteTitle;
+	public static String FileChoosers_OverwriteMessage;
 
 	static {
 		initializeClass(Texts.class, null);

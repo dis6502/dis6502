@@ -67,6 +67,8 @@ public final class MainMenu {
 
 	public final JMenuBar menuBar = new JMenuBar();
 
+	/** Public so that {@code Dis6502} can bring the File menu's enabled states up to date whenever it opens. */
+	public final JMenu fileMenu = ElementFactory.createMenu(com.wudsn.tools.base.Actions.MainMenu_File);
 	public final JMenuItem newWorkspaceMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_NewWorkspace, "newWorkspaceMenuItem");
 	public final JMenuItem openWorkspaceMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenWorkspace, "openWorkspaceMenuItem");
 	public final JMenuItem openCassetteImageFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenCassetteImageFile,
@@ -197,7 +199,7 @@ public final class MainMenu {
 	}
 
 	private JMenu createFileMenu() {
-		JMenu menu = ElementFactory.createMenu(com.wudsn.tools.base.Actions.MainMenu_File);
+		JMenu menu = fileMenu;
 
 		menu.add(newWorkspaceMenuItem);
 		menu.addSeparator();

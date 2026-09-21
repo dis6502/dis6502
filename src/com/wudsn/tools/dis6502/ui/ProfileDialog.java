@@ -19,7 +19,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -27,7 +26,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
 import com.wudsn.tools.base.Actions;
-import com.wudsn.tools.base.common.FileUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.base.repository.DataType;
 import com.wudsn.tools.dis6502.DataTypes;
@@ -35,6 +33,7 @@ import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.ComputerSystemTypeInfo;
 import com.wudsn.tools.dis6502.model.Encoding;
+import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.Profile;
 import com.wudsn.tools.dis6502.model.ProfileLogic;
 
@@ -130,14 +129,16 @@ public final class ProfileDialog extends JDialog {
 	private final JTextField maxIncludeLinesField = new JTextField(6);
 
 	private final ProfileLogic profileLogic;
+	private final FileChoosers fileChoosers;
 	private final Profile workingProfile = new Profile();
 	private ComputerSystemTypeInfo computerSystemTypeInfo;
 	private File lastProfileFile;
 	private boolean confirmed;
 
-	public ProfileDialog(Frame owner, ProfileLogic profileLogic) {
+	public ProfileDialog(Frame owner, ProfileLogic profileLogic, FileChoosers fileChoosers) {
 		super(owner, true);
 		this.profileLogic = profileLogic;
+		this.fileChoosers = fileChoosers;
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setTitle(Texts.ProfileDialog_Title);
 
@@ -510,16 +511,11 @@ public final class ProfileDialog extends JDialog {
 
 	/** Ported from ProfileDialog::ProcessCommand's {@code ID_LOAD_PROFILE} case. */
 	private void performLoadProfile() {
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(Texts.ProfileDialog_LoadFileTitle);
-		fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".prf", Texts.ProfileDialog_ProfileFilesFilterDescription));
-		if (lastProfileFile != null) {
-			fileChooser.setCurrentDirectory(lastProfileFile.getParentFile());
-		}
-		if (fileChooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+		File file = fileChoosers.chooseOpenFile(this, Texts.ProfileDialog_LoadFileTitle, FileType.PROFILE_FILE);
+		if (file == null) {
 			return;
 		}
-		lastProfileFile = fileChooser.getSelectedFile();
+		lastProfileFile = file;
 
 		Profile loadedProfile = new Profile();
 		if (profileLogic.loadAndSetDefaultProfile(loadedProfile, computerSystemTypeInfo, lastProfileFile.getPath())) {
@@ -533,16 +529,11 @@ public final class ProfileDialog extends JDialog {
 
 	/** Ported from ProfileDialog::ProcessCommand's {@code ID_SAVE_PROFILE} case. */
 	private void performSaveProfile() {
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(Texts.ProfileDialog_SaveFileTitle);
-		fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".prf", Texts.ProfileDialog_ProfileFilesFilterDescription));
-		if (lastProfileFile != null) {
-			fileChooser.setSelectedFile(lastProfileFile);
-		}
-		if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+		File file = fileChoosers.chooseSaveFile(this, Texts.ProfileDialog_SaveFileTitle, FileType.PROFILE_FILE, lastProfileFile);
+		if (file == null) {
 			return;
 		}
-		lastProfileFile = fileChooser.getSelectedFile();
+		lastProfileFile = file;
 
 		Profile currentProfile = new Profile();
 		getDialogValues(currentProfile);

@@ -194,6 +194,24 @@ needed a dedicated shade-plugin filter to strip its `META-INF` signature
 files when building the uber-jar - that filter was removed too once the
 dependency was gone).
 
+### Keep type enums free of display texts - texts live in a separate Info class backed by `Texts`
+
+User-visible texts must stay localizable, so they do not belong in a type
+enum as hard-coded string literals. When the C++ `FileTypeInfo` table
+(display text, filter text, extensions, default extension, folder type) was
+folded into fields of the `FileType` enum - which looks simpler in Java -
+the user corrected it: "Keep separate FileType and FileTypeInfo to support
+localization of the texts."
+
+How to apply: the enum stays a plain list of constants plus its persistence
+key methods; the UI-facing data comes from a separate `...Info` class
+(`FileTypeInfo.get(FileType)`) whose texts are read from the project's text
+repository (`Texts.java`/`Texts.properties`, fields like
+`FileType_EXECUTABLE_FILE_Text`), the same mechanism every other UI text
+uses. The same applies to any other type that needs display texts: do not
+merge an `XxxInfo` lookup into its enum, and do not introduce new hard-coded
+English UI strings in model classes.
+
 ## Swing UI conventions
 
 ### Wire popup menu items directly - no hidden `doClick()` indirection

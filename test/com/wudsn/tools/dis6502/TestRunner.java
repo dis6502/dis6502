@@ -23,6 +23,7 @@ import com.wudsn.tools.dis6502.model.ReassemblyRoundTripTest;
 import com.wudsn.tools.dis6502.model.SegmentTest;
 import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogicTest;
+import com.wudsn.tools.dis6502.ui.FileChoosersTest;
 
 /**
  * Runs the ported unit tests and reports a pass/fail summary.
@@ -112,6 +113,7 @@ public final class TestRunner {
 		runTest("CommandLineArgumentsTest", CommandLineArgumentsTest::testCommandLineArguments);
 		runTest("LineNumberHistoryTest", LineNumberHistoryTest::testLineNumberHistory);
 		runTest("ImmediateTypeTest", ImmediateTypeTest::testImmediateType);
+		runTest("FileChoosersTest", FileChoosersTest::testFileChoosers);
 		runTest("ReassemblyRoundTripTest", ReassemblyRoundTripTest::testReassemblyRoundTrip);
 
 		if (failedCount == 0) {

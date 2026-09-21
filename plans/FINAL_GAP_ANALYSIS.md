@@ -185,7 +185,27 @@ is ported, and `performSetMemoryInspectorLoHiType` already does the mutation
 for the memory inspector's equivalent. Only the menu items and wiring are
 missing.
 
-### G. Default folders have no effect, file choosers have no filters - MEDIUM
+### G. ~~Default folders have no effect, file choosers have no filters~~ - FIXED 2026-09-22
+
+**Fix**: new `ui/FileChoosers` (the counterpart of C++ `FileDialogs`) is
+behind every open/save chooser of the application, driven by the newly
+ported `FileTypeInfo` (kept apart from the `FileType` enum; its texts come
+from `Texts.properties` so they stay localizable):
+- start folder, in this order: the suggested file's; where a file of this
+  type was last picked in this session (new - C++ has no such memory, so
+  types that never reach the MRU list always start in the default folder
+  again); the most recently used file of this type; the default folder of
+  the type's folder type. A folder that no longer exists is skipped.
+- per-type filter, e.g. "Executable Files (*.bin, *.com, ..., *.xex)" -
+  `.prg` and `.tap` added, the C++ list was Atari-only; none for raw files.
+- saving: the type's default extension is appended to a name without one,
+  and overwriting an existing file must be confirmed (`JFileChooser` does
+  neither by itself; the Win32 dialog does both).
+- `Dis6502.getDefaultFolders` keeps the default folders per computer system
+  (saved/reloaded when the system changes) and the Default Folders dialog
+  now saves on OK.
+
+Original finding:
 
 View > Default Folders... works as a dialog and persists per system, but
 nothing reads the result (`FileDialogs::SetDefaultFolders` has no Java
@@ -200,7 +220,18 @@ extension on save. Java only filters `.wrk` and `.equ`; `FileType.java`'s own
 javadoc notes the `FileTypeInfo` filter/extension/folder-type table is not
 ported.
 
-### H. Main menu is not gated by system or by edit mode - LOW/MEDIUM
+### H. ~~Main menu is not gated by system or by edit mode~~ - FIXED 2026-09-22
+
+**Fix**: `Dis6502.updateFileMenuState` applies all three `WM_INITMENU` rules
+- Open/Add items only for file types the current computer system supports;
+Save items only with segments; nothing that replaces, extends or saves the
+workspace while the memory inspector is in edit mode. It runs on workspace
+changes, on entering/leaving edit mode (new `setEditModeEnteredListener`)
+and, as the safety net `WM_INITMENU` is, whenever the File menu opens.
+`openFile` additionally ends edit mode itself, since a dropped file bypasses
+the menu. Verified live: C64 offers no cassette/disk/ROM items, the Atari
+5200 only raw and ROM; everything is disabled during an edit and back after.
+Original finding:
 
 C++ `WM_INITMENU`:
 - enables each Open/Add item only if
@@ -304,5 +335,5 @@ handler, with the two loads retagged as low/high byte).
 2. ~~**A**~~ - done, including a genuine `C64.equ`.
 3. ~~**C + D**, and **I**~~ - done.
 4. ~~**E, F**~~ - done.
-5. **G, H** - file dialog polish and menu gating.
+5. ~~**G, H**~~ - done.
 6. Javadoc sweep for the stale "not ported" notes.

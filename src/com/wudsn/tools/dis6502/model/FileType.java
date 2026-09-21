@@ -9,11 +9,11 @@ package com.wudsn.tools.dis6502.model;
  * The kind of file a {@link ComputerSystem} can read, write, or guess from
  * its content.
  * <p>
- * Ported from FileType.h. {@code FileTypeInfo}/{@code FileTypeFactory}'s
- * fuller UI-facing text/filter/folder-type lookup is not ported yet - only
- * {@link #getKey()}/{@link #fromKey(String)} (the key names, needed by
- * {@link MRUList}'s persistence) are, following the same pattern as {@link
- * LabelAccess}/{@link Encoding}/{@link FolderType}.
+ * Ported from FileType.h. {@link #getKey()}/{@link #fromKey(String)} are
+ * the key names {@link MRUList}'s persistence uses, following the same
+ * pattern as {@link LabelAccess}/{@link Encoding}/{@link FolderType}. The
+ * UI-facing texts, filter extensions and folder type live in {@link
+ * FileTypeInfo}, so that the texts stay localizable.
  *
  * @author Peter Dell
  */

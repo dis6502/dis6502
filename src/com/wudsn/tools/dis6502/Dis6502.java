@@ -21,12 +21,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.swing.JFileChooser;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 
-import com.wudsn.tools.base.common.FileUtility;
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.repository.Message;
 import com.wudsn.tools.dis6502.model.AtariDisk;
@@ -34,6 +35,7 @@ import com.wudsn.tools.dis6502.model.AtariError;
 import com.wudsn.tools.dis6502.model.AtariFile;
 import com.wudsn.tools.dis6502.model.ComputerSystem;
 import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
+import com.wudsn.tools.dis6502.model.ComputerSystemTypeInfo;
 import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.DefaultFolders;
 import com.wudsn.tools.dis6502.model.DefaultFoldersLogic;
@@ -74,8 +76,10 @@ import com.wudsn.tools.dis6502.ui.DiskImageExecutableFileDialog;
 import com.wudsn.tools.dis6502.ui.DiskImageSectorsDialog;
 import com.wudsn.tools.dis6502.ui.EquateDialog;
 import com.wudsn.tools.dis6502.ui.EquateRangeDialog;
+import com.wudsn.tools.dis6502.ui.FileChoosers;
 import com.wudsn.tools.dis6502.ui.LowHighByteDialog;
 import com.wudsn.tools.dis6502.ui.MRUController;
+import com.wudsn.tools.dis6502.ui.MainMenu;
 import com.wudsn.tools.dis6502.ui.MainWindow;
 import com.wudsn.tools.dis6502.ui.MemoryInspectorFindStringDialog;
 import com.wudsn.tools.dis6502.ui.ProfileDialog;
@@ -184,6 +188,7 @@ public final class Dis6502 {
 	private MainWindow mainWindow;
 	private MRUController mruController;
 	private DefaultFolders defaultFolders;
+	private FileChoosers fileChoosers;
 	private MutableMemoryInspectorState memoryInspectorState;
 	private File currentFile;
 	private File lastEquateFile;
@@ -239,6 +244,7 @@ public final class Dis6502 {
 				commandLineArguments.computerSystemTypeID != null ? commandLineArguments.computerSystemTypeID : "ATARI800");
 		mruController = new MRUController(application);
 		mruController.load();
+		fileChoosers = new FileChoosers(mruController, this::getDefaultFolders);
 		memoryInspectorState = workspace.getMemoryInspectorState(); // Workspace owns this instance directly now, not a satellite object constructed here.
 
 		mainWindow = new MainWindow();
@@ -257,7 +263,7 @@ public final class Dis6502 {
 			if (properties.contains(WorkspaceProperty.SYSTEM_EQUATES) || properties.contains(WorkspaceProperty.USER_EQUATES)) {
 				updateEquatesMenuState();
 			}
-			if (properties.contains(WorkspaceProperty.SEGMENTS)) {
+			if (properties.contains(WorkspaceProperty.SEGMENTS) || properties.contains(WorkspaceProperty.COMPUTER_SYSTEM_TYPE)) {
 				updateFileMenuState();
 			}
 			if (properties.contains(WorkspaceProperty.SELECTED_SEGMENT)) {
@@ -365,6 +371,22 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.editMenuItem.addActionListener(e -> mainWindow.memoryInspectorPanel.enterEditMode());
 		mainWindow.memoryInspectorPanel.quitEditModeMenuItem.addActionListener(e -> mainWindow.memoryInspectorPanel.quitEditMode());
 		mainWindow.memoryInspectorPanel.setEditModeExitedListener(this::performMemoryInspectorEditModeExited);
+		mainWindow.memoryInspectorPanel.setEditModeEnteredListener(this::updateFileMenuState);
+		// The safety net WM_INITMENU is in the C++ version: whatever changed since, the File menu is right when it opens.
+		mainWindow.mainMenu.fileMenu.addMenuListener(new MenuListener() {
+			@Override
+			public void menuSelected(MenuEvent e) {
+				updateFileMenuState();
+			}
+
+			@Override
+			public void menuDeselected(MenuEvent e) {
+			}
+
+			@Override
+			public void menuCanceled(MenuEvent e) {
+			}
+		});
 		mainWindow.memoryInspectorPanel.assembleMenuItem.addActionListener(e -> performShowAssembleDialog());
 		mainWindow.memoryInspectorPanel.startCodeTraceMenuItem.addActionListener(e -> performGuessCode());
 
@@ -475,22 +497,59 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Disables Save Disassembly Files/Write Boot Disk while the workspace has
-	 * no segments. In the C++ source's {@code WM_INITMENU} handler ({@code
-	 * ui/Main.cpp}), {@code ID_FILE_SAVE_DISASSEMBLY_FILES} is not gated at
-	 * all, and {@code ID_FILE_SAVE_DISK_IMAGE_BOOT_SECTORS} ("Write Boot
-	 * Disk" here - see {@link Actions}'s own javadoc for the naming) is gated
-	 * on the memory inspector's current selection having a segment, not on
-	 * the segment list's own emptiness. This port gates both directly on the
-	 * segment list instead, matching {@code ID_FILE_SAVE_WORKSPACE}/{@code
-	 * _AS}'s own existing C++ gating condition - simpler, and avoiding the
-	 * awkwardness the C++ source's own {@code // TODO Move to segment context
-	 * menu} comment on that line already flags.
+	 * Enables the File menu's commands. Ported from the {@code WM_INITMENU}
+	 * handler in {@code ui/Main.cpp}, with its three rules:
+	 * <ul>
+	 * <li>Nothing that replaces, extends or saves the workspace while the
+	 * memory inspector is in edit mode - the half-typed byte belongs to the
+	 * workspace as it is now. (A disabled item's accelerator is dead too.)</li>
+	 * <li>An Open/Add item only if the workspace's computer system can read
+	 * that file type at all - no cassette or disk images for the C64, say.</li>
+	 * <li>The Save items only if there is something to save. The C++ version
+	 * does not gate {@code ID_FILE_SAVE_DISASSEMBLY_FILES} at all, and gates
+	 * {@code ID_FILE_SAVE_DISK_IMAGE_BOOT_SECTORS} ("Write Boot Disk" here -
+	 * see {@link Actions}'s own javadoc for the naming) on the memory
+	 * inspector's selection having a segment; both simply follow {@code
+	 * ID_FILE_SAVE_WORKSPACE}'s "has segments" here - simpler, and avoiding
+	 * the awkwardness the C++ source's own {@code // TODO Move to segment
+	 * context menu} comment on that line already flags.</li>
+	 * </ul>
 	 */
 	private void updateFileMenuState() {
+		MainMenu mainMenu = mainWindow.mainMenu;
+		ComputerSystem computerSystem = workspace.getComputerSystem();
+		boolean notEditing = !mainWindow.memoryInspectorPanel.isEditMode();
 		boolean hasSegments = !workspace.getSegmentList().isEmpty();
-		mainWindow.mainMenu.saveDisassemblyFilesMenuItem.setEnabled(hasSegments);
-		mainWindow.mainMenu.writeBootDiskMenuItem.setEnabled(hasSegments);
+
+		mainMenu.newWorkspaceMenuItem.setEnabled(notEditing);
+		mainMenu.openWorkspaceMenuItem.setEnabled(notEditing);
+		mainMenu.recentWorkspacesMenu.setEnabled(notEditing);
+		mainMenu.recentFilesMenu.setEnabled(notEditing);
+
+		setOpenAndAddEnabled(mainMenu.openCassetteImageFileMenuItem, mainMenu.addCassetteImageFileMenuItem,
+				notEditing && computerSystem.isSupportedFileType(FileType.CASSETTE_IMAGE_FILE));
+		setOpenAndAddEnabled(mainMenu.openDiskImageExecutableFileMenuItem, mainMenu.addDiskImageExecutableFileMenuItem,
+				notEditing && computerSystem.isSupportedFileType(FileType.DISK_IMAGE_EXECUTABLE_FILE));
+		setOpenAndAddEnabled(mainMenu.openDiskImageBootSectorsMenuItem, mainMenu.addDiskImageBootSectorsMenuItem,
+				notEditing && computerSystem.isSupportedFileType(FileType.DISK_IMAGE_BOOT_SECTORS));
+		setOpenAndAddEnabled(mainMenu.openDiskImageSectorsMenuItem, mainMenu.addDiskImageSectorsMenuItem,
+				notEditing && computerSystem.isSupportedFileType(FileType.DISK_IMAGE_SECTORS));
+		setOpenAndAddEnabled(mainMenu.openExecutableFileMenuItem, mainMenu.addExecutableFileMenuItem,
+				notEditing && computerSystem.isSupportedFileType(FileType.EXECUTABLE_FILE));
+		setOpenAndAddEnabled(mainMenu.openRawFileMenuItem, mainMenu.addRawFileMenuItem,
+				notEditing && computerSystem.isSupportedFileType(FileType.RAW_FILE));
+		setOpenAndAddEnabled(mainMenu.openROMImageFileMenuItem, mainMenu.addROMImageFileMenuItem,
+				notEditing && computerSystem.isSupportedFileType(FileType.ROM_IMAGE_FILE));
+
+		mainMenu.saveWorkspaceMenuItem.setEnabled(notEditing && hasSegments);
+		mainMenu.saveWorkspaceAsMenuItem.setEnabled(notEditing && hasSegments);
+		mainMenu.saveDisassemblyFilesMenuItem.setEnabled(notEditing && hasSegments);
+		mainMenu.writeBootDiskMenuItem.setEnabled(notEditing && hasSegments);
+	}
+
+	private static void setOpenAndAddEnabled(JMenuItem openMenuItem, JMenuItem addMenuItem, boolean enabled) {
+		openMenuItem.setEnabled(enabled);
+		addMenuItem.setEnabled(enabled);
 	}
 
 	/** Repopulates the "Recent Workspaces"/"Recent Files" menus from {@link #mruController}. */
@@ -547,18 +606,10 @@ public final class Dis6502 {
 	 * drop).
 	 */
 	private void performOpenFile(FileType fileType, boolean add) {
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(getFileTypeOpenTitle(fileType, add));
-		if (fileType == FileType.WORKSPACE_FILE) {
-			fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".wrk", Texts.Dis6502_WorkspaceFilesFilterDescription));
+		File file = fileChoosers.chooseOpenFile(mainWindow.getFrame(), getFileTypeOpenTitle(fileType, add), fileType);
+		if (file != null) {
+			openFile(file, fileType, add);
 		}
-		if (currentFile != null) {
-			fileChooser.setCurrentDirectory(currentFile.getParentFile());
-		}
-		if (fileChooser.showOpenDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
-			return;
-		}
-		openFile(fileChooser.getSelectedFile(), fileType, add);
 	}
 
 	/**
@@ -574,6 +625,9 @@ public final class Dis6502 {
 	 * Returns whether the file was actually opened/added.
 	 */
 	boolean openFile(File file, FileType fileType, boolean add) {
+		// The menu commands are disabled while editing, but a dropped file gets here regardless.
+		mainWindow.memoryInspectorPanel.quitEditMode();
+
 		if (fileType == FileType.UNKNOWN_FILE) {
 			if (file.getName().toLowerCase().endsWith(".wrk")) {
 				fileType = FileType.WORKSPACE_FILE;
@@ -971,16 +1025,11 @@ public final class Dis6502 {
 
 	/** Ported from EquateListController::LoadUserEquates. */
 	private void performOpenUserEquates() {
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(Texts.Dis6502_OpenUserEquatesFileTitle);
-		fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".equ", Texts.Dis6502_EquateFilesFilterDescription));
-		if (lastEquateFile != null) {
-			fileChooser.setCurrentDirectory(lastEquateFile.getParentFile());
-		}
-		if (fileChooser.showOpenDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+		File file = fileChoosers.chooseOpenFile(mainWindow.getFrame(), Texts.Dis6502_OpenUserEquatesFileTitle, FileType.EQUATES_FILE);
+		if (file == null) {
 			return;
 		}
-		lastEquateFile = fileChooser.getSelectedFile();
+		lastEquateFile = file;
 		if (equateListLogic.load(workspace.getUserEquateList(), lastEquateFile.getPath())) {
 			updateDisassembly(false); // Matches Main::HandleWorkspaceChanged's non-forced refresh on a SYSTEM_EQUATES/USER_EQUATES change.
 		}
@@ -988,17 +1037,17 @@ public final class Dis6502 {
 
 	/** Ported from EquateListController::Save, invoked for both "Save User Equates" ({@code xasm=false}) and "Export User Equates" ({@code xasm=true}). */
 	private void performSaveUserEquates(boolean xasm) {
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(xasm ? Texts.Dis6502_ExportUserEquatesFileTitle : Texts.Dis6502_SaveUserEquatesFileTitle);
-		fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".equ", Texts.Dis6502_EquateFilesFilterDescription));
-		if (lastEquateFile != null) {
-			fileChooser.setCurrentDirectory(lastEquateFile.getParentFile());
-		}
-		if (fileChooser.showSaveDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+		// The exported label table is a different format: do not suggest overwriting the equates file with it.
+		File file = fileChoosers.chooseSaveFile(mainWindow.getFrame(),
+				xasm ? Texts.Dis6502_ExportUserEquatesFileTitle : Texts.Dis6502_SaveUserEquatesFileTitle, FileType.EQUATES_FILE,
+				xasm ? null : lastEquateFile);
+		if (file == null) {
 			return;
 		}
-		lastEquateFile = fileChooser.getSelectedFile();
-		equateListLogic.save(workspace.getUserEquateList(), lastEquateFile.getPath(), xasm);
+		if (!xasm) {
+			lastEquateFile = file;
+		}
+		equateListLogic.save(workspace.getUserEquateList(), file.getPath(), xasm);
 	}
 
 	/** Ported from MainSegment::PerformCommands's IDM_SEGMENT_MERGE case. */
@@ -1026,15 +1075,12 @@ public final class Dis6502 {
 		if (segmentIndex < 0) {
 			return;
 		}
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(Texts.Dis6502_SaveSegmentTitle);
-		if (currentFile != null) {
-			fileChooser.setCurrentDirectory(currentFile.getParentFile());
-		}
-		if (fileChooser.showSaveDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+		File file = fileChoosers.chooseSaveFile(mainWindow.getFrame(), Texts.Dis6502_SaveSegmentTitle,
+				writeHeader ? FileType.EXECUTABLE_FILE : FileType.RAW_FILE, null);
+		if (file == null) {
 			return;
 		}
-		try (FileOutputStream outputStream = new FileOutputStream(fileChooser.getSelectedFile())) {
+		try (FileOutputStream outputStream = new FileOutputStream(file)) {
 			workspace.getComputerSystem().writeExecutableFile(workspace.getSegmentList(), segmentIndex, writeHeader, outputStream);
 		} catch (IOException ex) {
 			application.sendErrorMessage(ex);
@@ -1046,15 +1092,12 @@ public final class Dis6502 {
 		if (workspace.getSegmentList().getCount() == 0) {
 			return;
 		}
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(Texts.Dis6502_SaveAllSegmentsTitle);
-		if (currentFile != null) {
-			fileChooser.setCurrentDirectory(currentFile.getParentFile());
-		}
-		if (fileChooser.showSaveDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+		File file = fileChoosers.chooseSaveFile(mainWindow.getFrame(), Texts.Dis6502_SaveAllSegmentsTitle, FileType.EXECUTABLE_FILE,
+				null);
+		if (file == null) {
 			return;
 		}
-		try (FileOutputStream outputStream = new FileOutputStream(fileChooser.getSelectedFile())) {
+		try (FileOutputStream outputStream = new FileOutputStream(file)) {
 			workspace.getComputerSystem().writeExecutableFile(workspace.getSegmentList(), SegmentList.NO_SEGMENT_INDEX, true, outputStream);
 		} catch (IOException ex) {
 			application.sendErrorMessage(ex);
@@ -1114,12 +1157,13 @@ public final class Dis6502 {
 	 * address).
 	 */
 	private void performSaveMemoryInspectorSelection(boolean withHeader) {
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(withHeader ? Texts.Dis6502_SaveSelectionWithHeaderTitle : Texts.Dis6502_SaveSelectionNoHeaderTitle);
-		if (fileChooser.showSaveDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+		File file = fileChoosers.chooseSaveFile(mainWindow.getFrame(),
+				withHeader ? Texts.Dis6502_SaveSelectionWithHeaderTitle : Texts.Dis6502_SaveSelectionNoHeaderTitle,
+				withHeader ? FileType.EXECUTABLE_FILE : FileType.RAW_FILE, null);
+		if (file == null) {
 			return;
 		}
-		try (FileOutputStream outputStream = new FileOutputStream(fileChooser.getSelectedFile())) {
+		try (FileOutputStream outputStream = new FileOutputStream(file)) {
 			if (withHeader) {
 				int[] addressRange = memoryInspectorState.getAddressRange();
 				writeWordLE(outputStream, FileHeader.ATARI_BINARY.getValue());
@@ -1537,6 +1581,7 @@ public final class Dis6502 {
 	 * inconsistency this fixes.
 	 */
 	private void performMemoryInspectorEditModeExited() {
+		updateFileMenuState();
 		updateDisassembly(false);
 	}
 
@@ -1587,23 +1632,39 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from Main::ShowDefaultFoldersDialog. {@code
-	 * FileDialogs::SetDefaultFolders} is not ported - there is no Java
-	 * equivalent of the C++ {@code FileDialogs} abstraction yet, so editing
-	 * the default folders here does not yet influence the directory the
-	 * various "Open"/"Save" {@link JFileChooser}s start in.
+	 * Ported from Main::ShowDefaultFoldersDialog. What is edited here is
+	 * where {@link FileChoosers} starts when it knows no better place - see
+	 * its javadoc.
 	 */
 	private void performShowDefaultFolders() {
-		if (defaultFolders == null) {
-			defaultFolders = defaultFoldersLogic.createDefaultFolders(workspace.getComputerSystem().getTypeInfo());
+		DefaultFolders currentDefaultFolders = getDefaultFolders();
+		if (new DefaultFoldersDialog(mainWindow.getFrame()).show(currentDefaultFolders)) {
+			defaultFoldersLogic.save(currentDefaultFolders);
+		}
+	}
+
+	/**
+	 * The default folders of the workspace's current computer system - they
+	 * are kept per system. Ported from the {@code COMPUTER_SYSTEM_TYPE} case
+	 * of Main::HandleWorkspaceChanged, done on demand instead: when the
+	 * system has changed since the last call, the previous system's folders
+	 * are saved and the new one's loaded.
+	 */
+	private DefaultFolders getDefaultFolders() {
+		ComputerSystemTypeInfo typeInfo = workspace.getComputerSystem().getTypeInfo();
+		if (defaultFolders == null || defaultFolders.getComputerSystemTypeInfo().type != typeInfo.type) {
+			if (defaultFolders != null) {
+				defaultFoldersLogic.save(defaultFolders);
+			}
+			defaultFolders = defaultFoldersLogic.createDefaultFolders(typeInfo);
 			defaultFoldersLogic.load(defaultFolders);
 		}
-		new DefaultFoldersDialog(mainWindow.getFrame()).show(defaultFolders);
+		return defaultFolders;
 	}
 
 	/** Ported from Main::ShowProfileDialog. */
 	private void performShowProfile() {
-		ProfileDialog dialog = new ProfileDialog(mainWindow.getFrame(), profileLogic);
+		ProfileDialog dialog = new ProfileDialog(mainWindow.getFrame(), profileLogic, fileChoosers);
 		if (dialog.show(workspace.getProfile(), workspace.getComputerSystem().getTypeInfo())) {
 			workspace.notifyProfileChanged();
 			updateDisassembly(true); // Matches Main::HandleWorkspaceChanged's forced refresh on a PROFILE change.
@@ -1641,18 +1702,10 @@ public final class Dis6502 {
 	}
 
 	private boolean performSaveWorkspaceAs() {
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(Texts.Dis6502_SaveWorkspaceFileAsTitle);
-		fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".wrk", Texts.Dis6502_WorkspaceFilesFilterDescription));
-		if (currentFile != null) {
-			fileChooser.setSelectedFile(currentFile);
-		}
-		if (fileChooser.showSaveDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+		File file = fileChoosers.chooseSaveFile(mainWindow.getFrame(), Texts.Dis6502_SaveWorkspaceFileAsTitle, FileType.WORKSPACE_FILE,
+				currentFile);
+		if (file == null) {
 			return false;
-		}
-		File file = fileChooser.getSelectedFile();
-		if (!file.getName().contains(".")) {
-			file = new File(file.getPath() + ".wrk");
 		}
 		boolean saved = workspaceLogic.save(workspace, file.getPath());
 		if (saved) {
@@ -1672,13 +1725,11 @@ public final class Dis6502 {
 	 * DisassemblyResultFile#saveListing}.
 	 */
 	private void performSaveDisassemblyFiles() {
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(Texts.Dis6502_SaveDisassemblyFilesTitle);
-		fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".asm", Texts.Dis6502_AssemblerFilesFilterDescription));
-		if (fileChooser.showSaveDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
+		File file = fileChoosers.chooseSaveFile(mainWindow.getFrame(), Texts.Dis6502_SaveDisassemblyFilesTitle,
+				FileType.DISASSEMBLY_FILE, null);
+		if (file == null) {
 			return;
 		}
-		File file = fileChooser.getSelectedFile();
 		try {
 			new DisassemblyResultFile(application).saveListing(workspace.getDisassemblyResult(), workspace.getProfile(), file);
 		} catch (IOException ex) {
