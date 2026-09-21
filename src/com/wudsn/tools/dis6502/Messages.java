@@ -284,6 +284,16 @@ public final class Messages extends NLS {
 	/** {@link com.wudsn.tools.dis6502.ui.ComputerFont}'s {@code loadFont}'s "font resource not found" error. */
 	public static Message E066;
 
+	/**
+	 * {@link com.wudsn.tools.dis6502.ui.SegmentWriteBootDiskDialog}'s {@code
+	 * writeBootDisk}'s "no directory entries" error - Java-invented text
+	 * like every field above, even though it happens to match a hardcoded
+	 * literal C++'s own {@code WriteBootDisk} throws too (marked with a
+	 * {@code // TODO: Error message} comment there, i.e. C++ hasn't given
+	 * it a {@code STRINGTABLE} entry either).
+	 */
+	public static Message E067;
+
 	static {
 		initializeClass(Messages.class, null);
 	}

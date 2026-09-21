@@ -161,7 +161,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 
 		switch (error) {
 		case NO_ENTRY_FOUND:
-			throw new IOException("No directory entries found in the disk image.");
+			throw new IOException(Messages.E067.format());
 
 		case OK: {
 			int headerSize = 6;

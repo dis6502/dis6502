@@ -34,36 +34,19 @@ every possible text sink (e.g. `JLabel`/`JButton` literal constructors -
 those are already covered by the `ElementFactory`/`DataTypes` convention
 this codebase uses instead, so none turned up here).
 
-**Status**: this list only shows what's still outstanding - entries that
-have been migrated to `Text.java`/`Texts.java`/`Messages.java` are removed
-once done rather than kept struck through (see git history for what moved
-where and when: all 13 dialog `setTitle(...)` calls, every static
-`JOptionPane` title, every static/parameterizable `JOptionPane` message,
-every static-literal `setDialogTitle(...)` call in group A, and every
-`IOException` that used to be group B have all been migrated as of the
-commit above - group B itself is gone now that it's empty). What remains
-below is out-of-scope by design: dynamic titles built from a variable,
-which can't be a single static field, plus every `IllegalArgumentException`/
-`IllegalStateException`/`RuntimeException` usage, explicitly flagged as a
-programming-error guard rather than user- or log-facing text (groups
-C/D/E).
-
-## A) User-facing dialog titles/messages still outstanding
-
-Every dynamically-built title in `Dis6502.java` has now been migrated,
-including the last two ("Add "/"Open " + `fileTypeDisplayName`, a
-per-`FileType` runtime value): `performOpenFile`'s own
-`getFileTypeDisplayName` helper was replaced with a `getFileTypeOpenTitle
-(FileType, boolean)` helper that switches on the file type and picks
-between a fixed `Add<X>Title`/`Open<X>Title` `Texts.java` field pair per
-type, mirroring the adjacent `getFileTypeOpenMessage` helper's own
-per-`FileType` switch shape. Only one entry remains: a deliberately-
-unported C++-parity literal. The two `IllegalArgumentException`s this
-section used to list moved to group C below.
-
-### ui/SegmentWriteBootDiskDialog.java
-
-- `:163` `IOException` - `'No directory entries found in the disk image.'` (deliberately not ported to a `Text`/`Messages` field - matches C++'s own `WriteBootDisk`, which throws this exact literal with a `// TODO: Error message` comment, i.e. C++ hasn't given it a `STRINGTABLE` entry either)
+**Status**: every entry originally found that was actually a text-
+externalization candidate has now been migrated to `Text.java`/
+`Texts.java`/`Messages.java` (see git history for what moved where and
+when: all 13 dialog `setTitle(...)` calls, every static `JOptionPane`
+title, every static/parameterizable `JOptionPane` message, every static-
+literal `setDialogTitle(...)` call, every dynamically-built "Add "/"Open "
+title, every internal `IOException`, and finally
+`SegmentWriteBootDiskDialog`'s one deliberately-unported-in-C++-too
+literal - the old groups A and B are both gone now that they're empty).
+What remains below (groups C/D/E) is out of scope by design, not
+outstanding work: every `IllegalArgumentException`/`IllegalStateException`/
+`RuntimeException` usage, explicitly flagged as a programming-error guard
+rather than user- or log-facing text.
 
 ## C) IllegalArgumentException usages - not relevant for text externalization
 
@@ -141,9 +124,9 @@ back to, none are ever shown in a dialog, and none should move to
 
 | Group | Current membership | Migrated | Still outstanding | Excluded (not relevant) |
 |---|---|---|---|---|
-| A) User-facing dialog titles/messages | 48 (of 50 originally found - 2 reclassified to group C) | 47 | 1 (deliberately-unported literal matching an un-fixed C++ `// TODO`) | - |
+| User-facing dialog titles/messages (formerly group A, now gone - all migrated) | 48 (of 50 originally found - 2 reclassified to group C) | 48 | 0 | - |
 | `IOException` usages (formerly group B, now gone - all migrated) | 21 (of 62 originally found in the old group B - 15 reclassified to group C, 22 to group D, 4 to group E) | 21 | 0 | - |
-| C) `IllegalArgumentException` usages | 17 (2 from group A, 15 from the old group B) | 0 | 0 | 17 (parameter-validation guards) |
+| C) `IllegalArgumentException` usages | 17 (2 from the old group A, 15 from the old group B) | 0 | 0 | 17 (parameter-validation guards) |
 | D) `IllegalStateException` usages | 22 (from the old group B) | 0 | 0 | 22 (programming errors - violated invariants) |
 | E) `RuntimeException` usages | 4 (from the old group B) | 0 | 0 | 4 (programming errors - a caller's malformed input) |
-| **Total** | **112** | **68** | **1** | **43** |
+| **Total** | **112** | **69** | **0** | **43** |
