@@ -94,9 +94,21 @@ IDS_ERR_*` constants used with `sendErrorMessage`; `Messages.I008`-`I016`
 from nine real ported `Text.IDS_*` constants used with
 `sendInfoMessage` - `Text.java` has no common prefix for these like
 `IDS_ERR_*`, so finding them meant checking every `sendInfoMessage` call
-site by hand, not grepping for a prefix - on explicit user instruction
-each time, once the message needed its severity to actually drive
-dispatch). Send a `Messages.*` field via
+site by hand, not grepping for a prefix; `Messages.I017`-`I024` from
+eight more real ported `Text.IDS_LOG_OPEN_*`/`IDS_LOG_SAVE_*` constants
+that turned out to be completely unwired in the Java port (present in
+`Text.properties`, referenced nowhere in the code) - for these, the fix
+wasn't just moving/renaming an existing call site, it was checking each
+constant's real C++ call site (`MainFile::ConfirmOpen`,
+`DisassemblyResultFile::OpenWriter`) to find where and with what
+arguments to add a brand new `application.sendMessage(...)` call in the
+Java port, matching the point in the flow C++ logs it (as soon as the
+relevant path/count is known, before the actual file I/O) - on explicit
+user instruction each time, once the message needed its severity to
+actually drive dispatch). A ported-but-completely-unreferenced `Text.*`
+constant is worth checking this way in general: it can mean genuinely
+missing Java functionality (a log line C++ has and Java silently
+doesn't), not just leftover unused text. Send a `Messages.*` field via
 `Application.sendMessage(Message, String...)`, which reads
 `message.getSeverity()` to pick the right log method itself, instead of the
 caller choosing `sendInfoMessage`/`sendErrorMessage`.
