@@ -511,7 +511,7 @@ public final class ProfileDialog extends JDialog {
 	/** Ported from ProfileDialog::ProcessCommand's {@code ID_LOAD_PROFILE} case. */
 	private void performLoadProfile() {
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle("Load Profile File");
+		fileChooser.setDialogTitle(Texts.ProfileDialog_LoadFileTitle);
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Profile Files (*.prf)", "prf"));
 		if (lastProfileFile != null) {
 			fileChooser.setCurrentDirectory(lastProfileFile.getParentFile());
@@ -534,7 +534,7 @@ public final class ProfileDialog extends JDialog {
 	/** Ported from ProfileDialog::ProcessCommand's {@code ID_SAVE_PROFILE} case. */
 	private void performSaveProfile() {
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle("Save Profile File");
+		fileChooser.setDialogTitle(Texts.ProfileDialog_SaveFileTitle);
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Profile Files (*.prf)", "prf"));
 		if (lastProfileFile != null) {
 			fileChooser.setSelectedFile(lastProfileFile);

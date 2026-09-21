@@ -139,7 +139,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 	/** Ported from SegmentWriteBootDiskDialog::OnOK. */
 	private void performOK() {
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle("Write Boot Disk");
+		fileChooser.setDialogTitle(Texts.SegmentWriteBootDiskDialog_Title);
 		if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
 			return;
 		}

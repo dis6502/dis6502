@@ -91,6 +91,28 @@ public final class Texts extends NLS {
 	public static String ProfileDialog_LoadTitle;
 	/** {@link Dis6502#performSetMemoryInspectorLoHiType}'s error dialog title. */
 	public static String Dis6502_SetTypeTitle;
+	/** {@link Dis6502#performOpenUserEquates}'s {@code JFileChooser} title. */
+	public static String Dis6502_OpenUserEquatesFileTitle;
+	/** {@link Dis6502#performSaveUserEquates}'s {@code JFileChooser} title when exporting to xasm format ({@code xasm == true}). */
+	public static String Dis6502_ExportUserEquatesFileTitle;
+	/** {@link Dis6502#performSaveUserEquates}'s {@code JFileChooser} title when saving in the native format ({@code xasm == false}). */
+	public static String Dis6502_SaveUserEquatesFileTitle;
+	/** {@link Dis6502#performSaveSegment}'s {@code JFileChooser} title. */
+	public static String Dis6502_SaveSegmentTitle;
+	/** {@link Dis6502#performSaveAllSegments}'s {@code JFileChooser} title. */
+	public static String Dis6502_SaveAllSegmentsTitle;
+	/** {@link Dis6502#performSaveMemoryInspectorSelection}'s {@code JFileChooser} title when saving with a header ({@code withHeader == true}). */
+	public static String Dis6502_SaveSelectionWithHeaderTitle;
+	/** {@link Dis6502#performSaveMemoryInspectorSelection}'s {@code JFileChooser} title when saving without a header ({@code withHeader == false}). */
+	public static String Dis6502_SaveSelectionNoHeaderTitle;
+	/** {@link Dis6502#performSaveWorkspaceAs}'s {@code JFileChooser} title. */
+	public static String Dis6502_SaveWorkspaceFileAsTitle;
+	/** {@link Dis6502#performSaveDisassemblyFiles}'s {@code JFileChooser} title. */
+	public static String Dis6502_SaveDisassemblyFilesTitle;
+	/** {@link com.wudsn.tools.dis6502.ui.ProfileDialog#performLoadProfile}'s {@code JFileChooser} title. */
+	public static String ProfileDialog_LoadFileTitle;
+	/** {@link com.wudsn.tools.dis6502.ui.ProfileDialog#performSaveProfile}'s {@code JFileChooser} title. */
+	public static String ProfileDialog_SaveFileTitle;
 
 	static {
 		initializeClass(Texts.class, null);

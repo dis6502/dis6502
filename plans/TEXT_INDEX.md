@@ -38,22 +38,23 @@ this codebase uses instead, so none turned up here).
 have been migrated to `Text.java`/`Texts.java`/`Messages.java` are removed
 once done rather than kept struck through (see git history for what moved
 where and when: all 13 dialog `setTitle(...)` calls, every static
-`JOptionPane` title, and every static/parameterizable `JOptionPane` message
-in group A have been migrated as of the commit above). What remains below
-is either out-of-scope by design (dynamic titles built from a variable,
-which can't be a single static field; internal/defensive exception text
-with no C++ resource and no user-facing dialog) or simply not yet done
-(group B in full - internal exception/invariant messages were never
-requested to move).
+`JOptionPane` title, every static/parameterizable `JOptionPane` message,
+and every static-literal `setDialogTitle(...)` call in group A have been
+migrated as of the commit above). What remains below is either
+out-of-scope by design (dynamic titles built from a variable, which can't
+be a single static field; internal/defensive exception text with no C++
+resource and no user-facing dialog) or simply not yet done (group B in
+full - internal exception/invariant messages were never requested to
+move).
 
 ## A) User-facing dialog titles/messages still outstanding
 
 Everything remaining here is a dynamically-built title (`"Add "`/`"Open "`
-+ a variable, which can't become one static field) or a `JFileChooser`
-`setDialogTitle(...)` call - a separate sink from a `JDialog`'s own
-`setTitle(...)`, never in scope for the title-migration work - plus two
-defensive `IllegalArgumentException`s that are really internal checks
-(see group B) and one deliberately-unported C++-parity literal.
++ a variable, which can't become one static field - the only kind of
+`setDialogTitle(...)` call still left, now that every static-literal one
+has been migrated too) plus two defensive `IllegalArgumentException`s that
+are really internal checks (see group B) and one deliberately-unported
+C++-parity literal.
 
 ### Dis6502.java
 
@@ -66,23 +67,6 @@ defensive `IllegalArgumentException`s that are really internal checks
 - `:750` `setDialogTitle` - `'Add '`/`'Open '` + `'Disk Image Boot Sectors'` - dynamic, out of scope
 - `:815` `setDialogTitle` - `'Add '`/`'Open '` + `'Disk Image Sectors'` - dynamic, out of scope
 - `:899` `IllegalArgumentException` - `"Parameter 'fileType' has unsupported value "` + value + `'.'`
-- `:952` `setDialogTitle` - `'Open User Equates File'` - `JFileChooser` title, out of scope
-- `:969` `setDialogTitle` - `'Export User Equates File'`/`'Save User Equates File'` - out of scope
-- `:1007` `setDialogTitle` - `'Save Segment'` - out of scope
-- `:1027` `setDialogTitle` - `'Save All Segments'` - out of scope
-- `:1095` `setDialogTitle` - `'Save Selection (With Header)'`/`'Save Selection (No Header)'` - out of scope
-- `:1465` `setDialogTitle` - `'Save Workspace File As'` - out of scope
-- `:1496` `setDialogTitle` - `'Save Disassembly Files'` - out of scope
-
-### ui/ProfileDialog.java
-
-- `:512` `setDialogTitle` - `'Load Profile File'` - out of scope
-- `:535` `setDialogTitle` - `'Save Profile File'` - out of scope
-
-### ui/SegmentWriteBootDiskDialog.java
-
-- `:141` `setDialogTitle` - `'Write Boot Disk'` - out of scope
-- `:163` `IOException` - `'No directory entries found in the disk image.'` (deliberately not ported to a `Text`/`Messages` field - matches C++'s own `WriteBootDisk`, which throws this exact literal with a `// TODO: Error message` comment, i.e. C++ hasn't given it a `STRINGTABLE` entry either)
 
 ## B) Internal exception/invariant messages (62 hits, none migrated)
 
@@ -159,6 +143,6 @@ work has been done on this group.
 
 | Group | Originally found | Migrated | Still outstanding |
 |---|---|---|---|
-| A) User-facing dialog titles/messages | 50 | 30 | 20 (7 dynamic titles built from a variable, 10 static `JFileChooser` `setDialogTitle` calls - a different sink than a `JDialog`'s own `setTitle`, never in scope, 2 internal `IllegalArgumentException`s that really belong in group B, 1 deliberately-unported literal matching an un-fixed C++ `// TODO`) |
+| A) User-facing dialog titles/messages | 50 | 40 | 10 (7 dynamic titles built from a variable - can't be a single static field, 2 internal `IllegalArgumentException`s that really belong in group B, 1 deliberately-unported literal matching an un-fixed C++ `// TODO`) |
 | B) Internal exception/invariant messages | 62 | 0 | 62 |
-| **Total** | **112** | **30** | **82** |
+| **Total** | **112** | **40** | **72** |

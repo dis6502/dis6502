@@ -944,7 +944,7 @@ public final class Dis6502 {
 	/** Ported from EquateListController::LoadUserEquates. */
 	private void performOpenUserEquates() {
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle("Open User Equates File");
+		fileChooser.setDialogTitle(Texts.Dis6502_OpenUserEquatesFileTitle);
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Equate Files (*.equ)", "equ"));
 		if (lastEquateFile != null) {
 			fileChooser.setCurrentDirectory(lastEquateFile.getParentFile());
@@ -961,7 +961,7 @@ public final class Dis6502 {
 	/** Ported from EquateListController::Save, invoked for both "Save User Equates" ({@code xasm=false}) and "Export User Equates" ({@code xasm=true}). */
 	private void performSaveUserEquates(boolean xasm) {
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(xasm ? "Export User Equates File" : "Save User Equates File");
+		fileChooser.setDialogTitle(xasm ? Texts.Dis6502_ExportUserEquatesFileTitle : Texts.Dis6502_SaveUserEquatesFileTitle);
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Equate Files (*.equ)", "equ"));
 		if (lastEquateFile != null) {
 			fileChooser.setCurrentDirectory(lastEquateFile.getParentFile());
@@ -999,7 +999,7 @@ public final class Dis6502 {
 			return;
 		}
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle("Save Segment");
+		fileChooser.setDialogTitle(Texts.Dis6502_SaveSegmentTitle);
 		if (currentFile != null) {
 			fileChooser.setCurrentDirectory(currentFile.getParentFile());
 		}
@@ -1019,7 +1019,7 @@ public final class Dis6502 {
 			return;
 		}
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle("Save All Segments");
+		fileChooser.setDialogTitle(Texts.Dis6502_SaveAllSegmentsTitle);
 		if (currentFile != null) {
 			fileChooser.setCurrentDirectory(currentFile.getParentFile());
 		}
@@ -1087,7 +1087,7 @@ public final class Dis6502 {
 	 */
 	private void performSaveMemoryInspectorSelection(boolean withHeader) {
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(withHeader ? "Save Selection (With Header)" : "Save Selection (No Header)");
+		fileChooser.setDialogTitle(withHeader ? Texts.Dis6502_SaveSelectionWithHeaderTitle : Texts.Dis6502_SaveSelectionNoHeaderTitle);
 		if (fileChooser.showSaveDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
 			return;
 		}
@@ -1457,7 +1457,7 @@ public final class Dis6502 {
 
 	private boolean performSaveWorkspaceAs() {
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle("Save Workspace File As");
+		fileChooser.setDialogTitle(Texts.Dis6502_SaveWorkspaceFileAsTitle);
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Workspace Files (*.wrk)", "wrk"));
 		if (currentFile != null) {
 			fileChooser.setSelectedFile(currentFile);
@@ -1488,7 +1488,7 @@ public final class Dis6502 {
 	 */
 	private void performSaveDisassemblyFiles() {
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle("Save Disassembly Files");
+		fileChooser.setDialogTitle(Texts.Dis6502_SaveDisassemblyFilesTitle);
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Assembler Files (*.asm)", "asm"));
 		if (fileChooser.showSaveDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
 			return;
