@@ -59,12 +59,14 @@ public final class WorkspaceLogic {
 	 * Replaces the workspace's system equates with the ones shipped for its
 	 * current computer system (the hardware/OS labels that make a
 	 * disassembly read {@code STA COLBK} instead of {@code STA $D01A}). A
-	 * system without an equates file simply ends up with an empty list: the
-	 * unknown system, and also the C64 - the C++ version's {@code C64.equ}
-	 * turned out to be a stale copy of {@code Atari800.equ} (a mislabeled
-	 * asset, just like its {@code C64.fon} - see {@code ComputerFont}), which
-	 * would label the VIC-II's {@code $D01A} as Atari's {@code COLBK}, so it
-	 * is deliberately not shipped until a genuine C64 file exists.
+	 * system without an equates file (the unknown system) simply ends up
+	 * with an empty list. {@code C64.equ} is not the C++ version's file:
+	 * that one turned out to be a stale copy of {@code Atari800.equ} (a
+	 * mislabeled asset, just like its {@code C64.fon} - see {@code
+	 * ComputerFont}), which would label the VIC-II's {@code $D01A} as Atari's
+	 * {@code COLBK}. It was written from scratch for this port instead, with
+	 * the KERNAL/BASIC source label names as published in "Mapping the
+	 * Commodore 64".
 	 */
 	public void loadSystemEquates(Workspace workspace) {
 		ComputerSystem computerSystem = workspace.getComputerSystem();

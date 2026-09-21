@@ -40,11 +40,16 @@ for a new/opened file, and after a workspace load - "if empty" so that a
 `.wrk` carrying its own system equates keeps them.
 
 Two findings along the way:
-- **`C64.equ` is deliberately not shipped.** The C++ file is a stale copy of
-  `Atari800.equ` (16 differing lines) - it would label the VIC-II's `$D01A`
-  as Atari's `COLBK`. Same mislabeled-asset problem as `C64.fon`. The C64
-  gets no system equates until a genuine file is written - an open,
-  optional follow-up.
+- **`C64.equ` was written from scratch, not ported.** The C++ file is a stale
+  copy of `Atari800.equ` (16 differing lines) - it would label the VIC-II's
+  `$D01A` as Atari's `COLBK`. Same mislabeled-asset problem as `C64.fon`. The
+  new file (455 labels: 6510 port, BASIC/KERNAL zero page, pages 2-3 incl.
+  all indirect vectors, VIC-II, SID, CIA #1/#2, common BASIC ROM routines,
+  the KERNAL jump table, hardware vectors) uses the KERNAL/BASIC source label
+  names as published in "Mapping the Commodore 64". Verified: every line
+  parses, MADS accepts every label (no reserved-word collisions), and a
+  hand-built C64 routine disassembles to `sta EXTCOL`/`jsr CHROUT`/
+  `sta CINV+1`/`jmp SYSIRQ` and reassembles byte-exactly.
 - **Fixed a disassembler defect C++ only works around.** With the default
   profile (`omitUnreferencedSystemLabels = true`), `STA IOCB0+ICCOM,X` marked
   `IOCB0` as referenced but not the constant `ICCOM`, so `ICCOM` was omitted
@@ -177,6 +182,20 @@ disk image via its file/sector picker. Java's `openRecentFile` calls
 `workspaceLogic.addFile` directly for every file type. Not run-tested here -
 verify what a recent `RAW_FILE`/`DISK_IMAGE_*` entry actually produces.
 
+## C64 support is a stub in C++ too (found while writing `C64.equ`)
+
+Not port gaps - identical in C++ - but worth knowing now that the Java
+version is the future one:
+- `C64.readExecutableFile` never sets `segment.bBinary`, so a loaded `.prg`
+  is a "Raw" segment and is not disassembled until the user ticks Binary in
+  Segment Properties.
+- `C64.BASE_ADDRESSES`/`VECTOR_ADDRESSES` are a single `0x0200 /* DUMMY
+  EXAMPLE */` entry, so code trace never recognises `LDA #<irq / STA CINV /
+  LDA #>irq / STA CINV+1` as an address pair. The real candidates are now
+  all named in `C64.equ` (`CINV`, `CBINV`, `NMINV`, the `$0300`-`$0333`
+  vectors, `NMIVEC`/`RESVEC`/`IRQVEC`).
+- `C64.guessFileType` always returns `UNKNOWN_FILE` (matters for gaps C/D).
+
 ## Minor divergences (listed for completeness, no action suggested)
 
 - **Home/End in the two grids**: C++ scrolls to top/bottom on plain Home/End
@@ -221,7 +240,7 @@ verify what a recent `RAW_FILE`/`DISK_IMAGE_*` entry actually produces.
 ## Suggested order
 
 1. ~~**B**~~ - done.
-2. ~~**A**~~ - done (optional follow-up: author a genuine `C64.equ`).
+2. ~~**A**~~ - done, including a genuine `C64.equ`.
 3. **C + D together** - one `openFile(path, UNKNOWN_FILE, add)` dispatcher
    serves both, and fixes **I** for free if Recent Files is routed through
    it too.

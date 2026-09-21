@@ -44,10 +44,10 @@ public final class WorkspaceLogicTest {
 
 	/**
 	 * New (not ported): every computer system that ships a system equates
-	 * file must load it, a system without one must end up empty, and
-	 * switching systems must replace - not append to - the previous system's
-	 * equates. The C64 deliberately ships none - see {@link
-	 * WorkspaceLogic#loadSystemEquates}.
+	 * file must load it completely (every line of the file yields exactly
+	 * one equate, so a count equal to the file's line count proves no line
+	 * was rejected), a system without one must end up empty, and switching
+	 * systems must replace - not append to - the previous system's equates.
 	 */
 	private static void testLoadSystemEquates() {
 		Application application = new Application();
@@ -64,7 +64,11 @@ public final class WorkspaceLogicTest {
 
 		workspace.setComputerSystemType(ComputerSystemType.C64);
 		workspaceLogic.loadSystemEquates(workspace);
-		Assert.boolEquals(systemEquateList.isEmpty(), true);
+		Assert.longEquals(systemEquateList.getCount(), 534);
+		Assert.boolEquals(systemEquateList.getEquateByLabel("COLBK") == null, true); // An Atari label - see loadSystemEquates' javadoc.
+		Equate chrout = systemEquateList.getEquateByLabel("CHROUT");
+		Assert.notNull(chrout);
+		Assert.longEquals(chrout.getLabelValue(), 0xFFD2);
 
 		workspace.setComputerSystemType(ComputerSystemType.ATARI5200);
 		workspaceLogic.loadSystemEquates(workspace);
