@@ -13,6 +13,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import com.wudsn.tools.dis6502.Messages;
+
 /**
  * The Atari 800 computer system: the primary/default target of this tool.
  * <p>
@@ -178,7 +180,7 @@ public final class Atari800 extends ComputerSystem {
 		if (header != FileHeader.ATARI_BINARY && header != FileHeader.SDX_FIXED_BLK
 				&& header != FileHeader.SDX_SYM_REQUIRED && header != FileHeader.SDX_SYM_DEFINED
 				&& header != FileHeader.SDX_FIX_UP_BLK && header != FileHeader.SDX_RELOC_BLK) {
-			throw new IOException("Unsupported file header " + header + ".");
+			throw new IOException(Messages.E051.format(String.valueOf(header)));
 		}
 
 		// Read all segments.
@@ -292,14 +294,13 @@ public final class Atari800 extends ComputerSystem {
 				int end = reader.readWordLE();
 
 				if (end < begin) {
-					throw new IOException("Segment end address is lower than segment start address.");
+					throw new IOException(Messages.E052.format());
 				}
 
 				// Check the data size.
 				int size = end - begin + 1;
 				if (size > reader.getBytesRemaining()) {
-					throw new IOException("Stream has " + reader.getBytesRemaining()
-							+ " bytes left and is too short for segment of size " + size + ".");
+					throw new IOException(Messages.E053.format(String.valueOf(reader.getBytesRemaining()), String.valueOf(size)));
 				}
 
 				segment.setHeader(header);
@@ -422,7 +423,7 @@ public final class Atari800 extends ComputerSystem {
 			byte[] carHeader = new byte[CAR_HEADER_SIZE];
 			readFully(inputStream, carHeader);
 			if (carHeader[0] != 'C' || carHeader[1] != 'A' || carHeader[2] != 'R' || carHeader[3] != 'T') {
-				throw new IOException("Invalid stream header. Stream is not a CART stream.");
+				throw new IOException(Messages.E054.format());
 			}
 			bytesRemaining -= CAR_HEADER_SIZE;
 		}
@@ -440,7 +441,7 @@ public final class Atari800 extends ComputerSystem {
 			begin = base16K;
 			end = end16K;
 		} else {
-			throw new IOException("Unsupported cartridge size " + bytesRemaining + ".");
+			throw new IOException(Messages.E055.format(String.valueOf(bytesRemaining)));
 		}
 
 		// Read segment data.
@@ -485,7 +486,7 @@ public final class Atari800 extends ComputerSystem {
 		byte[] casHeader = new byte[CAS_HEADER_SIZE];
 		readFully(inputStream, casHeader);
 		if (!Arrays.equals(casHeader, FUJI)) {
-			throw new IOException("Invalid file header. Stream is not a FUJI stream.");
+			throw new IOException(Messages.E056.format());
 		}
 
 		long bytesRemaining = fileSize - CAS_HEADER_SIZE; // Consumed: name (4 bytes).
@@ -653,8 +654,7 @@ public final class Atari800 extends ComputerSystem {
 
 	private static void writeSDXSymbol(String symbol, OutputStream outputStream) throws IOException {
 		if (symbol.length() > SDX_SYMBOL_LEN) {
-			throw new IOException(
-					"Length of SDX symbol '" + symbol + "' exceeds maximum length " + SDX_SYMBOL_LEN + ".");
+			throw new IOException(Messages.E057.format(symbol, String.valueOf(SDX_SYMBOL_LEN)));
 		}
 		byte[] buffer = new byte[SDX_SYMBOL_LEN];
 		Arrays.fill(buffer, (byte) ' ');
@@ -691,8 +691,7 @@ public final class Atari800 extends ComputerSystem {
 
 		private void checkedReadFully(byte[] buffer, int length) throws IOException {
 			if (length > bytesRemaining) {
-				throw new IOException("Computed remaining length of stream of " + bytesRemaining
-						+ " is smaller than requested amount of " + length + " to read.");
+				throw new IOException(Messages.E058.format(String.valueOf(bytesRemaining), String.valueOf(length)));
 			}
 			Atari800.readFully(inputStream, buffer);
 			bytesRemaining -= length;
@@ -730,8 +729,7 @@ public final class Atari800 extends ComputerSystem {
 		void readIntoMemoryBlock(Segment segment) throws IOException {
 			int size = segment.getSize();
 			if (size > bytesRemaining) {
-				throw new IOException("Computed remaining length of stream of " + bytesRemaining
-						+ " is smaller than requested amount of " + size + " to read.");
+				throw new IOException(Messages.E058.format(String.valueOf(bytesRemaining), String.valueOf(size)));
 			}
 			segment.memoryBlock.readData(inputStream, size);
 			bytesRemaining -= size;

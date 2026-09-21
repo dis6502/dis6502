@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
+import com.wudsn.tools.dis6502.Messages;
+
 /**
  * Writes one disassembly listing file: line-numbered, optionally
  * instruction-aligned text lines, plus the comment/include-statement/end-
@@ -43,7 +45,7 @@ public final class DisassemblyResultWriter implements AutoCloseable {
 		this.file = file;
 		Encoding encoding = profile.outputEncoding;
 		if (encoding == Encoding.UNKNOWN) {
-			throw new IOException("Cannot write files if encoding is unknown.");
+			throw new IOException(Messages.E061.format());
 		}
 		File parent = file.getParentFile();
 		if (parent != null && !parent.exists()) {
@@ -133,7 +135,7 @@ public final class DisassemblyResultWriter implements AutoCloseable {
 			throw new IllegalStateException("Invalid encoding.");
 
 		case BINARY:
-			throw new IOException("Cannot write strings if encoding is binary.");
+			throw new IOException(Messages.E062.format());
 
 		case ASCII: {
 			byte[] buffer = new byte[value.length()];
@@ -142,8 +144,8 @@ public final class DisassemblyResultWriter implements AutoCloseable {
 				if (c == 10 || c == 13 || (32 <= c && c <= 127)) {
 					buffer[i] = (byte) c;
 				} else {
-					throw new IOException("Character '" + c + "' (" + (int) c + ") at position " + i
-							+ " of string '" + value + "' is no ASCII character and cannot be written in ASCII encoding mode.");
+					throw new IOException(Messages.E063.format(String.valueOf(c), String.valueOf((int) c), String.valueOf(i), value,
+							"ASCII"));
 				}
 			}
 			outputStream.write(buffer);
@@ -157,8 +159,8 @@ public final class DisassemblyResultWriter implements AutoCloseable {
 				if (c <= 2555) {
 					buffer[i] = (byte) c;
 				} else {
-					throw new IOException("Character '" + c + "' (" + (int) c + ") at position " + i
-							+ " of string '" + value + "' is no ASCII character and cannot be written in ATASCII encoding mode.");
+					throw new IOException(Messages.E063.format(String.valueOf(c), String.valueOf((int) c), String.valueOf(i), value,
+							"ATASCII"));
 				}
 			}
 			outputStream.write(buffer);

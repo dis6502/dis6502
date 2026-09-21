@@ -10,6 +10,8 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
+import com.wudsn.tools.dis6502.Messages;
+
 /**
  * The Oric computer system.
  * <p>
@@ -77,7 +79,7 @@ public final class Oric extends ComputerSystem {
 		// Check that the file begins with 2 0xFF (well, both bytes of $1616 happen to be equal).
 		int header = readWordLE(inputStream);
 		if (header != FileHeader.ORIC_BINARY.getValue()) {
-			throw new IOException("Unsupported file header " + header + ".");
+			throw new IOException(Messages.E051.format(String.valueOf(header)));
 		}
 
 		long bytesRemaining = fileSize - 2;
@@ -102,7 +104,7 @@ public final class Oric extends ComputerSystem {
 			int begin = readWordBE(inputStream);
 
 			if (end < begin) {
-				throw new IOException("Segment end address is lower than segment start address.");
+				throw new IOException(Messages.E052.format());
 			}
 			bytesRemaining -= 4;
 

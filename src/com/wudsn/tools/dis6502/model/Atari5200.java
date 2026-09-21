@@ -10,6 +10,8 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
+import com.wudsn.tools.dis6502.Messages;
+
 /**
  * The Atari 5200 computer system.
  * <p>
@@ -70,7 +72,7 @@ public final class Atari5200 extends ComputerSystem {
 			throws IOException {
 		// Check that the file length is less than 32K.
 		if (fileSize > 32768L) {
-			throw new IOException("Only 32k ROMs are supported.");
+			throw new IOException(Messages.E050.format());
 		}
 
 		int memorySize = (int) fileSize;

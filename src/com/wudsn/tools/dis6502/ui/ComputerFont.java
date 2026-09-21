@@ -20,6 +20,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.model.ComputerSystemType;
 
 /**
@@ -213,7 +214,7 @@ public final class ComputerFont {
 	private static Font loadFont(String resourceName) {
 		try (InputStream in = ComputerFont.class.getResourceAsStream(resourceName)) {
 			if (in == null) {
-				throw new IOException("Font resource not found: " + resourceName);
+				throw new IOException(Messages.E066.format(resourceName));
 			}
 			return Font.createFont(Font.TRUETYPE_FONT, in);
 		} catch (IOException ex) {

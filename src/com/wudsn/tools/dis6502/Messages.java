@@ -212,6 +212,78 @@ public final class Messages extends NLS {
 	 */
 	public static Message E049;
 
+	/** {@link com.wudsn.tools.dis6502.model.Atari5200#readROMFile}'s "ROM too large" error - Java-invented text, no C++ resource to move from (like every field below, unless noted). */
+	public static Message E050;
+
+	/**
+	 * {@link com.wudsn.tools.dis6502.model.Atari800#readExecutableFile}'s
+	 * "unsupported file header" error, shared with {@link
+	 * com.wudsn.tools.dis6502.model.Oric#readExecutableFile}'s identically
+	 * worded one.
+	 */
+	public static Message E051;
+
+	/**
+	 * {@link com.wudsn.tools.dis6502.model.Atari800#readExecutableFile}'s
+	 * "segment end address lower than start address" error, shared with
+	 * {@link com.wudsn.tools.dis6502.model.Oric#readExecutableFile}'s
+	 * identically worded one.
+	 */
+	public static Message E052;
+
+	/** {@link com.wudsn.tools.dis6502.model.Atari800#readExecutableFile}'s "stream too short for segment" error. */
+	public static Message E053;
+
+	/** {@link com.wudsn.tools.dis6502.model.Atari800#readROMFile}'s "not a CART stream" error. */
+	public static Message E054;
+
+	/** {@link com.wudsn.tools.dis6502.model.Atari800#readROMFile}'s "unsupported cartridge size" error. */
+	public static Message E055;
+
+	/** {@link com.wudsn.tools.dis6502.model.Atari800#readCassetteFile}'s "not a FUJI stream" error. */
+	public static Message E056;
+
+	/** {@link com.wudsn.tools.dis6502.model.Atari800}'s {@code writeSDXSymbol}'s "SDX symbol too long" error. */
+	public static Message E057;
+
+	/**
+	 * {@link com.wudsn.tools.dis6502.model.Atari800}'s {@code
+	 * BoundedReader}'s {@code checkedReadFully}/{@code readIntoMemoryBlock}
+	 * "stream too short" error - one field for both, since they build the
+	 * exact same template text by hand today.
+	 */
+	public static Message E058;
+
+	/** {@link com.wudsn.tools.dis6502.model.C64#readExecutableFile}'s "file too large" error. */
+	public static Message E059;
+
+	/** {@link com.wudsn.tools.dis6502.model.C64#readExecutableFile}'s "more than one segment" error. */
+	public static Message E060;
+
+	/** {@link com.wudsn.tools.dis6502.model.DisassemblyResultWriter#openFile}'s "cannot write files, encoding unknown" error. */
+	public static Message E061;
+
+	/** {@link com.wudsn.tools.dis6502.model.DisassemblyResultWriter}'s {@code writeString}'s "cannot write strings, encoding is binary" error. */
+	public static Message E062;
+
+	/**
+	 * {@link com.wudsn.tools.dis6502.model.DisassemblyResultWriter}'s
+	 * {@code writeString}'s "character cannot be written in the current
+	 * encoding" error - one field for both the ASCII- and ATASCII-encoding
+	 * call sites, which build the exact same template text by hand today
+	 * except for the encoding mode name, now a {@code {4}} placeholder.
+	 */
+	public static Message E063;
+
+	/** {@link com.wudsn.tools.dis6502.model.ProfileLogic#load}'s "file is empty" error. */
+	public static Message E064;
+
+	/** {@link com.wudsn.tools.dis6502.model.Xml#load}'s "mismatched root element" error. */
+	public static Message E065;
+
+	/** {@link com.wudsn.tools.dis6502.ui.ComputerFont}'s {@code loadFont}'s "font resource not found" error. */
+	public static Message E066;
+
 	static {
 		initializeClass(Messages.class, null);
 	}

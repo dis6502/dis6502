@@ -39,14 +39,14 @@ have been migrated to `Text.java`/`Texts.java`/`Messages.java` are removed
 once done rather than kept struck through (see git history for what moved
 where and when: all 13 dialog `setTitle(...)` calls, every static
 `JOptionPane` title, every static/parameterizable `JOptionPane` message,
-and every static-literal `setDialogTitle(...)` call in group A have been
-migrated as of the commit above). What remains below is either
-out-of-scope by design (dynamic titles built from a variable, which can't
-be a single static field; every `IllegalArgumentException`/
+every static-literal `setDialogTitle(...)` call in group A, and every
+`IOException` that used to be group B have all been migrated as of the
+commit above - group B itself is gone now that it's empty). What remains
+below is out-of-scope by design: dynamic titles built from a variable,
+which can't be a single static field, plus every `IllegalArgumentException`/
 `IllegalStateException`/`RuntimeException` usage, explicitly flagged as a
-programming-error guard rather than user- or log-facing text - see groups
-C/D/E) or simply not yet done (group B's remaining `IOException`s were
-never requested to move).
+programming-error guard rather than user- or log-facing text (groups
+C/D/E).
 
 ## A) User-facing dialog titles/messages still outstanding
 
@@ -65,52 +65,15 @@ section used to list moved to group C below.
 
 - `:163` `IOException` - `'No directory entries found in the disk image.'` (deliberately not ported to a `Text`/`Messages` field - matches C++'s own `WriteBootDisk`, which throws this exact literal with a `// TODO: Error message` comment, i.e. C++ hasn't given it a `STRINGTABLE` entry either)
 
-## B) Internal exception/invariant messages (21 hits, none migrated)
-
-These are internal `IOException`s for malformed input data - not shown to
-the user through any dialog and with no C++ `STRINGTABLE` counterpart;
-they exist only as developer-facing diagnostics if a file/stream turns out
-malformed. Per `Text.java`'s own scope rule ("every field must trace back
-to a real C++ resource ID") and `Texts.java`'s rule ("UI text this port
-introduces"), none of these belong in either class as currently scoped;
-listed here for completeness since the original request was for every
-inline text-sink location, not just user-visible ones. No work has been
-done on this group. (Every `IllegalArgumentException` that used to be
-listed here moved to group C, every `IllegalStateException` to group D,
-and every `RuntimeException` to group E - see those sections for why.)
-
-- `model/Atari5200.java:73` `IOException` - `'Only 32k ROMs are supported.'`
-- `model/Atari800.java:181` `IOException` - `'Unsupported file header '` + value + `'.'`
-- `model/Atari800.java:295` `IOException` - `'Segment end address is lower than segment start address.'`
-- `model/Atari800.java:301` `IOException` - `'Stream has '` + n + `' bytes left and is too short for segment of size '` + n + `'.'`
-- `model/Atari800.java:425` `IOException` - `'Invalid stream header. Stream is not a CART stream.'`
-- `model/Atari800.java:443` `IOException` - `'Unsupported cartridge size '` + n + `'.'`
-- `model/Atari800.java:488` `IOException` - `'Invalid file header. Stream is not a FUJI stream.'`
-- `model/Atari800.java:656` `IOException` - `"Length of SDX symbol '"` + name + `"' exceeds maximum length "` + n + `'.'`
-- `model/Atari800.java:694` `IOException` - `'Computed remaining length of stream of '` + n + `' is smaller than requested amount of '` + n + `' to read.'`
-- `model/Atari800.java:733` same as above (second call site)
-- `model/C64.java:57` `IOException` - `'File size of '` + n + `' bytes exceeds the maximum file size of executable files on C64.'`
-- `model/C64.java:75` `IOException` - `'Executable files on C64 can only have one segment.'`
-- `model/DisassemblyResultWriter.java:46` `IOException` - `'Cannot write files if encoding is unknown.'`
-- `model/DisassemblyResultWriter.java:136` `IOException` - `'Cannot write strings if encoding is binary.'`
-- `model/DisassemblyResultWriter.java:145` `IOException` - `"Character '"` + c + `"' ("` + code + `') at position '` + pos + `" of string '"` + s + `"' is no ASCII character and cannot be written in ASCII encoding mode."`
-- `model/DisassemblyResultWriter.java:160` same shape, ATASCII encoding mode
-- `model/Oric.java:80` `IOException` - `'Unsupported file header '` + value + `'.'`
-- `model/Oric.java:105` `IOException` - `'Segment end address is lower than segment start address.'`
-- `model/ProfileLogic.java:49` `IOException` - `"File '"` + path + `"' is empty."`
-- `model/Xml.java:134` `IOException` - `"Mismatched root element: expected '"` + a + `"' but found '"` + b + `"'."`
-- `ui/ComputerFont.java:216` `IOException` - `'Font resource not found: '` + name
-
 ## C) IllegalArgumentException usages - not relevant for text externalization
 
 Flagged as out of scope: every `throw new IllegalArgumentException(...)`
 site is a parameter-validation guard (a programming-contract check on a
 method's own arguments), not a message meant to be read by a user or
-logged for diagnosis the way group B's `IOException` entries are. None of
-these have a C++ resource to trace back to, none are ever shown in a
-dialog, and none should move to `Text.java`, `Texts.java`, or
-`Messages.java` - they stay hardcoded `IllegalArgumentException` messages
-permanently, not "not yet migrated."
+logged for diagnosis. None of these have a C++ resource to trace back to,
+none are ever shown in a dialog, and none should move to `Text.java`,
+`Texts.java`, or `Messages.java` - they stay hardcoded
+`IllegalArgumentException` messages permanently, not "not yet migrated."
 
 - `Dis6502.java:227` - `"Parameter 'args' must not be null."`
 - `Dis6502.java:899` - `"Parameter 'fileType' has unsupported value "` + value + `'.'`
@@ -179,8 +142,8 @@ back to, none are ever shown in a dialog, and none should move to
 | Group | Current membership | Migrated | Still outstanding | Excluded (not relevant) |
 |---|---|---|---|---|
 | A) User-facing dialog titles/messages | 48 (of 50 originally found - 2 reclassified to group C) | 47 | 1 (deliberately-unported literal matching an un-fixed C++ `// TODO`) | - |
-| B) Internal exception/invariant messages (`IOException` only) | 21 (of 62 originally found - 15 reclassified to group C, 22 to group D, 4 to group E) | 0 | 21 | - |
-| C) `IllegalArgumentException` usages | 17 (2 from group A, 15 from group B) | 0 | 0 | 17 (parameter-validation guards) |
-| D) `IllegalStateException` usages | 22 (from group B) | 0 | 0 | 22 (programming errors - violated invariants) |
-| E) `RuntimeException` usages | 4 (from group B) | 0 | 0 | 4 (programming errors - a caller's malformed input) |
-| **Total** | **112** | **47** | **22** | **43** |
+| `IOException` usages (formerly group B, now gone - all migrated) | 21 (of 62 originally found in the old group B - 15 reclassified to group C, 22 to group D, 4 to group E) | 21 | 0 | - |
+| C) `IllegalArgumentException` usages | 17 (2 from group A, 15 from the old group B) | 0 | 0 | 17 (parameter-validation guards) |
+| D) `IllegalStateException` usages | 22 (from the old group B) | 0 | 0 | 22 (programming errors - violated invariants) |
+| E) `RuntimeException` usages | 4 (from the old group B) | 0 | 0 | 4 (programming errors - a caller's malformed input) |
+| **Total** | **112** | **68** | **1** | **43** |

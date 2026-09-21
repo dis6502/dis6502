@@ -46,7 +46,7 @@ public final class ProfileLogic {
 			File file = new File(filePath);
 			byte[] buffer = Files.readAllBytes(file.toPath());
 			if (buffer.length == 0) {
-				throw new IOException("File '" + filePath + "' is empty.");
+				throw new IOException(Messages.E064.format(filePath));
 			}
 			if (!Profile1X.load(profile, buffer, application)) {
 				Xml.load(profile, "Profile", file);

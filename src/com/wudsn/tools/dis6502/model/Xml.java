@@ -24,6 +24,7 @@ import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 import com.wudsn.tools.base.common.HexUtility;
+import com.wudsn.tools.dis6502.Messages;
 
 /**
  * XML serialization framework: attribute get/set helpers matching the C++
@@ -131,8 +132,7 @@ public final class Xml {
 		}
 		Element root = document.getDocumentElement();
 		if (!root.getTagName().equals(elementName)) {
-			throw new IOException(
-					"Mismatched root element: expected '" + elementName + "' but found '" + root.getTagName() + "'.");
+			throw new IOException(Messages.E065.format(elementName, root.getTagName()));
 		}
 		serializable.deserializeFrom(root);
 	}

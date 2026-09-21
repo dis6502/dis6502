@@ -11,6 +11,8 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Set;
 
+import com.wudsn.tools.dis6502.Messages;
+
 /**
  * The Commodore 64 computer system.
  * <p>
@@ -54,8 +56,7 @@ public final class C64 extends ComputerSystem {
 	protected void readExecutableFile(SegmentListInserter segmentListInserter, InputStream inputStream, long fileSize)
 			throws IOException {
 		if (fileSize > PRG_MAX_SIZE) {
-			throw new IOException(
-					"File size of " + fileSize + " bytes exceeds the maximum file size of executable files on C64.");
+			throw new IOException(Messages.E059.format(String.valueOf(fileSize)));
 		}
 		int address = readWordLE(inputStream);
 
@@ -72,7 +73,7 @@ public final class C64 extends ComputerSystem {
 		int segmentIndex;
 		if (firstSegmentIndex == SegmentList.NO_SEGMENT_INDEX) {
 			if (segmentList.getCount() > 1) {
-				throw new IOException("Executable files on C64 can only have one segment.");
+				throw new IOException(Messages.E060.format());
 			}
 			segmentIndex = 0;
 		} else {
