@@ -286,7 +286,7 @@ public final class EquateList implements Xml.Serializable {
 	}
 
 	public boolean isEquateAddressReferenced(int address, int labelAccess) {
-		if (address == 0) {
+		if (address == DisassemblyLine.NO_SYSTEM_ADDRESS) {
 			return false;
 		}
 		for (Equate equate : equateList) {

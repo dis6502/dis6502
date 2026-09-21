@@ -34,7 +34,16 @@ public final class DisassemblyLine {
 	public boolean selected; // Displayed in yellow background.
 	public boolean referenced; // Displayed in grey if not referenced.
 	public int address; // Absolute address to display as comment (in addition to the label).
-	public int systemAddress; // Address is filled only for system equates.
+	/**
+	 * {@link #systemAddress} of every line that is not a system equate's -
+	 * such a line is never omitted as "unreferenced". Not 0, which the C++
+	 * version uses: a system can have a label at address {@code $0000} (the
+	 * C64's 6510 port), and that line was then always written, referenced or
+	 * not.
+	 */
+	public static final int NO_SYSTEM_ADDRESS = -1;
+
+	public int systemAddress = NO_SYSTEM_ADDRESS; // Address is filled only for system equates.
 
 	private String line = "";
 	private int lineNumber;
@@ -72,7 +81,7 @@ public final class DisassemblyLine {
 		return "segmentIndex=" + segmentIndex + ", offset=" + Memory.offsetToHexString(offset) + ", size="
 				+ Memory.sizeToHexString(size) + ", xrefLineNumber=" + xrefLineNumber + ", selected=" + selected
 				+ ", referenced=" + referenced + ", address=" + Memory.addressToHexString(address)
-				+ ", systemAddress=" + Memory.addressToHexString(systemAddress) + ", lineNumber=" + lineNumber
+				+ ", systemAddress=" + (systemAddress == NO_SYSTEM_ADDRESS ? "none" : Memory.addressToHexString(systemAddress)) + ", lineNumber=" + lineNumber
 				+ ", line=" + line;
 	}
 }

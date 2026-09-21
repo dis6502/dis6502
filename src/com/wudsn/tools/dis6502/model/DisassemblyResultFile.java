@@ -78,7 +78,7 @@ public final class DisassemblyResultFile {
 	}
 
 	private void insertDisLine(DisassemblyResultWriter writer, DisassemblyLine disLine) throws IOException {
-		if (disLine.getSection().getType() != DisassemblySectionType.SYSTEM_EQUATES || disLine.systemAddress == 0
+		if (disLine.getSection().getType() != DisassemblySectionType.SYSTEM_EQUATES || disLine.systemAddress == DisassemblyLine.NO_SYSTEM_ADDRESS
 				|| disLine.referenced || !profile.omitUnreferencedSystemLabels) {
 			writer.printLine(disLine.getLine(), false);
 		}

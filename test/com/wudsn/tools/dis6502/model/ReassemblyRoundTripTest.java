@@ -133,6 +133,12 @@ public final class ReassemblyRoundTripTest {
 		byte[] expected = Files.readAllBytes(new File(refFilePath).toPath());
 		if (refFilePath.endsWith(".prg")) {
 			actual = atariBinaryToPrg(unitName, actual);
+
+			// The C64 has a system label at address $0000 (D6510). Nothing references it here, so it
+			// must be omitted like any other unreferenced one - address 0 used to mean "always write".
+			String includeFile = new String(Files.readAllBytes(new File(outFolder, unitName + ".inc").toPath()));
+			Assert.boolEquals(includeFile.contains("EXTCOL"), true);
+			Assert.boolEquals(includeFile.contains("D6510"), false);
 		}
 		if (!Arrays.equals(actual, expected)) {
 			Assert.fail(unitName + ": reassembled '" + outputFileName + "' (" + actual.length + " bytes) does not match reference '"

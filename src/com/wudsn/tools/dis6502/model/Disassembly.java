@@ -229,7 +229,7 @@ public final class Disassembly {
 			lineWriter.comment(comment);
 		}
 
-		systemAddress = disassemblySectionType == DisassemblySectionType.SYSTEM_EQUATES ? systemAddr : 0;
+		systemAddress = disassemblySectionType == DisassemblySectionType.SYSTEM_EQUATES ? systemAddr : DisassemblyLine.NO_SYSTEM_ADDRESS;
 
 		addLineWriter(disassemblySectionType);
 	}
@@ -241,14 +241,14 @@ public final class Disassembly {
 	/** Adds a label which is defined as a value in the SYSTEM_EQUATES file. */
 	private void addLabelValue(String label, int address, DisassemblySectionType disassemblySectionType,
 			String comment) {
-		int systemAddr = disassemblySectionType == DisassemblySectionType.SYSTEM_EQUATES ? 0xFFFF : 0;
+		int systemAddr = disassemblySectionType == DisassemblySectionType.SYSTEM_EQUATES ? 0xFFFF : DisassemblyLine.NO_SYSTEM_ADDRESS;
 		addLabelWithAddress(label, address, disassemblySectionType, systemAddr, comment);
 	}
 
 	private void addComment(String comment, DisassemblySectionType disassemblySectionType) {
 		lineWriter.clear().comment(comment);
 
-		systemAddress = disassemblySectionType == DisassemblySectionType.SYSTEM_EQUATES ? 0xFFFF : 0;
+		systemAddress = disassemblySectionType == DisassemblySectionType.SYSTEM_EQUATES ? 0xFFFF : DisassemblyLine.NO_SYSTEM_ADDRESS;
 		addLineWriter(disassemblySectionType);
 	}
 
@@ -275,7 +275,7 @@ public final class Disassembly {
 		for (String line : comment.split("\n", -1)) {
 			String text = line.endsWith("\r") ? line.substring(0, line.length() - 1) : line;
 			markSize = 0;
-			systemAddress = 0;
+			systemAddress = DisassemblyLine.NO_SYSTEM_ADDRESS;
 			addLine(profile.commentPrefix + " " + text, disassemblySectionType);
 		}
 
@@ -346,7 +346,7 @@ public final class Disassembly {
 				.hasNext();) {
 			DisassemblyLine line = i.next();
 
-			if (line.systemAddress <= address
+			if (line.systemAddress != DisassemblyLine.NO_SYSTEM_ADDRESS && line.systemAddress <= address
 					&& (nearestLine == null || nearestLine.systemAddress < line.systemAddress)) {
 				nearestLine = line;
 			}
@@ -483,7 +483,7 @@ public final class Disassembly {
 		if (newSection) {
 			int oldAbsoluteAddress = absoluteAddress;
 			int oldSystemAddress = systemAddress;
-			systemAddress = 0;
+			systemAddress = DisassemblyLine.NO_SYSTEM_ADDRESS;
 			String sectionText = DisassemblySection.getText(disassemblySectionType);
 
 			switch (disassemblySectionType) {
@@ -525,7 +525,7 @@ public final class Disassembly {
 	private boolean disInit() {
 		pc = 0;
 		absoluteAddress = 0;
-		systemAddress = 0;
+		systemAddress = DisassemblyLine.NO_SYSTEM_ADDRESS;
 
 		disNewSegment = true;
 		memoryBlockIterator = null;
