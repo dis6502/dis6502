@@ -85,12 +85,18 @@ followed by a plain sequence number (e.g. `I001`) shared across every
 severity - the numbering does not restart at 1 per letter, it just
 continues on from whatever number came before it regardless of severity
 (so the six `E`-prefixed fields added right after `I001` are numbered
-`E002`-`E007`, not `E001`-`E006`) - not a ported C++ resource ID, even for
-a message whose text did originally come from one (`Messages.I001` itself
-was moved here from a real ported `Text.IDS_LOG_BETA_MESSAGE`, and
-`Messages.E002`-`E007` from six real ported `Text.IDS_ERR_*` constants,
-on explicit user instruction each time, once the message needed its
-severity to actually drive dispatch). Send a `Messages.*` field via
+`E002`-`E007`, not `E001`-`E006`, and the nine `I`-prefixed fields added
+after those continue as `I008`-`I016`, not restarting at `I002`) - not a
+ported C++ resource ID, even for a message whose text did originally come
+from one (`Messages.I001` itself was moved here from a real ported `Text.
+IDS_LOG_BETA_MESSAGE`; `Messages.E002`-`E007` from six real ported `Text.
+IDS_ERR_*` constants used with `sendErrorMessage`; `Messages.I008`-`I016`
+from nine real ported `Text.IDS_*` constants used with
+`sendInfoMessage` - `Text.java` has no common prefix for these like
+`IDS_ERR_*`, so finding them meant checking every `sendInfoMessage` call
+site by hand, not grepping for a prefix - on explicit user instruction
+each time, once the message needed its severity to actually drive
+dispatch). Send a `Messages.*` field via
 `Application.sendMessage(Message, String...)`, which reads
 `message.getSeverity()` to pick the right log method itself, instead of the
 caller choosing `sendInfoMessage`/`sendErrorMessage`.
