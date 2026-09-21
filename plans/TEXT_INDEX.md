@@ -50,22 +50,20 @@ never requested to move).
 
 ## A) User-facing dialog titles/messages still outstanding
 
-Everything remaining here is a dynamically-built title (`"Add "`/`"Open "`
-+ a variable, which can't become one static field - the only kind of
-`setDialogTitle(...)` call still left, now that every static-literal one
-has been migrated too) plus one deliberately-unported C++-parity literal.
-The two `IllegalArgumentException`s this section used to list moved to
-group C below.
+Everything remaining here is a title built from `"Add "`/`"Open "` plus
+`fileTypeDisplayName` - a genuinely per-`FileType` runtime value (a 3-way
+switch in `getFileTypeDisplayName`, not a single literal), unlike the
+other five `"Add "`/`"Open "` + literal-suffix titles, which turned out to
+be exactly like `EquateDialog`'s already-migrated
+`editable ? "Edit Equates" : "Display Equates"` and have since been
+migrated too - plus one deliberately-unported C++-parity literal. The two
+`IllegalArgumentException`s this section used to list moved to group C
+below.
 
 ### Dis6502.java
 
-- `:542` `setDialogTitle` - `'Add '`/`'Open '` (+ suffix built elsewhere) - dynamic, out of scope
-- `:559` `JOptionPane.showMessageDialog` - title `'Add '`/`'Open '` + `fileTypeDisplayName` - dynamic, out of scope (message already migrated to `Messages.E040`)
-- `:587` `setDialogTitle` - `'Add '`/`'Open '` + `'Raw File'` - dynamic, out of scope
-- `:644` `setDialogTitle` - `'Add '`/`'Open '` + `'Disk Image Executable File'` - dynamic, out of scope
-- `:723` `JOptionPane.showMessageDialog` - title `'Add '`/`'Open '` + `'Disk Image Executable File'` - dynamic, out of scope (message already migrated, shares `Messages.E040`)
-- `:750` `setDialogTitle` - `'Add '`/`'Open '` + `'Disk Image Boot Sectors'` - dynamic, out of scope
-- `:815` `setDialogTitle` - `'Add '`/`'Open '` + `'Disk Image Sectors'` - dynamic, out of scope
+- `:539` `setDialogTitle` - `'Add '`/`'Open '` + `fileTypeDisplayName` (a per-`FileType` runtime value) - out of scope
+- `:558` `JOptionPane.showMessageDialog` - title `'Add '`/`'Open '` + `fileTypeDisplayName` - out of scope (message already migrated, shares `Messages.E040`/`E049`)
 
 ### ui/SegmentWriteBootDiskDialog.java
 
@@ -184,9 +182,9 @@ back to, none are ever shown in a dialog, and none should move to
 
 | Group | Current membership | Migrated | Still outstanding | Excluded (not relevant) |
 |---|---|---|---|---|
-| A) User-facing dialog titles/messages | 48 (of 50 originally found - 2 reclassified to group C) | 40 | 8 (7 dynamic titles built from a variable - can't be a single static field, 1 deliberately-unported literal matching an un-fixed C++ `// TODO`) | - |
+| A) User-facing dialog titles/messages | 48 (of 50 originally found - 2 reclassified to group C) | 45 | 3 (2 titles built from `fileTypeDisplayName`, a genuine per-`FileType` runtime value - can't be a single static field, 1 deliberately-unported literal matching an un-fixed C++ `// TODO`) | - |
 | B) Internal exception/invariant messages (`IOException` only) | 21 (of 62 originally found - 15 reclassified to group C, 22 to group D, 4 to group E) | 0 | 21 | - |
 | C) `IllegalArgumentException` usages | 17 (2 from group A, 15 from group B) | 0 | 0 | 17 (parameter-validation guards) |
 | D) `IllegalStateException` usages | 22 (from group B) | 0 | 0 | 22 (programming errors - violated invariants) |
 | E) `RuntimeException` usages | 4 (from group B) | 0 | 0 | 4 (programming errors - a caller's malformed input) |
-| **Total** | **112** | **40** | **29** | **43** |
+| **Total** | **112** | **45** | **24** | **43** |

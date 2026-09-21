@@ -113,6 +113,33 @@ public final class Texts extends NLS {
 	public static String ProfileDialog_LoadFileTitle;
 	/** {@link com.wudsn.tools.dis6502.ui.ProfileDialog#performSaveProfile}'s {@code JFileChooser} title. */
 	public static String ProfileDialog_SaveFileTitle;
+	/**
+	 * {@link Dis6502#performOpenRawFile}'s {@code JFileChooser} title for
+	 * {@code add == true}; the {@code add == false} case reuses {@link
+	 * com.wudsn.tools.dis6502.ui.RawFileDialog}'s own {@link
+	 * com.wudsn.tools.dis6502.Texts#RawFileDialog_Title} ("Open Raw File" -
+	 * identical text).
+	 */
+	public static String Dis6502_AddRawFileTitle;
+	/**
+	 * {@link Dis6502#performOpenDiskImageExecutableFile}'s {@code
+	 * JFileChooser}/error-dialog title for {@code add == true}; the {@code
+	 * add == false} case reuses {@link
+	 * com.wudsn.tools.dis6502.Texts#DiskImageExecutableFileDialog_Title}
+	 * ("Open Disk Image Executable File" - identical text).
+	 */
+	public static String Dis6502_AddDiskImageExecutableFileTitle;
+	/** {@link Dis6502#performOpenDiskImageBootSectors}'s {@code JFileChooser} title for {@code add == true}. */
+	public static String Dis6502_AddDiskImageBootSectorsTitle;
+	/** {@link Dis6502#performOpenDiskImageBootSectors}'s {@code JFileChooser} title for {@code add == false}. */
+	public static String Dis6502_OpenDiskImageBootSectorsTitle;
+	/**
+	 * {@link Dis6502#performOpenDiskImageSectors}'s {@code JFileChooser}
+	 * title for {@code add == true}; the {@code add == false} case reuses
+	 * {@link com.wudsn.tools.dis6502.Texts#DiskImageSectorsDialog_Title}
+	 * ("Open Disk Image Sectors" - identical text).
+	 */
+	public static String Dis6502_AddDiskImageSectorsTitle;
 
 	static {
 		initializeClass(Texts.class, null);

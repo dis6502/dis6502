@@ -581,7 +581,7 @@ public final class Dis6502 {
 		}
 
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle((add ? "Add " : "Open ") + "Raw File");
+		fileChooser.setDialogTitle(add ? Texts.Dis6502_AddRawFileTitle : Texts.RawFileDialog_Title);
 		if (currentFile != null) {
 			fileChooser.setCurrentDirectory(currentFile.getParentFile());
 		}
@@ -638,7 +638,7 @@ public final class Dis6502 {
 		}
 
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle((add ? "Add " : "Open ") + "Disk Image Executable File");
+		fileChooser.setDialogTitle(add ? Texts.Dis6502_AddDiskImageExecutableFileTitle : Texts.DiskImageExecutableFileDialog_Title);
 		if (currentFile != null) {
 			fileChooser.setCurrentDirectory(currentFile.getParentFile());
 		}
@@ -719,7 +719,8 @@ public final class Dis6502 {
 		if (!success) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
 					(add ? Messages.E040 : Messages.E049).format(dialog.getExecutableFileName()),
-					(add ? "Add " : "Open ") + "Disk Image Executable File", JOptionPane.ERROR_MESSAGE);
+					add ? Texts.Dis6502_AddDiskImageExecutableFileTitle : Texts.DiskImageExecutableFileDialog_Title,
+					JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
@@ -743,7 +744,7 @@ public final class Dis6502 {
 		}
 
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle((add ? "Add " : "Open ") + "Disk Image Boot Sectors");
+		fileChooser.setDialogTitle(add ? Texts.Dis6502_AddDiskImageBootSectorsTitle : Texts.Dis6502_OpenDiskImageBootSectorsTitle);
 		if (currentFile != null) {
 			fileChooser.setCurrentDirectory(currentFile.getParentFile());
 		}
@@ -808,7 +809,7 @@ public final class Dis6502 {
 		}
 
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle((add ? "Add " : "Open ") + "Disk Image Sectors");
+		fileChooser.setDialogTitle(add ? Texts.Dis6502_AddDiskImageSectorsTitle : Texts.DiskImageSectorsDialog_Title);
 		if (currentFile != null) {
 			fileChooser.setCurrentDirectory(currentFile.getParentFile());
 		}
