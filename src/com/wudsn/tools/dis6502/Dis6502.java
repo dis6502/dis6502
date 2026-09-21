@@ -453,7 +453,6 @@ public final class Dis6502 {
 			return;
 		}
 		workspace.init();
-		workspace.setComputerSystemTypeID("ATARI800");
 		currentFile = null;
 
 		if (!workspaceLogic.addFile(workspace, entry.getFileType(), entry.getFilePath())) {
@@ -553,7 +552,6 @@ public final class Dis6502 {
 
 		if (!add) {
 			workspace.init();
-			workspace.setComputerSystemTypeID("ATARI800");
 			currentFile = null;
 		}
 
@@ -610,7 +608,6 @@ public final class Dis6502 {
 
 		if (!add) {
 			workspace.init();
-			workspace.setComputerSystemTypeID("ATARI800");
 			currentFile = null;
 		}
 
@@ -710,7 +707,6 @@ public final class Dis6502 {
 
 		if (!add) {
 			workspace.init();
-			workspace.setComputerSystemTypeID("ATARI800");
 			currentFile = null;
 		}
 
@@ -784,7 +780,6 @@ public final class Dis6502 {
 
 		if (!add) {
 			workspace.init();
-			workspace.setComputerSystemTypeID("ATARI800");
 			currentFile = null;
 		}
 
@@ -842,7 +837,6 @@ public final class Dis6502 {
 
 		if (!add) {
 			workspace.init();
-			workspace.setComputerSystemTypeID("ATARI800");
 			currentFile = null;
 		}
 
