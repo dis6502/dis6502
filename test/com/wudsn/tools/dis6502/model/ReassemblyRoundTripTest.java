@@ -33,7 +33,9 @@ import com.wudsn.tools.dis6502.Application;
  * FAST} test mode used) - a deliberate scope reduction, not an oversight;
  * see the gap #5 proposal for why. The real Atari 800 system equates are
  * loaded the same way the application does it, so the listing references
- * genuine OS/hardware labels and must still reassemble byte-exactly.
+ * genuine OS/hardware labels and must still reassemble byte-exactly. A
+ * fifth, C64 unit (new, not ported) does the same for a system other than
+ * the Atari 800, with {@code C64.equ}'s labels.
  *
  * @author Peter Dell
  */
@@ -54,7 +56,30 @@ public final class ReassemblyRoundTripTest {
 		testUnit("unit004", FileType.WORKSPACE_FILE, "test-resources/disassembly/unit004/in/predux-220810.wrk",
 				"test-resources/disassembly/unit004/ref/predux-220810.xex");
 
+		// New (not ported): a C64 workspace, checked against the very .prg it was made from.
+		testUnit("c64", FileType.WORKSPACE_FILE, "test-resources/system/c64/HelloWorld.wrk",
+				"test-resources/system/c64/HelloWorld.prg");
+
 		Assert.log("ReassemblyRoundTripTest completed");
+	}
+
+	/**
+	 * MADS always writes an Atari binary ({@code $FFFF}, start address, end
+	 * address, data), while a C64 {@code .prg} is just the start address
+	 * followed by the data - converts the former into the latter, insisting
+	 * on a single block, so the two can be compared byte by byte.
+	 */
+	private static byte[] atariBinaryToPrg(String unitName, byte[] atariBinary) {
+		int start = (atariBinary[2] & 0xFF) | ((atariBinary[3] & 0xFF) << 8);
+		int end = (atariBinary[4] & 0xFF) | ((atariBinary[5] & 0xFF) << 8);
+		if ((atariBinary[0] & 0xFF) != 0xFF || (atariBinary[1] & 0xFF) != 0xFF || atariBinary.length != 6 + end - start + 1) {
+			Assert.fail(unitName + ": reassembled file is not a single-block Atari binary.");
+		}
+		byte[] prg = new byte[atariBinary.length - 4];
+		prg[0] = atariBinary[2];
+		prg[1] = atariBinary[3];
+		System.arraycopy(atariBinary, 6, prg, 2, atariBinary.length - 6);
+		return prg;
 	}
 
 	private static void testUnit(String unitName, FileType fileType, String inFilePath, String refFilePath)
@@ -106,6 +131,9 @@ public final class ReassemblyRoundTripTest {
 
 		byte[] actual = Files.readAllBytes(outputFile.toPath());
 		byte[] expected = Files.readAllBytes(new File(refFilePath).toPath());
+		if (refFilePath.endsWith(".prg")) {
+			actual = atariBinaryToPrg(unitName, actual);
+		}
 		if (!Arrays.equals(actual, expected)) {
 			Assert.fail(unitName + ": reassembled '" + outputFileName + "' (" + actual.length + " bytes) does not match reference '"
 					+ refFilePath + "' (" + expected.length + " bytes).");

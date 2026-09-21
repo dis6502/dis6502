@@ -1,0 +1,550 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Workspace ComputerSystemTypeID="C64">
+    <Profile AlignInstructions="true" CommentPrefix=";" DirectiveBYTE=".byte" DirectiveBYTENumberOfBytesPerLine="16" DirectiveBYTENumberOfCharactersPerString="40" DirectiveBYTEOnlyNumbersAllowed="false" DirectiveBYTESeparator="," DirectiveDS=".ds" DirectiveDSAllowed="true" DirectiveENDHead="" DirectiveENDNeedsFilename="false" DirectiveENDTail="" DirectiveEQU="equ" DirectiveForceAbsolute=".w" DirectiveHIGHHead="&gt;" DirectiveHIGHTail="" DirectiveINCLUDEAllEquatesInOneIncludeFile="true" DirectiveINCLUDEAllIncludesInMainFile="false" DirectiveINCLUDEAllowed="true" DirectiveINCLUDEHead="icl '" DirectiveINCLUDEMaximumNumberOfLinesPerFile="0" DirectiveINCLUDETail="'" DirectiveLOWHead="&lt;" DirectiveLOWTail="" DirectiveORG="org" DirectiveSBYTE=".sb" DirectiveSBYTEAllowed="true" DirectiveWORD=".word" DirectiveWORDAllowed="true" DirectiveWORDNumberOfWordsPerLine="1" HexNotationPrefix="$" OmitUnreferencedSystemLabels="true" OutputEncoding="ASCII" QuoteForASCIIStrings="'" ShowAInAccumulatorMode="false" ShowBRKAsByte0="true" ShowColonAfterLabel="false" ShowLowerCaseInstructions="true" ShowNonASCIIChararactersAsBytes="true" ShowOpcodeAsComment="false" ShowZPAbsoluteAsByte="false" UseHexNotation="true" UseIllegalOpcodes="false" UseLineNumbers="false"/>
+    <SystemEquates Count="534">
+        <Equate Comment="C64 SYSTEM EQUATES" EquateType="COMMENT"/>
+        <Equate Comment="------------------" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="Label names follow the Commodore KERNAL/BASIC source listings as published" EquateType="COMMENT"/>
+        <Equate Comment="in &quot;Mapping the Commodore 64&quot; (Sheldon Leemon) and the &quot;Commodore 64" EquateType="COMMENT"/>
+        <Equate Comment="Programmer's Reference Guide&quot;, except where noted." EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="Syntax:" EquateType="COMMENT"/>
+        <Equate Comment="Use '=' for addresses" EquateType="COMMENT"/>
+        <Equate Comment="and '&lt;' for read addresses (ex: POTX)" EquateType="COMMENT"/>
+        <Equate Comment="and '&gt;' for write addresses (ex: FRELO1)" EquateType="COMMENT"/>
+        <Equate Comment="and '#' for values" EquateType="COMMENT"/>
+        <Equate EquateType="EMPTY"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="6510 ON-CHIP I/O PORT" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate EquateType="LABEL" Label="D6510" LabelAccess="READ_WRITE" LabelValue="0x00"/>
+        <Equate EquateType="LABEL" Label="R6510" LabelAccess="READ_WRITE" LabelValue="0x01"/>
+        <Equate EquateType="EMPTY"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="BASIC ZERO PAGE" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate EquateType="LABEL" Label="ADRAY1" LabelAccess="READ_WRITE" LabelValue="0x03"/>
+        <Equate EquateType="LABEL" Label="ADRAY1+1" LabelAccess="READ_WRITE" LabelValue="0x04"/>
+        <Equate EquateType="LABEL" Label="ADRAY2" LabelAccess="READ_WRITE" LabelValue="0x05"/>
+        <Equate EquateType="LABEL" Label="ADRAY2+1" LabelAccess="READ_WRITE" LabelValue="0x06"/>
+        <Equate EquateType="LABEL" Label="CHARAC" LabelAccess="READ_WRITE" LabelValue="0x07"/>
+        <Equate EquateType="LABEL" Label="ENDCHR" LabelAccess="READ_WRITE" LabelValue="0x08"/>
+        <Equate EquateType="LABEL" Label="TRMPOS" LabelAccess="READ_WRITE" LabelValue="0x09"/>
+        <Equate EquateType="LABEL" Label="VERCK" LabelAccess="READ_WRITE" LabelValue="0x0A"/>
+        <Equate EquateType="LABEL" Label="COUNT" LabelAccess="READ_WRITE" LabelValue="0x0B"/>
+        <Equate EquateType="LABEL" Label="DIMFLG" LabelAccess="READ_WRITE" LabelValue="0x0C"/>
+        <Equate EquateType="LABEL" Label="VALTYP" LabelAccess="READ_WRITE" LabelValue="0x0D"/>
+        <Equate EquateType="LABEL" Label="INTFLG" LabelAccess="READ_WRITE" LabelValue="0x0E"/>
+        <Equate EquateType="LABEL" Label="GARBFL" LabelAccess="READ_WRITE" LabelValue="0x0F"/>
+        <Equate EquateType="LABEL" Label="SUBFLG" LabelAccess="READ_WRITE" LabelValue="0x10"/>
+        <Equate EquateType="LABEL" Label="INPFLG" LabelAccess="READ_WRITE" LabelValue="0x11"/>
+        <Equate EquateType="LABEL" Label="TANSGN" LabelAccess="READ_WRITE" LabelValue="0x12"/>
+        <Equate EquateType="LABEL" Label="CHANNL" LabelAccess="READ_WRITE" LabelValue="0x13"/>
+        <Equate EquateType="LABEL" Label="LINNUM" LabelAccess="READ_WRITE" LabelValue="0x14"/>
+        <Equate EquateType="LABEL" Label="LINNUM+1" LabelAccess="READ_WRITE" LabelValue="0x15"/>
+        <Equate EquateType="LABEL" Label="TEMPPT" LabelAccess="READ_WRITE" LabelValue="0x16"/>
+        <Equate EquateType="LABEL" Label="LASTPT" LabelAccess="READ_WRITE" LabelValue="0x17"/>
+        <Equate EquateType="LABEL" Label="LASTPT+1" LabelAccess="READ_WRITE" LabelValue="0x18"/>
+        <Equate EquateType="LABEL" Label="TEMPST" LabelAccess="READ_WRITE" LabelValue="0x19"/>
+        <Equate EquateType="LABEL" Label="INDEX" LabelAccess="READ_WRITE" LabelValue="0x22"/>
+        <Equate EquateType="LABEL" Label="INDEX+1" LabelAccess="READ_WRITE" LabelValue="0x23"/>
+        <Equate EquateType="LABEL" Label="INDEX+2" LabelAccess="READ_WRITE" LabelValue="0x24"/>
+        <Equate EquateType="LABEL" Label="INDEX+3" LabelAccess="READ_WRITE" LabelValue="0x25"/>
+        <Equate EquateType="LABEL" Label="RESHO" LabelAccess="READ_WRITE" LabelValue="0x26"/>
+        <Equate EquateType="LABEL" Label="RESHO+1" LabelAccess="READ_WRITE" LabelValue="0x27"/>
+        <Equate EquateType="LABEL" Label="RESHO+2" LabelAccess="READ_WRITE" LabelValue="0x28"/>
+        <Equate EquateType="LABEL" Label="RESHO+3" LabelAccess="READ_WRITE" LabelValue="0x29"/>
+        <Equate EquateType="LABEL" Label="RESHO+4" LabelAccess="READ_WRITE" LabelValue="0x2A"/>
+        <Equate EquateType="LABEL" Label="TXTTAB" LabelAccess="READ_WRITE" LabelValue="0x2B"/>
+        <Equate EquateType="LABEL" Label="TXTTAB+1" LabelAccess="READ_WRITE" LabelValue="0x2C"/>
+        <Equate EquateType="LABEL" Label="VARTAB" LabelAccess="READ_WRITE" LabelValue="0x2D"/>
+        <Equate EquateType="LABEL" Label="VARTAB+1" LabelAccess="READ_WRITE" LabelValue="0x2E"/>
+        <Equate EquateType="LABEL" Label="ARYTAB" LabelAccess="READ_WRITE" LabelValue="0x2F"/>
+        <Equate EquateType="LABEL" Label="ARYTAB+1" LabelAccess="READ_WRITE" LabelValue="0x30"/>
+        <Equate EquateType="LABEL" Label="STREND" LabelAccess="READ_WRITE" LabelValue="0x31"/>
+        <Equate EquateType="LABEL" Label="STREND+1" LabelAccess="READ_WRITE" LabelValue="0x32"/>
+        <Equate EquateType="LABEL" Label="FRETOP" LabelAccess="READ_WRITE" LabelValue="0x33"/>
+        <Equate EquateType="LABEL" Label="FRETOP+1" LabelAccess="READ_WRITE" LabelValue="0x34"/>
+        <Equate EquateType="LABEL" Label="FRESPC" LabelAccess="READ_WRITE" LabelValue="0x35"/>
+        <Equate EquateType="LABEL" Label="FRESPC+1" LabelAccess="READ_WRITE" LabelValue="0x36"/>
+        <Equate EquateType="LABEL" Label="MEMSIZ" LabelAccess="READ_WRITE" LabelValue="0x37"/>
+        <Equate EquateType="LABEL" Label="MEMSIZ+1" LabelAccess="READ_WRITE" LabelValue="0x38"/>
+        <Equate EquateType="LABEL" Label="CURLIN" LabelAccess="READ_WRITE" LabelValue="0x39"/>
+        <Equate EquateType="LABEL" Label="CURLIN+1" LabelAccess="READ_WRITE" LabelValue="0x3A"/>
+        <Equate EquateType="LABEL" Label="OLDLIN" LabelAccess="READ_WRITE" LabelValue="0x3B"/>
+        <Equate EquateType="LABEL" Label="OLDLIN+1" LabelAccess="READ_WRITE" LabelValue="0x3C"/>
+        <Equate EquateType="LABEL" Label="OLDTXT" LabelAccess="READ_WRITE" LabelValue="0x3D"/>
+        <Equate EquateType="LABEL" Label="OLDTXT+1" LabelAccess="READ_WRITE" LabelValue="0x3E"/>
+        <Equate EquateType="LABEL" Label="DATLIN" LabelAccess="READ_WRITE" LabelValue="0x3F"/>
+        <Equate EquateType="LABEL" Label="DATLIN+1" LabelAccess="READ_WRITE" LabelValue="0x40"/>
+        <Equate EquateType="LABEL" Label="DATPTR" LabelAccess="READ_WRITE" LabelValue="0x41"/>
+        <Equate EquateType="LABEL" Label="DATPTR+1" LabelAccess="READ_WRITE" LabelValue="0x42"/>
+        <Equate EquateType="LABEL" Label="INPPTR" LabelAccess="READ_WRITE" LabelValue="0x43"/>
+        <Equate EquateType="LABEL" Label="INPPTR+1" LabelAccess="READ_WRITE" LabelValue="0x44"/>
+        <Equate EquateType="LABEL" Label="VARNAM" LabelAccess="READ_WRITE" LabelValue="0x45"/>
+        <Equate EquateType="LABEL" Label="VARNAM+1" LabelAccess="READ_WRITE" LabelValue="0x46"/>
+        <Equate EquateType="LABEL" Label="VARPNT" LabelAccess="READ_WRITE" LabelValue="0x47"/>
+        <Equate EquateType="LABEL" Label="VARPNT+1" LabelAccess="READ_WRITE" LabelValue="0x48"/>
+        <Equate EquateType="LABEL" Label="FORPNT" LabelAccess="READ_WRITE" LabelValue="0x49"/>
+        <Equate EquateType="LABEL" Label="FORPNT+1" LabelAccess="READ_WRITE" LabelValue="0x4A"/>
+        <Equate EquateType="LABEL" Label="OPPTR" LabelAccess="READ_WRITE" LabelValue="0x4B"/>
+        <Equate EquateType="LABEL" Label="OPPTR+1" LabelAccess="READ_WRITE" LabelValue="0x4C"/>
+        <Equate EquateType="LABEL" Label="OPMASK" LabelAccess="READ_WRITE" LabelValue="0x4D"/>
+        <Equate EquateType="LABEL" Label="DEFPNT" LabelAccess="READ_WRITE" LabelValue="0x4E"/>
+        <Equate EquateType="LABEL" Label="DEFPNT+1" LabelAccess="READ_WRITE" LabelValue="0x4F"/>
+        <Equate EquateType="LABEL" Label="DSCPNT" LabelAccess="READ_WRITE" LabelValue="0x50"/>
+        <Equate EquateType="LABEL" Label="DSCPNT+1" LabelAccess="READ_WRITE" LabelValue="0x51"/>
+        <Equate EquateType="LABEL" Label="DSCPNT+2" LabelAccess="READ_WRITE" LabelValue="0x52"/>
+        <Equate EquateType="LABEL" Label="FOUR6" LabelAccess="READ_WRITE" LabelValue="0x53"/>
+        <Equate EquateType="LABEL" Label="JMPER" LabelAccess="READ_WRITE" LabelValue="0x54"/>
+        <Equate EquateType="LABEL" Label="JMPER+1" LabelAccess="READ_WRITE" LabelValue="0x55"/>
+        <Equate EquateType="LABEL" Label="JMPER+2" LabelAccess="READ_WRITE" LabelValue="0x56"/>
+        <Equate EquateType="LABEL" Label="FACEXP" LabelAccess="READ_WRITE" LabelValue="0x61"/>
+        <Equate EquateType="LABEL" Label="FACHO" LabelAccess="READ_WRITE" LabelValue="0x62"/>
+        <Equate EquateType="LABEL" Label="FACHO+1" LabelAccess="READ_WRITE" LabelValue="0x63"/>
+        <Equate EquateType="LABEL" Label="FACHO+2" LabelAccess="READ_WRITE" LabelValue="0x64"/>
+        <Equate EquateType="LABEL" Label="FACHO+3" LabelAccess="READ_WRITE" LabelValue="0x65"/>
+        <Equate EquateType="LABEL" Label="FACSGN" LabelAccess="READ_WRITE" LabelValue="0x66"/>
+        <Equate EquateType="LABEL" Label="SGNFLG" LabelAccess="READ_WRITE" LabelValue="0x67"/>
+        <Equate EquateType="LABEL" Label="BITS" LabelAccess="READ_WRITE" LabelValue="0x68"/>
+        <Equate EquateType="LABEL" Label="ARGEXP" LabelAccess="READ_WRITE" LabelValue="0x69"/>
+        <Equate EquateType="LABEL" Label="ARGHO" LabelAccess="READ_WRITE" LabelValue="0x6A"/>
+        <Equate EquateType="LABEL" Label="ARGHO+1" LabelAccess="READ_WRITE" LabelValue="0x6B"/>
+        <Equate EquateType="LABEL" Label="ARGHO+2" LabelAccess="READ_WRITE" LabelValue="0x6C"/>
+        <Equate EquateType="LABEL" Label="ARGHO+3" LabelAccess="READ_WRITE" LabelValue="0x6D"/>
+        <Equate EquateType="LABEL" Label="ARGSGN" LabelAccess="READ_WRITE" LabelValue="0x6E"/>
+        <Equate EquateType="LABEL" Label="ARISGN" LabelAccess="READ_WRITE" LabelValue="0x6F"/>
+        <Equate EquateType="LABEL" Label="FACOV" LabelAccess="READ_WRITE" LabelValue="0x70"/>
+        <Equate EquateType="LABEL" Label="FBUFPT" LabelAccess="READ_WRITE" LabelValue="0x71"/>
+        <Equate EquateType="LABEL" Label="FBUFPT+1" LabelAccess="READ_WRITE" LabelValue="0x72"/>
+        <Equate EquateType="LABEL" Label="CHRGET" LabelAccess="READ_WRITE" LabelValue="0x73"/>
+        <Equate EquateType="LABEL" Label="CHRGOT" LabelAccess="READ_WRITE" LabelValue="0x79"/>
+        <Equate EquateType="LABEL" Label="TXTPTR" LabelAccess="READ_WRITE" LabelValue="0x7A"/>
+        <Equate EquateType="LABEL" Label="TXTPTR+1" LabelAccess="READ_WRITE" LabelValue="0x7B"/>
+        <Equate EquateType="LABEL" Label="RNDX" LabelAccess="READ_WRITE" LabelValue="0x8B"/>
+        <Equate EquateType="LABEL" Label="RNDX+1" LabelAccess="READ_WRITE" LabelValue="0x8C"/>
+        <Equate EquateType="LABEL" Label="RNDX+2" LabelAccess="READ_WRITE" LabelValue="0x8D"/>
+        <Equate EquateType="LABEL" Label="RNDX+3" LabelAccess="READ_WRITE" LabelValue="0x8E"/>
+        <Equate EquateType="LABEL" Label="RNDX+4" LabelAccess="READ_WRITE" LabelValue="0x8F"/>
+        <Equate EquateType="EMPTY"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="KERNAL ZERO PAGE" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="VERCKK is the KERNAL's load/verify flag, called VERCK like the BASIC one at $0A in the original source." EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate EquateType="LABEL" Label="STATUS" LabelAccess="READ_WRITE" LabelValue="0x90"/>
+        <Equate EquateType="LABEL" Label="STKEY" LabelAccess="READ_WRITE" LabelValue="0x91"/>
+        <Equate EquateType="LABEL" Label="SVXT" LabelAccess="READ_WRITE" LabelValue="0x92"/>
+        <Equate EquateType="LABEL" Label="VERCKK" LabelAccess="READ_WRITE" LabelValue="0x93"/>
+        <Equate EquateType="LABEL" Label="C3PO" LabelAccess="READ_WRITE" LabelValue="0x94"/>
+        <Equate EquateType="LABEL" Label="BSOUR" LabelAccess="READ_WRITE" LabelValue="0x95"/>
+        <Equate EquateType="LABEL" Label="SYNO" LabelAccess="READ_WRITE" LabelValue="0x96"/>
+        <Equate EquateType="LABEL" Label="XSAV" LabelAccess="READ_WRITE" LabelValue="0x97"/>
+        <Equate EquateType="LABEL" Label="LDTND" LabelAccess="READ_WRITE" LabelValue="0x98"/>
+        <Equate EquateType="LABEL" Label="DFLTN" LabelAccess="READ_WRITE" LabelValue="0x99"/>
+        <Equate EquateType="LABEL" Label="DFLTO" LabelAccess="READ_WRITE" LabelValue="0x9A"/>
+        <Equate EquateType="LABEL" Label="PRTY" LabelAccess="READ_WRITE" LabelValue="0x9B"/>
+        <Equate EquateType="LABEL" Label="DPSW" LabelAccess="READ_WRITE" LabelValue="0x9C"/>
+        <Equate EquateType="LABEL" Label="MSGFLG" LabelAccess="READ_WRITE" LabelValue="0x9D"/>
+        <Equate EquateType="LABEL" Label="PTR1" LabelAccess="READ_WRITE" LabelValue="0x9E"/>
+        <Equate EquateType="LABEL" Label="PTR2" LabelAccess="READ_WRITE" LabelValue="0x9F"/>
+        <Equate EquateType="LABEL" Label="TIME" LabelAccess="READ_WRITE" LabelValue="0xA0"/>
+        <Equate EquateType="LABEL" Label="TIME+1" LabelAccess="READ_WRITE" LabelValue="0xA1"/>
+        <Equate EquateType="LABEL" Label="TIME+2" LabelAccess="READ_WRITE" LabelValue="0xA2"/>
+        <Equate EquateType="LABEL" Label="PCNTR" LabelAccess="READ_WRITE" LabelValue="0xA3"/>
+        <Equate EquateType="LABEL" Label="FIRT" LabelAccess="READ_WRITE" LabelValue="0xA4"/>
+        <Equate EquateType="LABEL" Label="CNTDN" LabelAccess="READ_WRITE" LabelValue="0xA5"/>
+        <Equate EquateType="LABEL" Label="BUFPNT" LabelAccess="READ_WRITE" LabelValue="0xA6"/>
+        <Equate EquateType="LABEL" Label="INBIT" LabelAccess="READ_WRITE" LabelValue="0xA7"/>
+        <Equate EquateType="LABEL" Label="BITCI" LabelAccess="READ_WRITE" LabelValue="0xA8"/>
+        <Equate EquateType="LABEL" Label="RINONE" LabelAccess="READ_WRITE" LabelValue="0xA9"/>
+        <Equate EquateType="LABEL" Label="RIDATA" LabelAccess="READ_WRITE" LabelValue="0xAA"/>
+        <Equate EquateType="LABEL" Label="RIPRTY" LabelAccess="READ_WRITE" LabelValue="0xAB"/>
+        <Equate EquateType="LABEL" Label="SAL" LabelAccess="READ_WRITE" LabelValue="0xAC"/>
+        <Equate EquateType="LABEL" Label="SAL+1" LabelAccess="READ_WRITE" LabelValue="0xAD"/>
+        <Equate EquateType="LABEL" Label="EAL" LabelAccess="READ_WRITE" LabelValue="0xAE"/>
+        <Equate EquateType="LABEL" Label="EAL+1" LabelAccess="READ_WRITE" LabelValue="0xAF"/>
+        <Equate EquateType="LABEL" Label="CMP0" LabelAccess="READ_WRITE" LabelValue="0xB0"/>
+        <Equate EquateType="LABEL" Label="CMP0+1" LabelAccess="READ_WRITE" LabelValue="0xB1"/>
+        <Equate EquateType="LABEL" Label="TAPE1" LabelAccess="READ_WRITE" LabelValue="0xB2"/>
+        <Equate EquateType="LABEL" Label="TAPE1+1" LabelAccess="READ_WRITE" LabelValue="0xB3"/>
+        <Equate EquateType="LABEL" Label="BITTS" LabelAccess="READ_WRITE" LabelValue="0xB4"/>
+        <Equate EquateType="LABEL" Label="NXTBIT" LabelAccess="READ_WRITE" LabelValue="0xB5"/>
+        <Equate EquateType="LABEL" Label="RODATA" LabelAccess="READ_WRITE" LabelValue="0xB6"/>
+        <Equate EquateType="LABEL" Label="FNLEN" LabelAccess="READ_WRITE" LabelValue="0xB7"/>
+        <Equate EquateType="LABEL" Label="LA" LabelAccess="READ_WRITE" LabelValue="0xB8"/>
+        <Equate EquateType="LABEL" Label="SA" LabelAccess="READ_WRITE" LabelValue="0xB9"/>
+        <Equate EquateType="LABEL" Label="FA" LabelAccess="READ_WRITE" LabelValue="0xBA"/>
+        <Equate EquateType="LABEL" Label="FNADR" LabelAccess="READ_WRITE" LabelValue="0xBB"/>
+        <Equate EquateType="LABEL" Label="FNADR+1" LabelAccess="READ_WRITE" LabelValue="0xBC"/>
+        <Equate EquateType="LABEL" Label="ROPRTY" LabelAccess="READ_WRITE" LabelValue="0xBD"/>
+        <Equate EquateType="LABEL" Label="FSBLK" LabelAccess="READ_WRITE" LabelValue="0xBE"/>
+        <Equate EquateType="LABEL" Label="MYCH" LabelAccess="READ_WRITE" LabelValue="0xBF"/>
+        <Equate EquateType="LABEL" Label="CAS1" LabelAccess="READ_WRITE" LabelValue="0xC0"/>
+        <Equate EquateType="LABEL" Label="STAL" LabelAccess="READ_WRITE" LabelValue="0xC1"/>
+        <Equate EquateType="LABEL" Label="STAL+1" LabelAccess="READ_WRITE" LabelValue="0xC2"/>
+        <Equate EquateType="LABEL" Label="MEMUSS" LabelAccess="READ_WRITE" LabelValue="0xC3"/>
+        <Equate EquateType="LABEL" Label="MEMUSS+1" LabelAccess="READ_WRITE" LabelValue="0xC4"/>
+        <Equate EquateType="LABEL" Label="LSTX" LabelAccess="READ_WRITE" LabelValue="0xC5"/>
+        <Equate EquateType="LABEL" Label="NDX" LabelAccess="READ_WRITE" LabelValue="0xC6"/>
+        <Equate EquateType="LABEL" Label="RVS" LabelAccess="READ_WRITE" LabelValue="0xC7"/>
+        <Equate EquateType="LABEL" Label="INDX" LabelAccess="READ_WRITE" LabelValue="0xC8"/>
+        <Equate EquateType="LABEL" Label="LXSP" LabelAccess="READ_WRITE" LabelValue="0xC9"/>
+        <Equate EquateType="LABEL" Label="LXSP+1" LabelAccess="READ_WRITE" LabelValue="0xCA"/>
+        <Equate EquateType="LABEL" Label="SFDX" LabelAccess="READ_WRITE" LabelValue="0xCB"/>
+        <Equate EquateType="LABEL" Label="BLNSW" LabelAccess="READ_WRITE" LabelValue="0xCC"/>
+        <Equate EquateType="LABEL" Label="BLNCT" LabelAccess="READ_WRITE" LabelValue="0xCD"/>
+        <Equate EquateType="LABEL" Label="GDBLN" LabelAccess="READ_WRITE" LabelValue="0xCE"/>
+        <Equate EquateType="LABEL" Label="BLNON" LabelAccess="READ_WRITE" LabelValue="0xCF"/>
+        <Equate EquateType="LABEL" Label="CRSW" LabelAccess="READ_WRITE" LabelValue="0xD0"/>
+        <Equate EquateType="LABEL" Label="PNT" LabelAccess="READ_WRITE" LabelValue="0xD1"/>
+        <Equate EquateType="LABEL" Label="PNT+1" LabelAccess="READ_WRITE" LabelValue="0xD2"/>
+        <Equate EquateType="LABEL" Label="PNTR" LabelAccess="READ_WRITE" LabelValue="0xD3"/>
+        <Equate EquateType="LABEL" Label="QTSW" LabelAccess="READ_WRITE" LabelValue="0xD4"/>
+        <Equate EquateType="LABEL" Label="LNMX" LabelAccess="READ_WRITE" LabelValue="0xD5"/>
+        <Equate EquateType="LABEL" Label="TBLX" LabelAccess="READ_WRITE" LabelValue="0xD6"/>
+        <Equate EquateType="LABEL" Label="INSRT" LabelAccess="READ_WRITE" LabelValue="0xD8"/>
+        <Equate EquateType="LABEL" Label="LDTB1" LabelAccess="READ_WRITE" LabelValue="0xD9"/>
+        <Equate EquateType="LABEL" Label="USER" LabelAccess="READ_WRITE" LabelValue="0xF3"/>
+        <Equate EquateType="LABEL" Label="USER+1" LabelAccess="READ_WRITE" LabelValue="0xF4"/>
+        <Equate EquateType="LABEL" Label="KEYTAB" LabelAccess="READ_WRITE" LabelValue="0xF5"/>
+        <Equate EquateType="LABEL" Label="KEYTAB+1" LabelAccess="READ_WRITE" LabelValue="0xF6"/>
+        <Equate EquateType="LABEL" Label="RIBUF" LabelAccess="READ_WRITE" LabelValue="0xF7"/>
+        <Equate EquateType="LABEL" Label="RIBUF+1" LabelAccess="READ_WRITE" LabelValue="0xF8"/>
+        <Equate EquateType="LABEL" Label="ROBUF" LabelAccess="READ_WRITE" LabelValue="0xF9"/>
+        <Equate EquateType="LABEL" Label="ROBUF+1" LabelAccess="READ_WRITE" LabelValue="0xFA"/>
+        <Equate EquateType="LABEL" Label="FREKZP" LabelAccess="READ_WRITE" LabelValue="0xFB"/>
+        <Equate EquateType="LABEL" Label="FREKZP+1" LabelAccess="READ_WRITE" LabelValue="0xFC"/>
+        <Equate EquateType="LABEL" Label="FREKZP+2" LabelAccess="READ_WRITE" LabelValue="0xFD"/>
+        <Equate EquateType="LABEL" Label="FREKZP+3" LabelAccess="READ_WRITE" LabelValue="0xFE"/>
+        <Equate EquateType="LABEL" Label="BASZPT" LabelAccess="READ_WRITE" LabelValue="0xFF"/>
+        <Equate EquateType="EMPTY"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="PAGE 2: BASIC INPUT BUFFER, KERNAL TABLES AND VARIABLES" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="MEMSIZK is the KERNAL's top of memory pointer, called MEMSIZ like the BASIC one at $37 in the original source." EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate EquateType="LABEL" Label="BUF" LabelAccess="READ_WRITE" LabelValue="0x0200"/>
+        <Equate EquateType="LABEL" Label="LAT" LabelAccess="READ_WRITE" LabelValue="0x0259"/>
+        <Equate EquateType="LABEL" Label="FAT" LabelAccess="READ_WRITE" LabelValue="0x0263"/>
+        <Equate EquateType="LABEL" Label="SAT" LabelAccess="READ_WRITE" LabelValue="0x026D"/>
+        <Equate EquateType="LABEL" Label="KEYD" LabelAccess="READ_WRITE" LabelValue="0x0277"/>
+        <Equate EquateType="LABEL" Label="MEMSTR" LabelAccess="READ_WRITE" LabelValue="0x0281"/>
+        <Equate EquateType="LABEL" Label="MEMSTR+1" LabelAccess="READ_WRITE" LabelValue="0x0282"/>
+        <Equate EquateType="LABEL" Label="MEMSIZK" LabelAccess="READ_WRITE" LabelValue="0x0283"/>
+        <Equate EquateType="LABEL" Label="MEMSIZK+1" LabelAccess="READ_WRITE" LabelValue="0x0284"/>
+        <Equate EquateType="LABEL" Label="TIMOUT" LabelAccess="READ_WRITE" LabelValue="0x0285"/>
+        <Equate EquateType="LABEL" Label="COLOR" LabelAccess="READ_WRITE" LabelValue="0x0286"/>
+        <Equate EquateType="LABEL" Label="GDCOL" LabelAccess="READ_WRITE" LabelValue="0x0287"/>
+        <Equate EquateType="LABEL" Label="HIBASE" LabelAccess="READ_WRITE" LabelValue="0x0288"/>
+        <Equate EquateType="LABEL" Label="XMAX" LabelAccess="READ_WRITE" LabelValue="0x0289"/>
+        <Equate EquateType="LABEL" Label="RPTFLG" LabelAccess="READ_WRITE" LabelValue="0x028A"/>
+        <Equate EquateType="LABEL" Label="KOUNT" LabelAccess="READ_WRITE" LabelValue="0x028B"/>
+        <Equate EquateType="LABEL" Label="DELAY" LabelAccess="READ_WRITE" LabelValue="0x028C"/>
+        <Equate EquateType="LABEL" Label="SHFLAG" LabelAccess="READ_WRITE" LabelValue="0x028D"/>
+        <Equate EquateType="LABEL" Label="LSTSHF" LabelAccess="READ_WRITE" LabelValue="0x028E"/>
+        <Equate EquateType="LABEL" Label="KEYLOG" LabelAccess="READ_WRITE" LabelValue="0x028F"/>
+        <Equate EquateType="LABEL" Label="KEYLOG+1" LabelAccess="READ_WRITE" LabelValue="0x0290"/>
+        <Equate EquateType="LABEL" Label="MODE" LabelAccess="READ_WRITE" LabelValue="0x0291"/>
+        <Equate EquateType="LABEL" Label="AUTODN" LabelAccess="READ_WRITE" LabelValue="0x0292"/>
+        <Equate EquateType="LABEL" Label="M51CTR" LabelAccess="READ_WRITE" LabelValue="0x0293"/>
+        <Equate EquateType="LABEL" Label="M51CDR" LabelAccess="READ_WRITE" LabelValue="0x0294"/>
+        <Equate EquateType="LABEL" Label="M51AJB" LabelAccess="READ_WRITE" LabelValue="0x0295"/>
+        <Equate EquateType="LABEL" Label="M51AJB+1" LabelAccess="READ_WRITE" LabelValue="0x0296"/>
+        <Equate EquateType="LABEL" Label="RSSTAT" LabelAccess="READ_WRITE" LabelValue="0x0297"/>
+        <Equate EquateType="LABEL" Label="BITNUM" LabelAccess="READ_WRITE" LabelValue="0x0298"/>
+        <Equate EquateType="LABEL" Label="BAUDOF" LabelAccess="READ_WRITE" LabelValue="0x0299"/>
+        <Equate EquateType="LABEL" Label="BAUDOF+1" LabelAccess="READ_WRITE" LabelValue="0x029A"/>
+        <Equate EquateType="LABEL" Label="RIDBE" LabelAccess="READ_WRITE" LabelValue="0x029B"/>
+        <Equate EquateType="LABEL" Label="RIDBS" LabelAccess="READ_WRITE" LabelValue="0x029C"/>
+        <Equate EquateType="LABEL" Label="RODBS" LabelAccess="READ_WRITE" LabelValue="0x029D"/>
+        <Equate EquateType="LABEL" Label="RODBE" LabelAccess="READ_WRITE" LabelValue="0x029E"/>
+        <Equate EquateType="LABEL" Label="IRQTMP" LabelAccess="READ_WRITE" LabelValue="0x029F"/>
+        <Equate EquateType="LABEL" Label="IRQTMP+1" LabelAccess="READ_WRITE" LabelValue="0x02A0"/>
+        <Equate EquateType="LABEL" Label="ENABL" LabelAccess="READ_WRITE" LabelValue="0x02A1"/>
+        <Equate EquateType="LABEL" Label="TODSNS" LabelAccess="READ_WRITE" LabelValue="0x02A2"/>
+        <Equate EquateType="LABEL" Label="TRDTMP" LabelAccess="READ_WRITE" LabelValue="0x02A3"/>
+        <Equate EquateType="LABEL" Label="TD1IRQ" LabelAccess="READ_WRITE" LabelValue="0x02A4"/>
+        <Equate EquateType="LABEL" Label="TLNIDX" LabelAccess="READ_WRITE" LabelValue="0x02A5"/>
+        <Equate EquateType="LABEL" Label="TVSFLG" LabelAccess="READ_WRITE" LabelValue="0x02A6"/>
+        <Equate EquateType="EMPTY"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="PAGE 3: BASIC AND KERNAL INDIRECT VECTORS" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate EquateType="LABEL" Label="IERROR" LabelAccess="READ_WRITE" LabelValue="0x0300"/>
+        <Equate EquateType="LABEL" Label="IERROR+1" LabelAccess="READ_WRITE" LabelValue="0x0301"/>
+        <Equate EquateType="LABEL" Label="IMAIN" LabelAccess="READ_WRITE" LabelValue="0x0302"/>
+        <Equate EquateType="LABEL" Label="IMAIN+1" LabelAccess="READ_WRITE" LabelValue="0x0303"/>
+        <Equate EquateType="LABEL" Label="ICRNCH" LabelAccess="READ_WRITE" LabelValue="0x0304"/>
+        <Equate EquateType="LABEL" Label="ICRNCH+1" LabelAccess="READ_WRITE" LabelValue="0x0305"/>
+        <Equate EquateType="LABEL" Label="IQPLOP" LabelAccess="READ_WRITE" LabelValue="0x0306"/>
+        <Equate EquateType="LABEL" Label="IQPLOP+1" LabelAccess="READ_WRITE" LabelValue="0x0307"/>
+        <Equate EquateType="LABEL" Label="IGONE" LabelAccess="READ_WRITE" LabelValue="0x0308"/>
+        <Equate EquateType="LABEL" Label="IGONE+1" LabelAccess="READ_WRITE" LabelValue="0x0309"/>
+        <Equate EquateType="LABEL" Label="IEVAL" LabelAccess="READ_WRITE" LabelValue="0x030A"/>
+        <Equate EquateType="LABEL" Label="IEVAL+1" LabelAccess="READ_WRITE" LabelValue="0x030B"/>
+        <Equate EquateType="LABEL" Label="SAREG" LabelAccess="READ_WRITE" LabelValue="0x030C"/>
+        <Equate EquateType="LABEL" Label="SXREG" LabelAccess="READ_WRITE" LabelValue="0x030D"/>
+        <Equate EquateType="LABEL" Label="SYREG" LabelAccess="READ_WRITE" LabelValue="0x030E"/>
+        <Equate EquateType="LABEL" Label="SPREG" LabelAccess="READ_WRITE" LabelValue="0x030F"/>
+        <Equate EquateType="LABEL" Label="USRPOK" LabelAccess="READ_WRITE" LabelValue="0x0310"/>
+        <Equate EquateType="LABEL" Label="USRADD" LabelAccess="READ_WRITE" LabelValue="0x0311"/>
+        <Equate EquateType="LABEL" Label="USRADD+1" LabelAccess="READ_WRITE" LabelValue="0x0312"/>
+        <Equate EquateType="LABEL" Label="CINV" LabelAccess="READ_WRITE" LabelValue="0x0314"/>
+        <Equate EquateType="LABEL" Label="CINV+1" LabelAccess="READ_WRITE" LabelValue="0x0315"/>
+        <Equate EquateType="LABEL" Label="CBINV" LabelAccess="READ_WRITE" LabelValue="0x0316"/>
+        <Equate EquateType="LABEL" Label="CBINV+1" LabelAccess="READ_WRITE" LabelValue="0x0317"/>
+        <Equate EquateType="LABEL" Label="NMINV" LabelAccess="READ_WRITE" LabelValue="0x0318"/>
+        <Equate EquateType="LABEL" Label="NMINV+1" LabelAccess="READ_WRITE" LabelValue="0x0319"/>
+        <Equate EquateType="LABEL" Label="IOPEN" LabelAccess="READ_WRITE" LabelValue="0x031A"/>
+        <Equate EquateType="LABEL" Label="IOPEN+1" LabelAccess="READ_WRITE" LabelValue="0x031B"/>
+        <Equate EquateType="LABEL" Label="ICLOSE" LabelAccess="READ_WRITE" LabelValue="0x031C"/>
+        <Equate EquateType="LABEL" Label="ICLOSE+1" LabelAccess="READ_WRITE" LabelValue="0x031D"/>
+        <Equate EquateType="LABEL" Label="ICHKIN" LabelAccess="READ_WRITE" LabelValue="0x031E"/>
+        <Equate EquateType="LABEL" Label="ICHKIN+1" LabelAccess="READ_WRITE" LabelValue="0x031F"/>
+        <Equate EquateType="LABEL" Label="ICKOUT" LabelAccess="READ_WRITE" LabelValue="0x0320"/>
+        <Equate EquateType="LABEL" Label="ICKOUT+1" LabelAccess="READ_WRITE" LabelValue="0x0321"/>
+        <Equate EquateType="LABEL" Label="ICLRCH" LabelAccess="READ_WRITE" LabelValue="0x0322"/>
+        <Equate EquateType="LABEL" Label="ICLRCH+1" LabelAccess="READ_WRITE" LabelValue="0x0323"/>
+        <Equate EquateType="LABEL" Label="IBASIN" LabelAccess="READ_WRITE" LabelValue="0x0324"/>
+        <Equate EquateType="LABEL" Label="IBASIN+1" LabelAccess="READ_WRITE" LabelValue="0x0325"/>
+        <Equate EquateType="LABEL" Label="IBSOUT" LabelAccess="READ_WRITE" LabelValue="0x0326"/>
+        <Equate EquateType="LABEL" Label="IBSOUT+1" LabelAccess="READ_WRITE" LabelValue="0x0327"/>
+        <Equate EquateType="LABEL" Label="ISTOP" LabelAccess="READ_WRITE" LabelValue="0x0328"/>
+        <Equate EquateType="LABEL" Label="ISTOP+1" LabelAccess="READ_WRITE" LabelValue="0x0329"/>
+        <Equate EquateType="LABEL" Label="IGETIN" LabelAccess="READ_WRITE" LabelValue="0x032A"/>
+        <Equate EquateType="LABEL" Label="IGETIN+1" LabelAccess="READ_WRITE" LabelValue="0x032B"/>
+        <Equate EquateType="LABEL" Label="ICLALL" LabelAccess="READ_WRITE" LabelValue="0x032C"/>
+        <Equate EquateType="LABEL" Label="ICLALL+1" LabelAccess="READ_WRITE" LabelValue="0x032D"/>
+        <Equate EquateType="LABEL" Label="USRCMD" LabelAccess="READ_WRITE" LabelValue="0x032E"/>
+        <Equate EquateType="LABEL" Label="USRCMD+1" LabelAccess="READ_WRITE" LabelValue="0x032F"/>
+        <Equate EquateType="LABEL" Label="ILOAD" LabelAccess="READ_WRITE" LabelValue="0x0330"/>
+        <Equate EquateType="LABEL" Label="ILOAD+1" LabelAccess="READ_WRITE" LabelValue="0x0331"/>
+        <Equate EquateType="LABEL" Label="ISAVE" LabelAccess="READ_WRITE" LabelValue="0x0332"/>
+        <Equate EquateType="LABEL" Label="ISAVE+1" LabelAccess="READ_WRITE" LabelValue="0x0333"/>
+        <Equate EquateType="LABEL" Label="TBUFFR" LabelAccess="READ_WRITE" LabelValue="0x033C"/>
+        <Equate EquateType="EMPTY"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="DEFAULT SCREEN MEMORY" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate EquateType="LABEL" Label="VICSCN" LabelAccess="READ_WRITE" LabelValue="0x0400"/>
+        <Equate EquateType="EMPTY"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="VIC-II VIDEO CHIP" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate EquateType="LABEL" Label="SP0X" LabelAccess="READ_WRITE" LabelValue="0xD000"/>
+        <Equate EquateType="LABEL" Label="SP0Y" LabelAccess="READ_WRITE" LabelValue="0xD001"/>
+        <Equate EquateType="LABEL" Label="SP1X" LabelAccess="READ_WRITE" LabelValue="0xD002"/>
+        <Equate EquateType="LABEL" Label="SP1Y" LabelAccess="READ_WRITE" LabelValue="0xD003"/>
+        <Equate EquateType="LABEL" Label="SP2X" LabelAccess="READ_WRITE" LabelValue="0xD004"/>
+        <Equate EquateType="LABEL" Label="SP2Y" LabelAccess="READ_WRITE" LabelValue="0xD005"/>
+        <Equate EquateType="LABEL" Label="SP3X" LabelAccess="READ_WRITE" LabelValue="0xD006"/>
+        <Equate EquateType="LABEL" Label="SP3Y" LabelAccess="READ_WRITE" LabelValue="0xD007"/>
+        <Equate EquateType="LABEL" Label="SP4X" LabelAccess="READ_WRITE" LabelValue="0xD008"/>
+        <Equate EquateType="LABEL" Label="SP4Y" LabelAccess="READ_WRITE" LabelValue="0xD009"/>
+        <Equate EquateType="LABEL" Label="SP5X" LabelAccess="READ_WRITE" LabelValue="0xD00A"/>
+        <Equate EquateType="LABEL" Label="SP5Y" LabelAccess="READ_WRITE" LabelValue="0xD00B"/>
+        <Equate EquateType="LABEL" Label="SP6X" LabelAccess="READ_WRITE" LabelValue="0xD00C"/>
+        <Equate EquateType="LABEL" Label="SP6Y" LabelAccess="READ_WRITE" LabelValue="0xD00D"/>
+        <Equate EquateType="LABEL" Label="SP7X" LabelAccess="READ_WRITE" LabelValue="0xD00E"/>
+        <Equate EquateType="LABEL" Label="SP7Y" LabelAccess="READ_WRITE" LabelValue="0xD00F"/>
+        <Equate EquateType="LABEL" Label="MSIGX" LabelAccess="READ_WRITE" LabelValue="0xD010"/>
+        <Equate EquateType="LABEL" Label="SCROLY" LabelAccess="READ_WRITE" LabelValue="0xD011"/>
+        <Equate EquateType="LABEL" Label="RASTER" LabelAccess="READ_WRITE" LabelValue="0xD012"/>
+        <Equate EquateType="LABEL" Label="LPENX" LabelAccess="READ" LabelValue="0xD013"/>
+        <Equate EquateType="LABEL" Label="LPENY" LabelAccess="READ" LabelValue="0xD014"/>
+        <Equate EquateType="LABEL" Label="SPENA" LabelAccess="READ_WRITE" LabelValue="0xD015"/>
+        <Equate EquateType="LABEL" Label="SCROLX" LabelAccess="READ_WRITE" LabelValue="0xD016"/>
+        <Equate EquateType="LABEL" Label="YXPAND" LabelAccess="READ_WRITE" LabelValue="0xD017"/>
+        <Equate EquateType="LABEL" Label="VMCSB" LabelAccess="READ_WRITE" LabelValue="0xD018"/>
+        <Equate EquateType="LABEL" Label="VICIRQ" LabelAccess="READ_WRITE" LabelValue="0xD019"/>
+        <Equate EquateType="LABEL" Label="IRQMSK" LabelAccess="READ_WRITE" LabelValue="0xD01A"/>
+        <Equate EquateType="LABEL" Label="SPBGPR" LabelAccess="READ_WRITE" LabelValue="0xD01B"/>
+        <Equate EquateType="LABEL" Label="SPMC" LabelAccess="READ_WRITE" LabelValue="0xD01C"/>
+        <Equate EquateType="LABEL" Label="XXPAND" LabelAccess="READ_WRITE" LabelValue="0xD01D"/>
+        <Equate EquateType="LABEL" Label="SPSPCL" LabelAccess="READ_WRITE" LabelValue="0xD01E"/>
+        <Equate EquateType="LABEL" Label="SPBGCL" LabelAccess="READ_WRITE" LabelValue="0xD01F"/>
+        <Equate EquateType="LABEL" Label="EXTCOL" LabelAccess="READ_WRITE" LabelValue="0xD020"/>
+        <Equate EquateType="LABEL" Label="BGCOL0" LabelAccess="READ_WRITE" LabelValue="0xD021"/>
+        <Equate EquateType="LABEL" Label="BGCOL1" LabelAccess="READ_WRITE" LabelValue="0xD022"/>
+        <Equate EquateType="LABEL" Label="BGCOL2" LabelAccess="READ_WRITE" LabelValue="0xD023"/>
+        <Equate EquateType="LABEL" Label="BGCOL3" LabelAccess="READ_WRITE" LabelValue="0xD024"/>
+        <Equate EquateType="LABEL" Label="SPMC0" LabelAccess="READ_WRITE" LabelValue="0xD025"/>
+        <Equate EquateType="LABEL" Label="SPMC1" LabelAccess="READ_WRITE" LabelValue="0xD026"/>
+        <Equate EquateType="LABEL" Label="SP0COL" LabelAccess="READ_WRITE" LabelValue="0xD027"/>
+        <Equate EquateType="LABEL" Label="SP1COL" LabelAccess="READ_WRITE" LabelValue="0xD028"/>
+        <Equate EquateType="LABEL" Label="SP2COL" LabelAccess="READ_WRITE" LabelValue="0xD029"/>
+        <Equate EquateType="LABEL" Label="SP3COL" LabelAccess="READ_WRITE" LabelValue="0xD02A"/>
+        <Equate EquateType="LABEL" Label="SP4COL" LabelAccess="READ_WRITE" LabelValue="0xD02B"/>
+        <Equate EquateType="LABEL" Label="SP5COL" LabelAccess="READ_WRITE" LabelValue="0xD02C"/>
+        <Equate EquateType="LABEL" Label="SP6COL" LabelAccess="READ_WRITE" LabelValue="0xD02D"/>
+        <Equate EquateType="LABEL" Label="SP7COL" LabelAccess="READ_WRITE" LabelValue="0xD02E"/>
+        <Equate EquateType="EMPTY"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="SID SOUND CHIP" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate EquateType="LABEL" Label="FRELO1" LabelAccess="WRITE" LabelValue="0xD400"/>
+        <Equate EquateType="LABEL" Label="FREHI1" LabelAccess="WRITE" LabelValue="0xD401"/>
+        <Equate EquateType="LABEL" Label="PWLO1" LabelAccess="WRITE" LabelValue="0xD402"/>
+        <Equate EquateType="LABEL" Label="PWHI1" LabelAccess="WRITE" LabelValue="0xD403"/>
+        <Equate EquateType="LABEL" Label="VCREG1" LabelAccess="WRITE" LabelValue="0xD404"/>
+        <Equate EquateType="LABEL" Label="ATDCY1" LabelAccess="WRITE" LabelValue="0xD405"/>
+        <Equate EquateType="LABEL" Label="SUREL1" LabelAccess="WRITE" LabelValue="0xD406"/>
+        <Equate EquateType="LABEL" Label="FRELO2" LabelAccess="WRITE" LabelValue="0xD407"/>
+        <Equate EquateType="LABEL" Label="FREHI2" LabelAccess="WRITE" LabelValue="0xD408"/>
+        <Equate EquateType="LABEL" Label="PWLO2" LabelAccess="WRITE" LabelValue="0xD409"/>
+        <Equate EquateType="LABEL" Label="PWHI2" LabelAccess="WRITE" LabelValue="0xD40A"/>
+        <Equate EquateType="LABEL" Label="VCREG2" LabelAccess="WRITE" LabelValue="0xD40B"/>
+        <Equate EquateType="LABEL" Label="ATDCY2" LabelAccess="WRITE" LabelValue="0xD40C"/>
+        <Equate EquateType="LABEL" Label="SUREL2" LabelAccess="WRITE" LabelValue="0xD40D"/>
+        <Equate EquateType="LABEL" Label="FRELO3" LabelAccess="WRITE" LabelValue="0xD40E"/>
+        <Equate EquateType="LABEL" Label="FREHI3" LabelAccess="WRITE" LabelValue="0xD40F"/>
+        <Equate EquateType="LABEL" Label="PWLO3" LabelAccess="WRITE" LabelValue="0xD410"/>
+        <Equate EquateType="LABEL" Label="PWHI3" LabelAccess="WRITE" LabelValue="0xD411"/>
+        <Equate EquateType="LABEL" Label="VCREG3" LabelAccess="WRITE" LabelValue="0xD412"/>
+        <Equate EquateType="LABEL" Label="ATDCY3" LabelAccess="WRITE" LabelValue="0xD413"/>
+        <Equate EquateType="LABEL" Label="SUREL3" LabelAccess="WRITE" LabelValue="0xD414"/>
+        <Equate EquateType="LABEL" Label="CUTLO" LabelAccess="WRITE" LabelValue="0xD415"/>
+        <Equate EquateType="LABEL" Label="CUTHI" LabelAccess="WRITE" LabelValue="0xD416"/>
+        <Equate EquateType="LABEL" Label="RESON" LabelAccess="WRITE" LabelValue="0xD417"/>
+        <Equate EquateType="LABEL" Label="SIGVOL" LabelAccess="WRITE" LabelValue="0xD418"/>
+        <Equate EquateType="LABEL" Label="POTX" LabelAccess="READ" LabelValue="0xD419"/>
+        <Equate EquateType="LABEL" Label="POTY" LabelAccess="READ" LabelValue="0xD41A"/>
+        <Equate EquateType="LABEL" Label="RANDOM" LabelAccess="READ" LabelValue="0xD41B"/>
+        <Equate EquateType="LABEL" Label="ENV3" LabelAccess="READ" LabelValue="0xD41C"/>
+        <Equate EquateType="EMPTY"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="COLOR RAM" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate EquateType="LABEL" Label="COLRAM" LabelAccess="READ_WRITE" LabelValue="0xD800"/>
+        <Equate EquateType="EMPTY"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="CIA #1: KEYBOARD, JOYSTICKS, IRQ TIMERS" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate EquateType="LABEL" Label="CIAPRA" LabelAccess="READ_WRITE" LabelValue="0xDC00"/>
+        <Equate EquateType="LABEL" Label="CIAPRB" LabelAccess="READ_WRITE" LabelValue="0xDC01"/>
+        <Equate EquateType="LABEL" Label="CIDDRA" LabelAccess="READ_WRITE" LabelValue="0xDC02"/>
+        <Equate EquateType="LABEL" Label="CIDDRB" LabelAccess="READ_WRITE" LabelValue="0xDC03"/>
+        <Equate EquateType="LABEL" Label="TIMALO" LabelAccess="READ_WRITE" LabelValue="0xDC04"/>
+        <Equate EquateType="LABEL" Label="TIMAHI" LabelAccess="READ_WRITE" LabelValue="0xDC05"/>
+        <Equate EquateType="LABEL" Label="TIMBLO" LabelAccess="READ_WRITE" LabelValue="0xDC06"/>
+        <Equate EquateType="LABEL" Label="TIMBHI" LabelAccess="READ_WRITE" LabelValue="0xDC07"/>
+        <Equate EquateType="LABEL" Label="TODTEN" LabelAccess="READ_WRITE" LabelValue="0xDC08"/>
+        <Equate EquateType="LABEL" Label="TODSEC" LabelAccess="READ_WRITE" LabelValue="0xDC09"/>
+        <Equate EquateType="LABEL" Label="TODMIN" LabelAccess="READ_WRITE" LabelValue="0xDC0A"/>
+        <Equate EquateType="LABEL" Label="TODHRS" LabelAccess="READ_WRITE" LabelValue="0xDC0B"/>
+        <Equate EquateType="LABEL" Label="CIASDR" LabelAccess="READ_WRITE" LabelValue="0xDC0C"/>
+        <Equate EquateType="LABEL" Label="CIAICR" LabelAccess="READ_WRITE" LabelValue="0xDC0D"/>
+        <Equate EquateType="LABEL" Label="CIACRA" LabelAccess="READ_WRITE" LabelValue="0xDC0E"/>
+        <Equate EquateType="LABEL" Label="CIACRB" LabelAccess="READ_WRITE" LabelValue="0xDC0F"/>
+        <Equate EquateType="EMPTY"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="CIA #2: SERIAL BUS, RS-232, VIC BANK, NMI TIMERS" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate EquateType="LABEL" Label="CI2PRA" LabelAccess="READ_WRITE" LabelValue="0xDD00"/>
+        <Equate EquateType="LABEL" Label="CI2PRB" LabelAccess="READ_WRITE" LabelValue="0xDD01"/>
+        <Equate EquateType="LABEL" Label="C2DDRA" LabelAccess="READ_WRITE" LabelValue="0xDD02"/>
+        <Equate EquateType="LABEL" Label="C2DDRB" LabelAccess="READ_WRITE" LabelValue="0xDD03"/>
+        <Equate EquateType="LABEL" Label="TI2ALO" LabelAccess="READ_WRITE" LabelValue="0xDD04"/>
+        <Equate EquateType="LABEL" Label="TI2AHI" LabelAccess="READ_WRITE" LabelValue="0xDD05"/>
+        <Equate EquateType="LABEL" Label="TI2BLO" LabelAccess="READ_WRITE" LabelValue="0xDD06"/>
+        <Equate EquateType="LABEL" Label="TI2BHI" LabelAccess="READ_WRITE" LabelValue="0xDD07"/>
+        <Equate EquateType="LABEL" Label="TO2TEN" LabelAccess="READ_WRITE" LabelValue="0xDD08"/>
+        <Equate EquateType="LABEL" Label="TO2SEC" LabelAccess="READ_WRITE" LabelValue="0xDD09"/>
+        <Equate EquateType="LABEL" Label="TO2MIN" LabelAccess="READ_WRITE" LabelValue="0xDD0A"/>
+        <Equate EquateType="LABEL" Label="TO2HRS" LabelAccess="READ_WRITE" LabelValue="0xDD0B"/>
+        <Equate EquateType="LABEL" Label="CI2SDR" LabelAccess="READ_WRITE" LabelValue="0xDD0C"/>
+        <Equate EquateType="LABEL" Label="CI2ICR" LabelAccess="READ_WRITE" LabelValue="0xDD0D"/>
+        <Equate EquateType="LABEL" Label="CI2CRA" LabelAccess="READ_WRITE" LabelValue="0xDD0E"/>
+        <Equate EquateType="LABEL" Label="CI2CRB" LabelAccess="READ_WRITE" LabelValue="0xDD0F"/>
+        <Equate EquateType="EMPTY"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="BASIC ROM ROUTINES" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate EquateType="LABEL" Label="READY" LabelAccess="READ_WRITE" LabelValue="0xA474"/>
+        <Equate EquateType="LABEL" Label="NEWSTT" LabelAccess="READ_WRITE" LabelValue="0xA7AE"/>
+        <Equate EquateType="LABEL" Label="STROUT" LabelAccess="READ_WRITE" LabelValue="0xAB1E"/>
+        <Equate EquateType="LABEL" Label="FRMNUM" LabelAccess="READ_WRITE" LabelValue="0xAD8A"/>
+        <Equate EquateType="LABEL" Label="FRMEVL" LabelAccess="READ_WRITE" LabelValue="0xAD9E"/>
+        <Equate EquateType="LABEL" Label="CHKCOM" LabelAccess="READ_WRITE" LabelValue="0xAEFD"/>
+        <Equate EquateType="LABEL" Label="GIVAYF" LabelAccess="READ_WRITE" LabelValue="0xB391"/>
+        <Equate EquateType="LABEL" Label="GETBYT" LabelAccess="READ_WRITE" LabelValue="0xB79E"/>
+        <Equate EquateType="LABEL" Label="GETADR" LabelAccess="READ_WRITE" LabelValue="0xB7F7"/>
+        <Equate EquateType="LABEL" Label="LINPRT" LabelAccess="READ_WRITE" LabelValue="0xBDCD"/>
+        <Equate EquateType="EMPTY"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="KERNAL ROM ENTRY POINTS OFTEN USED DIRECTLY" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="These four names are descriptive; the original source has no single official label for them." EquateType="COMMENT"/>
+        <Equate Comment="SYSIRQ is the standard IRQ handler, SYSIRQX its register-restoring exit." EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate EquateType="LABEL" Label="SYSIRQ" LabelAccess="READ_WRITE" LabelValue="0xEA31"/>
+        <Equate EquateType="LABEL" Label="SYSIRQX" LabelAccess="READ_WRITE" LabelValue="0xEA81"/>
+        <Equate EquateType="LABEL" Label="SYSRESET" LabelAccess="READ_WRITE" LabelValue="0xFCE2"/>
+        <Equate EquateType="LABEL" Label="SYSNMI" LabelAccess="READ_WRITE" LabelValue="0xFE47"/>
+        <Equate EquateType="EMPTY"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="KERNAL JUMP TABLE" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate EquateType="LABEL" Label="CINT" LabelAccess="READ_WRITE" LabelValue="0xFF81"/>
+        <Equate EquateType="LABEL" Label="IOINIT" LabelAccess="READ_WRITE" LabelValue="0xFF84"/>
+        <Equate EquateType="LABEL" Label="RAMTAS" LabelAccess="READ_WRITE" LabelValue="0xFF87"/>
+        <Equate EquateType="LABEL" Label="RESTOR" LabelAccess="READ_WRITE" LabelValue="0xFF8A"/>
+        <Equate EquateType="LABEL" Label="VECTOR" LabelAccess="READ_WRITE" LabelValue="0xFF8D"/>
+        <Equate EquateType="LABEL" Label="SETMSG" LabelAccess="READ_WRITE" LabelValue="0xFF90"/>
+        <Equate EquateType="LABEL" Label="SECOND" LabelAccess="READ_WRITE" LabelValue="0xFF93"/>
+        <Equate EquateType="LABEL" Label="TKSA" LabelAccess="READ_WRITE" LabelValue="0xFF96"/>
+        <Equate EquateType="LABEL" Label="MEMTOP" LabelAccess="READ_WRITE" LabelValue="0xFF99"/>
+        <Equate EquateType="LABEL" Label="MEMBOT" LabelAccess="READ_WRITE" LabelValue="0xFF9C"/>
+        <Equate EquateType="LABEL" Label="SCNKEY" LabelAccess="READ_WRITE" LabelValue="0xFF9F"/>
+        <Equate EquateType="LABEL" Label="SETTMO" LabelAccess="READ_WRITE" LabelValue="0xFFA2"/>
+        <Equate EquateType="LABEL" Label="ACPTR" LabelAccess="READ_WRITE" LabelValue="0xFFA5"/>
+        <Equate EquateType="LABEL" Label="CIOUT" LabelAccess="READ_WRITE" LabelValue="0xFFA8"/>
+        <Equate EquateType="LABEL" Label="UNTLK" LabelAccess="READ_WRITE" LabelValue="0xFFAB"/>
+        <Equate EquateType="LABEL" Label="UNLSN" LabelAccess="READ_WRITE" LabelValue="0xFFAE"/>
+        <Equate EquateType="LABEL" Label="LISTEN" LabelAccess="READ_WRITE" LabelValue="0xFFB1"/>
+        <Equate EquateType="LABEL" Label="TALK" LabelAccess="READ_WRITE" LabelValue="0xFFB4"/>
+        <Equate EquateType="LABEL" Label="READST" LabelAccess="READ_WRITE" LabelValue="0xFFB7"/>
+        <Equate EquateType="LABEL" Label="SETLFS" LabelAccess="READ_WRITE" LabelValue="0xFFBA"/>
+        <Equate EquateType="LABEL" Label="SETNAM" LabelAccess="READ_WRITE" LabelValue="0xFFBD"/>
+        <Equate EquateType="LABEL" Label="OPEN" LabelAccess="READ_WRITE" LabelValue="0xFFC0"/>
+        <Equate EquateType="LABEL" Label="CLOSE" LabelAccess="READ_WRITE" LabelValue="0xFFC3"/>
+        <Equate EquateType="LABEL" Label="CHKIN" LabelAccess="READ_WRITE" LabelValue="0xFFC6"/>
+        <Equate EquateType="LABEL" Label="CHKOUT" LabelAccess="READ_WRITE" LabelValue="0xFFC9"/>
+        <Equate EquateType="LABEL" Label="CLRCHN" LabelAccess="READ_WRITE" LabelValue="0xFFCC"/>
+        <Equate EquateType="LABEL" Label="CHRIN" LabelAccess="READ_WRITE" LabelValue="0xFFCF"/>
+        <Equate EquateType="LABEL" Label="CHROUT" LabelAccess="READ_WRITE" LabelValue="0xFFD2"/>
+        <Equate EquateType="LABEL" Label="LOAD" LabelAccess="READ_WRITE" LabelValue="0xFFD5"/>
+        <Equate EquateType="LABEL" Label="SAVE" LabelAccess="READ_WRITE" LabelValue="0xFFD8"/>
+        <Equate EquateType="LABEL" Label="SETTIM" LabelAccess="READ_WRITE" LabelValue="0xFFDB"/>
+        <Equate EquateType="LABEL" Label="RDTIM" LabelAccess="READ_WRITE" LabelValue="0xFFDE"/>
+        <Equate EquateType="LABEL" Label="STOP" LabelAccess="READ_WRITE" LabelValue="0xFFE1"/>
+        <Equate EquateType="LABEL" Label="GETIN" LabelAccess="READ_WRITE" LabelValue="0xFFE4"/>
+        <Equate EquateType="LABEL" Label="CLALL" LabelAccess="READ_WRITE" LabelValue="0xFFE7"/>
+        <Equate EquateType="LABEL" Label="UDTIM" LabelAccess="READ_WRITE" LabelValue="0xFFEA"/>
+        <Equate EquateType="LABEL" Label="SCREEN" LabelAccess="READ_WRITE" LabelValue="0xFFED"/>
+        <Equate EquateType="LABEL" Label="PLOT" LabelAccess="READ_WRITE" LabelValue="0xFFF0"/>
+        <Equate EquateType="LABEL" Label="IOBASE" LabelAccess="READ_WRITE" LabelValue="0xFFF3"/>
+        <Equate EquateType="EMPTY"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate Comment="6510 HARDWARE VECTORS" EquateType="COMMENT"/>
+        <Equate Comment="" EquateType="COMMENT"/>
+        <Equate EquateType="LABEL" Label="NMIVEC" LabelAccess="READ_WRITE" LabelValue="0xFFFA"/>
+        <Equate EquateType="LABEL" Label="NMIVEC+1" LabelAccess="READ_WRITE" LabelValue="0xFFFB"/>
+        <Equate EquateType="LABEL" Label="RESVEC" LabelAccess="READ_WRITE" LabelValue="0xFFFC"/>
+        <Equate EquateType="LABEL" Label="RESVEC+1" LabelAccess="READ_WRITE" LabelValue="0xFFFD"/>
+        <Equate EquateType="LABEL" Label="IRQVEC" LabelAccess="READ_WRITE" LabelValue="0xFFFE"/>
+        <Equate EquateType="LABEL" Label="IRQVEC+1" LabelAccess="READ_WRITE" LabelValue="0xFFFF"/>
+    </SystemEquates>
+    <UserEquates Count="0"/>
+    <Segments Count="1">
+        <Segment Begin="0x0801" Binary="true" End="0x0818" Header="0x0000" LabelPrefix="" ProcessorType="MOS6502" SDXBlockNumber="0" SDXControlByte="0x00" SDXFixUpSize="0" SDXSymbol="" Title="">
+            <Content Data="0x0B080A009E32303634000000000000EE20D0EE21D04C1008" Size="0x18" Type="0x0303030303030303030303030303030A0A0A0A0A0A0A0A0A"/>
+            <Comments>
+                <Comment Offset="0x0000" Text="BASIC stub: 10 SYS 2064"/>
+                <Comment Offset="0x000F" Text="Flash the border color"/>
+            </Comments>
+        </Segment>
+    </Segments>
+</Workspace>

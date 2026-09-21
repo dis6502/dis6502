@@ -5,6 +5,9 @@
  */
 package com.wudsn.tools.dis6502.model;
 
+import java.io.File;
+import java.io.IOException;
+
 import com.wudsn.tools.dis6502.Application;
 
 /**
@@ -20,14 +23,16 @@ import com.wudsn.tools.dis6502.Application;
 public final class WorkspaceLogicTest {
 
 	private static final String FIXTURE_PATH = "test-resources/workspace/SynCalc-(1993)-128K-Main.wrk";
+	private static final String C64_FIXTURE_PATH = "test-resources/system/c64/HelloWorld.wrk";
 
 	private WorkspaceLogicTest() {
 	}
 
-	public static void testWorkspaceLogic() {
+	public static void testWorkspaceLogic() throws IOException {
 		testLoad();
 		testSplitAtRebasesComments();
 		testLoadSystemEquates();
+		testC64Workspace();
 
 		Assert.log("WorkspaceLogicTest completed");
 	}
@@ -81,6 +86,52 @@ public final class WorkspaceLogicTest {
 		workspace.setComputerSystemType(ComputerSystemType.UNKNOWN);
 		workspaceLogic.loadSystemEquates(workspace);
 		Assert.boolEquals(systemEquateList.isEmpty(), true);
+	}
+
+	/**
+	 * New (not ported): a workspace for a system other than the Atari 800 -
+	 * {@code HelloWorld.prg} loaded as C64, its BASIC stub marked as bytes,
+	 * its machine code traced, two user comments added - must load with all
+	 * of that intact, and must survive being saved and loaded again.
+	 */
+	private static void testC64Workspace() throws IOException {
+		Application application = new Application();
+		WorkspaceLogic workspaceLogic = new WorkspaceLogic(application);
+
+		Workspace workspace = new Workspace(new ComputerSystemFactory());
+		workspace.setComputerSystemType(ComputerSystemType.ATARI800); // The file, not the previous state, decides.
+		Assert.boolEquals(workspaceLogic.load(workspace, C64_FIXTURE_PATH), true);
+		assertC64Workspace(workspace);
+
+		File savedFile = File.createTempFile("dis6502-c64-", ".wrk");
+		savedFile.deleteOnExit();
+		Assert.boolEquals(workspaceLogic.save(workspace, savedFile.getPath()), true);
+
+		Workspace reloadedWorkspace = new Workspace(new ComputerSystemFactory());
+		Assert.boolEquals(workspaceLogic.load(reloadedWorkspace, savedFile.getPath()), true);
+		assertC64Workspace(reloadedWorkspace);
+	}
+
+	private static void assertC64Workspace(Workspace workspace) {
+		Assert.boolEquals(workspace.getComputerSystem().getType() == ComputerSystemType.C64, true);
+		Assert.longEquals(workspace.getSegmentList().getCount(), 1);
+
+		Segment segment = workspace.getSegmentList().getSegment(0);
+		Assert.longEquals(segment.wBegin, 0x0801);
+		Assert.longEquals(segment.wEnd, 0x0818);
+		Assert.boolEquals(segment.bBinary, true);
+		Assert.longEquals(segment.getData(0x0F), 0xEE); // INC $D020
+		for (int offset = 0; offset < segment.getSize(); offset++) {
+			MemoryType expectedType = offset < 0x0F ? MemoryType.BYTE : MemoryType.CODE;
+			Assert.boolEquals(segment.memoryBlock.getTypeAt(offset) == expectedType, true);
+		}
+		Assert.stringEquals(segment.findComment(0x00), "BASIC stub: 10 SYS 2064");
+		Assert.stringEquals(segment.findComment(0x0F), "Flash the border color");
+
+		// The workspace carries its own system equates - genuine C64 ones.
+		EquateList systemEquateList = workspace.getSystemEquateList();
+		Assert.longEquals(systemEquateList.getCount(), 534);
+		Assert.longEquals(systemEquateList.getEquateByLabel("EXTCOL").getLabelValue(), 0xD020);
 	}
 
 	/**
