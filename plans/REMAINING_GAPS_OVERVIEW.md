@@ -261,30 +261,40 @@ here - both repos continue to change.
   title reads "6502 Disassembler for Atari 800" with no workspace
   loaded, matching the ported resource text exactly.
 
-### 9. `DisassemblyProgressMonitor`'s base-class logging is still an unwired no-op
+### 9. ~~`DisassemblyProgressMonitor`'s base-class logging is still an unwired no-op~~ - FIXED 2026-09-21
 
-- **Found**: same `Text.java` audit as gap #8 -
-  `Text.IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_INFO`/`_PASS`/`_SEGMENT` are
-  real, actively-used C++ resources with no Java call site.
+- **Was**: `DisassemblyProgressMonitor.setPass`/`setSegmentNumber`/
+  `sendInfo` were no-ops by design - the class javadoc documented this as
+  deliberate, written before this port had an `Application`-based logging
+  mechanism ("that is not ported yet, so they default to no-ops here -
+  override them once application-level logging exists").
 - **C++**: `DisassemblyProgressMonitor::SetPass`/`SetSegmentNumber`/
-  `SendInfo` log through the global `Application` object.
-- **Java**: `DisassemblyProgressMonitor.setPass`/`setSegmentNumber`/
-  `sendInfo` (`model/DisassemblyProgressMonitor.java:45-53`) are no-ops by
-  design - the class javadoc already documents this as deliberate,
-  written before this port had an `Application`-based logging mechanism
-  ("that is not ported yet, so they default to no-ops here - override
-  them once application-level logging exists"). `Application` (with
-  `sendMessage`/`sendInfoMessage`) has existed for a while now, so this
-  TODO is actionable, just never revisited.
-- **Caveat, lowering priority**: in C++ itself, the real GUI path
-  (`DisassemblyProgressDialog`) overrides `SetPass`/`SetSegmentNumber` to
-  update its own UI labels without ever calling into the logging base -
-  only the plain `DisassemblyProgressMonitor` used directly by
-  `MainTest.cpp` (C++'s unit-test harness) exercises the logging path at
-  all, so this is a low real-world-impact gap, not a user-visible one.
-- Not implemented as part of this audit - listed here for a future
-  session; the existing javadoc TODO already documents the decision to
-  defer it.
+  `SendInfo` log through the global `Application` object; the real GUI
+  path (`DisassemblyProgressDialog`) overrides `SetPass`/`SetSegmentNumber`
+  to update its own UI labels *without* calling into the logging base, so
+  in practice only the plain `DisassemblyProgressMonitor` used directly by
+  `MainTest.cpp` (C++'s test harness) ever exercises the logging path.
+- **Fix**: `DisassemblyProgressMonitor` now takes an `Application` in its
+  constructor and logs via `application.sendMessage(...)`, using
+  `Text.IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_INFO`/`_PASS`/`_SEGMENT`'s
+  text, moved to `Messages.I068`-`I070` per this project's
+  Text-vs-Messages convention (a Text.java constant that gets its
+  severity-driven dispatch wired up this way belongs in `Messages.java`,
+  not `Text.java` - see `plans/MEMORY.md`). Matching the C++ behavior
+  above exactly: `DisassemblyProgressDialog`'s `Monitor.setPass` was
+  changed from `super.setPass(pass)` to setting the inherited `pass`
+  field directly, so the real GUI path still doesn't log pass/segment
+  changes (only the UI labels update) - `setSegmentNumber` already didn't
+  call `super`, so needed no change. `sendInfo`'s verbose per-byte trace
+  log (gated on `isVerbose()` at its `Disassembly.java` call site, not
+  overridden by the dialog) logs in both paths, matching C++.
+- Verified with a clean `mvn -o compile`/`test-compile`, the full
+  `TestRunner` suite, and a direct model-level smoke test (real
+  `Application`, real `Workspace`, a real `.xex` file, a real six-pass
+  `Disassembly` run with `verbose=true`): `setPass`/`setSegmentNumber`/
+  `sendInfo` all fired with correctly formatted real messages ("Pass 1 -
+  Find Labels", "Segment 1", "Log: Pass 2 - Reserve Labels -
+  segmentIndex=0, wPC=02E2, ...").
 
 ## Divergences where the Java port fixed a real C++ bug (not a Java gap)
 
@@ -503,6 +513,5 @@ doesn't support, without a separate decision to add a genuinely new feature:
    document or a class javadoc) rather than staying an implicit gap.
 9. ~~**Gap #8** (main window title missing computer system name)~~ - **fixed
    2026-09-21**, see above.
-10. **Gap #9** (`DisassemblyProgressMonitor` logging never wired up) -
-    low real-world impact (C++'s own GUI path barely exercises it either);
-    found alongside gap #8.
+10. ~~**Gap #9** (`DisassemblyProgressMonitor` logging never wired up)~~ -
+    **fixed 2026-09-21**, see above.
