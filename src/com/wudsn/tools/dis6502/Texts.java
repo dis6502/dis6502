@@ -98,6 +98,8 @@ public final class Texts extends NLS {
 	public static String ProfileDialog_LoadTitle;
 	/** {@link Dis6502#performSetMemoryInspectorLoHiType}'s error dialog title. */
 	public static String Dis6502_SetTypeTitle;
+	/** {@link Dis6502#performPasteMemoryInspectorSelection}'s error dialog title. */
+	public static String Dis6502_PasteSelectionTitle;
 	/** {@link Dis6502#performOpenUserEquates}'s {@code JFileChooser} title. */
 	public static String Dis6502_OpenUserEquatesFileTitle;
 	/** {@link Dis6502#performSaveUserEquates}'s {@code JFileChooser} title when exporting to xasm format ({@code xasm == true}). */

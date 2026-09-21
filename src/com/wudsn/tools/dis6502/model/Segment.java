@@ -235,6 +235,83 @@ public final class Segment implements Xml.Serializable {
 		// TODO: Transfer additional data (symbols/fixups/labels)?
 	}
 
+	/**
+	 * Removes {@code size} bytes at {@code offset}, shifting later bytes down
+	 * and shrinking the segment by {@code size} - the model-layer half of the
+	 * Memory Inspector's Delete Selection command (see
+	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel's class javadoc). Follows
+	 * {@link #mergeWith}'s own allocate-a-new-block-and-copy-back shape;
+	 * unlike the C++ {@code MemoryInspector::DeleteSelection} this is based
+	 * on, this actually shrinks {@link #memoryBlock} - that method's own
+	 * comment admits it never did. Shrinking a segment to size 0 leaves
+	 * {@link #isEmpty()} true; the caller is responsible for then removing
+	 * the now-empty segment from its {@link SegmentList} (e.g. via {@link
+	 * SegmentList#deleteSelectedSegment()}), the same as splitting/merging
+	 * leave list-membership changes to {@link SegmentList}.
+	 */
+	public void deleteRange(int offset, int size) {
+		if (offset < 0 || size <= 0 || offset + size > getSize()) {
+			throw new IllegalArgumentException("Invalid range.");
+		}
+		int newSize = getSize() - size;
+
+		MemoryBlock newBlock = new MemoryBlock();
+		newBlock.create(newSize);
+		memoryBlock.copyTo(0, offset, newBlock, 0);
+		memoryBlock.copyTo(offset + size, newSize - offset, newBlock, offset);
+
+		createMemoryBlockWithSize(newSize);
+		newBlock.copyTo(0, newSize, memoryBlock, 0);
+		wEnd -= size;
+
+		deleteComments(offset, size);
+		for (Comment comment : comments) {
+			if (comment.getOffset() >= offset + size) {
+				comment.setOffset(comment.getOffset() - size);
+			}
+		}
+	}
+
+	/** Returns whether inserting {@code additionalSize} more bytes would keep the segment within {@link #MAX_SEGMENT_SIZE}. */
+	public boolean canInsertRange(int additionalSize) {
+		return getSize() + additionalSize <= MAX_SEGMENT_SIZE;
+	}
+
+	/**
+	 * Inserts {@code data} at {@code offset}, shifting later bytes up and
+	 * growing the segment by {@code data.length} - the model-layer half of
+	 * the Memory Inspector's Paste command (see
+	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel's class javadoc).
+	 * Inserted bytes get {@link MemoryType#UNKNOWN}, matching {@link
+	 * MemoryBlock#create}'s own zero-filled type array. Unlike the C++
+	 * {@code MemoryInspector::PasteAtSelection} this is based on, this
+	 * actually applies the built buffer back to the segment - that method's
+	 * own code to do so was commented out.
+	 */
+	public void insertRange(int offset, byte[] data) {
+		if (offset < 0 || offset > getSize() || !canInsertRange(data.length)) {
+			throw new IllegalArgumentException("Invalid offset or size.");
+		}
+		int oldSize = getSize();
+		int newSize = oldSize + data.length;
+
+		MemoryBlock newBlock = new MemoryBlock();
+		newBlock.create(newSize);
+		memoryBlock.copyTo(0, offset, newBlock, 0);
+		newBlock.setDataAt(offset, data, 0, data.length);
+		memoryBlock.copyTo(offset, oldSize - offset, newBlock, offset + data.length);
+
+		createMemoryBlockWithSize(newSize);
+		newBlock.copyTo(0, newSize, memoryBlock, 0);
+		wEnd += data.length;
+
+		for (Comment comment : comments) {
+			if (comment.getOffset() >= offset) {
+				comment.setOffset(comment.getOffset() + data.length);
+			}
+		}
+	}
+
 	public boolean isSDXRelocBlkWithData() {
 		return isHeader(FileHeader.SDX_RELOC_BLK) && (bSDXControlByte & 0x80) == 0x00;
 	}

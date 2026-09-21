@@ -8,8 +8,8 @@ re-auditing both codebases from scratch.
 
 **Status**: this list only shows what's still outstanding - a fixed gap is
 removed from this document once done rather than kept struck through (see
-git history for the write-up of each fix: gaps #1, #2, #6, #7, #8, and #9
-have all been fixed and removed as of 2026-09-21). Remaining gaps keep
+git history for the write-up of each fix: gaps #1, #2, #3, #6, #7, #8, and
+#9 have all been fixed and removed as of 2026-09-21). Remaining gaps keep
 their original numbers rather than being renumbered, so references to a
 specific gap number elsewhere (commit messages, `plans/MEMORY.md`) stay
 valid.
@@ -38,21 +38,6 @@ re-verify against the current C++ source before relying on any single line
 here - both repos continue to change.
 
 ## Confirmed gaps - UI layer
-
-### 3. Memory Inspector Delete/Cut/Paste Selection - not ported at all (deliberately, tracked as an open TODO)
-
-- `MemoryInspectorPanel.java:102-115` documents the decision: the C++
-  `MemoryInspector::DeleteSelection` never actually shrinks the segment's
-  byte/type arrays (admitted in the C++ source's own comment), and
-  `MemoryInspector::PasteAtSelection` is explicitly broken in C++ (the code
-  that applies the paste buffer is commented out there). Porting either
-  faithfully would just carry the brokenness forward.
-- Fixing this for real needs actual segment-buffer resizing support, which
-  `com.wudsn.tools.dis6502.model.MemoryBlock` doesn't have yet - this is a
-  model-layer prerequisite for a UI-layer feature.
-- Status: open TODO, not a closed/reviewed decision - worth scoping
-  explicitly (per the porting guide's "decide feature scope per subsystem up
-  front" rule) rather than leaving it as a standing comment indefinitely.
 
 ### 4. ~~`LogPanel` had no visual way to distinguish error lines from info lines~~ - FIXED 2026-09-21
 
@@ -292,14 +277,8 @@ doesn't support, without a separate decision to add a genuinely new feature:
 
 ## Suggested priority order for closing these
 
-1. **Gap #3** (Memory Inspector Delete/Cut/Paste Selection) - explicitly
-   blocked on `MemoryBlock` gaining real resize support; needs a scoping
-   decision (faithful-but-broken port vs. a fixed reimplementation) before
-   any code is written, per the porting guide's process-lesson rule (now
-   historical - see the status note at the top; still a reasonable process
-   to follow for a decision like this one).
-2. ~~**Gap #4** (`LogPanel` error-line coloring)~~ - **fixed 2026-09-21**,
+1. ~~**Gap #4** (`LogPanel` error-line coloring)~~ - **fixed 2026-09-21**,
    see above.
-3. **Gap #5** (`MainUITest.cpp` self-test harness) - needs an explicit
+2. **Gap #5** (`MainUITest.cpp` self-test harness) - needs an explicit
    "superseded by JUnit, won't port" decision recorded somewhere (this
    document or a class javadoc) rather than staying an implicit gap.

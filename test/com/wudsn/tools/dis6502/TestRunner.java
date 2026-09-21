@@ -81,6 +81,7 @@ public final class TestRunner {
 		runTest("AssemblerTest", () -> AssemblerTest.testAssembler(new Workspace(new ComputerSystemFactory())));
 		runTest("EquateTest", EquateTest::testEquate);
 		runTest("SegmentTest", SegmentTest::testSegment);
+		runTest("SegmentTest.testSegmentRangeEdit", SegmentTest::testSegmentRangeEdit);
 		runTest("DisassemblyResultTest", DisassemblyResultTest::testDisassemblyResult);
 		runTest("DisassemblyResultFileTest", DisassemblyResultFileTest::testDisassemblyResultFile);
 		runTest("ComputerSystemTest", () -> ComputerSystemTest.testSystems(new ComputerSystemFactory()));

@@ -103,20 +103,27 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * hex string, matching {@code
  * DatatypeUtility::ByteArrayToHexString(..., false)}'s format.
  * <p>
- * TODO: Delete/Cut/Paste Selection are deliberately NOT ported: {@code
- * MemoryInspector::DeleteSelection} never actually shrinks the segment's
- * underlying byte/type arrays (its own comment admits as much, and now carries
- * a second TODO added while porting this, documenting the knock-on effect
- * below), which also means its "delete the whole segment if it's now empty"
- * branch can't work, since {@code
- * Segment::IsEmpty}/{@link Segment#isEmpty} check that same never- shrunk
- * allocation; and {@code MemoryInspector::PasteAtSelection} is explicitly
- * broken in the C++ source (its own comment says so, and the code that would
- * apply the newly-built buffer back to the segment is commented out - also now
- * flagged there with a porting-context TODO). Porting either faithfully would
- * just carry the same brokenness forward, and fixing them needs real
- * segment-buffer resizing, which does not exist in
- * {@link com.wudsn.tools.dis6502.model.MemoryBlock} yet.
+ * {@link #cutSelectionMenuItem}/{@link #copySelectionMenuItem}/{@link
+ * #pasteSelectionMenuItem}/{@link #deleteSelectionMenuItem} are a from-scratch,
+ * Java-native design, not a port: {@code MemoryInspector::DeleteSelection}
+ * never actually shrinks the segment's underlying byte/type arrays (its own
+ * comment admits as much), which also means its "delete the whole segment if
+ * it's now empty" branch can't work, since {@code Segment::IsEmpty} checks
+ * that same never-shrunk allocation; and {@code
+ * MemoryInspector::PasteAtSelection} is explicitly broken in the C++ source
+ * (its own comment says so, and the code that would apply the newly-built
+ * buffer back to the segment is commented out). There is no working C++
+ * behavior to port, so this uses real segment-buffer resizing instead -
+ * {@link com.wudsn.tools.dis6502.model.Segment#deleteRange}/{@link
+ * com.wudsn.tools.dis6502.model.Segment#insertRange}, wired from {@code
+ * Dis6502#performDeleteMemoryInspectorSelection}/{@code
+ * #performPasteMemoryInspectorSelection}. {@link #cutSelectionMenuItem} is
+ * Copy+Delete composed at the call site, matching the C++ original's own Cut
+ * (which likewise has no separate model-layer method). {@link
+ * #pasteSelectionMenuItem} is a single insert-before-the-selection command,
+ * not the C++ source's "before"/"after" pair - {@code
+ * PasteAtSelection}'s {@code after} parameter was unused dead code even
+ * there, so there was never a real "paste after" behavior to preserve.
  * <p>
  * {@link #selectGraphicsMenuItem} (from {@code
  * MemoryInspector::ShowSelectSpritesDialog}/IDM_DUMP_SELECT_SPRITES, ported as
@@ -165,9 +172,10 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * XRefSelectionListener} pattern. The submenu's checkmarks are ported from
  * {@code TypeSubMenu::Update} - which type(s) are actually present across the
  * selection, including its LOBYTE/HIBYTE-adjacency lookback for a byte whose
- * own stored type is unknown/invalid. Cut, Paste (before/after selection), and
- * Delete are not in this menu, matching this class's own note above on why
- * Delete/Cut/Paste Selection are not ported.
+ * own stored type is unknown/invalid. {@link #cutSelectionMenuItem}/{@link
+ * #pasteSelectionMenuItem}/{@link #deleteSelectionMenuItem} are plain
+ * top-level popup items instead, not part of this submenu - see this class's
+ * own note above on their from-scratch design.
  * <p>
  * {@link #editMenuItem}/{@link #enterEditMode()}/{@link #quitEditMode()} and
  * the keyboard handling wired up in the constructor port
@@ -276,8 +284,14 @@ public final class MemoryInspectorPanel extends JPanel {
 			"editCommentMenuItem");
 	public final JMenuItem editMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_Edit, "editMenuItem");
 	public final JMenuItem assembleMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_Assemble, "assembleMenuItem");
+	public final JMenuItem cutSelectionMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_CutSelection,
+			"cutSelectionMenuItem");
 	public final JMenuItem copySelectionMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_CopySelection,
 			"copySelectionMenuItem");
+	public final JMenuItem pasteSelectionMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_PasteSelection,
+			"pasteSelectionMenuItem");
+	public final JMenuItem deleteSelectionMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_DeleteSelection,
+			"deleteSelectionMenuItem");
 	public final JMenuItem selectNextUnknownBlockMenuItem = ElementFactory
 			.createMenuItem(Actions.MemoryInspectorPopupMenu_SelectNextUnknownBlock, "selectNextUnknownBlockMenuItem");
 	public final JMenuItem selectGraphicsMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_SelectGraphics,
@@ -446,7 +460,10 @@ public final class MemoryInspectorPanel extends JPanel {
 	private void bindPopupMenuAccelerators() {
 		bindAccelerator(Actions.MemoryInspectorPopupMenu_StartCodeTrace, startCodeTraceMenuItem);
 		bindAccelerator(Actions.MemoryInspectorPopupMenu_Assemble, assembleMenuItem);
+		bindAccelerator(Actions.MemoryInspectorPopupMenu_CutSelection, cutSelectionMenuItem);
 		bindAccelerator(Actions.MemoryInspectorPopupMenu_CopySelection, copySelectionMenuItem);
+		bindAccelerator(Actions.MemoryInspectorPopupMenu_PasteSelection, pasteSelectionMenuItem);
+		bindAccelerator(Actions.MemoryInspectorPopupMenu_DeleteSelection, deleteSelectionMenuItem);
 		bindAccelerator(Actions.MemoryInspectorPopupMenu_Find, findMenuItem);
 		bindAccelerator(Actions.MemoryInspectorPopupMenu_FindNext, findNextMenuItem);
 		bindAccelerator(Actions.MemoryInspectorPopupMenu_SelectNextUnknownBlock, selectNextUnknownBlockMenuItem);
@@ -508,7 +525,10 @@ public final class MemoryInspectorPanel extends JPanel {
 		popupMenu.add(editCommentMenuItem);
 		popupMenu.add(editMenuItem);
 		popupMenu.add(assembleMenuItem);
+		popupMenu.add(cutSelectionMenuItem);
 		popupMenu.add(copySelectionMenuItem);
+		popupMenu.add(pasteSelectionMenuItem);
+		popupMenu.add(deleteSelectionMenuItem);
 		popupMenu.add(splitAtSelectionMenuItem);
 
 		popupMenu.addSeparator();
@@ -1062,7 +1082,10 @@ public final class MemoryInspectorPanel extends JPanel {
 		saveSelectionNoHeaderMenuItem.setEnabled(hasSelection);
 		saveSelectionHeaderMenuItem.setEnabled(hasSelection);
 		setUnknownBlockToByteMenuItem.setEnabled(hasSelection);
+		cutSelectionMenuItem.setEnabled(hasSelection);
 		copySelectionMenuItem.setEnabled(hasSelection);
+		pasteSelectionMenuItem.setEnabled(hasSelection); // insertion point comes from the current selection's begin offset
+		deleteSelectionMenuItem.setEnabled(hasSelection);
 		editCommentMenuItem.setEnabled(hasSelection);
 		editMenuItem.setEnabled(hasSelection);
 		assembleMenuItem.setEnabled(hasSelection);

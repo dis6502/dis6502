@@ -96,7 +96,13 @@ import com.wudsn.tools.base.repository.NLS;
  * shown, then re-derives the mnemonic from the formatted text, since
  * {@link com.wudsn.tools.base.gui.ElementFactory} has no method for
  * applying an already-built {@link Action}'s mnemonic to text that isn't
- * the action's own literal label.
+ * the action's own literal label. {@link #MemoryInspectorPopupMenu_CutSelection}/
+ * {@link #MemoryInspectorPopupMenu_PasteSelection}/{@link
+ * #MemoryInspectorPopupMenu_DeleteSelection} have no {@code dis6502.rc}
+ * counterpart at all - there is no working C++ Delete/Cut/Paste Selection
+ * to port (see gap #3's history in {@code plans/REMAINING_GAPS_OVERVIEW.md}) -
+ * so their Ctrl+X/Ctrl+V/Delete accelerators are this port's own choice,
+ * following standard editor convention rather than any C++ source.
  *
  * @author Peter Dell
  */
@@ -201,7 +207,10 @@ public final class Actions extends NLS {
 	public static Action MemoryInspectorPopupMenu_EditComment;
 	public static Action MemoryInspectorPopupMenu_Edit = new Action(KeyEvent.VK_F2, 0);
 	public static Action MemoryInspectorPopupMenu_Assemble = new Action(KeyEvent.VK_F8, 0);
+	public static Action MemoryInspectorPopupMenu_CutSelection = new Action(KeyEvent.VK_X, KeyStroke.M1);
 	public static Action MemoryInspectorPopupMenu_CopySelection = new Action(KeyEvent.VK_C, KeyStroke.M1);
+	public static Action MemoryInspectorPopupMenu_PasteSelection = new Action(KeyEvent.VK_V, KeyStroke.M1);
+	public static Action MemoryInspectorPopupMenu_DeleteSelection = new Action(KeyEvent.VK_DELETE, 0);
 	public static Action MemoryInspectorPopupMenu_SplitAtSelection;
 	public static Action MemoryInspectorPopupMenu_Find = new Action(KeyEvent.VK_F, KeyStroke.M1);
 	public static Action MemoryInspectorPopupMenu_FindNext = new Action(KeyEvent.VK_F3, 0);

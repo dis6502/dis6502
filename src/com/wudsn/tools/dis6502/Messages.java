@@ -317,6 +317,12 @@ public final class Messages extends NLS {
 	 */
 	public static Message I070;
 
+	/** {@link Dis6502#performPasteMemoryInspectorSelection}'s "clipboard is not a valid hex byte sequence" error - Java-native, no C++ equivalent (see gap #3's history). */
+	public static Message E071;
+
+	/** {@link Dis6502#performPasteMemoryInspectorSelection}'s "would exceed the 64 KB segment size limit" error - Java-native, no C++ equivalent (see gap #3's history). */
+	public static Message E072;
+
 	static {
 		initializeClass(Messages.class, null);
 	}

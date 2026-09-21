@@ -7,7 +7,9 @@ package com.wudsn.tools.dis6502;
 
 import java.awt.EventQueue;
 import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.ByteArrayInputStream;
@@ -349,7 +351,10 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.setTypeSelectionListener(this::performSetMemoryInspectorType);
 		mainWindow.memoryInspectorPanel.setSelectionChangedListener(this::performMemoryInspectorSelectionChanged);
 		mainWindow.memoryInspectorPanel.setUnknownBlockToByteMenuItem.addActionListener(e -> performSetUnknownBlockToByte());
+		mainWindow.memoryInspectorPanel.cutSelectionMenuItem.addActionListener(e -> performCutMemoryInspectorSelection());
 		mainWindow.memoryInspectorPanel.copySelectionMenuItem.addActionListener(e -> performCopyMemoryInspectorSelection());
+		mainWindow.memoryInspectorPanel.pasteSelectionMenuItem.addActionListener(e -> performPasteMemoryInspectorSelection());
+		mainWindow.memoryInspectorPanel.deleteSelectionMenuItem.addActionListener(e -> performDeleteMemoryInspectorSelection());
 		mainWindow.memoryInspectorPanel.editCommentMenuItem.addActionListener(e -> performEditMemoryInspectorComment());
 		mainWindow.memoryInspectorPanel.editMenuItem.addActionListener(e -> mainWindow.memoryInspectorPanel.enterEditMode());
 		mainWindow.memoryInspectorPanel.quitEditModeMenuItem.addActionListener(e -> mainWindow.memoryInspectorPanel.quitEditMode());
@@ -1203,6 +1208,121 @@ public final class Dis6502 {
 			hex.append(String.format("%02X", value & 0xFF));
 		}
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(hex.toString()), null);
+	}
+
+	/**
+	 * Cut: {@link #performCopyMemoryInspectorSelection} followed by {@link
+	 * #performDeleteMemoryInspectorSelection}, composed here at the call
+	 * site - there is no separate C++ {@code CutSelection} either; its own
+	 * Cut command is Copy+Delete composed the same way. See {@code
+	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s class javadoc for
+	 * why Delete/Cut/Paste Selection are a from-scratch Java design rather
+	 * than a port.
+	 */
+	private void performCutMemoryInspectorSelection() {
+		if (memoryInspectorState.isSelectionEmpty()) {
+			return;
+		}
+		performCopyMemoryInspectorSelection();
+		performDeleteMemoryInspectorSelection();
+	}
+
+	/**
+	 * Delete: removes the current byte selection from its segment via
+	 * {@link Segment#deleteRange}, shrinking it in place. If that empties
+	 * the segment entirely, it is removed from the workspace's {@link
+	 * SegmentList} via {@link SegmentList#deleteSelectedSegment()} - making
+	 * good on the "delete the whole segment if it's now empty" behavior
+	 * {@code MemoryInspector::DeleteSelection}'s own comment describes but
+	 * whose bug (never actually shrinking the buffer) always prevented from
+	 * running; see {@code MemoryInspectorPanel}'s class javadoc.
+	 */
+	private void performDeleteMemoryInspectorSelection() {
+		if (memoryInspectorState.isSelectionEmpty()) {
+			return;
+		}
+		Segment segment = memoryInspectorState.getSegment();
+		int begin = memoryInspectorState.getBegin();
+		int size = memoryInspectorState.getSize();
+
+		segment.deleteRange(begin, size);
+
+		if (segment.isEmpty()) {
+			workspace.getSegmentList().deleteSelectedSegment();
+		} else {
+			memoryInspectorState.clearSelection();
+			mainWindow.memoryInspectorPanel.segmentChanged(memoryInspectorState);
+			updateDisassembly(false);
+		}
+	}
+
+	/**
+	 * Paste: inserts the system clipboard's content - the same plain
+	 * uppercase hex string {@link #performCopyMemoryInspectorSelection}
+	 * produces - before the current byte selection's first byte, via {@link
+	 * Segment#insertRange}. Unlike C++'s {@code
+	 * MemoryInspector::PasteAtSelection}, whose own comment says it is
+	 * broken (the code applying its newly-built buffer back to the segment
+	 * is commented out), this actually inserts the bytes. Insert-only, not
+	 * replace-selection - matching what C++'s (broken) version intended
+	 * too - and a single command, not a "before"/"after" pair, since {@code
+	 * PasteAtSelection}'s {@code after} parameter was unused dead code even
+	 * in the C++ source; see {@code MemoryInspectorPanel}'s class javadoc.
+	 */
+	private void performPasteMemoryInspectorSelection() {
+		if (memoryInspectorState.isSelectionEmpty()) {
+			return;
+		}
+		String clipboardText;
+		try {
+			clipboardText = (String) Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor);
+		} catch (UnsupportedFlavorException | IOException ex) {
+			clipboardText = null;
+		}
+		byte[] bytes = clipboardText == null ? null : decodeHexString(clipboardText);
+		if (bytes == null || bytes.length == 0) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E071.format(), Texts.Dis6502_PasteSelectionTitle,
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		Segment segment = memoryInspectorState.getSegment();
+		if (!segment.canInsertRange(bytes.length)) {
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E072.format(String.valueOf(bytes.length)),
+					Texts.Dis6502_PasteSelectionTitle, JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		segment.insertRange(memoryInspectorState.getBegin(), bytes);
+
+		memoryInspectorState.clearSelection();
+		mainWindow.memoryInspectorPanel.segmentChanged(memoryInspectorState);
+		updateDisassembly(false);
+	}
+
+	/**
+	 * Decodes a plain uppercase hex string with no separators/prefix back
+	 * into bytes - the inverse of {@link #performCopyMemoryInspectorSelection}'s
+	 * hand-written encode loop. There is no shared {@code
+	 * com.wudsn.tools.base.common.HexUtility} decode method to reuse (only
+	 * the encode direction exists there). Returns {@code null} if {@code
+	 * text} (after trimming) is not an even-length string of hex digits.
+	 */
+	private static byte[] decodeHexString(String text) {
+		String trimmed = text.trim();
+		if (trimmed.isEmpty() || trimmed.length() % 2 != 0) {
+			return null;
+		}
+		byte[] result = new byte[trimmed.length() / 2];
+		for (int i = 0; i < result.length; i++) {
+			int high = Character.digit(trimmed.charAt(i * 2), 16);
+			int low = Character.digit(trimmed.charAt(i * 2 + 1), 16);
+			if (high < 0 || low < 0) {
+				return null;
+			}
+			result[i] = (byte) ((high << 4) | low);
+		}
+		return result;
 	}
 
 	/**
