@@ -999,7 +999,7 @@ public final class Disassembly {
 	}
 
 	// ------------------------------------------------------------------
-	// Result generation helpers used by Pass 4/5/6 (not ported yet).
+	// Result generation helpers used by Pass 4/5/6.
 	// ------------------------------------------------------------------
 
 	private void addOrgOrBlock(int segmentIndex, int pc) {

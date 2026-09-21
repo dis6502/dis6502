@@ -20,8 +20,8 @@ import com.wudsn.tools.base.common.HexUtility;
  * segment, its disassembly type information, comments, and (transient,
  * rebuilt on every disassembly pass) symbols/fixups/address labels.
  * <p>
- * Ported from Segment.h / Segment.cpp. {@code Load14} (the
- * workspace-version-1X binary format) is not ported yet.
+ * Ported from Segment.h / Segment.cpp, including {@link #load14} (the
+ * workspace-version-1X binary format, see {@link Workspace1X}).
  *
  * @author Peter Dell
  */

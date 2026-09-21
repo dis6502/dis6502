@@ -9,7 +9,9 @@ package com.wudsn.tools.dis6502.model;
  * Text encoding used for the disassembly output.
  * <p>
  * Ported from Encoding.h. {@code EncodingInfo}/{@code EncodingFactory} (the
- * UI-facing key/text/newline lookup) is not ported yet.
+ * key/text/newline lookup) has no counterpart: the key is the enum
+ * constant's name, and the newline per encoding is {@link
+ * DisassemblyResultWriter}'s own business.
  *
  * @author Peter Dell
  */

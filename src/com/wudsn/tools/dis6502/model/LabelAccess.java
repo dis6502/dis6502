@@ -14,9 +14,9 @@ package com.wudsn.tools.dis6502.model;
  * {@code Equate::AddLabelReference} in the C++ source).
  * <p>
  * Ported from LabelAccess.h. {@code LabelAccessInfo}/{@code
- * LabelAccessFactory} (the UI-facing key/text lookup and combo-box index
- * helper) are not ported yet - they are only needed once the UI layer is
- * ported.
+ * LabelAccessFactory} (the key/text lookup and combo-box index helper) have
+ * no counterpart beyond {@link #getKey}/{@link #fromKey}/{@link
+ * #getQualifier} - the equate dialogs do not need more.
  *
  * @author Peter Dell
  */

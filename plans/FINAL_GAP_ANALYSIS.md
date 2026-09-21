@@ -279,9 +279,11 @@ the future one:
   reassembly round-trips still byte-exact).
 - ~~`C64.guessFileType` always returns `UNKNOWN_FILE`~~ - FIXED 2026-09-21
   with gaps C/D: a load address that fits into memory makes it a `.prg`.
-- Cosmetic, still open: `DisassemblyLine.systemAddress == 0` doubles as the
-  "not an address line, always write it" sentinel, so a system label at
-  `$0000` (`D6510`) is written to every C64 listing even when unreferenced.
+- ~~`DisassemblyLine.systemAddress == 0` doubles as the "not an address line,
+  always write it" sentinel~~ - FIXED 2026-09-22: it is
+  `DisassemblyLine.NO_SYSTEM_ADDRESS` (-1) now, so the C64's system label at
+  `$0000` (`D6510`) is omitted when unreferenced like any other; the C64
+  reassembly unit checks that.
 
 Verified by `ComputerSystemTest.testC64Addresses`/
 `testC64CodeTraceFollowsVector` (a `.prg` whose IRQ handler is reachable only
@@ -336,4 +338,15 @@ handler, with the two loads retagged as low/high byte).
 3. ~~**C + D**, and **I**~~ - done.
 4. ~~**E, F**~~ - done.
 5. ~~**G, H**~~ - done.
-6. Javadoc sweep for the stale "not ported" notes.
+6. ~~Javadoc sweep for the stale "not ported" notes~~ - done 2026-09-22. Every
+   "not ported *yet*" note was checked against the code and rewritten: some
+   were plainly wrong (`Segment.load14`/`EquateList.load1X` exist; every main
+   menu item is wired; the UI layer and the memory inspector exist), the rest
+   now say why there is no counterpart (the `XxxInfo`/`XxxFactory` lookups
+   of `Encoding`/`EquateType`/`ProcessorType`/`LabelAccess`, `Symbol`/`Fixup`
+   XML persistence) instead of implying pending work. The remaining "is not
+   ported" notes describe deliberate decisions and are accurate.
+
+Nothing in this document is open any more. One observation left for a
+future decision, not a gap: the Profile dialog's encoding combo shows the
+enum names (`UTF8`) where C++ shows `EncodingInfo`'s texts (`UTF-8`).

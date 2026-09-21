@@ -22,7 +22,7 @@ import com.wudsn.tools.base.repository.Message;
  * <p>
  * The C++ version is an abstract base class: {@code GetModuleFilePath}/
  * {@code GetSettingsSection} are pure virtual (implemented by the concrete
- * application class in {@code ui/}, not ported yet), and message methods
+ * application class in {@code ui/}), and message methods
  * take a {@code Text::TextID} that gets resolved through {@code
  * Application::GetText}/{@code Text::Get} at call time - the base class's
  * own {@code GetText} is itself just a stub returning the numeric ID as a
@@ -37,9 +37,10 @@ import com.wudsn.tools.base.repository.Message;
  * it (like {@link com.wudsn.tools.dis6502.model.WorkspaceLogic}) take an
  * {@code Application} instance through their constructor instead.
  * <p>
- * This is concrete, not abstract, unlike the C++ version - there is no
- * ported UI layer yet to subclass it, and a plain instance is all any
- * ported logic class currently needs. {@link #getSettingsSection} is
+ * This is concrete, not abstract, unlike the C++ version: a plain instance
+ * is all the model classes and the unit tests need, and {@code
+ * com.wudsn.tools.dis6502.ui.UIApplication} only adds routing the messages
+ * to the log panel on top. {@link #getSettingsSection} is
  * backed by {@link Preferences} rather than a Windows INI file (see
  * {@link ApplicationSettingsSection}'s javadoc), and {@link
  * #getModuleFilePath} resolves relative to the directory containing this

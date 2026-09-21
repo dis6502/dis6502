@@ -7,7 +7,9 @@ package com.wudsn.tools.dis6502.model;
 
 /**
  * Ported from ProcessorType.h. {@code ProcessorTypeInfo}/{@code
- * ProcessorTypeFactory} (the UI-facing key/text lookup) is not ported yet.
+ * ProcessorTypeFactory} (the key/text lookup) has no counterpart: the key
+ * is the enum constant's name, and the text the segment properties dialog
+ * shows is the {@link InstructionSet}'s own name.
  *
  * @author Peter Dell
  */

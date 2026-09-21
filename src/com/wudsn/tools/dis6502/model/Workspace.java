@@ -21,10 +21,9 @@ import com.wudsn.tools.base.common.Log;
  * SegmentListChangedListener} to keep {@code HandleEquateListChanged}/{@code
  * HandleSegmentListChanged} out of its public interface, Java interface
  * methods are always public - there is no private-inheritance equivalent.
- * {@code Load1X}/{@code Save1X} and {@code Load}/{@code Save} of a whole
- * workspace file (the {@code Format} enum and {@code WorkspaceLogic}) are
- * not ported yet, since they depend on application-level file I/O and
- * logging.
+ * Loading and saving a whole workspace file is not done here but by {@link
+ * WorkspaceLogic} (and {@link Workspace1X} for the legacy binary format),
+ * since it depends on application-level file I/O and logging.
  * <p>
  * {@link #getMemoryInspectorState()} is this workspace's single, owned
  * {@link MutableMemoryInspectorState} instance (constructed once, alongside {@link

@@ -12,8 +12,9 @@ import java.util.Comparator;
  * up, and the index of the segment where the referenced label is located.
  * <p>
  * Ported from Fixup.h / Fixup.cpp. {@code SerializeTo}/{@code
- * DeserializeFrom} (XML persistence) are not ported yet - it is a transient,
- * not-serialized attribute of {@code Segment} anyway.
+ * DeserializeFrom} (XML persistence) are not ported: it is a transient
+ * attribute of {@code Segment}, rebuilt by every disassembly, and the C++
+ * version's own calls to them are commented out.
  *
  * @author Peter Dell
  */

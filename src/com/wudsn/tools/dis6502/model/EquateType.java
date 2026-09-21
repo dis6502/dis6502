@@ -9,7 +9,8 @@ package com.wudsn.tools.dis6502.model;
  * Type of one line in an equates file / one entry in an {@link EquateList}.
  * <p>
  * Ported from EquateType.h. {@code EquateTypeInfo}/{@code EquateTypeFactory}
- * (the UI-facing key/text lookup) is not ported yet.
+ * (the key/text lookup) has no counterpart - nothing shows an equate type to
+ * the user, and the key is the enum constant's name.
  *
  * @author Peter Dell
  */

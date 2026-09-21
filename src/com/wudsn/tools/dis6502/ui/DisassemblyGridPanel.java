@@ -39,9 +39,8 @@ import com.wudsn.tools.dis6502.model.DisassemblySectionType;
  * <p>
  * Ported from ui/DisassemblyControlImpl.cpp's paint routine: virtualized
  * scrolling relies on Swing's clip-rect-based repaint the same way {@link
- * HexGridPanel} does, and inline editing/the full popup menu
- * are not ported - {@link DisassemblyPanel} predates this class and never
- * had them either; {@link #highlightLine}/{@link #scrollLineToVisible}
+ * HexGridPanel} does. The popup menu is {@link DisassemblyPanel}'s, not
+ * this class's; {@link #highlightLine}/{@link #scrollLineToVisible}
  * carry over from it, used for both search-result/cross-reference
  * navigation and (new here) click/drag line selection, and {@link
  * #lineIndexAtY} is the pixel-to-line half of that selection mapping, used

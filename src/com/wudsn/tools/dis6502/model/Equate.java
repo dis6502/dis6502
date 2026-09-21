@@ -13,9 +13,9 @@ import com.wudsn.tools.base.common.HexUtility;
  * One entry read from (or to be written to) an equates file: an empty line,
  * a comment line, or a label definition line ("LABEL = $1234 ; comment").
  * <p>
- * Ported from Equate.h / Equate.cpp. The workspace-version-1X binary
- * Load1X/Save1X format is not ported yet; deferred to when {@code
- * Workspace}'s own binary-format loading is ported.
+ * Ported from Equate.h / Equate.cpp. Reading the workspace-version-1X
+ * binary format is {@link EquateList#load1X}'s job; writing it ({@code
+ * Save1X}) is not ported - see {@link Workspace1X}.
  * <p>
  * Only {@link EquateList} and this class's own {@link #readFrom} may create
  * and initialize instances (it was a C++ {@code friend class}); the

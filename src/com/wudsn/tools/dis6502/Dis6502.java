@@ -98,7 +98,7 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * dispatch thread.
  * <p>
  * Ported from ui/Main.h / Main.cpp / ui/MainController.h / MainController.cpp
- * / ui/MainFile.cpp / ui/MainMenu.cpp, reduced to a first working slice: the
+ * / ui/MainFile.cpp / ui/MainMenu.cpp: the
  * main window shell (see {@link MainWindow}) plus workspace New (see {@link
  * #performNewWorkspace}/{@link WorkspaceDialog})/Open/Save/Save As/Save
  * Disassembly Files (see {@link #performSaveDisassemblyFiles})/Write Boot
@@ -112,7 +112,10 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * EquateRangeDialog}), the View menu's Display as Screen Code/No
  * Disassembly/Double Font Height toggles and Default Folders/Profile
  * dialogs (see {@link DefaultFoldersDialog}/{@link ProfileDialog}), and
- * Help &gt; About.
+ * Help &gt; About. Every way of opening a file - menu, Recent Files/
+ * Workspaces, the command line (see {@link CommandLineArguments}), drag and
+ * drop - goes through {@link #openFile}; every file chooser through {@link
+ * FileChoosers}.
  * {@link #confirmClearWorkspace} mirrors {@code Main::PromptToClearWorkspace};
  * {@link #updateDisassembly} mirrors {@code Main::UpdateDisassembly},
  * called explicitly after each action instead of through the reactive
@@ -939,7 +942,7 @@ public final class Dis6502 {
 		return true;
 	}
 
-	/** The per-{@link FileType}/add-or-open dialog title. Ported ad hoc; the C++ source's fuller {@code FileTypeFactory} text lookup is not ported. */
+	/** The per-{@link FileType}/add-or-open dialog title. The C++ version composes it from {@code FileTypeInfo}'s text instead ("Open " + text); these are separate, fully worded texts, which translate better. */
 	private static String getFileTypeOpenTitle(FileType fileType, boolean add) {
 		switch (fileType) {
 		case WORKSPACE_FILE:

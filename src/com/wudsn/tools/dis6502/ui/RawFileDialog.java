@@ -39,10 +39,9 @@ import com.wudsn.tools.dis6502.Texts;
  * <p>
  * Ported from ui/RawFileDialog.h / RawFileDialog.cpp, with one structural
  * simplification: the C++ version lets the user pick the byte range by
- * dragging a selection across a {@code MemoryInspectorControl} hex dump -
- * that control is the not-yet-ported memory inspector itself (see the
- * {@code ui} package's other panel classes), so this port shows the same
- * read-only hex dump but replaces drag-selection with explicit "Start
+ * dragging a selection across a {@code MemoryInspectorControl} hex dump.
+ * This dialog was ported before the memory inspector was, so it shows the
+ * same read-only hex dump but replaces drag-selection with explicit "Start
  * Offset"/"End Offset" fields, pre-filled with the whole file (offset 0 to
  * the last byte) to match {@code MemoryInspectorControl::GetSelection}'s
  * {@code bDefaultAll} behavior when nothing is selected. Address, like the

@@ -18,7 +18,7 @@ import com.wudsn.tools.dis6502.Actions;
  * The application's main menu bar.
  * <p>
  * Ported from ui/MainWindowMenu.h / MainWindowMenu.cpp and dis6502.rc's
- * {@code MAIN_MENU} resource, simplified for this first pass: File &gt;
+ * {@code MAIN_MENU} resource: File &gt;
  * New/Open/Save/Save As/Save Disassembly Files.../Exit, File &gt; Open
  * File/Add File &gt; Executable/ROM Image/Cassette Image/Raw/Disk Image
  * Executable/Disk Image Boot Sectors/Disk Image Sectors File (see {@link
@@ -30,10 +30,9 @@ import com.wudsn.tools.dis6502.Actions;
  * {@link EquateRangeDialog}), View &gt; Display as Screen Code/No
  * Disassembly/Double Font Height/Default Folders.../Profile... dialogs
  * (see {@link MemoryInspectorPanel}/{@link DefaultFoldersDialog}/{@link
- * ProfileDialog}), and Help &gt; About are wired to real actions (see
- * {@code Dis6502}); every other menu item is present (matching the .rc
- * structure, for visual completeness) but disabled, since the dialogs/
- * logic they need are not ported yet.
+ * ProfileDialog}), and Help &gt; About. Every item is wired to its action
+ * by {@code Dis6502}, which also decides when the File menu's items are
+ * enabled (see {@code Dis6502.updateFileMenuState}).
  * <p>
  * Every {@code JMenu}/{@code JMenuItem} is built from an {@link Action} via
  * {@link ElementFactory} instead of a literal string label - see {@link
