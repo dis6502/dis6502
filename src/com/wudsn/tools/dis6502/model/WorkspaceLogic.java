@@ -14,6 +14,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 import com.wudsn.tools.dis6502.Application;
+import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Text;
 
 /**
@@ -86,7 +87,7 @@ public final class WorkspaceLogic {
 		} catch (IOException ex) {
 			workspace.endUpdate();
 			workspace.init();
-			application.sendErrorMessage(Text.IDS_ERR_BAD_WORKSPACE);
+			application.sendMessage(Messages.E003);
 			application.sendErrorMessage(ex);
 		}
 
@@ -163,7 +164,7 @@ public final class WorkspaceLogic {
 			segmentListInserter.apply();
 		} catch (RuntimeException ex) {
 			segmentListInserter.cancel();
-			application.sendErrorMessage(Text.IDS_ERR_READING_FILE, String.valueOf(ex.getMessage()));
+			application.sendMessage(Messages.E007, String.valueOf(ex.getMessage()));
 		}
 	}
 
@@ -231,7 +232,7 @@ public final class WorkspaceLogic {
 			segmentListInserter.apply();
 		} catch (RuntimeException ex) {
 			segmentListInserter.cancel();
-			application.sendErrorMessage(Text.IDS_ERR_READING_FILE, String.valueOf(ex.getMessage()));
+			application.sendMessage(Messages.E007, String.valueOf(ex.getMessage()));
 		}
 	}
 }

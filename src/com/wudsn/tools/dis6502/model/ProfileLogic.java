@@ -13,6 +13,7 @@ import java.nio.file.Files;
 
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.ApplicationSettingsSection;
+import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Text;
 
 /**
@@ -53,7 +54,7 @@ public final class ProfileLogic {
 			}
 			return true;
 		} catch (IOException ex) {
-			application.sendErrorMessage(Text.IDS_ERR_BAD_PROFILE);
+			application.sendMessage(Messages.E002);
 			application.sendErrorMessage(ex);
 			return false;
 		}

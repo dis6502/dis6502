@@ -1489,7 +1489,7 @@ public final class Dis6502 {
 	private void performWriteBootDisk() {
 		Segment segment = memoryInspectorState.getSegment();
 		if (segment == null) {
-			application.sendErrorMessage(Text.IDS_ERR_NO_SEGMENT);
+			application.sendMessage(Messages.E006);
 			return;
 		}
 

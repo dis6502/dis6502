@@ -68,10 +68,6 @@ public final class Text extends NLS {
 	public static String IDS_EQUATE_LIST_LOADED;
 	public static String IDS_ERR_ATARI_FILE;
 	public static String IDS_ERR_BAD_MODE_FOR_LOHI;
-	public static String IDS_ERR_BAD_PROFILE;
-	public static String IDS_ERR_BAD_WORKSPACE;
-	public static String IDS_ERR_CANNOT_PARSE_EQUATE_LINE;
-	public static String IDS_ERR_EXCEPTION;
 	public static String IDS_ERR_FNT_NOT_FOUND;
 	public static String IDS_ERR_IMG_BAD_MAGIC;
 	public static String IDS_ERR_IMG_DISK_ERROR;
@@ -86,9 +82,7 @@ public final class Text extends NLS {
 	public static String IDS_ERR_NO_FREE_SEG;
 	public static String IDS_ERR_NO_GUESS_MEMORY;
 	public static String IDS_ERR_NO_LABEL_MEMORY;
-	public static String IDS_ERR_NO_SEGMENT;
 	public static String IDS_ERR_READING_ATR;
-	public static String IDS_ERR_READING_FILE;
 	public static String IDS_ERR_SEGMENT_OVERLAP;
 	public static String IDS_EXPORT_USER_EQU;
 	public static String IDS_FILE_IO_ERR_WRITING_FILE;

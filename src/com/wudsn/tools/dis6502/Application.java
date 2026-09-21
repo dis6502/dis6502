@@ -90,7 +90,7 @@ public class Application {
 	}
 
 	public void sendErrorMessage(Throwable ex) {
-		sendErrorMessage(Text.IDS_ERR_EXCEPTION, String.valueOf(ex.getMessage()));
+		sendMessage(Messages.E005, String.valueOf(ex.getMessage()));
 	}
 
 	public ApplicationSettingsSection getSettingsSection(String name) {

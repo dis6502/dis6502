@@ -15,6 +15,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 
 import com.wudsn.tools.dis6502.Application;
+import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Text;
 
 /**
@@ -59,7 +60,7 @@ public final class EquateListLogic {
 			while ((line = reader.readLine()) != null) {
 				EquateList.EquateResult result = equateList.addEquate(line);
 				if (!result.error.isEmpty()) {
-					application.sendErrorMessage(Text.IDS_ERR_CANNOT_PARSE_EQUATE_LINE, line, result.error);
+					application.sendMessage(Messages.E004, line, result.error);
 				}
 			}
 		} catch (IOException ex) {
