@@ -57,16 +57,6 @@ public final class Text extends NLS {
 	public static String IDS_EQUATES_CONFIRM_CLEAR_USER_EQUATES;
 	public static String IDS_FIND_STRING_DIALOG_STRING_NOT_FOUND_MESSAGE;
 	public static String IDS_FIND_STRING_DIALOG_TITLE;
-	/**
-	 * Ported but not yet wired up: {@code DisassemblyProgressMonitor}'s
-	 * base-class logging (matching C++'s {@code DisassemblyProgressMonitor::
-	 * SendInfo}) is a documented TODO on that class - see its own javadoc.
-	 */
-	public static String IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_INFO;
-	/** See {@link #IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_INFO}'s note - same TODO, the "pass" log line. */
-	public static String IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_PASS;
-	/** See {@link #IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_INFO}'s note - same TODO, the "segment" log line. */
-	public static String IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_SEGMENT;
 	public static String IDS_LOG_TITLE;
 	public static String IDS_MAIN_FILE_NEW_WORKSPACE_MESSAGE;
 	public static String IDS_MAIN_FILE_NEW_WORKSPACE_TITLE;

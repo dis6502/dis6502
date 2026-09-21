@@ -294,6 +294,30 @@ public final class Messages extends NLS {
 	 */
 	public static Message E067;
 
+	/**
+	 * {@link com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor#sendInfo}'s
+	 * verbose per-byte trace log line - moved from {@code
+	 * Text.IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_INFO}, wiring up a Text.java
+	 * constant that had never actually been referenced from Java code
+	 * before (found while auditing {@code Text.java} for unreferenced
+	 * constants - see {@code plans/REMAINING_GAPS_OVERVIEW.md}'s gap #9).
+	 */
+	public static Message I068;
+
+	/**
+	 * {@link com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor#setPass}'s
+	 * "starting pass" log line - moved from {@code
+	 * Text.IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_PASS}.
+	 */
+	public static Message I069;
+
+	/**
+	 * {@link com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor#setSegmentNumber}'s
+	 * "starting segment" log line - moved from {@code
+	 * Text.IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_SEGMENT}.
+	 */
+	public static Message I070;
+
 	static {
 		initializeClass(Messages.class, null);
 	}

@@ -21,6 +21,7 @@ import javax.swing.SwingWorker;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
@@ -63,10 +64,11 @@ public final class DisassemblyProgressDialog extends JDialog {
 	private final JLabel passLabel = new JLabel("-");
 	private final JLabel segmentLabel = new JLabel("-");
 	private final AtomicBoolean cancelled = new AtomicBoolean();
-	private final DisassemblyProgressMonitor monitor = new Monitor();
+	private final DisassemblyProgressMonitor monitor;
 
-	public DisassemblyProgressDialog(Frame owner) {
+	public DisassemblyProgressDialog(Frame owner, Application application) {
 		super(owner, "6502 Disassembler", true);
+		monitor = new Monitor(application);
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
 		JPanel content = new JPanel(new GridBagLayout());
@@ -113,6 +115,10 @@ public final class DisassemblyProgressDialog extends JDialog {
 
 	private final class Monitor extends DisassemblyProgressMonitor {
 
+		Monitor(Application application) {
+			super(application);
+		}
+
 		/** Ported from DisassemblyProgressDialog::DisassembleInternal/InitDialog - see this class's javadoc for why the mechanism differs. */
 		@Override
 		protected void disassembleInternal(Disassembly disassembly) {
@@ -133,17 +139,27 @@ public final class DisassemblyProgressDialog extends JDialog {
 			setVisible(true); // Blocks until done() hides the dialog - this is a modal dialog.
 		}
 
-		/** Ported from DisassemblyProgressDialog::SetPass. */
+		/**
+		 * Ported from DisassemblyProgressDialog::SetPass - sets the inherited
+		 * {@code pass} field directly rather than calling {@code
+		 * super.setPass(pass)}, matching how the C++ override updates its own
+		 * {@code pass} member without calling the base class's logging
+		 * implementation (see this class's own javadoc).
+		 */
 		@Override
 		public void setPass(String pass) {
-			super.setPass(pass);
+			this.pass = pass;
 			SwingUtilities.invokeLater(() -> {
 				passLabel.setText(pass);
 				segmentLabel.setText("-");
 			});
 		}
 
-		/** Ported from DisassemblyProgressDialog::SetSegmentNumber. */
+		/**
+		 * Ported from DisassemblyProgressDialog::SetSegmentNumber - like
+		 * {@link #setPass}, deliberately never calls {@code
+		 * super.setSegmentNumber(segmentNumber)}, so it doesn't log either.
+		 */
 		@Override
 		public void setSegmentNumber(int segmentNumber) {
 			SwingUtilities.invokeLater(() -> segmentLabel.setText(String.valueOf(segmentNumber)));

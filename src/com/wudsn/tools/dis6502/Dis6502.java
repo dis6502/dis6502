@@ -1559,7 +1559,7 @@ public final class Dis6502 {
 			return;
 		}
 		Disassembly disassembly = new Disassembly();
-		DisassemblyProgressDialog progressDialog = new DisassemblyProgressDialog(mainWindow.getFrame());
+		DisassemblyProgressDialog progressDialog = new DisassemblyProgressDialog(mainWindow.getFrame(), application);
 		DisassemblyProgressMonitor progressMonitor = progressDialog.getMonitor();
 		disassembly.setWorkspace(workspace);
 		disassembly.setProgressMonitor(progressMonitor);
