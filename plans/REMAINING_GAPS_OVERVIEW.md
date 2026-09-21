@@ -188,57 +188,55 @@ here - both repos continue to change.
   drag-select/rendering verification in the real running app is still a
   manual follow-up.
 
-### 7. The main window's part-window headers are missing their C++ background coloring - and three of the five have no header at all
+### 7. ~~The main window's part-window headers are missing their C++ background coloring - and three of the five have no header at all~~ - FIXED 2026-09-21
 
-- C++'s `Main::PaintMainWindow` (`src/ui/Main.cpp:322-429`) paints a colored
-  title bar above each of the five part windows, each with its own flat
-  background color and black (or, for the memory inspector, focus-dependent
-  black/gray) text:
-  - Segment List: `RGB(255,255,0)` (yellow) - `Main.cpp:336`
-  - Disassembly: `RGB(0,255,0)` (green) - `Main.cpp:365`
-  - Memory Inspector ("Dump"): `RGB(0,255,255)` (cyan) - `Main.cpp:375`
-  - Cross-reference ("XRef"): `RGB(255,192,192)` (light pink) - `Main.cpp:410`
-  - Log: `RGB(192,192,255)` (light lavender) - `Main.cpp:418`
-
-  (Confirmed against a real build's screenshot, not just the source -
-  matches exactly.)
-- **In Java, only two of the five panels show a header at all**, and neither
-  is colored:
-  - `MemoryInspectorPanel` (`MemoryInspectorPanel.java:235`) and `XRefPanel`
-    (`XRefPanel.java:48`) each use a plain `javax.swing.border.TitledBorder`
-    (`BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),
-    ...)`) - correct title text, but rendered in the Look and Feel's default
-    title color/font, with no per-panel background color at all.
-  - `SegmentListPanel`, `DisassemblyPanel`, and `LogPanel` have **no header
-    of any kind** - no `TitledBorder`, no label, nothing; confirmed by grep,
-    no `JLabel`/`TitledBorder` usage exists in any of the three files.
-- **The C++ title text itself was already ported into `Text.properties` but
-  is entirely unused**: `Text.IDS_SEGMENT_TITLE`/
-  `IDS_SEGMENT_TITLE_NO_SEGMENTS_LOADED`, `IDS_DIS_TITLE`, and `IDS_LOG_TITLE`
-  (`Text.java`/`Text.properties`) have zero references anywhere under `ui/`
-  or in `Dis6502.java` - confirmed by grep. (`MemoryInspectorPanel`'s and
-  `XRefPanel`'s own title text is built from hardcoded literals/`String
-  .format` calls instead of the matching `IDS_DUMP_TITLE_*`/`IDS_XREF_TITLE_*`
-  constants that were also already ported - a smaller, related loose end
-  worth fixing alongside this.)
-- **Impact**: beyond the missing color-coding itself, three of the five
-  panels in the main window currently show no title/status line at all,
-  where C++ always shows one (e.g. "No segments loaded" / "Disassembly" /
-  "Log") - a bigger functional gap than "just" cosmetic coloring, since the
-  segment-list and log panels lose useful at-a-glance status text (segment
-  count/filename, a static "Disassembly" label) as well as the color coding.
-- **Fix shape**: give each of the five part panels a `TitledBorder` (as
-  `MemoryInspectorPanel`/`XRefPanel` already do) with a custom
-  `Font`/background matching the C++ RGB values above - `TitledBorder`
-  doesn't support a background fill directly, so this likely needs either a
-  small custom `Border`/header `JPanel` (a colored `JLabel` strip above each
-  scroll pane, matching how `Main.cpp` paints a filled rectangle behind the
-  text) rather than `TitledBorder`'s outline-only title. Wire
-  `SegmentListPanel`/`DisassemblyPanel`/`LogPanel` up to the already-ported
-  `Text.IDS_SEGMENT_TITLE*`/`IDS_DIS_TITLE`/`IDS_LOG_TITLE` constants at the
-  same time, and switch `MemoryInspectorPanel`/`XRefPanel` to their matching
-  `IDS_DUMP_TITLE_*`/`IDS_XREF_TITLE_*` constants instead of the current
-  hardcoded literals, for full fidelity.
+- **Was**: C++'s `Main::PaintMainWindow` (`src/ui/Main.cpp:322-429`) paints a
+  colored title bar above each of the five part windows (Segment List
+  yellow, Disassembly green, Memory Inspector cyan, XRef light pink, Log
+  light lavender - see the original write-up's exact `RGB()` values). In
+  Java, only `MemoryInspectorPanel`/`XRefPanel` showed any header at all
+  (a plain, uncolored `TitledBorder`); `SegmentListPanel`/`DisassemblyPanel`/
+  `LogPanel` showed no header whatsoever, and the already-ported
+  `Text.IDS_SEGMENT_TITLE*`/`IDS_DIS_TITLE`/`IDS_LOG_TITLE` resources were
+  completely unused.
+- **Fix**: new package-private `PartHeaderPanel` (`ui`) - a small
+  `JComponent`, opaque, filling its whole background then painting text via
+  `ComputerFont#drawText` (at `(1,1)`, matching `DC::ExtTextOut(1, 1, rc,
+  title)`'s offset and its `ETO_OPAQUE` whole-rectangle fill) - added as a
+  `BorderLayout.NORTH` child of all five part panels, each constructed with
+  its C++ `RGB()` value as a `java.awt.Color`. The C++ source's
+  focus-dependent black/gray memory-inspector text color was deliberately
+  not replicated: that exact line carries its own `// TODO Detection of
+  focus does not actually work.` comment, so it never actually returns
+  anything but black in real C++ operation either - `PartHeaderPanel`
+  always paints black text, matching real observed behavior rather than
+  the broken-in-C++-too focus branch.
+  - `SegmentListPanel`/`DisassemblyPanel`/`LogPanel` now wire up the
+    previously-unused `Text.IDS_SEGMENT_TITLE`/
+    `IDS_SEGMENT_TITLE_NO_SEGMENTS_LOADED`/`IDS_DIS_TITLE`/`IDS_LOG_TITLE`
+    constants. `SegmentListPanel` gets a new `setFileName(String)`, called
+    from `Dis6502.updateTitle()` (the same 11 call sites that already keep
+    the main window's own frame title in sync with `currentFile`) - its
+    `refresh()` recomputes the header text from the cached file name plus
+    the segment list's current emptiness on every workspace change, so it
+    self-corrects for segment-count changes that happen without a
+    file-open/close event too (e.g. Disk Image Sectors' "Add Sector").
+  - `MemoryInspectorPanel`/`XRefPanel` switched from a `TitledBorder` plus
+    hand-written `String.format` literals to `PartHeaderPanel` plus the
+    matching `Text.IDS_DUMP_TITLE_*`/`IDS_XREF_TITLE_*` resources - which
+    surfaced and fixed two small pre-existing wording/fidelity divergences
+    from the C++ resource text along the way: `MemoryInspectorPanel`'s
+    "Selection" title never included the segment number the "Segment" title
+    did, unlike `IDS_DUMP_TITLE_SELECTION`'s own `"Selection {0}: ..."`;
+    `XRefPanel`'s hardcoded "No label selected"/"N Reference(s) to \"...\""
+    didn't match the resource text's "No Label Selected"/"N reference(s)
+    for \"...\"".
+- Verified with a clean `mvn -o compile`/`test-compile`, the full
+  `TestRunner` suite (13 tests, unaffected), and - since this environment
+  has a real, non-headless display - an actual launch of the running app
+  with a `java.awt.Robot` screenshot: all five headers render with the
+  correct colors and text, matching the reference C++ screenshot exactly
+  (including the corrected XRef wording).
 
 ## Divergences where the Java port fixed a real C++ bug (not a Java gap)
 
@@ -448,10 +446,8 @@ doesn't support, without a separate decision to add a genuinely new feature:
    blocked on `MemoryBlock` gaining real resize support; needs a scoping
    decision (faithful-but-broken port vs. a fixed reimplementation) before
    any code is written, per the porting guide's process-lesson rule.
-6. **Gap #7** (part-window header coloring, and three panels missing a
-   header entirely) - moderate effort (touches all five main-window panels),
-   but more than cosmetic: three panels currently show no status text at
-   all, where C++ always does.
+6. ~~**Gap #7** (part-window header coloring, and three panels missing a
+   header entirely)~~ - **fixed 2026-09-21**, see above.
 7. **Gap #4** (`LogPanel` columns/coloring) - cosmetic, low risk, low
    urgency.
 8. **Gap #5** (`MainUITest.cpp` self-test harness) - needs an explicit
