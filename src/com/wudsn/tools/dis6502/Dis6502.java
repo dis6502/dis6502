@@ -239,7 +239,7 @@ public final class Dis6502 {
 
 		mainWindow = new MainWindow();
 		application.setLogPanel(mainWindow.logPanel);
-		application.sendInfoMessage(Text.IDS_LOG_BETA_MESSAGE, "4.0", "2026-09-19");
+		application.sendInfoMessage(Text.IDS_LOG_BETA_MESSAGE, "4.0", Texts.Dis6502_BetaMessageDate);
 		mainWindow.segmentListPanel.setWorkspace(workspace);
 		mainWindow.segmentListPanel.moveUpMenuItem.addActionListener(e -> workspace.getSegmentList().moveSelectedSegmentUp());
 		mainWindow.segmentListPanel.moveDownMenuItem.addActionListener(e -> workspace.getSegmentList().moveSelectedSegmentDown());
