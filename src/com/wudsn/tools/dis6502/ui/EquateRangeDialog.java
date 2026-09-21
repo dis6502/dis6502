@@ -128,7 +128,7 @@ public final class EquateRangeDialog extends JDialog {
 		int endAddress = getAddress(endAddressField);
 		Equate selectedEquate = (Equate) baseEquateComboBox.getSelectedItem();
 
-		String title = "Define address range";
+		String title = Texts.EquateRangeDialog_Title;
 		if (startAddress == 0) {
 			JOptionPane.showMessageDialog(this, "Invalid start address.", title, JOptionPane.ERROR_MESSAGE);
 		} else if (endAddress == 0) {

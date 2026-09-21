@@ -148,7 +148,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 			writeBootDisk(file.getPath());
 			setVisible(false);
 		} catch (IOException ex) {
-			JOptionPane.showMessageDialog(this, ex.getMessage(), "Write Boot Disk", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, ex.getMessage(), Texts.SegmentWriteBootDiskDialog_Title, JOptionPane.ERROR_MESSAGE);
 			setVisible(false);
 		}
 	}

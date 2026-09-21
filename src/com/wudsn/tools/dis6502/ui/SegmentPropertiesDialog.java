@@ -129,7 +129,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 		int end = begin + segment.getSize() - 1; // TODO Will not work with >64K.
 
 		if (begin > end) { // In case of 64K overflow.
-			JOptionPane.showMessageDialog(this, Messages.E037.format(), "Segment Properties", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, Messages.E037.format(), Texts.SegmentPropertiesDialog_Title, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 

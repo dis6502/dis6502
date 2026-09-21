@@ -431,7 +431,7 @@ public final class Dis6502 {
 		if (!workspaceLogic.load(workspace, entry.getFilePath())) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
 					"Could not open workspace '" + entry.getFilePath() + "'. See the log for details.",
-					"Open Workspace", JOptionPane.ERROR_MESSAGE);
+					Texts.Dis6502_OpenWorkspaceTitle, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 		currentFile = new File(entry.getFilePath());
@@ -454,7 +454,7 @@ public final class Dis6502 {
 
 		if (!workspaceLogic.addFile(workspace, entry.getFileType(), entry.getFilePath())) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					"Could not open file '" + entry.getFilePath() + "'. See the log for details.", "Open File",
+					"Could not open file '" + entry.getFilePath() + "'. See the log for details.", Texts.Dis6502_OpenFileTitle,
 					JOptionPane.ERROR_MESSAGE);
 			return;
 		}
@@ -508,7 +508,7 @@ public final class Dis6502 {
 		File file = fileChooser.getSelectedFile();
 		if (!workspaceLogic.load(workspace, file.getPath())) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					"Could not open workspace '" + file.getPath() + "'. See the log for details.", "Open Workspace",
+					"Could not open workspace '" + file.getPath() + "'. See the log for details.", Texts.Dis6502_OpenWorkspaceTitle,
 					JOptionPane.ERROR_MESSAGE);
 			return;
 		}
@@ -702,7 +702,7 @@ public final class Dis6502 {
 		}
 		if (fileBuffer.length == 0) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(), "File in disk image is empty.",
-					"Open Disk Image Executable File", JOptionPane.ERROR_MESSAGE);
+					Texts.DiskImageExecutableFileDialog_Title, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
@@ -908,7 +908,7 @@ public final class Dis6502 {
 		String message = equateList.getProperty() == WorkspaceProperty.SYSTEM_EQUATES
 				? Text.IDS_EQUATES_CONFIRM_CLEAR_SYSTEM_EQUATES
 				: Text.IDS_EQUATES_CONFIRM_CLEAR_USER_EQUATES;
-		if (JOptionPane.showConfirmDialog(mainWindow.getFrame(), message, "Clear Equates",
+		if (JOptionPane.showConfirmDialog(mainWindow.getFrame(), message, Texts.Dis6502_ClearEquatesTitle,
 				JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 			equateList.clear();
 			updateDisassembly(false); // Matches Main::HandleWorkspaceChanged's non-forced refresh on a SYSTEM_EQUATES/USER_EQUATES change.
@@ -1154,18 +1154,18 @@ public final class Dis6502 {
 		int size = memoryInspectorState.getSize();
 
 		if (begin == 0) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E031.format(), "Set Type", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E031.format(), Texts.Dis6502_SetTypeTitle, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 		if (size != 1) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E032.format(), "Set Type", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E032.format(), Texts.Dis6502_SetTypeTitle, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
 		int previousOpcode = segment.getData(begin - 1);
 		InstructionSet instructionSet = workspace.getInstructionSet(segment.processorType);
 		if (instructionSet.getInstruction(previousOpcode).getOperandMode() != OperandMode.Immediate) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E025.format(), "Set Type", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E025.format(), Texts.Dis6502_SetTypeTitle, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 

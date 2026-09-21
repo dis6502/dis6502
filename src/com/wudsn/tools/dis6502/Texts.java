@@ -81,6 +81,17 @@ public final class Texts extends NLS {
 	/** {@link com.wudsn.tools.dis6502.ui.SelectGraphicsDialog}'s window title. */
 	public static String SelectGraphicsDialog_Title;
 
+	/** {@link Dis6502#openRecentWorkspace}/{@link Dis6502#performOpenWorkspace}'s "could not open workspace" error dialog title. */
+	public static String Dis6502_OpenWorkspaceTitle;
+	/** {@link Dis6502#openRecentFile}'s "could not open file" error dialog title. */
+	public static String Dis6502_OpenFileTitle;
+	/** {@link Dis6502#performClearEquates}'s confirmation dialog title. */
+	public static String Dis6502_ClearEquatesTitle;
+	/** {@link com.wudsn.tools.dis6502.ui.ProfileDialog#performLoadProfile}'s "could not load profile" error dialog title. */
+	public static String ProfileDialog_LoadTitle;
+	/** {@link Dis6502#performSetMemoryInspectorLoHiType}'s error dialog title. */
+	public static String Dis6502_SetTypeTitle;
+
 	static {
 		initializeClass(Texts.class, null);
 	}

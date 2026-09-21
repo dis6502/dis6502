@@ -218,7 +218,7 @@ public final class RawFileDialog extends JDialog {
 	public boolean show(File file) throws IOException {
 		fileBuffer = Files.readAllBytes(file.toPath());
 		if (fileBuffer.length == 0) {
-			JOptionPane.showMessageDialog(this, "File is empty.", "Open Raw File", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, "File is empty.", Texts.RawFileDialog_Title, JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
 
