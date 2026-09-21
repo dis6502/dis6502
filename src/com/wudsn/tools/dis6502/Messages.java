@@ -174,9 +174,9 @@ public final class Messages extends NLS {
 
 	/**
 	 * {@link Dis6502#performOpenFile}/{@link Dis6502#performOpenDiskImageExecutableFile}'s
-	 * "could not add/open file" error dialog message - one field for both,
-	 * parameterized on the add/open verb as well as the file path, since
-	 * both call sites build the exact same template text by hand today.
+	 * "could not add file" error dialog message - shared by both call
+	 * sites' {@code add == true} case; see {@link #E049} for the
+	 * {@code add == false} ("could not open file") case.
 	 */
 	public static Message E040;
 
@@ -203,6 +203,14 @@ public final class Messages extends NLS {
 
 	/** {@link com.wudsn.tools.dis6502.ui.RawFileDialog#show}'s "file is empty" error dialog message. */
 	public static Message E048;
+
+	/**
+	 * {@link Dis6502#performOpenFile}/{@link Dis6502#performOpenDiskImageExecutableFile}'s
+	 * "could not open file" error dialog message - the {@code add == false}
+	 * counterpart of {@link #E040}, split out from it into its own field
+	 * (was previously one field parameterized on the add/open verb).
+	 */
+	public static Message E049;
 
 	static {
 		initializeClass(Messages.class, null);

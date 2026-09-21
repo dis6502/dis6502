@@ -553,7 +553,8 @@ public final class Dis6502 {
 		}
 
 		if (!workspaceLogic.addFile(workspace, fileType, file.getPath())) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E040.format(add ? "add" : "open", file.getPath()),
+			JOptionPane.showMessageDialog(mainWindow.getFrame(),
+					(add ? Messages.E040 : Messages.E049).format(file.getPath()),
 					(add ? "Add " : "Open ") + fileTypeDisplayName, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
@@ -717,7 +718,7 @@ public final class Dis6502 {
 		}
 		if (!success) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					Messages.E040.format(add ? "add" : "open", dialog.getExecutableFileName()),
+					(add ? Messages.E040 : Messages.E049).format(dialog.getExecutableFileName()),
 					(add ? "Add " : "Open ") + "Disk Image Executable File", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
