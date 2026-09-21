@@ -25,9 +25,9 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.wudsn.tools.base.Actions;
+import com.wudsn.tools.base.common.FileUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.base.repository.DataType;
 import com.wudsn.tools.dis6502.DataTypes;
@@ -512,7 +512,7 @@ public final class ProfileDialog extends JDialog {
 	private void performLoadProfile() {
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle(Texts.ProfileDialog_LoadFileTitle);
-		fileChooser.setFileFilter(new FileNameExtensionFilter("Profile Files (*.prf)", "prf"));
+		fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".prf", Texts.ProfileDialog_ProfileFilesFilterDescription));
 		if (lastProfileFile != null) {
 			fileChooser.setCurrentDirectory(lastProfileFile.getParentFile());
 		}
@@ -535,7 +535,7 @@ public final class ProfileDialog extends JDialog {
 	private void performSaveProfile() {
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle(Texts.ProfileDialog_SaveFileTitle);
-		fileChooser.setFileFilter(new FileNameExtensionFilter("Profile Files (*.prf)", "prf"));
+		fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".prf", Texts.ProfileDialog_ProfileFilesFilterDescription));
 		if (lastProfileFile != null) {
 			fileChooser.setSelectedFile(lastProfileFile);
 		}

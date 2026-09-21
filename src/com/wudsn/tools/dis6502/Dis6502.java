@@ -22,8 +22,8 @@ import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.wudsn.tools.base.common.FileUtility;
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.repository.Message;
 import com.wudsn.tools.dis6502.model.AtariDisk;
@@ -496,7 +496,7 @@ public final class Dis6502 {
 
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle(Texts.Dis6502_OpenWorkspaceFileTitle);
-		fileChooser.setFileFilter(new FileNameExtensionFilter("Workspace Files (*.wrk)", "wrk"));
+		fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".wrk", Texts.Dis6502_WorkspaceFilesFilterDescription));
 		if (currentFile != null) {
 			fileChooser.setCurrentDirectory(currentFile.getParentFile());
 		}
@@ -947,7 +947,7 @@ public final class Dis6502 {
 	private void performOpenUserEquates() {
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle(Texts.Dis6502_OpenUserEquatesFileTitle);
-		fileChooser.setFileFilter(new FileNameExtensionFilter("Equate Files (*.equ)", "equ"));
+		fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".equ", Texts.Dis6502_EquateFilesFilterDescription));
 		if (lastEquateFile != null) {
 			fileChooser.setCurrentDirectory(lastEquateFile.getParentFile());
 		}
@@ -964,7 +964,7 @@ public final class Dis6502 {
 	private void performSaveUserEquates(boolean xasm) {
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle(xasm ? Texts.Dis6502_ExportUserEquatesFileTitle : Texts.Dis6502_SaveUserEquatesFileTitle);
-		fileChooser.setFileFilter(new FileNameExtensionFilter("Equate Files (*.equ)", "equ"));
+		fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".equ", Texts.Dis6502_EquateFilesFilterDescription));
 		if (lastEquateFile != null) {
 			fileChooser.setCurrentDirectory(lastEquateFile.getParentFile());
 		}
@@ -1460,7 +1460,7 @@ public final class Dis6502 {
 	private boolean performSaveWorkspaceAs() {
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle(Texts.Dis6502_SaveWorkspaceFileAsTitle);
-		fileChooser.setFileFilter(new FileNameExtensionFilter("Workspace Files (*.wrk)", "wrk"));
+		fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".wrk", Texts.Dis6502_WorkspaceFilesFilterDescription));
 		if (currentFile != null) {
 			fileChooser.setSelectedFile(currentFile);
 		}
@@ -1491,7 +1491,7 @@ public final class Dis6502 {
 	private void performSaveDisassemblyFiles() {
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle(Texts.Dis6502_SaveDisassemblyFilesTitle);
-		fileChooser.setFileFilter(new FileNameExtensionFilter("Assembler Files (*.asm)", "asm"));
+		fileChooser.setFileFilter(FileUtility.createFileExtensionFileFilter(".asm", Texts.Dis6502_AssemblerFilesFilterDescription));
 		if (fileChooser.showSaveDialog(mainWindow.getFrame()) != JFileChooser.APPROVE_OPTION) {
 			return;
 		}
