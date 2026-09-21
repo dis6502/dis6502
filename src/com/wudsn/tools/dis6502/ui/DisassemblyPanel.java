@@ -20,7 +20,9 @@ import java.util.Map;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -37,6 +39,8 @@ import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblyResult;
 import com.wudsn.tools.dis6502.model.Equate;
+import com.wudsn.tools.dis6502.model.LineNumberHistory;
+import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.SegmentList;
 
 /**
@@ -91,12 +95,17 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * EquateRangeDialog}) - see {@code Dis6502}'s wiring of {@link
  * #findDefMenuItem}/{@link #findRef1MenuItem}/{@link #findRef2MenuItem}/
  * {@link #renameDefMenuItem}/{@link #renameRefMenuItem}/{@link
- * #addrRangeDefMenuItem}/{@link #addrRangeRefMenuItem}. Still not ported:
- * Back in History (needs a navigation history stack this port does not
- * have) and the per-instruction Set Type submenu (a different, per-
- * clicked-instruction mechanism from the memory inspector popup's
- * selection-based one, needing "is this an immediate-mode instruction"
- * detection this port does not have either).
+ * #addrRangeDefMenuItem}/{@link #addrRangeRefMenuItem}. Navigate Back to
+ * Previous Position ({@link #backInHistoryMenuItem}, Backspace) returns to
+ * where Navigate to Definition was started from - see {@link
+ * #navigateToDefinitionLine}/{@link #navigateBack} and {@link
+ * LineNumberHistory}. The "Change type of immediate byte to" submenu works
+ * on the right-clicked instruction, not on a byte selection like the
+ * memory inspector popup's Change Type submenu; what it shows (enabled,
+ * char constant possible, current type's check mark) needs the workspace
+ * this panel does not have, so {@code Dis6502} supplies it per popup
+ * through {@link #setImmediateTypeProvider} and performs the change
+ * through {@link #setImmediateTypeListener}.
  * <p>
  * Every popup item is public and wired by {@code Dis6502} (unlike {@link
  * MemoryInspectorPanel}'s popup items, they need a parent {@link
@@ -139,6 +148,8 @@ public final class DisassemblyPanel extends JPanel {
 	// ElementFactory.createMenuItem: their label is "{0}"-templated and only known once
 	// the popup is about to show - see setDynamicLabel/maybeShowPopup.
 	public final JMenuItem findDefMenuItem = new JMenuItem();
+	public final JMenuItem backInHistoryMenuItem = ElementFactory.createMenuItem(Actions.DisassemblyPopupMenu_BackInHistory,
+			"backInHistoryMenuItem");
 	public final JMenuItem findRef1MenuItem = new JMenuItem();
 	public final JMenuItem findRef2MenuItem = new JMenuItem();
 	public final JMenuItem renameDefMenuItem = new JMenuItem();
@@ -161,6 +172,19 @@ public final class DisassemblyPanel extends JPanel {
 	private LineSelectionListener lineSelectionListener;
 	private NavigateToDefinitionListener navigateToDefinitionListener;
 	private int lastSelectedLineIndex = -1;
+
+	private final LineNumberHistory history = new LineNumberHistory();
+
+	/** The submenu's types, in menu order (a separator goes before the last one) - same order as the C++ .rc template. */
+	private static final MemoryType[] IMMEDIATE_TYPES = { MemoryType.CODE, MemoryType.LOBYTE, MemoryType.HIBYTE,
+			MemoryType.STRING, MemoryType.UNKNOWN };
+	private static final Action[] IMMEDIATE_TYPE_ACTIONS = { Actions.DisassemblyPopupMenu_ImmediateType_Code,
+			Actions.DisassemblyPopupMenu_ImmediateType_LowByte, Actions.DisassemblyPopupMenu_ImmediateType_HighByte,
+			Actions.DisassemblyPopupMenu_ImmediateType_String, Actions.DisassemblyPopupMenu_ImmediateType_Unknown };
+	private final JMenu immediateTypeMenu = ElementFactory.createMenu(Actions.DisassemblyPopupMenu_ImmediateType);
+	private final JCheckBoxMenuItem[] immediateTypeMenuItems = new JCheckBoxMenuItem[IMMEDIATE_TYPES.length];
+	private ImmediateTypeProvider immediateTypeProvider;
+	private ImmediateTypeListener immediateTypeListener;
 
 	public DisassemblyPanel() {
 		super(new BorderLayout());
@@ -186,6 +210,22 @@ public final class DisassemblyPanel extends JPanel {
 		add(scrollPane, BorderLayout.CENTER);
 
 		popupFindMenuItem.addActionListener(e -> findButton.doClick());
+		backInHistoryMenuItem.addActionListener(e -> navigateBack());
+
+		for (int i = 0; i < IMMEDIATE_TYPES.length; i++) {
+			final MemoryType type = IMMEDIATE_TYPES[i];
+			JCheckBoxMenuItem item = ElementFactory.createCheckBoxMenuItem(IMMEDIATE_TYPE_ACTIONS[i]);
+			item.addActionListener(e -> {
+				if (immediateTypeListener != null && rightClickedLine != null) {
+					immediateTypeListener.onImmediateTypeSelected(rightClickedLine, type);
+				}
+			});
+			immediateTypeMenuItems[i] = item;
+			if (type == MemoryType.UNKNOWN) {
+				immediateTypeMenu.addSeparator();
+			}
+			immediateTypeMenu.add(item);
+		}
 		popupFindNextMenuItem.addActionListener(e -> findNextButton.doClick());
 
 		grid.setFocusable(true);
@@ -232,6 +272,15 @@ public final class DisassemblyPanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				navigateToDefinitionOfSelectedLine();
+			}
+		});
+		// Backspace is scoped to the grid's own focus for the same reason: window-wide, it
+		// would be stolen from the find field and every other text field in the window.
+		grid.getInputMap(JComponent.WHEN_FOCUSED).put(Actions.DisassemblyPopupMenu_BackInHistory.getAccelerator(), "navigateBack");
+		grid.getActionMap().put("navigateBack", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				navigateBack();
 			}
 		});
 
@@ -288,6 +337,42 @@ public final class DisassemblyPanel extends JPanel {
 	}
 
 	/**
+	 * Goes to the line a label is defined at, remembering where that was
+	 * started from for {@link #navigateBack}. Ported from {@code
+	 * DisassemblyControlImpl::SelectDefinitionAndNotifyParent}: like there,
+	 * the target line ends up selected exactly as if it had been clicked, so
+	 * the memory inspector and the XRef list follow. "Where it was started
+	 * from" is {@code originLine} if given (the right-clicked line, for the
+	 * popup item), else the selected line (Return/double-click).
+	 */
+	public boolean navigateToDefinitionLine(int lineNumber, DisassemblyLine originLine) {
+		Integer index = lineNumberToIndex.get(lineNumber);
+		if (index == null) {
+			return false;
+		}
+		if (originLine != null) {
+			history.push(originLine.getLineNumber());
+		} else if (lastSelectedLineIndex >= 0 && lastSelectedLineIndex < disassemblyLines.size()) {
+			history.push(disassemblyLines.get(lastSelectedLineIndex).getLineNumber());
+		}
+		selectLineIndex(index);
+		return true;
+	}
+
+	/** Navigate Back to Previous Position - ported from {@code DisassemblyControlImpl::BackInHistory}. Does nothing if there is no previous position. */
+	public void navigateBack() {
+		Integer index = lineNumberToIndex.get(history.pop());
+		if (index != null) {
+			selectLineIndex(index);
+		}
+	}
+
+	/** Whether {@link #navigateBack} has anywhere to go. */
+	public boolean canNavigateBack() {
+		return !history.isEmpty();
+	}
+
+	/**
 	 * Ported from the per-line click handling in {@code
 	 * DisassemblyControlImpl::MouseMove} (reached here through a single
 	 * click/drag rather than continuous mouse-capture tracking, since
@@ -306,6 +391,11 @@ public final class DisassemblyPanel extends JPanel {
 		if (index < 0 || index >= disassemblyLines.size() || index == lastSelectedLineIndex) {
 			return;
 		}
+		selectLineIndex(index);
+	}
+
+	/** Makes the line at {@code index} the selected one - scrolled to, highlighted, reported to {@link #lineSelectionListener} - however that came about: a click, or a navigation. */
+	private void selectLineIndex(int index) {
 		lastSelectedLineIndex = index;
 		grid.highlightLine(index);
 
@@ -352,11 +442,26 @@ public final class DisassemblyPanel extends JPanel {
 		boolean referenceAutomatic = hasReference && Equate.isAutomaticLabel(rightClickedLabelReference);
 
 		popupMenu.removeAll();
+
+		ImmediateType immediateType = rightClickedLine != null && immediateTypeProvider != null
+				&& rightClickedLine.segmentIndex != SegmentList.NO_SEGMENT_INDEX
+						? immediateTypeProvider.getImmediateType(rightClickedLine)
+						: null;
+		immediateTypeMenu.setEnabled(immediateType != null);
+		for (int i = 0; i < IMMEDIATE_TYPES.length; i++) {
+			immediateTypeMenuItems[i].setSelected(immediateType != null && immediateType.memoryType == IMMEDIATE_TYPES[i]);
+			immediateTypeMenuItems[i].setEnabled(
+					immediateType != null && (IMMEDIATE_TYPES[i] != MemoryType.STRING || immediateType.charAllowed));
+		}
+		popupMenu.add(immediateTypeMenu);
+
 		if (hasReference) {
 			setDynamicLabel(findDefMenuItem, Actions.DisassemblyPopupMenu_FindDef, rightClickedLabelReference);
 			popupMenu.add(findDefMenuItem);
-			popupMenu.addSeparator();
 		}
+		backInHistoryMenuItem.setEnabled(canNavigateBack());
+		popupMenu.add(backInHistoryMenuItem);
+		popupMenu.addSeparator();
 
 		editCommentMenuItem
 				.setEnabled(rightClickedLine != null && rightClickedLine.segmentIndex != SegmentList.NO_SEGMENT_INDEX);
@@ -542,6 +647,13 @@ public final class DisassemblyPanel extends JPanel {
 	}
 
 	public void refresh(DisassemblyResult disassemblyResult) {
+		// Remembered positions are line numbers. A new disassembly of the same length (a
+		// comment or label was edited) leaves them valid; anything else would make "back"
+		// land on some unrelated line, so it is better to have nowhere to go back to.
+		int newLineCount = disassemblyResult == null ? 0 : disassemblyResult.getLineCount();
+		if (newLineCount != disassemblyLines.size()) {
+			history.clear();
+		}
 		lineNumberToIndex.clear();
 		rightClickedLine = null;
 		lastSelectedLineIndex = -1;
@@ -576,6 +688,36 @@ public final class DisassemblyPanel extends JPanel {
 		}
 		grid.highlightLine(index);
 		return true;
+	}
+
+	/** Supplies what the "Change type of immediate byte to" submenu shows for a line - see the class javadoc. */
+	public void setImmediateTypeProvider(ImmediateTypeProvider immediateTypeProvider) {
+		this.immediateTypeProvider = immediateTypeProvider;
+	}
+
+	/** Reports a pick from the "Change type of immediate byte to" submenu. */
+	public void setImmediateTypeListener(ImmediateTypeListener immediateTypeListener) {
+		this.immediateTypeListener = immediateTypeListener;
+	}
+
+	/** An immediate-mode instruction's operand, as far as the submenu cares. */
+	public static final class ImmediateType {
+		final MemoryType memoryType;
+		final boolean charAllowed;
+
+		public ImmediateType(MemoryType memoryType, boolean charAllowed) {
+			this.memoryType = memoryType;
+			this.charAllowed = charAllowed;
+		}
+	}
+
+	public interface ImmediateTypeProvider {
+		/** Returns {@code null} if the line is not an immediate-mode instruction. */
+		ImmediateType getImmediateType(DisassemblyLine line);
+	}
+
+	public interface ImmediateTypeListener {
+		void onImmediateTypeSelected(DisassemblyLine line, MemoryType memoryType);
 	}
 
 	/** Reports a line the user clicked or dragged to - see {@link #selectLineAt}. */

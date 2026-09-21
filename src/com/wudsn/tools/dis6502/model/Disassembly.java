@@ -167,6 +167,56 @@ public final class Disassembly {
 		return false;
 	}
 
+	/**
+	 * Changes how the operand of the {@code Immediate}-mode instruction at
+	 * {@code offset} is shown - the counterpart of {@link
+	 * #isInstructionWithImmediate}, which reports it. Ported from
+	 * MainDisassembly::SetImmediateType, minus the dialog: for {@link
+	 * MemoryType#LOBYTE}/{@link MemoryType#HIBYTE} the caller has already
+	 * asked the user for {@code unknownByte}, the other half of the address
+	 * (ignored for every other type).
+	 * <p>
+	 * Fixes a slip in the C++ version while at it: changing an instruction
+	 * that currently is LOBYTE/HIBYTE into a char constant must take that
+	 * marker off the opcode again. The C++ condition tests the new type
+	 * where it means the current one, so it only does that for LOBYTE (and
+	 * leaves the opcode UNKNOWN rather than CODE) - a HIBYTE instruction
+	 * stays HIBYTE, with an operand whose type slot now says STRING instead
+	 * of holding the other address half.
+	 *
+	 * @return whether anything was changed: {@code false} if there is no
+	 *         immediate-mode instruction at that offset, or {@code type} is
+	 *         not one an immediate operand can have.
+	 */
+	public static boolean setImmediateType(Workspace workspace, int segmentIndex, int offset, MemoryType type,
+			int unknownByte) {
+		if (!isInstructionWithImmediate(workspace, segmentIndex, offset, new int[1], new MemoryType[1])) {
+			return false;
+		}
+		Segment segment = workspace.getSegmentList().getSegment(segmentIndex);
+		switch (type) {
+		case LOBYTE:
+		case HIBYTE:
+			segment.setType(offset, type);
+			// Not Segment.setType: the type slot holds a raw byte here, see MemoryType's javadoc.
+			segment.memoryBlock.getType()[offset + 1] = (byte) unknownByte;
+			return true;
+		case STRING:
+			MemoryType opcodeType = segment.getType(offset);
+			if (opcodeType == MemoryType.LOBYTE || opcodeType == MemoryType.HIBYTE) {
+				segment.setType(offset, MemoryType.CODE);
+			}
+			segment.setType(offset + 1, MemoryType.STRING);
+			return true;
+		case CODE:
+		case UNKNOWN:
+			segment.setType(offset, type, 2);
+			return true;
+		default:
+			return false;
+		}
+	}
+
 	// ------------------------------------------------------------------
 	// Higher level operations.
 	// ------------------------------------------------------------------

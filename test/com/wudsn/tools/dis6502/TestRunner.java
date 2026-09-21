@@ -14,6 +14,8 @@ import com.wudsn.tools.dis6502.model.DisassemblyResultFileTest;
 import com.wudsn.tools.dis6502.model.DisassemblyResultTest;
 import com.wudsn.tools.dis6502.model.EquateListLogicTest;
 import com.wudsn.tools.dis6502.model.EquateTest;
+import com.wudsn.tools.dis6502.model.ImmediateTypeTest;
+import com.wudsn.tools.dis6502.model.LineNumberHistoryTest;
 import com.wudsn.tools.dis6502.model.MemoryInspectorStateTest;
 import com.wudsn.tools.dis6502.model.MemoryInspectorTest;
 import com.wudsn.tools.dis6502.model.Profile1XTest;
@@ -108,6 +110,8 @@ public final class TestRunner {
 		runTest("ByteRangeSelectionTest", ByteRangeSelectionTest::testByteRangeSelection);
 		runTest("DataTypesTest", DataTypesTest::testDataTypes);
 		runTest("CommandLineArgumentsTest", CommandLineArgumentsTest::testCommandLineArguments);
+		runTest("LineNumberHistoryTest", LineNumberHistoryTest::testLineNumberHistory);
+		runTest("ImmediateTypeTest", ImmediateTypeTest::testImmediateType);
 		runTest("ReassemblyRoundTripTest", ReassemblyRoundTripTest::testReassemblyRoundTrip);
 
 		if (failedCount == 0) {

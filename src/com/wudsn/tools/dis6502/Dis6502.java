@@ -41,6 +41,7 @@ import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
 import com.wudsn.tools.dis6502.model.DisassemblyResult;
+import com.wudsn.tools.dis6502.model.DisassemblyWriter;
 import com.wudsn.tools.dis6502.model.DisassemblyResultFile;
 import com.wudsn.tools.dis6502.model.DiskImage;
 import com.wudsn.tools.dis6502.model.Equate;
@@ -322,7 +323,8 @@ public final class Dis6502 {
 		mainWindow.disassemblyPanel.findNextButton.addActionListener(e -> performFindNextInDisassembly());
 		mainWindow.disassemblyPanel.editCommentMenuItem.addActionListener(e -> performEditDisassemblyComment());
 		mainWindow.disassemblyPanel.findDefMenuItem
-				.addActionListener(e -> performFindDisassemblyLabelDefinition(mainWindow.disassemblyPanel.getRightClickedLabelReference()));
+				.addActionListener(e -> performFindDisassemblyLabelDefinition(mainWindow.disassemblyPanel.getRightClickedLabelReference(),
+						mainWindow.disassemblyPanel.getRightClickedLine()));
 		mainWindow.disassemblyPanel.findRef1MenuItem
 				.addActionListener(e -> performFindDisassemblyReferences(mainWindow.disassemblyPanel.getRightClickedLabelReference()));
 		mainWindow.disassemblyPanel.findRef2MenuItem
@@ -336,7 +338,9 @@ public final class Dis6502 {
 		mainWindow.disassemblyPanel.addrRangeRefMenuItem
 				.addActionListener(e -> performDefineAddressRangeForLabel(mainWindow.disassemblyPanel.getRightClickedLabelReference()));
 		mainWindow.disassemblyPanel.setLineSelectionListener(this::performDisassemblyLineSelected);
-		mainWindow.disassemblyPanel.setNavigateToDefinitionListener(this::performFindDisassemblyLabelDefinition);
+		mainWindow.disassemblyPanel.setNavigateToDefinitionListener(label -> performFindDisassemblyLabelDefinition(label, null));
+		mainWindow.disassemblyPanel.setImmediateTypeProvider(this::getDisassemblyImmediateType);
+		mainWindow.disassemblyPanel.setImmediateTypeListener(this::performSetDisassemblyImmediateType);
 		mainWindow.xrefPanel.setSelectionListener(this::performXRefSelected);
 
 		mainWindow.memoryInspectorPanel.displayAsScreenCodeButton.setSelected(workspace.isViewDisplayAsScreenCode());
@@ -1380,14 +1384,56 @@ public final class Dis6502 {
 		}
 	}
 
-	/** Ported from MainDisassembly::FindDef, minus the navigation-history save (Back in History is not ported). */
-	private void performFindDisassemblyLabelDefinition(String label) {
+	/**
+	 * Ported from MainDisassembly::FindDef. {@code originLine} is the line
+	 * Navigate Back to Previous Position should return to - the right-clicked
+	 * line for the popup item, {@code null} (meaning the selected line) for
+	 * Return/double-click; see {@link DisassemblyPanel#navigateToDefinitionLine}.
+	 */
+	private void performFindDisassemblyLabelDefinition(String label, DisassemblyLine originLine) {
 		if (label.isEmpty()) {
 			return;
 		}
 		int lineNumber = workspace.getDisassemblyResult().findDefinitionLineNumber(label);
 		if (lineNumber != 0) {
-			mainWindow.disassemblyPanel.navigateToLine(lineNumber);
+			mainWindow.disassemblyPanel.navigateToDefinitionLine(lineNumber, originLine);
+		}
+	}
+
+	/**
+	 * What the disassembly popup's "Change type of immediate byte to" submenu
+	 * shows for a line - ported from the immediate-operand part of
+	 * MainDisassembly::DrawMenu.
+	 */
+	private DisassemblyPanel.ImmediateType getDisassemblyImmediateType(DisassemblyLine line) {
+		int[] immediateValue = new int[1];
+		MemoryType[] immediateMemoryType = new MemoryType[1];
+		if (!Disassembly.isInstructionWithImmediate(workspace, line.segmentIndex, line.offset, immediateValue,
+				immediateMemoryType)) {
+			return null;
+		}
+		boolean charAllowed = new DisassemblyWriter(new Disassembly(), workspace).isByteAllowedInString(immediateValue[0]);
+		return new DisassemblyPanel.ImmediateType(immediateMemoryType[0], charAllowed);
+	}
+
+	/**
+	 * Ported from MainDisassembly::SetImmediateType's dialog half - {@link
+	 * LowHighByteDialog} asks for the other half of the address for a low/
+	 * high byte; the change itself is {@link Disassembly#setImmediateType}.
+	 */
+	private void performSetDisassemblyImmediateType(DisassemblyLine line, MemoryType type) {
+		int unknownByte = 0;
+		if (type == MemoryType.LOBYTE || type == MemoryType.HIBYTE) {
+			Segment segment = workspace.getSegmentList().getSegment(line.segmentIndex);
+			LowHighByteDialog dialog = new LowHighByteDialog(mainWindow.getFrame());
+			if (!dialog.show(type, segment.getData(line.offset + 1))) {
+				return;
+			}
+			unknownByte = dialog.getUnknownByte();
+		}
+		if (Disassembly.setImmediateType(workspace, line.segmentIndex, line.offset, type, unknownByte)) {
+			mainWindow.memoryInspectorPanel.segmentChanged(memoryInspectorState);
+			updateDisassembly(false);
 		}
 	}
 

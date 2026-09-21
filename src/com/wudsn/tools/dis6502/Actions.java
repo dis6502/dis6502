@@ -169,7 +169,14 @@ public final class Actions extends NLS {
 	public static Action SegmentListPopupMenu_Properties;
 
 	// Actions: Disassembly popup menu.
+	public static Action DisassemblyPopupMenu_ImmediateType;
+	public static Action DisassemblyPopupMenu_ImmediateType_Code;
+	public static Action DisassemblyPopupMenu_ImmediateType_LowByte;
+	public static Action DisassemblyPopupMenu_ImmediateType_HighByte;
+	public static Action DisassemblyPopupMenu_ImmediateType_String;
+	public static Action DisassemblyPopupMenu_ImmediateType_Unknown;
 	public static Action DisassemblyPopupMenu_FindDef;
+	public static Action DisassemblyPopupMenu_BackInHistory = new Action(KeyEvent.VK_BACK_SPACE, 0);
 	public static Action DisassemblyPopupMenu_EditComment;
 	public static Action DisassemblyPopupMenu_Find = new Action(KeyEvent.VK_F, KeyStroke.M1 | KeyStroke.M2);
 	public static Action DisassemblyPopupMenu_FindNext = new Action(KeyEvent.VK_F3, KeyStroke.M2);

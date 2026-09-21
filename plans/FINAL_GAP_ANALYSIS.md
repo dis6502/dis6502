@@ -146,7 +146,18 @@ the same `OpenFile(path, UNKNOWN_FILE, false)` entry point as C. Java has no
 Java `openFile(path, FileType.UNKNOWN_FILE, add)` dispatcher equivalent to
 `MainFile::OpenFile`.
 
-### E. Disassembly popup: "Navigate Back to Previous Position" - MEDIUM
+### E. ~~Disassembly popup: "Navigate Back to Previous Position"~~ - FIXED 2026-09-21
+
+**Fix**: new headless `LineNumberHistory` (bounded; forgets the oldest
+position when full, where C++'s fixed array stops recording new ones).
+`DisassemblyPanel.navigateToDefinitionLine` remembers where Navigate to
+Definition was started from - the right-clicked line for the popup item, the
+selected line for Return/double-click - and `navigateBack` (Backspace while
+the listing has focus, or the new popup item, disabled when there is nowhere
+to go) returns there. As in C++, the line navigated to ends up selected
+exactly as if clicked, so memory inspector and XRef follow. The history
+survives a re-disassembly of the same length (comment/label edits) and is
+dropped otherwise, since its line numbers would be stale. Original finding:
 
 C++ keeps a jump history in the disassembly control; Navigate to Definition
 (Return/double click) pushes onto it and Backspace / the popup item pops.
@@ -154,7 +165,16 @@ Java has Navigate to Definition but no history, no popup item and no
 Backspace binding (`Dis6502.java:1366` says so explicitly). Following a `JSR`
 is one-way.
 
-### F. Disassembly popup: "Change type of immediate byte to" - MEDIUM
+### F. ~~Disassembly popup: "Change type of immediate byte to"~~ - FIXED 2026-09-21
+
+**Fix**: the submenu (Code / Low Byte / High Byte / Char Constant / Unknown)
+is back, enabled for an immediate-mode instruction, with a check mark on the
+current type and Char Constant only offered for a printable operand. The
+change itself is the new, unit-tested `Disassembly.setImmediateType`; Low/High
+Byte ask for the address's other half via `LowHighByteDialog` first. Fixes a
+C++ slip on the way: turning a High Byte instruction into a char constant
+left the High Byte marker on the opcode (the condition tests the new type
+where it means the current one). Original finding:
 
 C++ submenu (Code / Low Byte / High Byte / Char Constant / Unknown), enabled
 when the right-clicked line is an immediate-mode instruction, with a check
@@ -283,6 +303,6 @@ handler, with the two loads retagged as low/high byte).
 1. ~~**B**~~ - done.
 2. ~~**A**~~ - done, including a genuine `C64.equ`.
 3. ~~**C + D**, and **I**~~ - done.
-4. **E, F** - disassembly navigation/retyping conveniences.
+4. ~~**E, F**~~ - done.
 5. **G, H** - file dialog polish and menu gating.
 6. Javadoc sweep for the stale "not ported" notes.
