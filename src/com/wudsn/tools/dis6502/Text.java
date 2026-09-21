@@ -32,7 +32,13 @@ import com.wudsn.tools.base.repository.NLS;
  * and bitmaps, not texts, and belong with the (not yet ported) UI layer
  * that uses them. UI text this port introduces itself, with no real
  * resource to mirror (such as {@code AboutDialog}'s own body text), lives in
- * {@link Texts} instead, not here.
+ * {@link Texts} instead, not here. A structured, severity-typed message
+ * (one consumed via {@code com.wudsn.tools.base.repository.Message}/{@link
+ * Application#sendMessage}, not a plain {@code String}) lives in {@link
+ * Messages} instead, even if - like {@link Messages#I001}, moved from here
+ * (formerly {@code IDS_LOG_BETA_MESSAGE}) - it does trace back to a real
+ * ported C++ resource; {@link Messages}'s own javadoc explains why its
+ * field naming diverges from this class's {@code IDS_*} convention.
  * <p>
  * The single {@code STRINGTABLE} block in dis6502.rc is English-only, so
  * there is only a {@code Text.properties}, no locale-specific variant.
@@ -93,7 +99,6 @@ public final class Text extends NLS {
 	public static String IDS_FILE_SYSTEM_LOGIC_SAVE_FILE_TITLE;
 	public static String IDS_FIND_STRING_DIALOG_STRING_NOT_FOUND_MESSAGE;
 	public static String IDS_FIND_STRING_DIALOG_TITLE;
-	public static String IDS_LOG_BETA_MESSAGE;
 	public static String IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_INFO;
 	public static String IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_PASS;
 	public static String IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_SEGMENT;

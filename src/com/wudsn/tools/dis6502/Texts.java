@@ -33,8 +33,8 @@ public final class Texts extends NLS {
 
 	/**
 	 * The version number shown in {@link Dis6502#run}'s startup warning
-	 * message ({@link Text#IDS_LOG_BETA_MESSAGE}'s {@code {0}} argument).
-	 * A plain literal updated by hand per release, same as {@link
+	 * message ({@link Messages#I001}'s {@code {0}} argument). A plain
+	 * literal updated by hand per release, same as {@link
 	 * #Dis6502_VersionDate}/{@code AboutDialog_Text}'s copyright years
 	 * above.
 	 */
@@ -42,7 +42,7 @@ public final class Texts extends NLS {
 
 	/**
 	 * The build date shown in {@link Dis6502#run}'s startup warning message
-	 * ({@link Text#IDS_LOG_BETA_MESSAGE}'s {@code {1}} argument). The C++
+	 * ({@link Messages#I001}'s {@code {1}} argument). The C++
 	 * source fills this from the {@code __DATE__}/{@code __TIME__} compiler
 	 * macros at build time ({@code Main.cpp}'s {@code WIDE1(__DATE__),
 	 * WIDE1(__TIME__)}); Java has no build-time-macro equivalent, so this

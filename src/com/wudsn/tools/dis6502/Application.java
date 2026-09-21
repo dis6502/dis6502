@@ -14,6 +14,7 @@ import java.util.prefs.Preferences;
 
 import com.wudsn.tools.base.common.Log;
 import com.wudsn.tools.base.common.TextUtility;
+import com.wudsn.tools.base.repository.Message;
 
 /**
  * Minimal application-wide message handling plus settings/module-path
@@ -69,6 +70,23 @@ public class Application {
 
 	public void throwErrorMessage(String text, String... args) throws IOException {
 		throw new IOException(TextUtility.format(text, args));
+	}
+
+	/**
+	 * Sends a {@link Message} (from {@link Messages}, unlike {@link
+	 * Text}'s plain {@code String} fields) to the log at its own severity -
+	 * {@link Message#ERROR} routes to {@link #sendErrorLogMessage}, every
+	 * other severity ({@link Message#STATUS}/{@link Message#INFO}) to
+	 * {@link #sendLogMessage} - instead of the caller having to pick {@link
+	 * #sendInfoMessage}/{@link #sendErrorMessage} itself.
+	 */
+	public void sendMessage(Message message, String... args) {
+		String text = message.format(args);
+		if (message.getSeverity() == Message.ERROR) {
+			sendErrorLogMessage(text);
+		} else {
+			sendLogMessage(text);
+		}
 	}
 
 	public void sendErrorMessage(Throwable ex) {
