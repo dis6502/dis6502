@@ -32,15 +32,25 @@ public final class Texts extends NLS {
 	public static String AboutDialog_Text;
 
 	/**
-	 * The build date shown in {@link Dis6502#run}'s startup beta-warning
-	 * message ({@link Text#IDS_LOG_BETA_MESSAGE}'s {@code {1}} argument).
-	 * The C++ source fills this from the {@code __DATE__}/{@code __TIME__}
-	 * compiler macros at build time ({@code Main.cpp}'s {@code
-	 * WIDE1(__DATE__), WIDE1(__TIME__)}); Java has no build-time-macro
-	 * equivalent, so this is a plain literal updated by hand per release
-	 * instead, same as {@code AboutDialog_Text}'s copyright years above.
+	 * The version number shown in {@link Dis6502#run}'s startup warning
+	 * message ({@link Text#IDS_LOG_BETA_MESSAGE}'s {@code {0}} argument).
+	 * A plain literal updated by hand per release, same as {@link
+	 * #Dis6502_VersionDate}/{@code AboutDialog_Text}'s copyright years
+	 * above.
 	 */
-	public static String Dis6502_BetaMessageDate;
+	public static String Dis6502_Version;
+
+	/**
+	 * The build date shown in {@link Dis6502#run}'s startup warning message
+	 * ({@link Text#IDS_LOG_BETA_MESSAGE}'s {@code {1}} argument). The C++
+	 * source fills this from the {@code __DATE__}/{@code __TIME__} compiler
+	 * macros at build time ({@code Main.cpp}'s {@code WIDE1(__DATE__),
+	 * WIDE1(__TIME__)}); Java has no build-time-macro equivalent, so this
+	 * is a plain literal updated by hand per release instead, same as
+	 * {@link #Dis6502_Version}/{@code AboutDialog_Text}'s copyright years
+	 * above.
+	 */
+	public static String Dis6502_VersionDate;
 
 	static {
 		initializeClass(Texts.class, null);
