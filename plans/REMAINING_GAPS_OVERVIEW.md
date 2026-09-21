@@ -54,16 +54,32 @@ here - both repos continue to change.
   explicitly (per the porting guide's "decide feature scope per subsystem up
   front" rule) rather than leaving it as a standing comment indefinitely.
 
-### 4. `LogPanel` is a plain `JTextArea`, not the C++'s multi-column, severity-colored list view
+### 4. ~~`LogPanel` had no visual way to distinguish error lines from info lines~~ - FIXED 2026-09-21
 
-- `LogListWindow.cpp`'s C++ log window is a real list view: one row per log
-  entry, columns, and severity-based coloring.
-- `LogPanel.java`'s own javadoc says explicitly: "simplified... for this
-  first pass - the C++ version's per-entry severity coloring/columns are not
-  ported yet." It's currently a single scrolling `JTextArea`.
-- Impact is cosmetic/usability (harder to scan for errors/warnings at a
-  glance among info messages) rather than a functional loss - all messages
-  are still logged and visible.
+- **Correction to the original write-up**: this gap was originally described
+  as "`LogPanel` is a plain `JTextArea`, not the C++'s multi-column,
+  severity-colored list view," based on `LogListWindow`'s name/shape, not
+  its actual behavior. On investigation while fixing this: C++'s
+  `LogListWindow` is a plain, single-column, uncolored `ListBox` with no
+  owner-draw painting at all, and `LogListWindow::AddText` - the only way
+  text would ever reach it - is never called anywhere in the C++ codebase.
+  There was no real C++ multi-column/colored behavior to port; the actual,
+  narrower problem was that error and info lines looked identical in
+  `LogPanel`, making errors hard to spot at a glance.
+- **Fix**: per the project's now-current direction (intentional divergence
+  from C++ is expected - see `plans/MEMORY.md`'s top section), this is a
+  Java-native fix for that real usability problem: `LogPanel` switched from
+  `JTextArea` to `JTextPane` with per-insert `SimpleAttributeSet` styling -
+  a new `appendErrorLine` (dark red) alongside the existing `appendLine`
+  (default color). `JTextPane` was chosen over a colored `JList` (the
+  pattern `XRefPanel`/`SegmentListPanel` use) specifically to keep native
+  text selection/copy working. `UIApplication.sendErrorLogMessage` now
+  calls `appendErrorLine` instead of hand-prepending `"ERROR: "` as
+  undifferentiated plain text (the prefix itself is kept, now also
+  colored).
+- Verified with a clean `mvn -o compile`/`test-compile`, the full
+  `TestRunner` suite, and a live screenshot showing info lines in black and
+  error lines in red.
 
 ### 5. No Java equivalent of `MainUITest.cpp`'s interactive self-test harness
 
@@ -282,8 +298,8 @@ doesn't support, without a separate decision to add a genuinely new feature:
    any code is written, per the porting guide's process-lesson rule (now
    historical - see the status note at the top; still a reasonable process
    to follow for a decision like this one).
-2. **Gap #4** (`LogPanel` columns/coloring) - cosmetic, low risk, low
-   urgency.
+2. ~~**Gap #4** (`LogPanel` error-line coloring)~~ - **fixed 2026-09-21**,
+   see above.
 3. **Gap #5** (`MainUITest.cpp` self-test harness) - needs an explicit
    "superseded by JUnit, won't port" decision recorded somewhere (this
    document or a class javadoc) rather than staying an implicit gap.
