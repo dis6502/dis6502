@@ -6,13 +6,14 @@ incomplete, or broken in this Java port, as of 2026-09-21. It exists so a
 future porting session can pick up where this snapshot left off without
 re-auditing both codebases from scratch.
 
-**Status**: this list only shows what's still outstanding - a fixed gap is
-removed from this document once done rather than kept struck through (see
-git history for the write-up of each fix: gaps #1, #2, #3, #6, #7, #8, and
-#9 have all been fixed and removed as of 2026-09-21). Remaining gaps keep
-their original numbers rather than being renumbered, so references to a
-specific gap number elsewhere (commit messages, `plans/MEMORY.md`) stay
-valid.
+**Status**: every gap originally tracked in this document (#1-#9) is now
+fixed or resolved as of 2026-09-21. Most fixed gaps are removed from this
+document entirely once done, relying on git history for their write-up
+(#1, #2, #3, #6, #7, #8, #9); #4 and #5 are kept below with a "FIXED"/
+"RESOLVED" write-up instead, since both had a factually incorrect original
+description worth correcting for the record. Numbers are kept as originally
+assigned rather than renumbered, so references elsewhere (commit messages,
+`plans/MEMORY.md`) stay valid.
 
 **Note (2026-09-21):** the porting phase itself is now over - see
 `plans/PORTING_GUIDE.md`'s status note and `plans/MEMORY.md`'s top section.
@@ -66,19 +67,49 @@ here - both repos continue to change.
   `TestRunner` suite, and a live screenshot showing info lines in black and
   error lines in red.
 
-### 5. No Java equivalent of `MainUITest.cpp`'s interactive self-test harness
+### 5. ~~No Java equivalent of `MainUITest.cpp`'s interactive self-test harness~~ - RESOLVED (partial port) 2026-09-21
 
-- C++ has a command-line self-test mode (`/TEST:DEEP`, `/TEST:FAST`),
-  invoked by `build\test-dis6502-DEEP.bat` / `test-dis6502-FAST.bat`, that
-  drives the UI programmatically in a loop.
-- No Java class resembles this (no `/TEST:` argument handling, nothing under
-  `test/` that mirrors an interactive/console self-test loop).
-- The Java port does have a real JUnit suite, which is arguably a better
-  substitute for regression coverage - but the specific interactive
-  self-test-loop UX (useful for manual soak-testing against real program
-  data while iterating) is absent. Worth an explicit "won't port, JUnit
-  supersedes it" decision if that's the intent, rather than leaving it
-  implicit.
+- **Correction to the original write-up**: this gap was originally described
+  as "C++ has a command-line self-test mode... that drives the UI
+  programmatically in a loop" - wrong, in the same way gap #4's original
+  `LogPanel` description was wrong. `MainUITest.cpp` is a 20-line dispatcher
+  with no UI-automation content at all: it parses a `/TEST:DEV|FAST|NORMAL|
+  DEEP` argument, allocates a console, and delegates to `MainTest.cpp` - a
+  headless console-mode integration suite, not a UI driver. `test-dis6502-
+  DEEP.bat`/`-FAST.bat` just relaunch the executable with that flag in a
+  `pause`/`goto` loop for manual soak-testing.
+- **What `MainTest.cpp` actually does**: (1) runs the same per-class unit
+  tests Java's `TestRunner` already ran - no gap there; (2) `TestWorkspace()`
+  - loads a real `.wrk` file, then splits a segment and asserts each half's
+  user comment survived at its correctly rebased offset - genuinely
+  untested in Java before this fix; (3) `ExecuteVariant()` - for up to 16
+  notation-variant combinations, disassembles four fixture programs,
+  reassembles the listing with a real MADS assembler, and byte-compares the
+  result against a reference binary - a real end-to-end disassembly-
+  correctness check, also genuinely uncovered in Java before this fix (the
+  `TestRunner` javadoc's old excuse, that this "depends on `WorkspaceLogic`
+  ... not ported yet," was stale - `WorkspaceLogic` has been fully ported
+  for a while).
+- **Fix (a deliberate partial port, not a full one - see the proposal this
+  was decided from)**: recovered the two genuinely non-redundant checks as
+  new `TestRunner` tests - `WorkspaceLogicTest` (from `TestWorkspace`) and
+  `ReassemblyRoundTripTest` (from `ExecuteUnitTestItem`/`ExecuteVariant`,
+  covering all four fixtures but only the one notation-variant combination
+  the default `Profile` already produces, not the full 16-variant sweep -
+  see that test's own javadoc for why). Deliberately did **not** port
+  `MainUITest.cpp`'s `/TEST:` command-line dispatch, console-mode output, or
+  the `DEV`/`FAST`/`NORMAL`/`DEEP` variant-count distinction itself -
+  `TestRunner` already is the "run everything once, report pass/fail" tool
+  a console mode would otherwise provide, and the repeated-relaunch soak-
+  test loop has no obvious Java equivalent need.
+- New fixtures under `test-resources/asm/mads/` (the vendored MADS
+  assembler binary) and `test-resources/disassembly/unit00{1,2,3,4}/`,
+  copied from the C++ repo's `tst/suite/asm/mads` and
+  `tst/suite/disassembly/unit00{1,2,3,4}`; `test-resources/workspace/`
+  (the `SynCalc` fixture `TestWorkspace` loads).
+- Verified with a clean `mvn -o compile`/`test-compile` and the full
+  `TestRunner` suite, including a real MADS subprocess invocation and
+  byte-exact comparison for all four fixtures.
 
 ## Divergences where the Java port fixed a real C++ bug (not a Java gap)
 
@@ -277,8 +308,9 @@ doesn't support, without a separate decision to add a genuinely new feature:
 
 ## Suggested priority order for closing these
 
-1. ~~**Gap #4** (`LogPanel` error-line coloring)~~ - **fixed 2026-09-21**,
-   see above.
-2. **Gap #5** (`MainUITest.cpp` self-test harness) - needs an explicit
-   "superseded by JUnit, won't port" decision recorded somewhere (this
-   document or a class javadoc) rather than staying an implicit gap.
+None remain - every gap originally tracked in this document (#1-#9) has
+been fixed or explicitly resolved as of 2026-09-21; see the "Confirmed
+gaps" section above for #4/#5's write-ups and git history for the rest.
+Nothing here currently drives new work - see the status note at the top on
+why this document's "what's missing relative to C++" framing is no longer
+the operative one going forward.

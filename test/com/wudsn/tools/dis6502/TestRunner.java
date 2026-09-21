@@ -17,20 +17,34 @@ import com.wudsn.tools.dis6502.model.EquateTest;
 import com.wudsn.tools.dis6502.model.MemoryInspectorStateTest;
 import com.wudsn.tools.dis6502.model.MemoryInspectorTest;
 import com.wudsn.tools.dis6502.model.Profile1XTest;
+import com.wudsn.tools.dis6502.model.ReassemblyRoundTripTest;
 import com.wudsn.tools.dis6502.model.SegmentTest;
 import com.wudsn.tools.dis6502.model.Workspace;
+import com.wudsn.tools.dis6502.model.WorkspaceLogicTest;
 
 /**
  * Runs the ported unit tests and reports a pass/fail summary.
  * <p>
- * This is a new, minimal aggregator - not a port of MainTest.h/MainTest.cpp,
- * whose {@code Execute}/{@code ExecuteVariant} drive a much larger
- * integration suite (workspace load/save, an external MADS assembler
- * invocation, reference-file comparison across notation variants) that
- * depends on {@code WorkspaceLogic} and other application-level pieces not
- * ported yet. This only runs the tests that exercise already-ported model
- * classes: {@link AssemblerTest}, {@link EquateTest}, {@link SegmentTest},
- * {@link DisassemblyResultTest}, {@link DisassemblyResultFileTest}, {@link
+ * This is a new, minimal aggregator - not a port of {@code
+ * MainUITest.h}/{@code .cpp} (the console-mode {@code /TEST:DEV|FAST|
+ * NORMAL|DEEP} self-test harness) or of most of {@code MainTest.h}/{@code
+ * .cpp} it delegates to. That harness itself is deliberately not ported -
+ * see gap #5's history in {@code plans/REMAINING_GAPS_OVERVIEW.md}: this
+ * class already is the "run everything once, report pass/fail" tool a
+ * console mode would otherwise provide, and the repeated-relaunch soak-test
+ * loop {@code test-dis6502-DEEP.bat}/{@code -FAST.bat} drove has no obvious
+ * Java equivalent need. What was recovered from {@code MainTest.cpp}
+ * instead is its two genuinely non-redundant checks: {@link
+ * WorkspaceLogicTest} (from {@code MainTest::TestWorkspace} - a real
+ * workspace-file load plus {@link com.wudsn.tools.dis6502.model.Segment#splitAt}'s
+ * comment-rebasing, previously untested in Java) and {@link
+ * ReassemblyRoundTripTest} (from {@code MainTest::ExecuteUnitTestItem}/{@code
+ * ExecuteVariant} - disassemble four real fixtures, reassemble each with the
+ * real MADS assembler, and byte-compare against a reference binary; see its
+ * own javadoc for the deliberately reduced variant-sweep scope). This also
+ * runs the tests that exercise every other already-ported model class:
+ * {@link AssemblerTest}, {@link EquateTest}, {@link SegmentTest}, {@link
+ * DisassemblyResultTest}, {@link DisassemblyResultFileTest}, {@link
  * ComputerSystemTest} (which in turn covers {@code Atari800Test} and the
  * C64 system), {@link Profile1XTest}, {@link EquateListLogicTest}, {@link
  * MemoryInspectorTest}, and {@link AtariDiskImageTest} (the last two ported
@@ -87,11 +101,13 @@ public final class TestRunner {
 		runTest("ComputerSystemTest", () -> ComputerSystemTest.testSystems(new ComputerSystemFactory()));
 		runTest("Profile1XTest", Profile1XTest::testProfile1X);
 		runTest("EquateListLogicTest", EquateListLogicTest::testEquateListLogic);
+		runTest("WorkspaceLogicTest", WorkspaceLogicTest::testWorkspaceLogic);
 		runTest("MemoryInspectorTest", MemoryInspectorTest::testMemoryInspectorType);
 		runTest("AtariDiskImageTest", AtariDiskImageTest::testAtariDiskImage);
 		runTest("MemoryInspectorStateTest", MemoryInspectorStateTest::testMemoryInspectorState);
 		runTest("ByteRangeSelectionTest", ByteRangeSelectionTest::testByteRangeSelection);
 		runTest("DataTypesTest", DataTypesTest::testDataTypes);
+		runTest("ReassemblyRoundTripTest", ReassemblyRoundTripTest::testReassemblyRoundTrip);
 
 		if (failedCount == 0) {
 			log("INFO: All " + totalCount + " unit tests were successful.");
