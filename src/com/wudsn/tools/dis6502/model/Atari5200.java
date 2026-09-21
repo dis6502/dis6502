@@ -64,7 +64,7 @@ public final class Atari5200 extends ComputerSystem {
 				|| fileSize == 0xa000L) {
 			return FileType.ROM_IMAGE_FILE;
 		}
-		return FileType.UNKNOWN_FILE;
+		return FileType.ANY_FILE;
 	}
 
 	@Override

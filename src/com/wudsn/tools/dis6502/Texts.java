@@ -245,34 +245,6 @@ public final class Texts extends NLS {
 	/** {@link com.wudsn.tools.dis6502.ui.XRefPanel}'s header text when no label is selected - moved from {@code Text.IDS_XREF_TITLE_NO_LABEL_SELECTED}. */
 	public static String XRefPanel_NoLabelSelectedTitle;
 
-	// {@link com.wudsn.tools.dis6502.model.FileTypeInfo}'s texts, one pair per {@link com.wudsn.tools.dis6502.model.FileType}:
-	// _Text is the singular display text, _FilterText the plural a file chooser's filter shows (which appends
-	// the " (*.xex, ...)" suffix itself).
-	public static String FileType_UNKNOWN_FILE_Text;
-	public static String FileType_UNKNOWN_FILE_FilterText;
-	public static String FileType_RAW_FILE_Text;
-	public static String FileType_RAW_FILE_FilterText;
-	public static String FileType_EXECUTABLE_FILE_Text;
-	public static String FileType_EXECUTABLE_FILE_FilterText;
-	public static String FileType_ROM_IMAGE_FILE_Text;
-	public static String FileType_ROM_IMAGE_FILE_FilterText;
-	public static String FileType_CASSETTE_IMAGE_FILE_Text;
-	public static String FileType_CASSETTE_IMAGE_FILE_FilterText;
-	public static String FileType_DISK_IMAGE_EXECUTABLE_FILE_Text;
-	public static String FileType_DISK_IMAGE_EXECUTABLE_FILE_FilterText;
-	public static String FileType_DISK_IMAGE_BOOT_SECTORS_Text;
-	public static String FileType_DISK_IMAGE_BOOT_SECTORS_FilterText;
-	public static String FileType_DISK_IMAGE_SECTORS_Text;
-	public static String FileType_DISK_IMAGE_SECTORS_FilterText;
-	public static String FileType_WORKSPACE_FILE_Text;
-	public static String FileType_WORKSPACE_FILE_FilterText;
-	public static String FileType_EQUATES_FILE_Text;
-	public static String FileType_EQUATES_FILE_FilterText;
-	public static String FileType_PROFILE_FILE_Text;
-	public static String FileType_PROFILE_FILE_FilterText;
-	public static String FileType_DISASSEMBLY_FILE_Text;
-	public static String FileType_DISASSEMBLY_FILE_FilterText;
-
 	/** {@link com.wudsn.tools.dis6502.ui.FileChoosers}' "file exists, overwrite?" confirmation. */
 	public static String FileChoosers_OverwriteTitle;
 	public static String FileChoosers_OverwriteMessage;

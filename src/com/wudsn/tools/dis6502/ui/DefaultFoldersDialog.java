@@ -10,7 +10,7 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.JButton;
@@ -35,7 +35,7 @@ import com.wudsn.tools.dis6502.model.FolderType;
  * simplified: the C++ version's {@code ShellSelectFolder} (a raw
  * {@code IFileOpenDialog} COM call with {@code FOS_PICKFOLDERS}) becomes a
  * {@link JFileChooser} in {@link JFileChooser#DIRECTORIES_ONLY} mode. Like
- * the C++ version, {@link FolderType#UNKNOWN_FILES} has no field here - it
+ * the C++ version, {@link FolderType#UNKNOWN} has no field here - it
  * is never user-editable, only ever set from the application's own module
  * path (see {@code DefaultFoldersLogic.createDefaultFolders}).
  *
@@ -50,7 +50,7 @@ public final class DefaultFoldersDialog extends JDialog {
 			FolderType.WORKSPACE_FILES, FolderType.EQUATES_FILES, FolderType.PROFILE_FILES,
 			FolderType.DISASSEMBLY_FILES };
 
-	private final Map<FolderType, JTextField> fields = new EnumMap<>(FolderType.class);
+	private final Map<FolderType, JTextField> fields = new HashMap<>(); // FolderType is a value set, not an enum.
 	private boolean confirmed;
 
 	public DefaultFoldersDialog(Frame owner) {

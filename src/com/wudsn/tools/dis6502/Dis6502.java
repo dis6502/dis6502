@@ -404,7 +404,7 @@ public final class Dis6502 {
 		mainWindow.setVisible(true);
 
 		if (commandLineArguments.file != null) {
-			openFile(commandLineArguments.file, FileType.UNKNOWN_FILE, false);
+			openFile(commandLineArguments.file, FileType.ANY_FILE, false);
 		}
 	}
 
@@ -442,7 +442,7 @@ public final class Dis6502 {
 			EventQueue.invokeLater(() -> {
 				boolean add = false;
 				for (File file : files) {
-					if (!openFile(file, FileType.UNKNOWN_FILE, add) && !add) {
+					if (!openFile(file, FileType.ANY_FILE, add) && !add) {
 						return; // Without the first file, there is nothing to add the others to.
 					}
 					add = true;
@@ -618,7 +618,7 @@ public final class Dis6502 {
 	/**
 	 * Opens (replacing the workspace's content, after {@link
 	 * #confirmClearWorkspace}) or adds a file of the given type. Ported from
-	 * MainFile::OpenFile: {@link FileType#UNKNOWN_FILE} - used by the command
+	 * MainFile::OpenFile: {@link FileType#ANY_FILE} - used by the command
 	 * line and by drag and drop, which only have a path - is resolved via
 	 * {@link ComputerSystem#guessFileType(File)} for the workspace's current
 	 * computer system, then by the {@code .wrk} extension. Unlike the C++
@@ -631,7 +631,7 @@ public final class Dis6502 {
 		// The menu commands are disabled while editing, but a dropped file gets here regardless.
 		mainWindow.memoryInspectorPanel.quitEditMode();
 
-		if (fileType == FileType.UNKNOWN_FILE) {
+		if (fileType == FileType.ANY_FILE) {
 			if (file.getName().toLowerCase().endsWith(".wrk")) {
 				fileType = FileType.WORKSPACE_FILE;
 			} else {
@@ -641,7 +641,7 @@ public final class Dis6502 {
 					application.sendErrorMessage(ex);
 					return false;
 				}
-				if (fileType == FileType.UNKNOWN_FILE) {
+				if (fileType == FileType.ANY_FILE) {
 					application.sendMessage(Messages.I073, file.getPath(), workspace.getComputerSystem().getTypeInfo().text);
 					fileType = FileType.RAW_FILE;
 				}
@@ -654,30 +654,23 @@ public final class Dis6502 {
 			return false;
 		}
 
+		// If chains, not switches, here and below: FileType is a ValueSet, not an enum.
 		boolean opened;
-		switch (fileType) {
-		case WORKSPACE_FILE:
+		if (fileType == FileType.WORKSPACE_FILE) {
 			opened = openWorkspaceFile(file);
-			break;
-		case EXECUTABLE_FILE:
-		case ROM_IMAGE_FILE:
-		case CASSETTE_IMAGE_FILE:
+		} else if (fileType == FileType.EXECUTABLE_FILE || fileType == FileType.ROM_IMAGE_FILE
+				|| fileType == FileType.CASSETTE_IMAGE_FILE) {
 			opened = openReadableFile(file, fileType, add);
-			break;
-		case RAW_FILE:
+		} else if (fileType == FileType.RAW_FILE) {
 			opened = openRawFile(file, add);
-			break;
-		case DISK_IMAGE_EXECUTABLE_FILE:
+		} else if (fileType == FileType.DISK_IMAGE_EXECUTABLE_FILE) {
 			opened = openDiskImageExecutableFile(file, add);
-			break;
-		case DISK_IMAGE_BOOT_SECTORS:
+		} else if (fileType == FileType.DISK_IMAGE_BOOT_SECTORS) {
 			opened = openDiskImageBootSectors(file, add);
-			break;
-		case DISK_IMAGE_SECTORS:
+		} else if (fileType == FileType.DISK_IMAGE_SECTORS) {
 			opened = openDiskImageSectors(file, add);
-			break;
-		default:
-			throw new IllegalArgumentException("Parameter 'fileType' has unsupported value " + fileType + ".");
+		} else {
+			throw new IllegalArgumentException("Parameter 'fileType' has unsupported value " + fileType.getKey() + ".");
 		}
 		if (!opened) {
 			return false;
@@ -942,42 +935,38 @@ public final class Dis6502 {
 		return true;
 	}
 
-	/** The per-{@link FileType}/add-or-open dialog title. The C++ version composes it from {@code FileTypeInfo}'s text instead ("Open " + text); these are separate, fully worded texts, which translate better. */
+	/** The per-{@link FileType}/add-or-open dialog title. The C++ version composes it from the file type's text instead ("Open " + text); these are separate, fully worded texts, which translate better. */
 	private static String getFileTypeOpenTitle(FileType fileType, boolean add) {
-		switch (fileType) {
-		case WORKSPACE_FILE:
+		if (fileType == FileType.WORKSPACE_FILE) {
 			return Texts.Dis6502_OpenWorkspaceFileTitle;
-		case EXECUTABLE_FILE:
+		} else if (fileType == FileType.EXECUTABLE_FILE) {
 			return add ? Texts.Dis6502_AddExecutableFileTitle : Texts.Dis6502_OpenExecutableFileTitle;
-		case ROM_IMAGE_FILE:
+		} else if (fileType == FileType.ROM_IMAGE_FILE) {
 			return add ? Texts.Dis6502_AddRomImageFileTitle : Texts.Dis6502_OpenRomImageFileTitle;
-		case CASSETTE_IMAGE_FILE:
+		} else if (fileType == FileType.CASSETTE_IMAGE_FILE) {
 			return add ? Texts.Dis6502_AddCassetteImageFileTitle : Texts.Dis6502_OpenCassetteImageFileTitle;
-		case RAW_FILE:
+		} else if (fileType == FileType.RAW_FILE) {
 			return add ? Texts.Dis6502_AddRawFileTitle : Texts.RawFileDialog_Title;
-		case DISK_IMAGE_EXECUTABLE_FILE:
+		} else if (fileType == FileType.DISK_IMAGE_EXECUTABLE_FILE) {
 			return add ? Texts.Dis6502_AddDiskImageExecutableFileTitle : Texts.DiskImageExecutableFileDialog_Title;
-		case DISK_IMAGE_BOOT_SECTORS:
+		} else if (fileType == FileType.DISK_IMAGE_BOOT_SECTORS) {
 			return add ? Texts.Dis6502_AddDiskImageBootSectorsTitle : Texts.Dis6502_OpenDiskImageBootSectorsTitle;
-		case DISK_IMAGE_SECTORS:
+		} else if (fileType == FileType.DISK_IMAGE_SECTORS) {
 			return add ? Texts.Dis6502_AddDiskImageSectorsTitle : Texts.DiskImageSectorsDialog_Title;
-		default:
-			throw new IllegalArgumentException("Parameter 'fileType' has unsupported value " + fileType + ".");
 		}
+		throw new IllegalArgumentException("Parameter 'fileType' has unsupported value " + fileType.getKey() + ".");
 	}
 
 	/** {@link #openReadableFile}'s per-{@link FileType} "opening file" log message, matching {@code MainFile::OpenFile}'s dispatch to {@code OpenExecutableFile}/{@code OpenRomImageFile}/{@code OpenCassetteImageFile}. */
 	private static Message getFileTypeOpenMessage(FileType fileType) {
-		switch (fileType) {
-		case EXECUTABLE_FILE:
+		if (fileType == FileType.EXECUTABLE_FILE) {
 			return Messages.I021;
-		case ROM_IMAGE_FILE:
+		} else if (fileType == FileType.ROM_IMAGE_FILE) {
 			return Messages.I023;
-		case CASSETTE_IMAGE_FILE:
+		} else if (fileType == FileType.CASSETTE_IMAGE_FILE) {
 			return Messages.I017;
-		default:
-			throw new IllegalArgumentException("Parameter 'fileType' has unsupported value " + fileType + ".");
 		}
+		throw new IllegalArgumentException("Parameter 'fileType' has unsupported value " + fileType.getKey() + ".");
 	}
 
 	/** Ported from EquateListController::Clear. */

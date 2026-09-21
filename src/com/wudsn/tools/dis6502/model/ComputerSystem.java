@@ -87,7 +87,7 @@ public abstract class ComputerSystem {
 	public FileType guessFileType(File filePath) throws IOException {
 		long fileSize = filePath.length();
 		if (fileSize < 4) {
-			return FileType.UNKNOWN_FILE;
+			return FileType.ANY_FILE;
 		}
 		byte[] header = new byte[4];
 		try (DataInputStream in = new DataInputStream(new FileInputStream(filePath))) {
@@ -124,17 +124,14 @@ public abstract class ComputerSystem {
 			throw new UnsupportedOperationException("File type is not supported.");
 		}
 
-		switch (fileType) {
-		case CASSETTE_IMAGE_FILE:
+		// An if chain, not a switch: FileType is a ValueSet, not an enum.
+		if (fileType == FileType.CASSETTE_IMAGE_FILE) {
 			readCassetteFile(segmentListInserter, inputStream, fileSize);
-			break;
-		case EXECUTABLE_FILE:
+		} else if (fileType == FileType.EXECUTABLE_FILE) {
 			readExecutableFile(segmentListInserter, inputStream, fileSize);
-			break;
-		case ROM_IMAGE_FILE:
+		} else if (fileType == FileType.ROM_IMAGE_FILE) {
 			readROMFile(segmentListInserter, inputStream, fileSize);
-			break;
-		default:
+		} else {
 			throw new UnsupportedOperationException("File type is not supported.");
 		}
 	}

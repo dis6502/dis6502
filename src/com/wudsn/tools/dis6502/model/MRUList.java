@@ -93,7 +93,7 @@ public final class MRUList {
 			}
 
 			FileType fileType = FileType.fromKey(fileTypeString);
-			if (fileType != FileType.UNKNOWN_FILE) {
+			if (fileType != FileType.ANY_FILE) {
 				entries.add(new MRUEntry(filePath, fileType));
 			}
 		}

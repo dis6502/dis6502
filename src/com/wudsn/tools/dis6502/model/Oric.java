@@ -70,7 +70,7 @@ public final class Oric extends ComputerSystem {
 		if ((content[0] & 0xFF) == (headerValue & 0xFF) && (content[1] & 0xFF) == ((headerValue >> 8) & 0xFF)) {
 			return FileType.EXECUTABLE_FILE;
 		}
-		return FileType.UNKNOWN_FILE;
+		return FileType.ANY_FILE;
 	}
 
 	@Override

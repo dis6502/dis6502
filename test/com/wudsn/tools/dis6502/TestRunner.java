@@ -15,6 +15,7 @@ import com.wudsn.tools.dis6502.model.DisassemblyResultTest;
 import com.wudsn.tools.dis6502.model.EncodingTest;
 import com.wudsn.tools.dis6502.model.EquateListLogicTest;
 import com.wudsn.tools.dis6502.model.EquateTest;
+import com.wudsn.tools.dis6502.model.FolderTypeTest;
 import com.wudsn.tools.dis6502.model.ImmediateTypeTest;
 import com.wudsn.tools.dis6502.model.LineNumberHistoryTest;
 import com.wudsn.tools.dis6502.model.MemoryInspectorStateTest;
@@ -116,6 +117,7 @@ public final class TestRunner {
 		runTest("ImmediateTypeTest", ImmediateTypeTest::testImmediateType);
 		runTest("FileChoosersTest", FileChoosersTest::testFileChoosers);
 		runTest("EncodingTest", EncodingTest::testEncoding);
+		runTest("FolderTypeTest", FolderTypeTest::testFolderType);
 		runTest("ReassemblyRoundTripTest", ReassemblyRoundTripTest::testReassemblyRoundTrip);
 
 		if (failedCount == 0) {

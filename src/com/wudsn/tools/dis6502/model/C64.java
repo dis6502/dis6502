@@ -92,7 +92,7 @@ public final class C64 extends ComputerSystem {
 		if (address >= 0x0200 && size > 0 && address + size <= 0x10000L) {
 			return FileType.EXECUTABLE_FILE;
 		}
-		return FileType.UNKNOWN_FILE;
+		return FileType.ANY_FILE;
 	}
 
 	@Override

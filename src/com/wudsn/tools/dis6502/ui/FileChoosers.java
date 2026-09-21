@@ -7,7 +7,7 @@ package com.wudsn.tools.dis6502.ui;
 
 import java.awt.Component;
 import java.io.File;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -19,15 +19,14 @@ import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.DefaultFolders;
 import com.wudsn.tools.dis6502.model.FileType;
-import com.wudsn.tools.dis6502.model.FileTypeInfo;
 
 /**
  * Every "open"/"save" file chooser of the application, so they all behave
  * the same: which folder they start in, which files they show, and what
  * happens to the file name picked for saving.
  * <p>
- * Replaces the C++ version's {@code FileDialogs}, driven by the same {@link
- * FileTypeInfo}:
+ * Replaces the C++ version's {@code FileDialogs}, driven by what each {@link
+ * FileType} knows about itself:
  * <ul>
  * <li>The folder to start in is, in this order: the suggested file's (when
  * saving something that already has a file); where a file of this type was
@@ -52,7 +51,7 @@ public final class FileChoosers {
 
 	private final MRUController mruController;
 	private final Supplier<DefaultFolders> defaultFoldersSupplier;
-	private final Map<FileType, File> lastFolders = new EnumMap<>(FileType.class);
+	private final Map<FileType, File> lastFolders = new HashMap<>(); // FileType is a value set, not an enum.
 
 	/**
 	 * @param defaultFoldersSupplier Supplies the default folders of the
@@ -87,7 +86,7 @@ public final class FileChoosers {
 		if (fileChooser.showSaveDialog(parent) != JFileChooser.APPROVE_OPTION) {
 			return null;
 		}
-		File file = withDefaultExtension(fileChooser.getSelectedFile(), FileTypeInfo.get(fileType));
+		File file = withDefaultExtension(fileChooser.getSelectedFile(), fileType);
 		if (file.exists() && JOptionPane.showConfirmDialog(parent, TextUtility.format(Texts.FileChoosers_OverwriteMessage, file.getPath()),
 				Texts.FileChoosers_OverwriteTitle, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) {
 			return null;
@@ -97,16 +96,14 @@ public final class FileChoosers {
 	}
 
 	private JFileChooser createFileChooser(String title, FileType fileType, File suggestedFile) {
-		FileTypeInfo fileTypeInfo = FileTypeInfo.get(fileType);
-
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle(title);
 
-		if (!fileTypeInfo.filterExtensions.isEmpty()) {
-			String[] extensions = new String[fileTypeInfo.filterExtensions.size()];
-			StringBuilder description = new StringBuilder(fileTypeInfo.filterText).append(" (");
+		if (!fileType.getFilterExtensions().isEmpty()) {
+			String[] extensions = new String[fileType.getFilterExtensions().size()];
+			StringBuilder description = new StringBuilder(fileType.getFilterText()).append(" (");
 			for (int i = 0; i < extensions.length; i++) {
-				extensions[i] = fileTypeInfo.filterExtensions.get(i).substring(1); // Without the dot.
+				extensions[i] = fileType.getFilterExtensions().get(i).substring(1); // Without the dot.
 				description.append(i == 0 ? "*." : ", *.").append(extensions[i]);
 			}
 			fileChooser.setFileFilter(new FileNameExtensionFilter(description.append(")").toString(), extensions));
@@ -114,7 +111,7 @@ public final class FileChoosers {
 
 		File mruFile = toFile(mruController.getLastFilePath(fileType));
 		File initialFolder = getInitialFolder(suggestedFile, lastFolders.get(fileType), mruFile,
-				toFile(defaultFoldersSupplier.get().getFolderPath(fileTypeInfo.folderType)));
+				toFile(defaultFoldersSupplier.get().getFolderPath(fileType.getFolderType())));
 		if (initialFolder != null) {
 			fileChooser.setCurrentDirectory(initialFolder);
 		}
@@ -145,10 +142,10 @@ public final class FileChoosers {
 	}
 
 	/** Appends the type's default extension to a file name that has none - if the type has one. */
-	static File withDefaultExtension(File file, FileTypeInfo fileTypeInfo) {
-		if (file.getName().contains(".") || FileTypeInfo.ANY_EXTENSION.equals(fileTypeInfo.defaultExtension)) {
+	static File withDefaultExtension(File file, FileType fileType) {
+		if (file.getName().contains(".") || !fileType.hasDefaultExtension()) {
 			return file;
 		}
-		return new File(file.getParentFile(), file.getName() + fileTypeInfo.defaultExtension);
+		return new File(file.getParentFile(), file.getName() + fileType.getDefaultExtension());
 	}
 }

@@ -210,28 +210,30 @@ first one here. Texts live in the one shared `ValueSets.properties` next to
 this project's `ValueSets` container class, keyed `SimpleClassName_ID`
 (`Encoding_UTF8=UTF-8`); `toString()` returns the text, and
 `com.wudsn.tools.base.gui.ValueSetField` is the ready-made combo box. A
-`ValueSet` cannot be used in a `switch` - use an `if` chain on identity. The
-persistence key is the `id`, never the text. More generally: before inventing
+`ValueSet` cannot be used in a `switch` or an `EnumMap` - use an `if` chain on
+identity and a `HashMap`. The persistence key is the `id`, never the text.
+The repository loader takes every `public static final` field of a value set
+class for a value and fails at startup on anything else (a `String`
+constant, say) - keep such constants private or turn them into methods.
+String concatenation with a value now yields its display text; use
+`getKey()` where the technical name is meant. More generally: before inventing
 a text-lookup helper, look in WUDSN Base for an existing repository pattern
 (`ValueSet`, `DataType`, `Action`, `Message`, `Texts`).
 
-### Keep type enums free of display texts - texts live in a separate Info class backed by `Texts`
+### Display texts never go into a type as string literals
 
-User-visible texts must stay localizable, so they do not belong in a type
-enum as hard-coded string literals. When the C++ `FileTypeInfo` table
-(display text, filter text, extensions, default extension, folder type) was
-folded into fields of the `FileType` enum - which looks simpler in Java -
-the user corrected it: "Keep separate FileType and FileTypeInfo to support
-localization of the texts."
-
-How to apply: the enum stays a plain list of constants plus its persistence
-key methods; the UI-facing data comes from a separate `...Info` class
-(`FileTypeInfo.get(FileType)`) whose texts are read from the project's text
-repository (`Texts.java`/`Texts.properties`, fields like
-`FileType_EXECUTABLE_FILE_Text`), the same mechanism every other UI text
-uses. The same applies to any other type that needs display texts: do not
-merge an `XxxInfo` lookup into its enum, and do not introduce new hard-coded
-English UI strings in model classes.
+User-visible texts must stay localizable. When the C++ `FileTypeInfo` table
+was first folded into fields of a Java `enum FileType` with hard-coded English
+texts, the user corrected it ("Keep separate FileType and FileTypeInfo to
+support localization of the texts"); the `ValueSet` pattern above then turned
+out to be the intended way to have both - one type, localizable texts - and
+`FileType`, `FolderType` and `Encoding` were all converted to it (with
+`FileType`'s default extension, filter extensions and folder type as extra
+attributes of each value, and its filter text simply being its
+`FolderType`'s text). The rule that remains: no new hard-coded English UI
+strings in model classes - texts come from `ValueSets.properties` (values of a
+type), `Texts.properties`, `Messages.properties`, `Actions.properties` or
+`DataTypes.properties`.
 
 ## Swing UI conventions
 

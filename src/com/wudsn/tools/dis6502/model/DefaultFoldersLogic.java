@@ -5,7 +5,6 @@
  */
 package com.wudsn.tools.dis6502.model;
 
-import java.util.Arrays;
 import java.util.List;
 
 import com.wudsn.tools.dis6502.Application;
@@ -19,10 +18,7 @@ import com.wudsn.tools.dis6502.ApplicationSettingsSection;
  */
 public final class DefaultFoldersLogic {
 
-	private static final List<FolderType> FOLDER_TYPES = Arrays.asList(FolderType.UNKNOWN_FILES, FolderType.RAW_FILES,
-			FolderType.EXECUTABLE_FILES, FolderType.ROM_IMAGE_FILES, FolderType.CASSETTE_IMAGE_FILES,
-			FolderType.DISK_IMAGE_FILES, FolderType.WORKSPACE_FILES, FolderType.EQUATES_FILES,
-			FolderType.PROFILE_FILES, FolderType.DISASSEMBLY_FILES);
+	private static final List<FolderType> FOLDER_TYPES = FolderType.getValues();
 
 	private final Application application;
 

@@ -110,7 +110,7 @@ through "Add File" or an existing `.wrk`.
 one dispatcher, `Dis6502.openFile(file, fileType, add)` (the counterpart of
 `MainFile::OpenFile`): the File menu's Open/Add items (now all one
 `performOpenFile`), Recent Files/Workspaces, the command line and drag and
-drop. `FileType.UNKNOWN_FILE` is resolved by the `.wrk` extension, then by
+drop. `FileType.ANY_FILE` (`UNKNOWN_FILE` until 2026-09-22) is resolved by the `.wrk` extension, then by
 `ComputerSystem.guessFileType`; a file that still cannot be classified is
 offered as a raw file via `RawFileDialog` instead of being silently ignored
 as in C++. `C64.guessFileType` now recognizes a `.prg`.
@@ -189,8 +189,10 @@ missing.
 
 **Fix**: new `ui/FileChoosers` (the counterpart of C++ `FileDialogs`) is
 behind every open/save chooser of the application, driven by the newly
-ported `FileTypeInfo` (kept apart from the `FileType` enum; its texts come
-from `Texts.properties` so they stay localizable):
+ported `FileTypeInfo` data (first a separate class with texts in
+`Texts.properties`; since 2026-09-22 part of `FileType` itself, which - like
+`FolderType` and `Encoding` - is now a WUDSN Base `ValueSet` with its texts in
+`ValueSets.properties`):
 - start folder, in this order: the suggested file's; where a file of this
   type was last picked in this session (new - C++ has no such memory, so
   types that never reach the MRU list always start in the default folder

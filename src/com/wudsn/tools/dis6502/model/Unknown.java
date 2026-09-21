@@ -39,6 +39,6 @@ public final class Unknown extends ComputerSystem {
 
 	@Override
 	public FileType guessFileType(long fileSize, byte[] content) {
-		return FileType.UNKNOWN_FILE;
+		return FileType.ANY_FILE;
 	}
 }

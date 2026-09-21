@@ -52,8 +52,8 @@ public final class ComputerSystemTest {
 
 		// guessFileType: a .prg is recognized by a load address that fits into memory.
 		Assert.boolEquals(computerSystem.guessFileType(24 + 2, new byte[] { 0x01, 0x08, 0x0B, 0x08 }) == FileType.EXECUTABLE_FILE, true);
-		Assert.boolEquals(computerSystem.guessFileType(0x2000, new byte[] { 0x00, (byte) 0xF0, 0, 0 }) == FileType.UNKNOWN_FILE, true); // $F000 + 8K does not fit.
-		Assert.boolEquals(computerSystem.guessFileType(100, new byte[] { 0x10, 0x00, 0, 0 }) == FileType.UNKNOWN_FILE, true); // Zero page.
+		Assert.boolEquals(computerSystem.guessFileType(0x2000, new byte[] { 0x00, (byte) 0xF0, 0, 0 }) == FileType.ANY_FILE, true); // $F000 + 8K does not fit.
+		Assert.boolEquals(computerSystem.guessFileType(100, new byte[] { 0x10, 0x00, 0, 0 }) == FileType.ANY_FILE, true); // Zero page.
 	}
 
 	/**

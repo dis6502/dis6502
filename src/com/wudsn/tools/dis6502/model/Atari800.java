@@ -130,7 +130,7 @@ public final class Atari800 extends ComputerSystem {
 			return FileType.DISK_IMAGE_BOOT_SECTORS;
 		}
 
-		return FileType.UNKNOWN_FILE;
+		return FileType.ANY_FILE;
 	}
 
 	/** Allocates a 1 byte segment to mark it as being used. */
