@@ -81,12 +81,17 @@ for a message that needs a severity attached (status/info/error) - the same
 pattern `com.wudsn.tools.base.Messages` already uses elsewhere in the WUDSN
 ecosystem. A field's own leading letter encodes its severity at class-load
 time (`S`=`Message.STATUS`, `I`=`Message.INFO`, `E`=`Message.ERROR`),
-followed by a plain sequence number (e.g. `I001`) - not a ported C++
-resource ID, even for a message whose text did originally come from one
-(`Messages.I001` itself was moved here from a real ported `Text.
-IDS_LOG_BETA_MESSAGE`, on explicit user instruction, once the message
-needed its severity to actually drive dispatch). Send a `Messages.*` field
-via `Application.sendMessage(Message, String...)`, which reads
+followed by a plain sequence number (e.g. `I001`) shared across every
+severity - the numbering does not restart at 1 per letter, it just
+continues on from whatever number came before it regardless of severity
+(so the six `E`-prefixed fields added right after `I001` are numbered
+`E002`-`E007`, not `E001`-`E006`) - not a ported C++ resource ID, even for
+a message whose text did originally come from one (`Messages.I001` itself
+was moved here from a real ported `Text.IDS_LOG_BETA_MESSAGE`, and
+`Messages.E002`-`E007` from six real ported `Text.IDS_ERR_*` constants,
+on explicit user instruction each time, once the message needed its
+severity to actually drive dispatch). Send a `Messages.*` field via
+`Application.sendMessage(Message, String...)`, which reads
 `message.getSeverity()` to pick the right log method itself, instead of the
 caller choosing `sendInfoMessage`/`sendErrorMessage`.
 
