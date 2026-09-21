@@ -9,6 +9,29 @@ reads as guidance rather than a session transcript; a couple of entries
 below note where a later decision superseded an earlier one recorded
 elsewhere in Claude's memory.
 
+## The porting phase is over (2026-09-21) - read this first
+
+The user has stated explicitly, in these words: "The Java version will
+from now on intentionally diverge the C++ original. This Java version is
+the port. There will not be another attempt." Every entry below this one
+was written while active fidelity to the C++ source was still the goal -
+useful as a record of *why* the existing code looks the way it does, and
+still generally sound Java/Swing engineering advice, but no longer a
+mandate to keep matching C++. Concretely, going forward:
+
+- Do not default to "match C++ behavior/structure" when making a design
+  decision; decide what's right for the Java codebase on its own terms.
+- Do not feel obliged to fix a bug in the C++ source when fixing it in
+  Java, file a C++-side `TODO:`, or verify a C++-side build before
+  committing a Java-side fix - see `plans/PORTING_GUIDE.md`'s now-historical
+  section 4 for what the old policy required.
+- A "genuine scope fork" is still worth asking the user about explicitly
+  (per the process lesson later in this file) - it's just no longer framed
+  as "match C++ or diverge from it," since diverging is now the norm, not
+  a special case needing justification.
+- This does not retroactively make already-completed work wrong; it's
+  guidance for what comes next.
+
 ## Architecture and state ownership
 
 ### Give cross-cutting state its own class owned by Workspace, not flat fields on Workspace

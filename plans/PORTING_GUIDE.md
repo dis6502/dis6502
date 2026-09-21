@@ -1,5 +1,27 @@
 # Porting dis6502 (C++) to jdis6502 (Java) - Guidance for a Future Attempt
 
+**Status (2026-09-21): the porting phase is over.** The user has stated
+explicitly that this Java codebase is the finished port - there will not be
+another attempt, and from now on the Java version is expected to
+**intentionally diverge** from the C++ original where that serves the Java
+codebase's own quality/design, rather than treating C++ behavior as the
+default answer to defer to. This reverses this document's own framing
+(written when active fidelity to C++ was still the goal) and, most
+concretely, section 4's bug-handling policy below, which assumed every
+divergence needed to be justified against - and often mirrored back into -
+the C++ source. Going forward:
+
+- Do not treat matching C++ behavior/structure as the default; make the
+  Java-appropriate design call on its own merits.
+- Do not feel obliged to also fix a bug in the C++ source when fixing it in
+  Java, or to file a C++-side `TODO:` before diverging.
+- The environment/tooling setup (section 2), coding conventions (section 3,
+  most of which describe good Java/Swing practice independent of C++), and
+  testing strategy (section 5) below remain useful. Section 4's C++-mirrored
+  bug-handling policy and this document's overall "port faithfully" framing
+  are kept only as historical record of the convention that applied during
+  the actual porting effort - not current guidance.
+
 This document is guidance for redoing this port from scratch, written after
 completing a first full attempt. It captures the process, conventions, and
 pitfalls worth carrying forward - not a log of specific bugs that have
@@ -77,7 +99,7 @@ the next attempt, since paths/versions may have drifted:
   values in. Judge this by "does it produce the same behavior for the
   user," not by "does the code structure match the original."
 
-## 4. Bug-handling policy
+## 4. Bug-handling policy (historical - see the status note at the top)
 
 When the Java port's behavior would diverge from a literal translation of
 the C++ because the C++ itself looks wrong:
@@ -113,8 +135,11 @@ the C++ because the C++ itself looks wrong:
 
 ## 6. Process lesson
 
-At genuine scope forks - what to port, how to handle a broken or
-questionable upstream feature - ask explicitly rather than deciding
-silently, and treat the answer as durable guidance for the rest of that
-feature area (not just the one instance being discussed) unless told
-otherwise.
+At a genuine scope fork - a design decision with more than one defensible
+answer - ask explicitly rather than deciding silently, and treat the answer
+as durable guidance for the rest of that feature area (not just the one
+instance being discussed) unless told otherwise. (This used to be phrased
+specifically around "what to port, how to handle a broken or questionable
+upstream feature" - see the status note at the top: the porting phase is
+over, so a fork is no longer "match C++ or diverge," it's just an ordinary
+Java-side design decision.)
