@@ -29,6 +29,7 @@ import javax.swing.event.DocumentListener;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Texts;
 
 /**
  * A dialog for adding a raw (headerless) file to the workspace as a single
@@ -72,7 +73,7 @@ public final class RawFileDialog extends JDialog {
 	public RawFileDialog(Frame owner) {
 		super(owner, true);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("Open Raw File");
+		setTitle(Texts.RawFileDialog_Title);
 
 		filePathField.setEditable(false);
 

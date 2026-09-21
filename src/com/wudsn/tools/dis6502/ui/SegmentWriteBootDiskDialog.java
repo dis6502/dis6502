@@ -28,6 +28,7 @@ import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Messages;
+import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.AtariDOS;
 import com.wudsn.tools.dis6502.model.AtariDisk;
 import com.wudsn.tools.dis6502.model.AtariError;
@@ -73,7 +74,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 	public SegmentWriteBootDiskDialog(Frame owner) {
 		super(owner, true);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("Write Boot Disk");
+		setTitle(Texts.SegmentWriteBootDiskDialog_Title);
 
 		JPanel panel = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();

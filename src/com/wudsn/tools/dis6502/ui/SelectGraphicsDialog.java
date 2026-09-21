@@ -23,6 +23,7 @@ import javax.swing.SpinnerNumberModel;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState;
 import com.wudsn.tools.dis6502.model.Segment;
 
@@ -76,7 +77,7 @@ public final class SelectGraphicsDialog extends JDialog {
 	public SelectGraphicsDialog(Frame owner) {
 		super(owner, true);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("Select Graphics");
+		setTitle(Texts.SelectGraphicsDialog_Title);
 
 		modeComboBox.addActionListener(e -> performModeChanged());
 		indexScrollBar.getModel().addChangeListener(e -> {

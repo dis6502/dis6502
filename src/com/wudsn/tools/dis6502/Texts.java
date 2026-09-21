@@ -52,6 +52,35 @@ public final class Texts extends NLS {
 	 */
 	public static String Dis6502_VersionDate;
 
+	/** {@link com.wudsn.tools.dis6502.ui.AssembleDialog}'s window title. */
+	public static String AssembleDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.CommentDialog}'s window title. */
+	public static String CommentDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.DiskImageExecutableFileDialog}'s window title. */
+	public static String DiskImageExecutableFileDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.DiskImageSectorsDialog}'s window title. */
+	public static String DiskImageSectorsDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.EquateDialog}'s window title when editing ({@code editable == true}). */
+	public static String EquateDialog_EditTitle;
+	/** {@link com.wudsn.tools.dis6502.ui.EquateDialog}'s window title when read-only ({@code editable == false}). */
+	public static String EquateDialog_DisplayTitle;
+	/** {@link com.wudsn.tools.dis6502.ui.EquateRangeDialog}'s window title. */
+	public static String EquateRangeDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.LowHighByteDialog}'s window title. */
+	public static String LowHighByteDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.MemoryInspectorFindStringDialog}'s window title. */
+	public static String MemoryInspectorFindStringDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.ProfileDialog}'s window title. */
+	public static String ProfileDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.RawFileDialog}'s window title. */
+	public static String RawFileDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.SegmentPropertiesDialog}'s window title. */
+	public static String SegmentPropertiesDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.SegmentWriteBootDiskDialog}'s window title. */
+	public static String SegmentWriteBootDiskDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.SelectGraphicsDialog}'s window title. */
+	public static String SelectGraphicsDialog_Title;
+
 	static {
 		initializeClass(Texts.class, null);
 	}

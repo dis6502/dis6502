@@ -29,6 +29,7 @@ import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.base.repository.DataType;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Text;
+import com.wudsn.tools.dis6502.Texts;
 
 /**
  * A dialog for searching the memory inspector for a byte sequence, typed
@@ -68,7 +69,7 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 	public MemoryInspectorFindStringDialog(Frame owner) {
 		super(owner, true);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("Find String in Dump Window");
+		setTitle(Texts.MemoryInspectorFindStringDialog_Title);
 
 		ButtonGroup scopeGroup = new ButtonGroup();
 		scopeGroup.add(allSegmentsRadioButton);

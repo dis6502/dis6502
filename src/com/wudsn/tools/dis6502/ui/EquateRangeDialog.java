@@ -24,6 +24,7 @@ import javax.swing.JTextField;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.Equate;
 import com.wudsn.tools.dis6502.model.EquateList;
 
@@ -55,7 +56,7 @@ public final class EquateRangeDialog extends JDialog {
 	public EquateRangeDialog(Frame owner) {
 		super(owner, true);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("Define Address Range");
+		setTitle(Texts.EquateRangeDialog_Title);
 
 		baseEquateComboBox.setRenderer(new DefaultListCellRenderer() {
 			private static final long serialVersionUID = 1L;

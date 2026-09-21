@@ -27,6 +27,7 @@ import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.base.repository.DataType;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Messages;
+import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.ProcessorType;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.Workspace;
@@ -59,7 +60,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 	public SegmentPropertiesDialog(Frame owner) {
 		super(owner, true);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("Segment Properties");
+		setTitle(Texts.SegmentPropertiesDialog_Title);
 
 		JPanel formPanel = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();

@@ -22,6 +22,7 @@ import javax.swing.event.DocumentListener;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.Equate;
 import com.wudsn.tools.dis6502.model.EquateList;
 import com.wudsn.tools.dis6502.model.WorkspaceProperty;
@@ -213,7 +214,7 @@ public final class EquateDialog extends JDialog {
 	 */
 	public boolean show(EquateList equateList, boolean editable, String address) {
 		this.editable = editable;
-		setTitle(editable ? "Edit Equates" : "Display Equates");
+		setTitle(editable ? Texts.EquateDialog_EditTitle : Texts.EquateDialog_DisplayTitle);
 
 		listModel.clear();
 		for (Equate equate : equateList.getEquates()) {

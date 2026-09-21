@@ -22,6 +22,7 @@ import javax.swing.event.DocumentListener;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.MemoryType;
 
 /**
@@ -52,7 +53,7 @@ public final class LowHighByteDialog extends JDialog {
 	public LowHighByteDialog(Frame owner) {
 		super(owner, true);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("Low/High Byte");
+		setTitle(Texts.LowHighByteDialog_Title);
 
 		knownByteField.setEditable(false);
 		unknownByteField.getDocument().addDocumentListener(new DocumentListener() {

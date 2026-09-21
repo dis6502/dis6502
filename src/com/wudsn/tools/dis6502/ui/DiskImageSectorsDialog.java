@@ -32,6 +32,7 @@ import javax.swing.event.DocumentListener;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.DiskImage;
 import com.wudsn.tools.dis6502.model.ImgInfo;
 import com.wudsn.tools.dis6502.model.ImgRWPacket;
@@ -107,7 +108,7 @@ public final class DiskImageSectorsDialog extends JDialog {
 	public DiskImageSectorsDialog(Frame owner) {
 		super(owner, true);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("Open Disk Image Sectors");
+		setTitle(Texts.DiskImageSectorsDialog_Title);
 
 		diskImageFilePathField.setEditable(false);
 		itemsList.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));

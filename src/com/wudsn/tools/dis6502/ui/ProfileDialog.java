@@ -31,6 +31,7 @@ import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.base.repository.DataType;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.ComputerSystemTypeInfo;
 import com.wudsn.tools.dis6502.model.Encoding;
 import com.wudsn.tools.dis6502.model.Profile;
@@ -137,7 +138,7 @@ public final class ProfileDialog extends JDialog {
 		super(owner, true);
 		this.profileLogic = profileLogic;
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("Profile");
+		setTitle(Texts.ProfileDialog_Title);
 
 		ButtonGroup includeFileGroup = new ButtonGroup();
 		includeFileGroup.add(radioIncludeOneFile);

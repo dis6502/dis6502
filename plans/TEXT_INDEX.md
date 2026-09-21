@@ -32,8 +32,19 @@ Not exhaustive: it can't see arguments that are themselves the result of
 another method call building the string elsewhere, and it doesn't cover
 every possible text sink (e.g. `JLabel`/`JButton` literal constructors -
 those are already covered by the `ElementFactory`/`DataTypes` convention
-this codebase uses instead, so none turned up here). 112 hits total, split
-below into two groups by what they're worth doing about.
+this codebase uses instead, so none turned up here). 112 hits found as of
+the commit above, split below into two groups by what they're worth doing
+about; entries struck through and marked MIGRATED have since been moved to
+a repository class (the count in each section heading is the original
+as-scanned total, not a live count - see each struck-through entry for what
+replaced it).
+
+**Update (same day):** all 13 literal `setTitle(...)` dialog-window-title
+call sites in group A were migrated to `<DialogName>_Title` fields in
+`Texts.java`/`Texts.properties` (`EquateDialog`'s two conditional variants
+became `EquateDialog_EditTitle`/`EquateDialog_DisplayTitle`). `setDialogTitle`
+(JFileChooser titles) and `JOptionPane` title/message arguments were left
+untouched - out of scope for that request.
 
 ## A) User-facing dialog titles/messages (50 hits)
 
@@ -74,27 +85,27 @@ section D output.
 
 ### ui/AssembleDialog.java
 
-- `:75` `setTitle` - `'Assemble'`
+- ~~`:75` `setTitle` - `'Assemble'`~~ MIGRATED -> `Texts.AssembleDialog_Title`
 
 ### ui/CommentDialog.java
 
-- `:57` `setTitle` - `'Comment'`
+- ~~`:57` `setTitle` - `'Comment'`~~ MIGRATED -> `Texts.CommentDialog_Title`
 
 ### ui/DiskImageExecutableFileDialog.java
 
-- `:69` `setTitle` - `'Open Disk Image Executable File'`
+- ~~`:69` `setTitle` - `'Open Disk Image Executable File'`~~ MIGRATED -> `Texts.DiskImageExecutableFileDialog_Title`
 
 ### ui/DiskImageSectorsDialog.java
 
-- `:110` `setTitle` - `'Open Disk Image Sectors'`
+- ~~`:110` `setTitle` - `'Open Disk Image Sectors'`~~ MIGRATED -> `Texts.DiskImageSectorsDialog_Title`
 
 ### ui/EquateDialog.java
 
-- `:216` `setTitle` - `'Edit Equates'`/`'Display Equates'`
+- ~~`:216` `setTitle` - `'Edit Equates'`/`'Display Equates'`~~ MIGRATED -> `Texts.EquateDialog_EditTitle`/`Texts.EquateDialog_DisplayTitle`
 
 ### ui/EquateRangeDialog.java
 
-- `:58` `setTitle` - `'Define Address Range'`
+- ~~`:58` `setTitle` - `'Define Address Range'`~~ MIGRATED -> `Texts.EquateRangeDialog_Title`
 - `:132` `JOptionPane.showMessageDialog` - `'Invalid start address.'`
 - `:134` `JOptionPane.showMessageDialog` - `'Invalid end address.'`
 - `:136` `JOptionPane.showMessageDialog` - `'Start address greater than end address.'`
@@ -103,39 +114,39 @@ section D output.
 
 ### ui/LowHighByteDialog.java
 
-- `:55` `setTitle` - `'Low/High Byte'`
+- ~~`:55` `setTitle` - `'Low/High Byte'`~~ MIGRATED -> `Texts.LowHighByteDialog_Title`
 
 ### ui/MemoryInspectorFindStringDialog.java
 
-- `:71` `setTitle` - `'Find String in Dump Window'`
+- ~~`:71` `setTitle` - `'Find String in Dump Window'`~~ MIGRATED -> `Texts.MemoryInspectorFindStringDialog_Title`
 
 ### ui/ProfileDialog.java
 
-- `:140` `setTitle` - `'Profile'`
+- ~~`:140` `setTitle` - `'Profile'`~~ MIGRATED -> `Texts.ProfileDialog_Title`
 - `:512` `setDialogTitle` - `'Load Profile File'`
 - `:527` `JOptionPane.showMessageDialog` - `"Could not load profile '"` + path + `"'. See the log for details."`, title `'Load Profile'`
 - `:535` `setDialogTitle` - `'Save Profile File'`
 
 ### ui/RawFileDialog.java
 
-- `:75` `setTitle` - `'Open Raw File'`
+- ~~`:75` `setTitle` - `'Open Raw File'`~~ MIGRATED -> `Texts.RawFileDialog_Title`
 - `:220` `JOptionPane.showMessageDialog` - `'File is empty.'`, title `'Open Raw File'`
 
 ### ui/SegmentPropertiesDialog.java
 
-- `:62` `setTitle` - `'Segment Properties'`
+- ~~`:62` `setTitle` - `'Segment Properties'`~~ MIGRATED -> `Texts.SegmentPropertiesDialog_Title`
 - `:131` `JOptionPane.showMessageDialog` - title `'Segment Properties'` (message is now `Messages.E037`)
 
 ### ui/SegmentWriteBootDiskDialog.java
 
-- `:76` `setTitle` - `'Write Boot Disk'`
+- ~~`:76` `setTitle` - `'Write Boot Disk'`~~ MIGRATED -> `Texts.SegmentWriteBootDiskDialog_Title`
 - `:141` `setDialogTitle` - `'Write Boot Disk'`
 - `:150` `JOptionPane.showMessageDialog` - title `'Write Boot Disk'`
 - `:163` `IOException` - `'No directory entries found in the disk image.'` (deliberately not ported to a `Text`/`Messages` field - matches C++'s own `WriteBootDisk`, which throws this exact literal with a `// TODO: Error message` comment, i.e. C++ hasn't given it a `STRINGTABLE` entry either)
 
 ### ui/SelectGraphicsDialog.java
 
-- `:79` `setTitle` - `'Select Graphics'`
+- ~~`:79` `setTitle` - `'Select Graphics'`~~ MIGRATED -> `Texts.SelectGraphicsDialog_Title`
 
 ## B) Internal exception/invariant messages (62 hits)
 

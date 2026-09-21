@@ -20,6 +20,7 @@ import javax.swing.JTextField;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.Actions;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.Assembler;
 import com.wudsn.tools.dis6502.model.Instruction;
 import com.wudsn.tools.dis6502.model.MutableMemoryInspectorState;
@@ -72,7 +73,7 @@ public final class AssembleDialog extends JDialog {
 	public AssembleDialog(Frame owner) {
 		super(owner, true);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("Assemble");
+		setTitle(Texts.AssembleDialog_Title);
 
 		JPanel formPanel = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();

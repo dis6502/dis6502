@@ -24,6 +24,7 @@ import javax.swing.JTextField;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.AtariDisk;
 import com.wudsn.tools.dis6502.model.AtariError;
 import com.wudsn.tools.dis6502.model.AtariFile;
@@ -66,7 +67,7 @@ public final class DiskImageExecutableFileDialog extends JDialog {
 	public DiskImageExecutableFileDialog(Frame owner) {
 		super(owner, true);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle("Open Disk Image Executable File");
+		setTitle(Texts.DiskImageExecutableFileDialog_Title);
 
 		diskImageFilePathField.setEditable(false);
 		filesList.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
