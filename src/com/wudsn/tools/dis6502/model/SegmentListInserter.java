@@ -5,6 +5,8 @@
  */
 package com.wudsn.tools.dis6502.model;
 
+import com.wudsn.tools.dis6502.Messages;
+
 /**
  * A scope-guarded batch of segment insertions into a {@link SegmentList}:
  * either all inserted segments are kept (via {@link #apply()}) or none are
@@ -36,12 +38,19 @@ public final class SegmentListInserter implements AutoCloseable {
 		active = true;
 	}
 
-	/** Throws IllegalStateException if no further segment can be inserted. */
+	/**
+	 * Throws IllegalStateException if no further segment can be inserted -
+	 * ported from {@code SegmentListInserter::InsertSegment}'s {@code
+	 * g_Application->ThrowErrorMessageWithID(IDS_ERR_NO_FREE_SEG)} (now {@link
+	 * Messages#E035}), kept as an unchecked exception here since this class has
+	 * no {@code Application} reference to log through and its call sites don't
+	 * expect a checked one.
+	 */
 	public Segment insertSegment() {
 		assert active;
 
 		if (currentIndex == SegmentList.MAX_SEGMENTS) {
-			throw new IllegalStateException("No free segment available.");
+			throw new IllegalStateException(Messages.E035.format());
 		}
 		Segment segment = segmentList.insertSegmentAt(currentIndex);
 		currentIndex++;

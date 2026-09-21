@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 
+import com.wudsn.tools.dis6502.Application;
+import com.wudsn.tools.dis6502.Messages;
+
 /**
  * Low-level API to read/write sectors of an Atari .atr/.xfd disk image, by
  * sector number (1-based).
@@ -240,5 +243,40 @@ public final class DiskImage {
 
 	public static boolean isError(ImgError error) {
 		return error != ImgError.XFD && error != ImgError.ATR;
+	}
+
+	/**
+	 * Logs the message for a disk image read/write error, if any. Ported from
+	 * {@code DiskImage::DisplayError}: {@link ImgError#XFD}/{@link
+	 * ImgError#ATR} log nothing (they identify a successfully recognized disk
+	 * image type, not an error), every other value logs its own {@code
+	 * Messages.E0xx} field (moved from the matching {@code IDS_ERR_IMG_*}
+	 * constant) via {@link Application#sendMessage}. Like the C++ original,
+	 * this only logs - it never shows a dialog.
+	 *
+	 * @return {@link #isError(ImgError)} for {@code error}.
+	 */
+	public static boolean displayError(Application application, ImgError error) {
+		switch (error) {
+		case XFD:
+		case ATR:
+			break;
+		case BAD_MAGIC:
+			application.sendMessage(Messages.E026);
+			break;
+		case FILE_NOT_FOUND:
+			application.sendMessage(Messages.E028);
+			break;
+		case OUT_OF_RANGE:
+			application.sendMessage(Messages.E029);
+			break;
+		case DISK_ERROR:
+			application.sendMessage(Messages.E027);
+			break;
+		case WRITE_PROTECT:
+			application.sendMessage(Messages.E030);
+			break;
+		}
+		return isError(error);
 	}
 }

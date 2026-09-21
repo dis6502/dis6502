@@ -115,6 +115,53 @@ public final class Messages extends NLS {
 	/** {@link com.wudsn.tools.dis6502.model.DisassemblyResultFile#openWriter}'s "saving file" log line - moved from {@code Text.IDS_LOG_SAVE_DISASSEMBLY}. */
 	public static Message I024;
 
+	/** {@link Dis6502#performSetMemoryInspectorLoHiType}'s "LOBYTE/HIBYTE only valid for immediate operand" error - moved from {@code Text.IDS_ERR_BAD_MODE_FOR_LOHI}. */
+	public static Message E025;
+
+	/** {@link com.wudsn.tools.dis6502.model.DiskImage#displayError}'s "bad ATR signature" error - moved from {@code Text.IDS_ERR_IMG_BAD_MAGIC}. */
+	public static Message E026;
+
+	/** {@link com.wudsn.tools.dis6502.model.DiskImage#displayError}'s "disk error" error - moved from {@code Text.IDS_ERR_IMG_DISK_ERROR}. */
+	public static Message E027;
+
+	/** {@link com.wudsn.tools.dis6502.model.DiskImage#displayError}'s "file does not exist" error - moved from {@code Text.IDS_ERR_IMG_FILE_NOT_FOUND}. */
+	public static Message E028;
+
+	/** {@link com.wudsn.tools.dis6502.model.DiskImage#displayError}'s "sector out of range" error - moved from {@code Text.IDS_ERR_IMG_OUT_OF_RANGE}. */
+	public static Message E029;
+
+	/** {@link com.wudsn.tools.dis6502.model.DiskImage#displayError}'s "write protected" error - moved from {@code Text.IDS_ERR_IMG_WRITE_PROTECT}. */
+	public static Message E030;
+
+	/** {@link Dis6502#performSetMemoryInspectorLoHiType}'s "LOBYTE/HIBYTE not allowed for first byte" error - moved from {@code Text.IDS_ERR_LOHI_FIRST}. */
+	public static Message E031;
+
+	/** {@link Dis6502#performSetMemoryInspectorLoHiType}'s "LOBYTE/HIBYTE on multi-byte selection" error - moved from {@code Text.IDS_ERR_MULTI_LOHI}. */
+	public static Message E032;
+
+	/** {@link Dis6502#performOpenDiskImageExecutableFile}'s "no file found in disk image" error - moved from {@code Text.IDS_ERR_NO_ATARI_FILE}. */
+	public static Message E033;
+
+	/** {@link Dis6502#performOpenDiskImageBootSectors}'s "disk image is not bootable" error - moved from {@code Text.IDS_ERR_NO_BOOT}. */
+	public static Message E034;
+
+	/**
+	 * {@link com.wudsn.tools.dis6502.model.SegmentListInserter#insertSegment}'s
+	 * "no free segment" error - moved from {@code Text.IDS_ERR_NO_FREE_SEG},
+	 * fixing a real bug found while moving it: the C++ resource string ({@code
+	 * dis6502.rc}) says the maximum is 256, but {@code SegmentList::MAX_SEGMENTS}
+	 * (checked by the very code that throws this error) is actually 4096 - fixed
+	 * here and, separately, in the C++ {@code .rc} source too (see that repo's
+	 * own commit).
+	 */
+	public static Message E035;
+
+	/** {@link Dis6502#performOpenDiskImageExecutableFile}'s "disk image corrupted" fallback error - moved from {@code Text.IDS_ERR_READING_ATR}. */
+	public static Message E036;
+
+	/** {@link com.wudsn.tools.dis6502.ui.SegmentPropertiesDialog#performOK}'s "segment overlap" error - moved from {@code Text.IDS_ERR_SEGMENT_OVERLAP}. */
+	public static Message E037;
+
 	static {
 		initializeClass(Messages.class, null);
 	}

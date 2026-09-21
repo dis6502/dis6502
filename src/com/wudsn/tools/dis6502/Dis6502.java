@@ -659,10 +659,24 @@ public final class Dis6502 {
 			application.sendErrorMessage(ex);
 			return;
 		}
-		if (error != AtariError.OK) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					"Could not read disk image '" + file.getPath() + "': " + error.getErrorText(),
-					"Open Disk Image Executable File", JOptionPane.ERROR_MESSAGE);
+		// Ported from MainFile::OpenDiskImageExecutableFile's switch, log-only
+		// like the C++ original (no dialog). The DISK_NOT_FOUND case there logs
+		// IDS_FILE_IO_EX_OPENING_FILE_FOR_READ_ACCESS with the OS-level error
+		// code/message from FileIO::GetError() - AtariDisk#findFirst doesn't
+		// surface those details (it only distinguishes DISK_NOT_FOUND via a
+		// caught FileNotFoundException, see AtariDOS's own class javadoc), so
+		// this case keeps its own generic message instead.
+		switch (error) {
+		case OK:
+			break;
+		case DISK_NOT_FOUND:
+			application.sendErrorMessage("Could not read disk image \"" + file.getPath() + "\": " + error.getErrorText());
+			return;
+		case NO_ENTRY_FOUND:
+			application.sendMessage(Messages.E033, file.getPath());
+			return;
+		default:
+			application.sendMessage(Messages.E036);
 			return;
 		}
 
@@ -745,10 +759,7 @@ public final class Dis6502 {
 
 		ImgInfo info = new ImgInfo();
 		DiskImage.getInfo(file.getPath(), info);
-		if (DiskImage.isError(info.result)) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					"Could not read disk image '" + file.getPath() + "': " + info.result.getErrorText(),
-					"Open Disk Image Boot Sectors", JOptionPane.ERROR_MESSAGE);
+		if (DiskImage.displayError(application, info.result)) {
 			return;
 		}
 
@@ -757,15 +768,15 @@ public final class Dis6502 {
 		sector.sectorNumber = 1;
 		sector.sectorSize = 128; // Atari boot sectors are always 128 bytes long.
 		DiskImage.readSector(sector);
-		if (DiskImage.isError(sector.result)) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					"Could not read the boot sector of '" + file.getPath() + "': " + sector.result.getErrorText(),
-					"Open Disk Image Boot Sectors", JOptionPane.ERROR_MESSAGE);
+		// Ported from MainFile::OpenDiskImageBootSectors: the C++ source checks
+		// Info.nResult again here instead of sector.nResult - a real bug (it
+		// keeps checking the disk-image-level result from GetInfo() instead of
+		// the sector read that just happened), not reproduced here.
+		if (DiskImage.displayError(application, sector.result)) {
 			return;
 		}
 		if ((sector.sectorData[1] & 0xFF) == 0) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(), "Disk image '" + file.getPath() + "' is not bootable.",
-					"Open Disk Image Boot Sectors", JOptionPane.ERROR_MESSAGE);
+			application.sendMessage(Messages.E034, file.getPath());
 			return;
 		}
 
@@ -812,10 +823,7 @@ public final class Dis6502 {
 
 		ImgInfo info = new ImgInfo();
 		DiskImage.getInfo(file.getPath(), info);
-		if (DiskImage.isError(info.result)) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					"Could not read disk image '" + file.getPath() + "': " + info.result.getErrorText(),
-					"Open Disk Image Sectors", JOptionPane.ERROR_MESSAGE);
+		if (DiskImage.displayError(application, info.result)) {
 			return;
 		}
 
@@ -1146,18 +1154,18 @@ public final class Dis6502 {
 		int size = memoryInspectorState.getSize();
 
 		if (begin == 0) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(), Text.IDS_ERR_LOHI_FIRST, "Set Type", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E031.format(), "Set Type", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 		if (size != 1) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(), Text.IDS_ERR_MULTI_LOHI, "Set Type", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E032.format(), "Set Type", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
 		int previousOpcode = segment.getData(begin - 1);
 		InstructionSet instructionSet = workspace.getInstructionSet(segment.processorType);
 		if (instructionSet.getInstruction(previousOpcode).getOperandMode() != OperandMode.Immediate) {
-			JOptionPane.showMessageDialog(mainWindow.getFrame(), Text.IDS_ERR_BAD_MODE_FOR_LOHI, "Set Type", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E025.format(), "Set Type", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 

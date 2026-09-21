@@ -29,31 +29,4 @@ public enum ImgError {
 	DISK_ERROR,
 	/** Write denied: image is write-protected. */
 	WRITE_PROTECT;
-
-	/**
-	 * Human-readable description, matching {@code DiskImage::DisplayError}'s
-	 * {@code IDS_ERR_IMG_*} message texts (without their "Error: " prefix).
-	 * Never actually shown for {@link #XFD}/{@link #ATR}, since those are
-	 * not errors - see {@link DiskImage#isError}.
-	 */
-	public String getErrorText() {
-		switch (this) {
-		case XFD:
-			return "XFD image detected";
-		case ATR:
-			return "ATR image detected";
-		case BAD_MAGIC:
-			return "ATR file does not have a \"NICKATARI\" signature";
-		case FILE_NOT_FOUND:
-			return "File does not exist";
-		case OUT_OF_RANGE:
-			return "Sector out of range";
-		case DISK_ERROR:
-			return "Disk error occurred";
-		case WRITE_PROTECT:
-			return "Disk image is write protected";
-		default:
-			return "Unknown error";
-		}
-	}
 }

@@ -105,7 +105,21 @@ arguments to add a brand new `application.sendMessage(...)` call in the
 Java port, matching the point in the flow C++ logs it (as soon as the
 relevant path/count is known, before the actual file I/O) - on explicit
 user instruction each time, once the message needed its severity to
-actually drive dispatch). A ported-but-completely-unreferenced `Text.*`
+actually drive dispatch; `Messages.E025`-`E037` from the last thirteen
+real ported `Text.IDS_ERR_*` constants, once a second audit pass asked
+"turn `IDS_ERR_*` into `E...` messages" again and found a genuine scope
+fork: five of them (`IDS_ERR_IMG_*`) plus two more (`IDS_ERR_NO_ATARI_FILE`,
+`IDS_ERR_READING_ATR`) mapped to C++ code that reports a distinct message
+per error case, which the Java port had collapsed into one generic
+"Could not read disk image 'X': <reason>" `JOptionPane` at three/four call
+sites - offered as an explicit scope-fork question via `AskUserQuestion`
+(per the porting guide's own "ask, don't decide silently" rule), the user
+chose to restructure to match C++ exactly rather than keep the
+simplification; see `DiskImage#displayError` below for the resulting
+pattern, and note the C++ `.rc` bug also found and fixed in the same round
+(`IDS_ERR_NO_FREE_SEG`'s text said "maximum is 256" while
+`SegmentList::MAX_SEGMENTS`, the constant actually enforced, is 4096)).
+A ported-but-completely-unreferenced `Text.*`
 constant is worth checking this way in general: it can mean genuinely
 missing Java functionality (a log line C++ has and Java silently
 doesn't), not just leftover unused text. Send a `Messages.*` field via
@@ -262,6 +276,29 @@ whichever reads naturally) unless it is genuinely stale or contradicts the
 ported code. This applies retroactively - already-ported files that dropped
 comments should be revisited and fixed, not just future ports done going
 forward.
+
+### A C++ "display an error" dispatcher function is a log call, not a dialog - port it as one
+
+When a C++ function's whole job is dispatching an enum/result code to a
+per-case logged message and returning whether it was an error (the pattern
+`DiskImage::DisplayError(ImgError err)` uses: a `switch` that calls
+`g_Application->SendErrorMessageWithID(...)` per error case, then `return
+IsError(err);`), port it as a static method with the same shape -
+`DiskImage.displayError(Application, ImgError)`, switching on the enum and
+calling `application.sendMessage(Messages.Exxx, ...)` per case, returning
+`isError(error)` - and have callers do `if (DiskImage.displayError(application,
+result)) { return; }`, replacing whatever ad hoc "check `isError`, then show
+a generic combined-text `JOptionPane`" logic existed before. `Send...WithID`
+in C++ always logs, never pops up a dialog, so the faithful port drops any
+`JOptionPane` the Java code had added at those call sites, even though that
+changes what the user visibly sees (no popup, just a log line) - this is a
+deliberate fidelity choice, not an oversight, made after the user explicitly
+chose "restructure to match C++" over keeping the dialog. Once such a
+dispatcher exists and owns the per-case message text, delete any
+now-dead `getErrorText()`-style method the enum itself had grown as a
+Java-only workaround before the dispatcher was ported - a real C++ enum
+paired with a `DisplayError`-shaped function does not also carry its own
+text method.
 
 ### Atari/C64 character-set rendering is a correctness gap, not a cosmetic one
 

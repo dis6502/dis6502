@@ -27,6 +27,7 @@ import javax.swing.event.DocumentListener;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.model.AtariDOS;
 import com.wudsn.tools.dis6502.model.AtariDisk;
 import com.wudsn.tools.dis6502.model.AtariError;
@@ -193,11 +194,18 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 		}
 
 		case DISK_NOT_FOUND:
-			throw new IOException("Could not read \"" + filePath + "\".");
+			// Ported from FileIO::FormatError(IDS_ERR_READING_FILE, filePath): that
+			// text (Messages.E007, "Error: {0}") has one placeholder, filled with
+			// filePath.
+			throw new IOException(Messages.E007.format(filePath));
 
 		default:
-			throw new IOException(
-					"Disk image is corrupted or not an Atari single/enhanced density disk or file too big: \"" + filePath + "\".");
+			// Ported from FileIO::FormatError(IDS_ERR_READING_ATR, filePath):
+			// unlike the DISK_NOT_FOUND case above, that text (Messages.E036) has
+			// no placeholder, so filePath is dropped - matching C++'s actual
+			// formatted output exactly, even though it silently ignores the
+			// filePath argument FormatError always passes.
+			throw new IOException(Messages.E036.format());
 		}
 	}
 
