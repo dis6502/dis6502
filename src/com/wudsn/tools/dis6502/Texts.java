@@ -140,6 +140,18 @@ public final class Texts extends NLS {
 	 * ("Open Disk Image Sectors" - identical text).
 	 */
 	public static String Dis6502_AddDiskImageSectorsTitle;
+	/** {@link Dis6502#performOpenFile}'s {@code JFileChooser}/error-dialog title for {@link com.wudsn.tools.dis6502.model.FileType#EXECUTABLE_FILE}, {@code add == true}. */
+	public static String Dis6502_AddExecutableFileTitle;
+	/** {@link Dis6502#performOpenFile}'s {@code JFileChooser}/error-dialog title for {@link com.wudsn.tools.dis6502.model.FileType#EXECUTABLE_FILE}, {@code add == false}. */
+	public static String Dis6502_OpenExecutableFileTitle;
+	/** {@link Dis6502#performOpenFile}'s {@code JFileChooser}/error-dialog title for {@link com.wudsn.tools.dis6502.model.FileType#ROM_IMAGE_FILE}, {@code add == true}. */
+	public static String Dis6502_AddRomImageFileTitle;
+	/** {@link Dis6502#performOpenFile}'s {@code JFileChooser}/error-dialog title for {@link com.wudsn.tools.dis6502.model.FileType#ROM_IMAGE_FILE}, {@code add == false}. */
+	public static String Dis6502_OpenRomImageFileTitle;
+	/** {@link Dis6502#performOpenFile}'s {@code JFileChooser}/error-dialog title for {@link com.wudsn.tools.dis6502.model.FileType#CASSETTE_IMAGE_FILE}, {@code add == true}. */
+	public static String Dis6502_AddCassetteImageFileTitle;
+	/** {@link Dis6502#performOpenFile}'s {@code JFileChooser}/error-dialog title for {@link com.wudsn.tools.dis6502.model.FileType#CASSETTE_IMAGE_FILE}, {@code add == false}. */
+	public static String Dis6502_OpenCassetteImageFileTitle;
 
 	static {
 		initializeClass(Texts.class, null);

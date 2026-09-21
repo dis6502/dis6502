@@ -533,10 +533,10 @@ public final class Dis6502 {
 		if (!add && !confirmClearWorkspace()) {
 			return;
 		}
-		String fileTypeDisplayName = getFileTypeDisplayName(fileType);
+		String fileTypeOpenTitle = getFileTypeOpenTitle(fileType, add);
 
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle((add ? "Add " : "Open ") + fileTypeDisplayName);
+		fileChooser.setDialogTitle(fileTypeOpenTitle);
 		if (currentFile != null) {
 			fileChooser.setCurrentDirectory(currentFile.getParentFile());
 		}
@@ -555,7 +555,7 @@ public final class Dis6502 {
 		if (!workspaceLogic.addFile(workspace, fileType, file.getPath())) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
 					(add ? Messages.E040 : Messages.E049).format(file.getPath()),
-					(add ? "Add " : "Open ") + fileTypeDisplayName, JOptionPane.ERROR_MESSAGE);
+					fileTypeOpenTitle, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
@@ -869,17 +869,17 @@ public final class Dis6502 {
 		updateTitle();
 	}
 
-	/** A short, human-readable name for a {@link FileType}, for dialog titles/messages. Ported ad hoc; the C++ source's fuller {@code FileTypeFactory} text lookup is not ported. */
-	private static String getFileTypeDisplayName(FileType fileType) {
+	/** {@link #performOpenFile}'s per-{@link FileType}/add-or-open dialog title. Ported ad hoc; the C++ source's fuller {@code FileTypeFactory} text lookup is not ported. */
+	private static String getFileTypeOpenTitle(FileType fileType, boolean add) {
 		switch (fileType) {
 		case EXECUTABLE_FILE:
-			return "Executable File";
+			return add ? Texts.Dis6502_AddExecutableFileTitle : Texts.Dis6502_OpenExecutableFileTitle;
 		case ROM_IMAGE_FILE:
-			return "ROM Image File";
+			return add ? Texts.Dis6502_AddRomImageFileTitle : Texts.Dis6502_OpenRomImageFileTitle;
 		case CASSETTE_IMAGE_FILE:
-			return "Cassette Image File";
+			return add ? Texts.Dis6502_AddCassetteImageFileTitle : Texts.Dis6502_OpenCassetteImageFileTitle;
 		default:
-			return "File";
+			throw new IllegalArgumentException("Parameter 'fileType' has unsupported value " + fileType + ".");
 		}
 	}
 

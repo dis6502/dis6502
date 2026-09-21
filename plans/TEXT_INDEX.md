@@ -50,20 +50,16 @@ never requested to move).
 
 ## A) User-facing dialog titles/messages still outstanding
 
-Everything remaining here is a title built from `"Add "`/`"Open "` plus
-`fileTypeDisplayName` - a genuinely per-`FileType` runtime value (a 3-way
-switch in `getFileTypeDisplayName`, not a single literal), unlike the
-other five `"Add "`/`"Open "` + literal-suffix titles, which turned out to
-be exactly like `EquateDialog`'s already-migrated
-`editable ? "Edit Equates" : "Display Equates"` and have since been
-migrated too - plus one deliberately-unported C++-parity literal. The two
-`IllegalArgumentException`s this section used to list moved to group C
-below.
-
-### Dis6502.java
-
-- `:539` `setDialogTitle` - `'Add '`/`'Open '` + `fileTypeDisplayName` (a per-`FileType` runtime value) - out of scope
-- `:558` `JOptionPane.showMessageDialog` - title `'Add '`/`'Open '` + `fileTypeDisplayName` - out of scope (message already migrated, shares `Messages.E040`/`E049`)
+Every dynamically-built title in `Dis6502.java` has now been migrated,
+including the last two ("Add "/"Open " + `fileTypeDisplayName`, a
+per-`FileType` runtime value): `performOpenFile`'s own
+`getFileTypeDisplayName` helper was replaced with a `getFileTypeOpenTitle
+(FileType, boolean)` helper that switches on the file type and picks
+between a fixed `Add<X>Title`/`Open<X>Title` `Texts.java` field pair per
+type, mirroring the adjacent `getFileTypeOpenMessage` helper's own
+per-`FileType` switch shape. Only one entry remains: a deliberately-
+unported C++-parity literal. The two `IllegalArgumentException`s this
+section used to list moved to group C below.
 
 ### ui/SegmentWriteBootDiskDialog.java
 
@@ -182,9 +178,9 @@ back to, none are ever shown in a dialog, and none should move to
 
 | Group | Current membership | Migrated | Still outstanding | Excluded (not relevant) |
 |---|---|---|---|---|
-| A) User-facing dialog titles/messages | 48 (of 50 originally found - 2 reclassified to group C) | 45 | 3 (2 titles built from `fileTypeDisplayName`, a genuine per-`FileType` runtime value - can't be a single static field, 1 deliberately-unported literal matching an un-fixed C++ `// TODO`) | - |
+| A) User-facing dialog titles/messages | 48 (of 50 originally found - 2 reclassified to group C) | 47 | 1 (deliberately-unported literal matching an un-fixed C++ `// TODO`) | - |
 | B) Internal exception/invariant messages (`IOException` only) | 21 (of 62 originally found - 15 reclassified to group C, 22 to group D, 4 to group E) | 0 | 21 | - |
 | C) `IllegalArgumentException` usages | 17 (2 from group A, 15 from group B) | 0 | 0 | 17 (parameter-validation guards) |
 | D) `IllegalStateException` usages | 22 (from group B) | 0 | 0 | 22 (programming errors - violated invariants) |
 | E) `RuntimeException` usages | 4 (from group B) | 0 | 0 | 4 (programming errors - a caller's malformed input) |
-| **Total** | **112** | **45** | **24** | **43** |
+| **Total** | **112** | **47** | **22** | **43** |
