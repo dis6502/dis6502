@@ -53,10 +53,11 @@ stay a thin aggregate of cohesive sub-objects (`SegmentList`, `Profile`,
 own related fields and methods; `Workspace` exposes them via `getXxx()`
 accessors rather than absorbing their state directly.
 
-### Split user-visible text into `Text.java` vs. `Texts.java` by provenance
+### Split user-visible text into `Text.java` vs. `Texts.java` vs. `Messages.java` by provenance and shape
 
-User-visible strings are split across two separate repository classes,
-based on where the string actually comes from.
+User-visible strings are split across three separate repository classes,
+based on where the string actually comes from and whether it needs a
+severity.
 
 `Text.java` (singular) holds only real ported `IDS_*` constants: strings
 that mirror an entry in the C++ source's Windows `STRINGTABLE` resource
@@ -74,19 +75,40 @@ the same convention the sibling WUDSN tool `com.wudsn.tools.thecartstudio.Texts`
 already uses for its own dialog-local strings (its `AboutDialog_Content`/
 `AboutDialog_URL` fields).
 
+`Messages.java` (a third class/file, added later than the other two) holds
+`com.wudsn.tools.base.repository.Message`-typed fields, not plain `String`s,
+for a message that needs a severity attached (status/info/error) - the same
+pattern `com.wudsn.tools.base.Messages` already uses elsewhere in the WUDSN
+ecosystem. A field's own leading letter encodes its severity at class-load
+time (`S`=`Message.STATUS`, `I`=`Message.INFO`, `E`=`Message.ERROR`),
+followed by a plain sequence number (e.g. `I001`) - not a ported C++
+resource ID, even for a message whose text did originally come from one
+(`Messages.I001` itself was moved here from a real ported `Text.
+IDS_LOG_BETA_MESSAGE`, on explicit user instruction, once the message
+needed its severity to actually drive dispatch). Send a `Messages.*` field
+via `Application.sendMessage(Message, String...)`, which reads
+`message.getSeverity()` to pick the right log method itself, instead of the
+caller choosing `sendInfoMessage`/`sendErrorMessage`.
+
 When adding a new dialog or new user-visible text to this project going
 forward: if the string is a faithful port of a real C++ `STRINGTABLE`
-entry, it belongs in `Text.java`/`Text.properties`. If it's new text this
-Java port itself introduces (including replacing a literal string that used
-to be hardcoded in a dialog's constructor), it belongs in
-`Texts.java`/`Texts.properties`, named `<DialogName>_<Purpose>`.
+entry and doesn't need a severity, it belongs in `Text.java`/`Text.properties`.
+If it's new text this Java port itself introduces (including replacing a
+literal string that used to be hardcoded in a dialog's constructor), it
+belongs in `Texts.java`/`Texts.properties`, named `<DialogName>_<Purpose>`
+(or `<ClassName>_<Purpose>` for a non-dialog owner). If it's a log/status/
+error message that needs a severity, it belongs in
+`Messages.java`/`Messages.properties` instead, named with the
+severity-letter-plus-number convention above, regardless of whether the
+text traces back to a C++ resource.
 
 ### Which NLS base class to use
 
-Both `Text.java` and `Texts.java` extend `com.wudsn.tools.base.repository.NLS`
-and initialize with `initializeClass(ClassName.class, null)` in a static
-initializer, with a matching `.properties` file next to the class on the
-classpath (package-relative path, e.g. `com/wudsn/tools/dis6502/Text.properties`).
+`Text.java`, `Texts.java`, and `Messages.java` all extend
+`com.wudsn.tools.base.repository.NLS` and initialize with
+`initializeClass(ClassName.class, null)` in a static initializer, with a
+matching `.properties` file next to the class on the classpath
+(package-relative path, e.g. `com/wudsn/tools/dis6502/Text.properties`).
 This is the same base class `com.wudsn.tools.thecartstudio.Texts` and this
 project's own `Actions.java` already use.
 
