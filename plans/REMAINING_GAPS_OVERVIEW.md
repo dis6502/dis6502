@@ -6,6 +6,23 @@ incomplete, or broken in this Java port, as of 2026-09-21. It exists so a
 future porting session can pick up where this snapshot left off without
 re-auditing both codebases from scratch.
 
+**Status**: this list only shows what's still outstanding - a fixed gap is
+removed from this document once done rather than kept struck through (see
+git history for the write-up of each fix: gaps #1, #2, #6, #7, #8, and #9
+have all been fixed and removed as of 2026-09-21). Remaining gaps keep
+their original numbers rather than being renumbered, so references to a
+specific gap number elsewhere (commit messages, `plans/MEMORY.md`) stay
+valid.
+
+**Note (2026-09-21):** the porting phase itself is now over - see
+`plans/PORTING_GUIDE.md`'s status note and `plans/MEMORY.md`'s top section.
+The Java codebase is the finished port and is expected to intentionally
+diverge from C++ going forward, so this document's framing ("what's
+missing relative to C++") no longer drives new work the way it did while
+the gaps below were being closed - it remains useful as a historical record
+and for any of the specific items still listed below that are still worth
+deciding on their own merits.
+
 ## Methodology and confidence level
 
 This was compiled by two passes - one over the model/logic layer
@@ -19,74 +36,6 @@ body; several items below are flagged explicitly as unverified rather than
 guessed at. Treat "fully ported" entries as spot-checked, not proven, and
 re-verify against the current C++ source before relying on any single line
 here - both repos continue to change.
-
-## Confirmed gaps - model/logic layer
-
-### 1. ~~`DisassemblyWriter` hardcodes the Atari800 return character for every computer system~~ - FIXED 2026-09-21
-
-- **Was**: `DisassemblyWriter.java:35` hardcoded
-  `private final int returnCharacter = 0x9B;` (Atari800's value) regardless
-  of which computer system the workspace actually used, with a stale
-  class-javadoc claim that this was a placeholder "since `ComputerSystem` is
-  not ported yet" - but `ComputerSystem`/`ComputerSystemFactory` had in fact
-  already been fully ported and wired into `Workspace.getComputerSystem()`,
-  with `ComputerSystem.getReturnCharacter()` already returning the correct
-  per-system value (Atari800/Atari5200 = `0x9B`, C64/Oric = `0x0D`,
-  Unknown = `0x0A`). The C++ constructor
-  (`DisassemblyWriter.cpp:15`) reads this from
-  `workspace.GetComputerSystem()->GetReturnCharacter()`; the equivalent Java
-  wiring had simply never been done.
-- **Fix**: `returnCharacter` is now set in the constructor from
-  `workspace.getComputerSystem().getReturnCharacter()`, matching the C++
-  wiring exactly; the stale javadoc paragraph was removed. Verified with
-  `mvn -o compile`/`test-compile` and a full run of `TestRunner` (all 12
-  tests still pass, including the `ComputerSystemTest`/`DisassemblyResult*`
-  tests that exercise `DisassemblyWriter` via Atari800 and C64 fixtures).
-- **Correction to the original write-up above**: the neighboring
-  `isByteAllowedInString()` TODO -
-  `// TODO: This actually depends on the character set of the computer system`
-  (the `showNonASCIIChararactersAsBytes` check) - was described here as
-  "related, same root cause, should be fixed alongside the above." That was
-  wrong: this TODO comment exists **verbatim in the C++ source itself**
-  (`DisassemblyWriter.cpp`'s own `IsByteAllowedInString`), so it's a
-  pre-existing, shared C++ limitation, not a Java-specific gap. It was left
-  untouched by this fix, correctly, per the porting guide's bug-handling
-  policy (don't diverge from C++ where C++ itself has no established correct
-  behavior to port).
-
-### 2. ~~`EquateList.addEquate()` silently swallows parse errors instead of logging them~~ - FIXED 2026-09-21
-
-- **Was**: `EquateList.java:296-299` had a javadoc admitting *"Unlike the C++
-  version, a parse error is not yet reported anywhere (the C++ version sends
-  it to the application's message log) - this is deferred until
-  application-level logging is ported."* That was stale:
-  `application.sendInfoMessage(...)`/`application.sendErrorMessage(...)` was
-  already fully wired and used elsewhere in the model layer for exactly this
-  kind of file-parse error/info reporting (`EquateListLogic.java`,
-  `ProfileLogic.java`, `WorkspaceLogic.java`), and the exact message resource
-  the C++ version sends (`IDS_ERR_CANNOT_PARSE_EQUATE_LINE`) was already
-  ported into `Text.properties`/`Text.java` but referenced nowhere.
-- **Fix**: `EquateList` itself still has no `Application` reference by
-  design (it's kept a pure model class), so the fix threads the error back
-  to the one caller that does have one, `EquateListLogic.load()`:
-  - `Equate.ReadResult` (`Equate.java`) now carries the parsed, initialized
-    `Equate` instance itself (`null` on error/`UNKNOWN`), computed once in
-    its constructor via a new private `createEquate` helper.
-  - `EquateList.addEquate(String)` now returns a new nested
-    `EquateList.EquateResult` (`equate` + `error`) instead of a bare
-    `Equate`, appending `result.equate` directly instead of re-deriving it.
-  - `EquateListLogic.load()` inspects `result.error` per line and calls
-    `application.sendErrorMessage(Text.IDS_ERR_CANNOT_PARSE_EQUATE_LINE,
-    line, result.error)` - matching C++'s `EquateList::AddEquate(line)`
-    exactly.
-  - The one other caller, `EquateDialog.performAdd()`, was updated to
-    unwrap `.equate` from the new return type; its own pre-existing
-    `// TODO: ERROR HANDLING` (matching the C++ source's own unresolved
-    TODO there) was left as-is - out of scope for this fix.
-- Verified with a clean `mvn -o compile`/`test-compile` and a full
-  `TestRunner` run (all 12 tests still pass, including
-  `EquateListLogicTest`, which loads a 899-line real equates file with no
-  new false-positive parse errors).
 
 ## Confirmed gaps - UI layer
 
@@ -129,172 +78,6 @@ here - both repos continue to change.
   data while iterating) is absent. Worth an explicit "won't port, JUnit
   supersedes it" decision if that's the intent, rather than leaving it
   implicit.
-
-### 6. ~~`DiskImageSectorsDialog`'s byte-range picker is Start/End offset fields, not a drag-selectable hex view~~ - FIXED 2026-09-21
-
-- **Was**: the C++ dialog lets you drag-select a byte range directly in a
-  hex-dump view (built on `MemoryInspectorControl`); the Java dialog used
-  plain numeric Start/End Offset `JTextField`s instead, because a reusable,
-  generic version of the memory inspector's grid control didn't exist yet
-  (`MemoryInspectorGridPanel` was specific to the main Memory Inspector
-  panel, hard-typed to `Segment`/`MemoryInspectorState`; renamed
-  `HexGridPanel` the same day once generalized, see below - used by its
-  current name throughout the rest of this entry).
-- **Fix**: generalized the grid behind two new small
-  abstractions and moved its drag-select mouse handling onto the grid
-  itself (previously duplicated per-caller in `MemoryInspectorPanel`):
-  - `HexGridByteSource` (new `ui` interface: `getSize()`/`getData()`/
-    `getType()`/`getBaseAddress()`) replaces the grid's hard-typed `Segment`
-    field. `SegmentByteSource` adapts a `Segment` (used by the main Memory
-    Inspector, no changes to `Segment`'s own API); `DiskSectorByteSource`
-    wraps a raw `byte[]` sector buffer (used by the dialog), always
-    reporting `MemoryType.UNKNOWN` - already painted in plain black, so no
-    separate "coloring off" mode was needed.
-  - `ByteRangeSelection`/`MutableByteRangeSelection` (new `model` class
-    pair, matching the existing `MemoryInspectorState`/
-    `MutableMemoryInspectorState` read-only-interface/mutable-impl split)
-    extract the pure begin/end swap-and-clamp arithmetic out of
-    `MutableMemoryInspectorState`, which now delegates to an owned instance
-    instead of tracking the fields itself (its own public API and the main
-    Memory Inspector's behavior are unchanged). `DiskImageSectorsDialog`
-    owns a second, fully independent instance - never touching
-    `Workspace`, matching how the C++ `MemoryInspectorControl` is one
-    reusable class with an independent instance per window.
-  - `HexGridPanel.DragSelectionListener` (`onDragSelectionChanged`/
-    `onDragSelectionFinished`) plus a `MouseAdapter` built into the grid's
-    own constructor reproduce the anchor-tracking drag logic that used to
-    live in `MemoryInspectorPanel` (`beginByteSelection`/
-    `extendByteSelection`, now removed) - both callers now share the same
-    code. `DiskImageSectorsDialog` only implements
-    `onDragSelectionChanged` (a lambda): it pulls the current selection
-    synchronously at "Add Sector" click time, defaulting to the whole
-    sector if nothing was dragged, exactly matching C++'s
-    `MemoryInspectorControl::GetSelection(..., bDefaultAll=true)` - the C++
-    dialog never listens for `SELECTION_CHANGED` either.
-  - Auto-scroll-past-viewport-edge while dragging stays out of scope
-    (recorded in `HexGridPanel`'s class javadoc) - this was
-    already a pre-existing, shipped divergence from C++'s
-    `SetEndOfSelection`/`VScroll` behavior (`offsetAtPoint` just clamps),
-    now simply shared by two callers instead of one, not a new gap.
-  - Sector navigation still uses a `JSpinner` instead of a native
-    scrollbar - unrelated, unchanged, still likely UX-equivalent/low risk.
-- Verified with a clean `mvn -o compile`/`test-compile`, a full `TestRunner`
-  run (13 tests, including a new `ByteRangeSelectionTest` covering the
-  extracted swap/clamp arithmetic), and an ad hoc off-screen smoke test
-  (scratch, not committed, per the porting guide's testing-strategy
-  convention) that constructs `DiskImageSectorsDialog`, paints
-  `HexGridPanel` with a synthetic `DiskSectorByteSource`, and
-  confirms `offsetAtPoint` returns in-range offsets - full interactive
-  drag-select/rendering verification in the real running app is still a
-  manual follow-up.
-
-### 7. ~~The main window's part-window headers are missing their C++ background coloring - and three of the five have no header at all~~ - FIXED 2026-09-21
-
-- **Was**: C++'s `Main::PaintMainWindow` (`src/ui/Main.cpp:322-429`) paints a
-  colored title bar above each of the five part windows (Segment List
-  yellow, Disassembly green, Memory Inspector cyan, XRef light pink, Log
-  light lavender - see the original write-up's exact `RGB()` values). In
-  Java, only `MemoryInspectorPanel`/`XRefPanel` showed any header at all
-  (a plain, uncolored `TitledBorder`); `SegmentListPanel`/`DisassemblyPanel`/
-  `LogPanel` showed no header whatsoever, and the already-ported
-  `Text.IDS_SEGMENT_TITLE*`/`IDS_DIS_TITLE`/`IDS_LOG_TITLE` resources were
-  completely unused.
-- **Fix**: new package-private `PartHeaderPanel` (`ui`) - a small
-  `JComponent`, opaque, filling its whole background then painting text via
-  `ComputerFont#drawText` (at `(1,1)`, matching `DC::ExtTextOut(1, 1, rc,
-  title)`'s offset and its `ETO_OPAQUE` whole-rectangle fill) - added as a
-  `BorderLayout.NORTH` child of all five part panels, each constructed with
-  its C++ `RGB()` value as a `java.awt.Color`. The C++ source's
-  focus-dependent black/gray memory-inspector text color was deliberately
-  not replicated: that exact line carries its own `// TODO Detection of
-  focus does not actually work.` comment, so it never actually returns
-  anything but black in real C++ operation either - `PartHeaderPanel`
-  always paints black text, matching real observed behavior rather than
-  the broken-in-C++-too focus branch.
-  - `SegmentListPanel`/`DisassemblyPanel`/`LogPanel` now wire up the
-    previously-unused `Text.IDS_SEGMENT_TITLE`/
-    `IDS_SEGMENT_TITLE_NO_SEGMENTS_LOADED`/`IDS_DIS_TITLE`/`IDS_LOG_TITLE`
-    constants. `SegmentListPanel` gets a new `setFileName(String)`, called
-    from `Dis6502.updateTitle()` (the same 11 call sites that already keep
-    the main window's own frame title in sync with `currentFile`) - its
-    `refresh()` recomputes the header text from the cached file name plus
-    the segment list's current emptiness on every workspace change, so it
-    self-corrects for segment-count changes that happen without a
-    file-open/close event too (e.g. Disk Image Sectors' "Add Sector").
-  - `MemoryInspectorPanel`/`XRefPanel` switched from a `TitledBorder` plus
-    hand-written `String.format` literals to `PartHeaderPanel` plus the
-    matching `Text.IDS_DUMP_TITLE_*`/`IDS_XREF_TITLE_*` resources - which
-    surfaced and fixed two small pre-existing wording/fidelity divergences
-    from the C++ resource text along the way: `MemoryInspectorPanel`'s
-    "Selection" title never included the segment number the "Segment" title
-    did, unlike `IDS_DUMP_TITLE_SELECTION`'s own `"Selection {0}: ..."`;
-    `XRefPanel`'s hardcoded "No label selected"/"N Reference(s) to \"...\""
-    didn't match the resource text's "No Label Selected"/"N reference(s)
-    for \"...\"".
-- Verified with a clean `mvn -o compile`/`test-compile`, the full
-  `TestRunner` suite (13 tests, unaffected), and - since this environment
-  has a real, non-headless display - an actual launch of the running app
-  with a `java.awt.Robot` screenshot: all five headers render with the
-  correct colors and text, matching the reference C++ screenshot exactly
-  (including the corrected XRef wording).
-
-### 8. ~~Main window title never shows the current computer system's name~~ - FIXED 2026-09-21
-
-- **Was**: `Dis6502.updateTitle()` just set `"dis6502"` plus `" - " +
-  currentFile.getName()` if a file was open - the computer system name
-  was never shown at all, and the file portion used just the file name
-  rather than C++'s full path.
-- **C++**: `Main::SetMainWindowTitle` (`src/ui/Main.cpp:89-101`) sets the
-  title to `Text::Format(IDS_MAIN_WINDOW_TITLE_NO_WORKSPACE_LOADED,
-  computerSystemText)` ("6502 Disassembler for {0}") when no file is
-  loaded, or `Text::Format(IDS_MAIN_WINDOW_TITLE, computerSystemText,
-  filePath)` ("6502 Disassembler for {0} {1}") once one is.
-- **Fix**: `updateTitle()` now uses `Text.IDS_MAIN_WINDOW_TITLE`/
-  `IDS_MAIN_WINDOW_TITLE_NO_WORKSPACE_LOADED` filled with
-  `workspace.getComputerSystem().getTypeInfo().text` and, once a file is
-  open, its full path (`currentFile.getPath()`) - matching C++ exactly,
-  including the full-path divergence. `SegmentListPanel`'s own header
-  (via `setFileName`) is a separate, unrelated UI element and was left
-  unchanged.
-- Verified with a clean `mvn -o compile`/`test-compile`, the full
-  `TestRunner` suite, and a live launch: the real running app's `JFrame`
-  title reads "6502 Disassembler for Atari 800" with no workspace
-  loaded, matching the ported resource text exactly.
-
-### 9. ~~`DisassemblyProgressMonitor`'s base-class logging is still an unwired no-op~~ - FIXED 2026-09-21
-
-- **Was**: `DisassemblyProgressMonitor.setPass`/`setSegmentNumber`/
-  `sendInfo` were no-ops by design - the class javadoc documented this as
-  deliberate, written before this port had an `Application`-based logging
-  mechanism ("that is not ported yet, so they default to no-ops here -
-  override them once application-level logging exists").
-- **C++**: `DisassemblyProgressMonitor::SetPass`/`SetSegmentNumber`/
-  `SendInfo` log through the global `Application` object; the real GUI
-  path (`DisassemblyProgressDialog`) overrides `SetPass`/`SetSegmentNumber`
-  to update its own UI labels *without* calling into the logging base, so
-  in practice only the plain `DisassemblyProgressMonitor` used directly by
-  `MainTest.cpp` (C++'s test harness) ever exercises the logging path.
-- **Fix**: `DisassemblyProgressMonitor` now takes an `Application` in its
-  constructor and logs via `application.sendMessage(...)`, using
-  `Text.IDS_LOG_DISASSEMBLY_PROGRESS_MONITOR_INFO`/`_PASS`/`_SEGMENT`'s
-  text, moved to `Messages.I068`-`I070` per this project's
-  Text-vs-Messages convention (a Text.java constant that gets its
-  severity-driven dispatch wired up this way belongs in `Messages.java`,
-  not `Text.java` - see `plans/MEMORY.md`). Matching the C++ behavior
-  above exactly: `DisassemblyProgressDialog`'s `Monitor.setPass` was
-  changed from `super.setPass(pass)` to setting the inherited `pass`
-  field directly, so the real GUI path still doesn't log pass/segment
-  changes (only the UI labels update) - `setSegmentNumber` already didn't
-  call `super`, so needed no change. `sendInfo`'s verbose per-byte trace
-  log (gated on `isVerbose()` at its `Disassembly.java` call site, not
-  overridden by the dialog) logs in both paths, matching C++.
-- Verified with a clean `mvn -o compile`/`test-compile`, the full
-  `TestRunner` suite, and a direct model-level smoke test (real
-  `Application`, real `Workspace`, a real `.xex` file, a real six-pass
-  `Disassembly` run with `verbose=true`): `setPass`/`setSegmentNumber`/
-  `sendInfo` all fired with correctly formatted real messages ("Pass 1 -
-  Find Labels", "Segment 1", "Log: Pass 2 - Reserve Labels -
-  segmentIndex=0, wPC=02E2, ...").
 
 ## Divergences where the Java port fixed a real C++ bug (not a Java gap)
 
@@ -454,9 +237,10 @@ gap" - flag them for a dedicated follow-up rather than assuming either way:
   class: settings-file sections, `SendInfoMessage`/`SendErrorMessage`/
   `ThrowErrorMessage` with Text IDs) has no `model`-package Java file, but an
   `application.sendInfoMessage(...)`/`sendErrorMessage(...)` abstraction
-  clearly exists and is actively used (see gap #2 above) - it must live in
-  the `ui` package. Full parity (settings persistence, every message
-  variant) was not verified.
+  clearly exists and is actively used throughout the model and UI layers
+  (`Application.java`) - it must live in the `ui` package (now the top-level
+  `com.wudsn.tools.dis6502` package). Full parity (settings persistence,
+  every message variant) was not verified.
 - **`OperatingSystem.h`** (`ExecuteCommand` - shell/process execution) has no
   Java model counterpart; likely superseded by `java.awt.Desktop`/
   `ProcessBuilder` somewhere in `ui`, not verified.
@@ -492,26 +276,14 @@ doesn't support, without a separate decision to add a genuinely new feature:
 
 ## Suggested priority order for closing these
 
-1. ~~**Gap #1** (`DisassemblyWriter` return character)~~ - **fixed
-   2026-09-21**, see above.
-2. ~~**Gap #2** (`EquateList` swallowed parse errors)~~ - **fixed
-   2026-09-21**, see above.
-3. ~~**Opcode table parity check**~~ - **completed 2026-09-21, no gap
-   found**, see above.
-4. ~~**Gap #6** (`DiskImageSectorsDialog` drag-select)~~ - **fixed
-   2026-09-21**, see above.
-5. **Gap #3** (Memory Inspector Delete/Cut/Paste Selection) - explicitly
+1. **Gap #3** (Memory Inspector Delete/Cut/Paste Selection) - explicitly
    blocked on `MemoryBlock` gaining real resize support; needs a scoping
    decision (faithful-but-broken port vs. a fixed reimplementation) before
-   any code is written, per the porting guide's process-lesson rule.
-6. ~~**Gap #7** (part-window header coloring, and three panels missing a
-   header entirely)~~ - **fixed 2026-09-21**, see above.
-7. **Gap #4** (`LogPanel` columns/coloring) - cosmetic, low risk, low
+   any code is written, per the porting guide's process-lesson rule (now
+   historical - see the status note at the top; still a reasonable process
+   to follow for a decision like this one).
+2. **Gap #4** (`LogPanel` columns/coloring) - cosmetic, low risk, low
    urgency.
-8. **Gap #5** (`MainUITest.cpp` self-test harness) - needs an explicit
+3. **Gap #5** (`MainUITest.cpp` self-test harness) - needs an explicit
    "superseded by JUnit, won't port" decision recorded somewhere (this
    document or a class javadoc) rather than staying an implicit gap.
-9. ~~**Gap #8** (main window title missing computer system name)~~ - **fixed
-   2026-09-21**, see above.
-10. ~~**Gap #9** (`DisassemblyProgressMonitor` logging never wired up)~~ -
-    **fixed 2026-09-21**, see above.
