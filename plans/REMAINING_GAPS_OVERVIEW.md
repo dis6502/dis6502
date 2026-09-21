@@ -238,33 +238,28 @@ here - both repos continue to change.
   correct colors and text, matching the reference C++ screenshot exactly
   (including the corrected XRef wording).
 
-### 8. Main window title never shows the current computer system's name
+### 8. ~~Main window title never shows the current computer system's name~~ - FIXED 2026-09-21
 
-- **Found**: while auditing `Text.java` for constants no longer referenced
-  anywhere in the Java source (2026-09-21) - `Text.IDS_MAIN_WINDOW_TITLE`/
-  `IDS_MAIN_WINDOW_TITLE_NO_WORKSPACE_LOADED` are still real, actively-used
-  C++ resources with no Java call site at all, unlike most of the other
-  candidates that audit turned up (those had a working Java equivalent
-  under a different mechanism - this one genuinely doesn't).
+- **Was**: `Dis6502.updateTitle()` just set `"dis6502"` plus `" - " +
+  currentFile.getName()` if a file was open - the computer system name
+  was never shown at all, and the file portion used just the file name
+  rather than C++'s full path.
 - **C++**: `Main::SetMainWindowTitle` (`src/ui/Main.cpp:89-101`) sets the
   title to `Text::Format(IDS_MAIN_WINDOW_TITLE_NO_WORKSPACE_LOADED,
   computerSystemText)` ("6502 Disassembler for {0}") when no file is
   loaded, or `Text::Format(IDS_MAIN_WINDOW_TITLE, computerSystemText,
-  filePath)` ("6502 Disassembler for {0} {1}") once one is - always
-  including `Workspace::GetComputerSystem()->GetTypeInfo()->text` (e.g.
-  "Atari 800").
-- **Java**: `Dis6502.updateTitle()` (`Dis6502.java:1748-1754`) just sets
-  `"dis6502"` plus `" - " + currentFile.getName()` if a file is open - the
-  computer system name is never shown at all, and the file portion uses
-  just the file name rather than C++'s full path (a second, smaller
-  divergence).
-- **Fix sketch**: `workspace.getComputerSystem().getTypeInfo().text` is
-  already used elsewhere in this exact class (`Dis6502.java:484`, in
-  `performNewWorkspace`'s log message) - wiring it into `updateTitle()`
-  (and deciding whether to keep the Java convention of a short file name
-  vs. C++'s full path) should be a small, self-contained change. Not yet
-  implemented as part of this audit since it wasn't the audit's purpose -
-  listed here for a future session.
+  filePath)` ("6502 Disassembler for {0} {1}") once one is.
+- **Fix**: `updateTitle()` now uses `Text.IDS_MAIN_WINDOW_TITLE`/
+  `IDS_MAIN_WINDOW_TITLE_NO_WORKSPACE_LOADED` filled with
+  `workspace.getComputerSystem().getTypeInfo().text` and, once a file is
+  open, its full path (`currentFile.getPath()`) - matching C++ exactly,
+  including the full-path divergence. `SegmentListPanel`'s own header
+  (via `setFileName`) is a separate, unrelated UI element and was left
+  unchanged.
+- Verified with a clean `mvn -o compile`/`test-compile`, the full
+  `TestRunner` suite, and a live launch: the real running app's `JFrame`
+  title reads "6502 Disassembler for Atari 800" with no workspace
+  loaded, matching the ported resource text exactly.
 
 ### 9. `DisassemblyProgressMonitor`'s base-class logging is still an unwired no-op
 
@@ -506,9 +501,8 @@ doesn't support, without a separate decision to add a genuinely new feature:
 8. **Gap #5** (`MainUITest.cpp` self-test harness) - needs an explicit
    "superseded by JUnit, won't port" decision recorded somewhere (this
    document or a class javadoc) rather than staying an implicit gap.
-9. **Gap #8** (main window title missing computer system name) - small,
-   self-contained fix; found 2026-09-21 while auditing `Text.java` for
-   unreferenced constants.
+9. ~~**Gap #8** (main window title missing computer system name)~~ - **fixed
+   2026-09-21**, see above.
 10. **Gap #9** (`DisassemblyProgressMonitor` logging never wired up) -
     low real-world impact (C++'s own GUI path barely exercises it either);
     found alongside gap #8.
