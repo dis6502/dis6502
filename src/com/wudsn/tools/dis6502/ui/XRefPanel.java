@@ -16,7 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import com.wudsn.tools.base.common.TextUtility;
-import com.wudsn.tools.dis6502.Text;
+import com.wudsn.tools.dis6502.Texts;
 
 /**
  * A list of the disassembly lines matching the current search string
@@ -54,7 +54,7 @@ public final class XRefPanel extends JPanel {
 
 	public XRefPanel() {
 		super(new BorderLayout());
-		header.setText(Text.IDS_XREF_TITLE_NO_LABEL_SELECTED);
+		header.setText(Texts.XRefPanel_NoLabelSelectedTitle);
 		add(header, BorderLayout.NORTH);
 		list.setCellRenderer(cellRenderer);
 		JScrollPane scrollPane = new JScrollPane(list);
@@ -87,18 +87,19 @@ public final class XRefPanel extends JPanel {
 	/**
 	 * Ported from MainXRef::UpdateList. {@code entries} is empty (matching
 	 * an empty {@code findString} in C++) to show "No label selected"
-	 * instead of a reference count/list. Now built from the actual {@code
-	 * Text.IDS_XREF_TITLE_*} resources instead of a hand-written literal -
-	 * switching to them also fixed the wording ("No label selected" vs.
-	 * the resource's "No Label Selected", "N Reference(s) to" vs. the
-	 * resource's "N reference(s) for") to match the C++ source exactly.
+	 * instead of a reference count/list. Now built from the actual
+	 * {@code Texts.XRefPanel_*Title} fields instead of a hand-written
+	 * literal - switching to them also fixed the wording ("No label
+	 * selected" vs. the resource's "No Label Selected", "N Reference(s)
+	 * to" vs. the resource's "N reference(s) for") to match the C++
+	 * source exactly.
 	 */
 	public void updateList(String findString, List<Entry> entries) {
 		listModel.clear();
 		if (findString.isEmpty() || entries.isEmpty()) {
-			header.setText(Text.IDS_XREF_TITLE_NO_LABEL_SELECTED);
+			header.setText(Texts.XRefPanel_NoLabelSelectedTitle);
 		} else {
-			String pattern = entries.size() == 1 ? Text.IDS_XREF_TITLE_LABEL_REFERENCE : Text.IDS_XREF_TITLE_LABEL_REFERENCES;
+			String pattern = entries.size() == 1 ? Texts.XRefPanel_LabelReferenceTitle : Texts.XRefPanel_LabelReferencesTitle;
 			header.setText(TextUtility.format(pattern, String.valueOf(entries.size()), findString));
 			for (Entry entry : entries) {
 				listModel.addElement(entry);

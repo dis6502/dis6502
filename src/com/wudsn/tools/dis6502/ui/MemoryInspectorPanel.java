@@ -32,7 +32,7 @@ import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.base.repository.Action;
 import com.wudsn.tools.dis6502.Actions;
-import com.wudsn.tools.dis6502.Text;
+import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.FileHeader;
 import com.wudsn.tools.dis6502.model.GuessCodeLogic;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState.EditCharResult;
@@ -317,7 +317,7 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	public MemoryInspectorPanel() {
 		super(new BorderLayout());
-		header.setText(Text.IDS_DUMP_TITLE_SEGMENT_NO_SEGMENT_SELECTED);
+		header.setText(Texts.MemoryInspectorPanel_NoSegmentSelectedTitle);
 
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		buttonPanel.add(displayAsScreenCodeButton);
@@ -655,7 +655,7 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	/**
 	 * Ported from {@code Main}'s {@code WM_PAINT} handler's "Print memory inspector
-	 * window title" block (IDS_DUMP_TITLE_SEGMENT/{@code
+	 * window title" block (C++'s {@code IDS_DUMP_TITLE_SEGMENT}/{@code
 	 * IDS_DUMP_TITLE_SELECTION}/{@code
 	 * IDS_DUMP_TITLE_SEGMENT_NO_SEGMENT_SELECTED}): the selected segment's 1-based
 	 * number, address range and size in hex and decimal - or, once a byte range
@@ -665,17 +665,17 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * to be at that moment, this is called explicitly wherever the segment or
 	 * selection changes ({@link #segmentChanged}, {@link #select},
 	 * {@link #clearSelection}). Built from the actual {@code
-	 * Text.IDS_DUMP_TITLE_*} resources rather than a hand-written {@code
-	 * String.format} - switching to them fixed a real divergence found in
-	 * the process: the old "Selection" branch never included the segment
-	 * number the "Segment" branch did, unlike {@code
-	 * IDS_DUMP_TITLE_SELECTION}'s own {@code "Selection {0}: ..."}, which
-	 * C++ does include.
+	 * Texts.MemoryInspectorPanel_*Title} fields rather than a hand-written
+	 * {@code String.format} - switching to them fixed a real divergence
+	 * found in the process: the old "Selection" branch never included the
+	 * segment number the "Segment" branch did, unlike C++'s own {@code
+	 * IDS_DUMP_TITLE_SELECTION}'s {@code "Selection {0}: ..."}, which does
+	 * include it.
 	 */
 	private void updateTitle() {
 		Segment segment = memoryInspectorState == null ? null : memoryInspectorState.getSegment();
 		if (segment == null) {
-			header.setText(Text.IDS_DUMP_TITLE_SEGMENT_NO_SEGMENT_SELECTED);
+			header.setText(Texts.MemoryInspectorPanel_NoSegmentSelectedTitle);
 			return;
 		}
 
@@ -685,13 +685,13 @@ public final class MemoryInspectorPanel extends JPanel {
 			int begin = segment.wBegin + memoryInspectorState.getBegin();
 			int end = segment.wBegin + memoryInspectorState.getEnd();
 			int size = memoryInspectorState.getSize();
-			title = TextUtility.format(Text.IDS_DUMP_TITLE_SELECTION, segmentNumber, hex(begin), hex(end), hex(size),
+			title = TextUtility.format(Texts.MemoryInspectorPanel_SelectionTitle, segmentNumber, hex(begin), hex(end), hex(size),
 					String.valueOf(size));
 		} else {
 			int begin = segment.wBegin;
 			int end = segment.wEnd;
 			int size = segment.getSize();
-			title = TextUtility.format(Text.IDS_DUMP_TITLE_SEGMENT, segmentNumber, hex(begin), hex(end), hex(size),
+			title = TextUtility.format(Texts.MemoryInspectorPanel_SegmentTitle, segmentNumber, hex(begin), hex(end), hex(size),
 					String.valueOf(size));
 		}
 		header.setText(title);

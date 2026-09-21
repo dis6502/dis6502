@@ -53,7 +53,7 @@ stay a thin aggregate of cohesive sub-objects (`SegmentList`, `Profile`,
 own related fields and methods; `Workspace` exposes them via `getXxx()`
 accessors rather than absorbing their state directly.
 
-### Split user-visible text into `Text.java` vs. `Texts.java` vs. `Messages.java` by provenance and shape
+### History: `Text.java` vs. `Texts.java` vs. `Messages.java` by provenance and shape (retired 2026-09-21 - see the note at the end)
 
 User-visible strings are split across three separate repository classes,
 based on where the string actually comes from and whether it needs a
@@ -127,25 +127,35 @@ doesn't), not just leftover unused text. Send a `Messages.*` field via
 `message.getSeverity()` to pick the right log method itself, instead of the
 caller choosing `sendInfoMessage`/`sendErrorMessage`.
 
-When adding a new dialog or new user-visible text to this project going
-forward: if the string is a faithful port of a real C++ `STRINGTABLE`
-entry and doesn't need a severity, it belongs in `Text.java`/`Text.properties`.
-If it's new text this Java port itself introduces (including replacing a
-literal string that used to be hardcoded in a dialog's constructor), it
-belongs in `Texts.java`/`Texts.properties`, named `<DialogName>_<Purpose>`
-(or `<ClassName>_<Purpose>` for a non-dialog owner). If it's a log/status/
-error message that needs a severity, it belongs in
-`Messages.java`/`Messages.properties` instead, named with the
-severity-letter-plus-number convention above, regardless of whether the
-text traces back to a C++ resource.
+**Retirement (2026-09-21)**: the three-way split above no longer holds -
+`Text.java`/`Text.properties` were deleted outright, on explicit user
+instruction, once every constant remaining in them (29 fields, everything
+the migration rounds above hadn't already moved to `Messages.java`) was
+moved into `Texts.java`/`Texts.properties` too, renamed away from its
+`IDS_*` name to the `<ClassName>_<Purpose>` convention below and grouped
+by the class that actually uses it (a few multi-class-shared fields, e.g.
+the "find string not found" message/title used by both
+`MemoryInspectorFindStringDialog` and `Dis6502`'s Find-Next path, were
+grouped under whichever class most owns the concept). Each moved field's
+javadoc keeps a "moved from `Text.IDS_XXX`" note purely for historical
+traceability, matching the same provenance-comment convention already
+used for every `Messages.java` field moved from `Text.java` earlier - but
+the fields themselves are now ordinary `Texts.java` fields, with no
+remaining distinction for "was this a real ported C++ resource." When
+adding new user-visible plain-`String` text to this project going forward
+(ported from a real C++ resource or invented by this port, doesn't
+matter which): it belongs in `Texts.java`/`Texts.properties`, named
+`<ClassName>_<Purpose>`. If it's a log/status/error message that needs a
+severity, it still belongs in `Messages.java`/`Messages.properties`
+instead, named with the severity-letter-plus-number convention above.
 
 ### Which NLS base class to use
 
-`Text.java`, `Texts.java`, and `Messages.java` all extend
+`Texts.java` and `Messages.java` both extend
 `com.wudsn.tools.base.repository.NLS` and initialize with
 `initializeClass(ClassName.class, null)` in a static initializer, with a
 matching `.properties` file next to the class on the classpath
-(package-relative path, e.g. `com/wudsn/tools/dis6502/Text.properties`).
+(package-relative path, e.g. `com/wudsn/tools/dis6502/Texts.properties`).
 This is the same base class `com.wudsn.tools.thecartstudio.Texts` and this
 project's own `Actions.java` already use.
 

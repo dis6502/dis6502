@@ -15,7 +15,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
-import com.wudsn.tools.dis6502.Text;
+import com.wudsn.tools.dis6502.Texts;
 
 /**
  * A scrolling, read-only log of application messages.
@@ -56,7 +56,7 @@ public final class LogPanel extends JPanel {
 
 	public LogPanel() {
 		super(new BorderLayout());
-		header.setText(Text.IDS_LOG_TITLE);
+		header.setText(Texts.LogPanel_Title);
 		add(header, BorderLayout.NORTH);
 		textArea.setEditable(false);
 		textArea.setFont(new java.awt.Font(java.awt.Font.MONOSPACED, java.awt.Font.PLAIN, 12));

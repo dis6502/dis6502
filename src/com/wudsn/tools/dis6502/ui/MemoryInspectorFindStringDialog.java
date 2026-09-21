@@ -28,7 +28,6 @@ import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.base.repository.DataType;
 import com.wudsn.tools.dis6502.DataTypes;
-import com.wudsn.tools.dis6502.Text;
 import com.wudsn.tools.dis6502.Texts;
 
 /**
@@ -209,8 +208,8 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 			setVisible(false);
 		} else {
 			JOptionPane.showMessageDialog(this,
-					TextUtility.format(Text.IDS_FIND_STRING_DIALOG_STRING_NOT_FOUND_MESSAGE, findStringDialog.getAsciiString()),
-					Text.IDS_FIND_STRING_DIALOG_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					TextUtility.format(Texts.MemoryInspectorFindStringDialog_StringNotFoundMessage, findStringDialog.getAsciiString()),
+					Texts.MemoryInspectorFindStringDialog_NotFoundTitle, JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
 

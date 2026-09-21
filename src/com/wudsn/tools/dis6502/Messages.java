@@ -10,12 +10,11 @@ import com.wudsn.tools.base.repository.NLS;
 
 /**
  * Message repository for structured, severity-typed messages ({@link
- * Message}) - unlike {@link Text}/{@link Texts}, whose fields are plain
- * {@code String}s. Follows the same pattern {@code
- * com.wudsn.tools.base.Messages} already uses in the shared WUDSN library:
- * a field's own name encodes its severity via a leading {@code S}/{@code
- * I}/{@code E} for {@link Message#STATUS}/{@link Message#INFO}/{@link
- * Message#ERROR} (see {@code
+ * Message}) - unlike {@link Texts}, whose fields are plain {@code
+ * String}s. Follows the same pattern {@code com.wudsn.tools.base.Messages}
+ * already uses in the shared WUDSN library: a field's own name encodes its
+ * severity via a leading {@code S}/{@code I}/{@code E} for {@link
+ * Message#STATUS}/{@link Message#INFO}/{@link Message#ERROR} (see {@code
  * com.wudsn.tools.base.repository.NLS}'s field-loading switch), followed
  * by a plain sequence number, shared across every severity (an {@code E}
  * field's number does not restart at 1 - it just continues on from
@@ -24,7 +23,7 @@ import com.wudsn.tools.base.repository.NLS;
  * message text itself was moved from one: any real C++ {@code
  * IDS_ERR_*}/{@code IDS_LOG_*} constant whose only use was a {@code
  * sendErrorMessage}/{@code sendInfoMessage} call belongs here instead of
- * {@link Text}, once it needs its severity to actually drive dispatch via
+ * {@link Texts}, once it needs its severity to actually drive dispatch via
  * {@link Application#sendMessage}.
  *
  * @author Peter Dell

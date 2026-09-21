@@ -23,7 +23,7 @@ import javax.swing.JTextField;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
-import com.wudsn.tools.dis6502.Text;
+import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.DefaultFolders;
 import com.wudsn.tools.dis6502.model.FolderType;
 
@@ -114,7 +114,7 @@ public final class DefaultFoldersDialog extends JDialog {
 	private void browse(FolderType folderType, JTextField field) {
 		JFileChooser fileChooser = new JFileChooser(field.getText());
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		fileChooser.setDialogTitle(TextUtility.format(Text.IDS_DEFAULT_FOLDERS_DIALOG_SUB_TITLE, folderType.getText()));
+		fileChooser.setDialogTitle(TextUtility.format(Texts.DefaultFoldersDialog_SubTitle, folderType.getText()));
 		if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
 			field.setText(fileChooser.getSelectedFile().getPath());
 		}
@@ -127,7 +127,7 @@ public final class DefaultFoldersDialog extends JDialog {
 	 * back into {@code defaultFolders}, only if the user clicked OK.
 	 */
 	public boolean show(DefaultFolders defaultFolders) {
-		setTitle(TextUtility.format(Text.IDS_DEFAULT_FOLDERS_DIALOG_TITLE, defaultFolders.getComputerSystemTypeInfo().text));
+		setTitle(TextUtility.format(Texts.DefaultFoldersDialog_Title, defaultFolders.getComputerSystemTypeInfo().text));
 		for (FolderType folderType : EDITABLE_FOLDER_TYPES) {
 			fields.get(folderType).setText(defaultFolders.getFolderPath(folderType));
 		}

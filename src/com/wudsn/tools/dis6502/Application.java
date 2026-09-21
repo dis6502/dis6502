@@ -27,10 +27,10 @@ import com.wudsn.tools.base.repository.Message;
  * Application::GetText}/{@code Text::Get} at call time - the base class's
  * own {@code GetText} is itself just a stub returning the numeric ID as a
  * string, with the real resource-table lookup only present in the concrete
- * subclass. Since {@link Text}'s fields already hold their resolved text
+ * subclass. Since {@link Texts}' fields already hold their resolved text
  * once the class is loaded (see its javadoc), that whole indirection is
  * unnecessary here: methods take the already-resolved {@code String} (e.g.
- * {@link Text#IDS_LOG_TITLE}) directly, so {@code SendXxxMessageWithID}
+ * {@link Texts#LogPanel_Title}) directly, so {@code SendXxxMessageWithID}
  * becomes {@code sendXxxMessage} - or, for a {@link Messages} field, {@link
  * #sendMessage}. Message sending is also not a singleton
  * accessed through a {@code g_Application} global here - callers that need

@@ -33,7 +33,7 @@ import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.base.repository.Action;
 import com.wudsn.tools.dis6502.Actions;
-import com.wudsn.tools.dis6502.Text;
+import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblyResult;
 import com.wudsn.tools.dis6502.model.Equate;
@@ -164,7 +164,7 @@ public final class DisassemblyPanel extends JPanel {
 
 	public DisassemblyPanel() {
 		super(new BorderLayout());
-		header.setText(Text.IDS_DIS_TITLE);
+		header.setText(Texts.DisassemblyPanel_Title);
 
 		JPanel findButtonsPanel = new JPanel();
 		findButtonsPanel.add(findButton);

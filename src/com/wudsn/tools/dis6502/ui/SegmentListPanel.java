@@ -23,7 +23,7 @@ import javax.swing.ListSelectionModel;
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.Actions;
-import com.wudsn.tools.dis6502.Text;
+import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentList;
 import com.wudsn.tools.dis6502.model.Workspace;
@@ -190,7 +190,7 @@ public final class SegmentListPanel extends JPanel {
 	/** Ported from Main::PaintMainWindow's segment list title block (IDS_SEGMENT_TITLE/IDS_SEGMENT_TITLE_NO_SEGMENTS_LOADED). */
 	private void updateHeaderText() {
 		boolean empty = workspace == null || workspace.getSegmentList().isEmpty();
-		header.setText(empty ? Text.IDS_SEGMENT_TITLE_NO_SEGMENTS_LOADED : TextUtility.format(Text.IDS_SEGMENT_TITLE, fileName));
+		header.setText(empty ? Texts.SegmentListPanel_NoSegmentsLoadedTitle : TextUtility.format(Texts.SegmentListPanel_Title, fileName));
 	}
 
 	/** Ported from MainSegment::RButtonDownProc (the "no edit mode" branch - there is no memory inspector edit mode to check here yet). */

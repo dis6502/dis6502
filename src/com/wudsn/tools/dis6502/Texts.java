@@ -8,15 +8,22 @@ package com.wudsn.tools.dis6502;
 import com.wudsn.tools.base.repository.NLS;
 
 /**
- * UI text repository for strings this port introduces itself - dialog
- * titles, labels, body text - with no real Win32 {@code STRINGTABLE}/{@code
- * IDS_*} resource to mirror, unlike {@link Text}. Fields are named per
- * dialog ({@code <DialogName>_<Purpose>}, e.g. {@link #AboutDialog_Title}),
- * following the same convention {@code com.wudsn.tools.thecartstudio.Texts}
- * uses for its own dialog-local strings (its {@code AboutDialog_Content}/
- * {@code AboutDialog_URL} fields) - including that class's own {@code
- * com.wudsn.tools.base.repository.NLS} base, the same one {@link Text}/
- * {@link Actions} use.
+ * UI text repository: every field is named per owning class ({@code
+ * <ClassName>_<Purpose>}, e.g. {@link #AboutDialog_Title}), following the
+ * same convention {@code com.wudsn.tools.thecartstudio.Texts} uses for its
+ * own dialog-local strings (its {@code AboutDialog_Content}/{@code
+ * AboutDialog_URL} fields) - including that class's own {@code
+ * com.wudsn.tools.base.repository.NLS} base, the same one {@link Actions}
+ * uses.
+ * <p>
+ * Most fields are UI text this port introduces itself, with no real Win32
+ * {@code STRINGTABLE}/{@code IDS_*} resource to mirror. Some, however, were
+ * moved here from the former {@code Text.java} (a separate faithfully-
+ * ported-C++-resource repository this project used earlier, since retired)
+ * once every one of its remaining constants was renamed away from its
+ * {@code IDS_*} name and merged in - those fields' javadoc notes the
+ * original C++ resource name they came from for traceability, but they are
+ * otherwise ordinary fields here like any other.
  *
  * @author Peter Dell
  */
@@ -152,6 +159,89 @@ public final class Texts extends NLS {
 	public static String Dis6502_AddCassetteImageFileTitle;
 	/** {@link Dis6502#performOpenFile}'s {@code JFileChooser}/error-dialog title for {@link com.wudsn.tools.dis6502.model.FileType#CASSETTE_IMAGE_FILE}, {@code add == false}. */
 	public static String Dis6502_OpenCassetteImageFileTitle;
+
+	/** {@link com.wudsn.tools.dis6502.ui.DefaultFoldersDialog}'s {@code JFileChooser} sub-title - moved from {@code Text.IDS_DEFAULT_FOLDERS_DIALOG_SUB_TITLE}. */
+	public static String DefaultFoldersDialog_SubTitle;
+	/** {@link com.wudsn.tools.dis6502.ui.DefaultFoldersDialog}'s window title - moved from {@code Text.IDS_DEFAULT_FOLDERS_DIALOG_TITLE}. */
+	public static String DefaultFoldersDialog_Title;
+
+	/** {@link com.wudsn.tools.dis6502.ui.DisassemblyPanel}'s header text - moved from {@code Text.IDS_DIS_TITLE}. */
+	public static String DisassemblyPanel_Title;
+
+	/** {@link com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s header text when a segment is selected - moved from {@code Text.IDS_DUMP_TITLE_SEGMENT}. */
+	public static String MemoryInspectorPanel_SegmentTitle;
+	/** {@link com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s header text when nothing is selected - moved from {@code Text.IDS_DUMP_TITLE_SEGMENT_NO_SEGMENT_SELECTED}. */
+	public static String MemoryInspectorPanel_NoSegmentSelectedTitle;
+	/** {@link com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s header text when a byte range is selected - moved from {@code Text.IDS_DUMP_TITLE_SELECTION}. */
+	public static String MemoryInspectorPanel_SelectionTitle;
+
+	/** {@link Dis6502#performClearEquates}'s confirmation message for {@code WorkspaceProperty#SYSTEM_EQUATES} - moved from {@code Text.IDS_EQUATES_CONFIRM_CLEAR_SYSTEM_EQUATES}. */
+	public static String Dis6502_ConfirmClearSystemEquatesMessage;
+	/** {@link Dis6502#performClearEquates}'s confirmation message for {@code WorkspaceProperty#USER_EQUATES} - moved from {@code Text.IDS_EQUATES_CONFIRM_CLEAR_USER_EQUATES}. */
+	public static String Dis6502_ConfirmClearUserEquatesMessage;
+
+	/**
+	 * {@link com.wudsn.tools.dis6502.ui.MemoryInspectorFindStringDialog#performOK}'s
+	 * "string not found" alert message, reused by {@link
+	 * Dis6502#performMemoryInspectorFindNext}/{@link
+	 * Dis6502#performFindInDisassembly} - moved from {@code
+	 * Text.IDS_FIND_STRING_DIALOG_STRING_NOT_FOUND_MESSAGE}.
+	 */
+	public static String MemoryInspectorFindStringDialog_StringNotFoundMessage;
+	/**
+	 * The "string not found" alert's title (distinct from {@link
+	 * #MemoryInspectorFindStringDialog_Title}, the dialog's own window
+	 * title) - moved from {@code Text.IDS_FIND_STRING_DIALOG_TITLE}.
+	 */
+	public static String MemoryInspectorFindStringDialog_NotFoundTitle;
+
+	/** {@link com.wudsn.tools.dis6502.ui.LogPanel}'s header text - moved from {@code Text.IDS_LOG_TITLE}. */
+	public static String LogPanel_Title;
+
+	/**
+	 * {@link com.wudsn.tools.dis6502.ui.WorkspaceDialog}'s window title,
+	 * reused by {@link Dis6502#confirmClearWorkspace}'s confirm dialog -
+	 * moved from {@code Text.IDS_MAIN_FILE_NEW_WORKSPACE_TITLE}.
+	 */
+	public static String WorkspaceDialog_Title;
+	/** {@link Dis6502#confirmClearWorkspace}'s confirmation message - moved from {@code Text.IDS_MAIN_FILE_NEW_WORKSPACE_MESSAGE}. */
+	public static String Dis6502_NewWorkspaceMessage;
+
+	/** {@link Dis6502#performOpenWorkspace}'s {@code JFileChooser} title - moved from {@code Text.IDS_MAIN_FILE_OPEN_WORKSPACE_FILE_TITLE}. */
+	public static String Dis6502_OpenWorkspaceFileTitle;
+	/** {@link Dis6502#updateTitle}'s main window title once a file is open - moved from {@code Text.IDS_MAIN_WINDOW_TITLE}. */
+	public static String Dis6502_WindowTitle;
+	/** {@link Dis6502#updateTitle}'s main window title with no file open - moved from {@code Text.IDS_MAIN_WINDOW_TITLE_NO_WORKSPACE_LOADED}. */
+	public static String Dis6502_WindowTitleNoWorkspaceLoaded;
+
+	/** {@link com.wudsn.tools.dis6502.ui.SegmentListPanel}'s header text when segments are loaded - moved from {@code Text.IDS_SEGMENT_TITLE}. */
+	public static String SegmentListPanel_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.SegmentListPanel}'s header text when empty - moved from {@code Text.IDS_SEGMENT_TITLE_NO_SEGMENTS_LOADED}. */
+	public static String SegmentListPanel_NoSegmentsLoadedTitle;
+
+	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_8}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_8}. */
+	public static String GraphicMode_Antic8;
+	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_9}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_9}. */
+	public static String GraphicMode_Antic9;
+	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_A}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_A}. */
+	public static String GraphicMode_AnticA;
+	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_B}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_B}. */
+	public static String GraphicMode_AnticB;
+	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_C}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_C}. */
+	public static String GraphicMode_AnticC;
+	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_D}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_D}. */
+	public static String GraphicMode_AnticD;
+	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_E}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_E}. */
+	public static String GraphicMode_AnticE;
+	/** {@link com.wudsn.tools.dis6502.ui.GraphicMode#ANTIC_F}'s display name - moved from {@code Text.IDS_SPRITE_ANTIC_F}. */
+	public static String GraphicMode_AnticF;
+
+	/** {@link com.wudsn.tools.dis6502.ui.XRefPanel}'s header text for exactly one reference - moved from {@code Text.IDS_XREF_TITLE_LABEL_REFERENCE}. */
+	public static String XRefPanel_LabelReferenceTitle;
+	/** {@link com.wudsn.tools.dis6502.ui.XRefPanel}'s header text for more than one reference - moved from {@code Text.IDS_XREF_TITLE_LABEL_REFERENCES}. */
+	public static String XRefPanel_LabelReferencesTitle;
+	/** {@link com.wudsn.tools.dis6502.ui.XRefPanel}'s header text when no label is selected - moved from {@code Text.IDS_XREF_TITLE_NO_LABEL_SELECTED}. */
+	public static String XRefPanel_NoLabelSelectedTitle;
 
 	static {
 		initializeClass(Texts.class, null);

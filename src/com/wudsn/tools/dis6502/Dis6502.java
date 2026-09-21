@@ -495,7 +495,7 @@ public final class Dis6502 {
 		}
 
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setDialogTitle(Text.IDS_MAIN_FILE_OPEN_WORKSPACE_FILE_TITLE);
+		fileChooser.setDialogTitle(Texts.Dis6502_OpenWorkspaceFileTitle);
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Workspace Files (*.wrk)", "wrk"));
 		if (currentFile != null) {
 			fileChooser.setCurrentDirectory(currentFile.getParentFile());
@@ -903,8 +903,8 @@ public final class Dis6502 {
 			return;
 		}
 		String message = equateList.getProperty() == WorkspaceProperty.SYSTEM_EQUATES
-				? Text.IDS_EQUATES_CONFIRM_CLEAR_SYSTEM_EQUATES
-				: Text.IDS_EQUATES_CONFIRM_CLEAR_USER_EQUATES;
+				? Texts.Dis6502_ConfirmClearSystemEquatesMessage
+				: Texts.Dis6502_ConfirmClearUserEquatesMessage;
 		if (JOptionPane.showConfirmDialog(mainWindow.getFrame(), message, Texts.Dis6502_ClearEquatesTitle,
 				JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 			equateList.clear();
@@ -1062,9 +1062,9 @@ public final class Dis6502 {
 	private void performMemoryInspectorFindNext() {
 		if (!mainWindow.memoryInspectorPanel.findNextString()) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					TextUtility.format(Text.IDS_FIND_STRING_DIALOG_STRING_NOT_FOUND_MESSAGE,
+					TextUtility.format(Texts.MemoryInspectorFindStringDialog_StringNotFoundMessage,
 							mainWindow.memoryInspectorPanel.getFindString()),
-					Text.IDS_FIND_STRING_DIALOG_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					Texts.MemoryInspectorFindStringDialog_NotFoundTitle, JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
 
@@ -1439,8 +1439,8 @@ public final class Dis6502 {
 			return true;
 		}
 
-		int result = JOptionPane.showConfirmDialog(mainWindow.getFrame(), Text.IDS_MAIN_FILE_NEW_WORKSPACE_MESSAGE,
-				Text.IDS_MAIN_FILE_NEW_WORKSPACE_TITLE, JOptionPane.YES_NO_CANCEL_OPTION);
+		int result = JOptionPane.showConfirmDialog(mainWindow.getFrame(), Texts.Dis6502_NewWorkspaceMessage,
+				Texts.WorkspaceDialog_Title, JOptionPane.YES_NO_CANCEL_OPTION);
 		if (result == JOptionPane.CANCEL_OPTION || result == JOptionPane.CLOSED_OPTION) {
 			return false;
 		}
@@ -1628,8 +1628,8 @@ public final class Dis6502 {
 			mainWindow.disassemblyPanel.navigateToLine(findFirstLineNumber[0]);
 		} else {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					TextUtility.format(Text.IDS_FIND_STRING_DIALOG_STRING_NOT_FOUND_MESSAGE, findString),
-					Text.IDS_FIND_STRING_DIALOG_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					TextUtility.format(Texts.MemoryInspectorFindStringDialog_StringNotFoundMessage, findString),
+					Texts.MemoryInspectorFindStringDialog_NotFoundTitle, JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
 
@@ -1748,8 +1748,8 @@ public final class Dis6502 {
 	/** Ported from Main::SetMainWindowTitle. */
 	private void updateTitle() {
 		String computerSystemText = workspace.getComputerSystem().getTypeInfo().text;
-		String title = currentFile == null ? TextUtility.format(Text.IDS_MAIN_WINDOW_TITLE_NO_WORKSPACE_LOADED, computerSystemText)
-				: TextUtility.format(Text.IDS_MAIN_WINDOW_TITLE, computerSystemText, currentFile.getPath());
+		String title = currentFile == null ? TextUtility.format(Texts.Dis6502_WindowTitleNoWorkspaceLoaded, computerSystemText)
+				: TextUtility.format(Texts.Dis6502_WindowTitle, computerSystemText, currentFile.getPath());
 		mainWindow.getFrame().setTitle(title);
 		mainWindow.segmentListPanel.setFileName(currentFile == null ? null : currentFile.getName());
 	}
