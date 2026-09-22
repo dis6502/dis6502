@@ -159,6 +159,9 @@ public final class Texts extends NLS {
 	public static String Dis6502_AddDiskImageSectorsTitle;
 	/** {@link Dis6502#performOpenFile}'s {@code JFileChooser}/error-dialog title for {@link com.wudsn.tools.dis6502.model.FileType#EXECUTABLE_FILE}, {@code add == true}. */
 	public static String Dis6502_AddExecutableFileTitle;
+	/** {@link Dis6502#performOpenFile}'s {@code JFileChooser} title for {@link com.wudsn.tools.dis6502.model.FileType#ANY_FILE} - the type is guessed from the file. */
+	public static String Dis6502_OpenAnyFileTitle;
+	public static String Dis6502_AddAnyFileTitle;
 	/** {@link Dis6502#performOpenFile}'s {@code JFileChooser}/error-dialog title for {@link com.wudsn.tools.dis6502.model.FileType#EXECUTABLE_FILE}, {@code add == false}. */
 	public static String Dis6502_OpenExecutableFileTitle;
 	/** {@link Dis6502#performOpenFile}'s {@code JFileChooser}/error-dialog title for {@link com.wudsn.tools.dis6502.model.FileType#ROM_IMAGE_FILE}, {@code add == true}. */
@@ -241,6 +244,8 @@ public final class Texts extends NLS {
 	/** {@link com.wudsn.tools.dis6502.ui.XRefPanel}'s header text when no label is selected - moved from {@code Text.IDS_XREF_TITLE_NO_LABEL_SELECTED}. */
 	public static String XRefPanel_NoLabelSelectedTitle;
 
+	/** {@link com.wudsn.tools.dis6502.ui.FileChoosers}' filter text for every file type the computer system can read at once. */
+	public static String FileChoosers_AllSupportedFilesFilterText;
 	/** {@link com.wudsn.tools.dis6502.ui.FileChoosers}' "file exists, overwrite?" confirmation. */
 	public static String FileChoosers_OverwriteTitle;
 	public static String FileChoosers_OverwriteMessage;

@@ -288,6 +288,8 @@ public final class Dis6502 {
 
 		mainWindow.mainMenu.newWorkspaceMenuItem.addActionListener(e -> performNewWorkspace());
 		mainWindow.mainMenu.openWorkspaceMenuItem.addActionListener(e -> performOpenFile(FileType.WORKSPACE_FILE, false));
+		mainWindow.mainMenu.openAnyFileMenuItem.addActionListener(e -> performOpenFile(FileType.ANY_FILE, false));
+		mainWindow.mainMenu.addAnyFileMenuItem.addActionListener(e -> performOpenFile(FileType.ANY_FILE, true));
 		mainWindow.mainMenu.openCassetteImageFileMenuItem.addActionListener(e -> performOpenFile(FileType.CASSETTE_IMAGE_FILE, false));
 		mainWindow.mainMenu.addCassetteImageFileMenuItem.addActionListener(e -> performOpenFile(FileType.CASSETTE_IMAGE_FILE, true));
 		mainWindow.mainMenu.openExecutableFileMenuItem.addActionListener(e -> performOpenFile(FileType.EXECUTABLE_FILE, false));
@@ -524,6 +526,7 @@ public final class Dis6502 {
 		boolean hasSegments = !workspace.getSegmentList().isEmpty();
 
 		mainMenu.newWorkspaceMenuItem.setEnabled(notEditing);
+		setOpenAndAddEnabled(mainMenu.openAnyFileMenuItem, mainMenu.addAnyFileMenuItem, notEditing);
 		mainMenu.openWorkspaceMenuItem.setEnabled(notEditing);
 		mainMenu.recentWorkspacesMenu.setEnabled(notEditing);
 		mainMenu.recentFilesMenu.setEnabled(notEditing);
@@ -608,7 +611,10 @@ public final class Dis6502 {
 	 * drop).
 	 */
 	private void performOpenFile(FileType fileType, boolean add) {
-		File file = fileChoosers.chooseOpenFile(mainWindow.getFrame(), getFileTypeOpenTitle(fileType, add), fileType);
+		String title = getFileTypeOpenTitle(fileType, add);
+		File file = fileType == FileType.ANY_FILE
+				? fileChoosers.chooseOpenAnyFile(mainWindow.getFrame(), title, workspace.getComputerSystem())
+				: fileChoosers.chooseOpenFile(mainWindow.getFrame(), title, fileType);
 		if (file != null) {
 			openFile(file, fileType, add);
 		}
@@ -936,7 +942,9 @@ public final class Dis6502 {
 
 	/** The per-{@link FileType}/add-or-open dialog title. The C++ version composes it from the file type's text instead ("Open " + text); these are separate, fully worded texts, which translate better. */
 	private static String getFileTypeOpenTitle(FileType fileType, boolean add) {
-		if (fileType == FileType.WORKSPACE_FILE) {
+		if (fileType == FileType.ANY_FILE) {
+			return add ? Texts.Dis6502_AddAnyFileTitle : Texts.Dis6502_OpenAnyFileTitle;
+		} else if (fileType == FileType.WORKSPACE_FILE) {
 			return Texts.Dis6502_OpenWorkspaceFileTitle;
 		} else if (fileType == FileType.EXECUTABLE_FILE) {
 			return add ? Texts.Dis6502_AddExecutableFileTitle : Texts.Dis6502_OpenExecutableFileTitle;

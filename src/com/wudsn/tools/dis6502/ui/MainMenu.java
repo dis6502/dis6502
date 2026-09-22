@@ -70,8 +70,10 @@ public final class MainMenu {
 	public final JMenu fileMenu = ElementFactory.createMenu(com.wudsn.tools.base.Actions.MainMenu_File);
 	public final JMenuItem newWorkspaceMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_NewWorkspace, "newWorkspaceMenuItem");
 	public final JMenuItem openWorkspaceMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenWorkspace, "openWorkspaceMenuItem");
+	public final JMenuItem openAnyFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenAnyFile, "openAnyFileMenuItem");
 	public final JMenuItem openCassetteImageFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenCassetteImageFile,
 			"openCassetteImageFileMenuItem");
+	public final JMenuItem addAnyFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_AddAnyFile, "addAnyFileMenuItem");
 	public final JMenuItem addCassetteImageFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_AddCassetteImageFile,
 			"addCassetteImageFileMenuItem");
 	public final JMenuItem openExecutableFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenExecutableFile,
@@ -206,6 +208,8 @@ public final class MainMenu {
 		menu.add(openWorkspaceMenuItem);
 
 		JMenu openFileMenu = ElementFactory.createMenu(Actions.MainMenu_File_OpenFile);
+		openFileMenu.add(openAnyFileMenuItem); // New, not in the C++ menu: the type is guessed from the file.
+		openFileMenu.addSeparator();
 		openFileMenu.add(openCassetteImageFileMenuItem);
 		openFileMenu.add(openDiskImageExecutableFileMenuItem);
 		openFileMenu.add(openDiskImageBootSectorsMenuItem);
@@ -216,6 +220,8 @@ public final class MainMenu {
 		menu.add(openFileMenu);
 
 		JMenu addFileMenu = ElementFactory.createMenu(Actions.MainMenu_File_AddFile);
+		addFileMenu.add(addAnyFileMenuItem);
+		addFileMenu.addSeparator();
 		addFileMenu.add(addCassetteImageFileMenuItem);
 		addFileMenu.add(addDiskImageExecutableFileMenuItem);
 		addFileMenu.add(addDiskImageBootSectorsMenuItem);

@@ -61,6 +61,14 @@ public final class MRUController {
 		}
 	}
 
+	/** The most recently used file of any type, workspaces included, or {@code ""}. */
+	public String getLastFilePath() {
+		if (!fileList.getEntries().isEmpty()) {
+			return fileList.getEntries().get(0).getFilePath();
+		}
+		return workspaceList.getLastFilePath(FileType.WORKSPACE_FILE);
+	}
+
 	public String getLastFilePath(FileType fileType) {
 		if (fileType == FileType.WORKSPACE_FILE) {
 			return workspaceList.getLastFilePath(fileType);

@@ -90,7 +90,7 @@ Not port gaps - identical in C++ - but limits a user will meet:
 ## 6. Improvements to consider
 
 - An "Open File..." that lists all supported files and guesses the type -
-  the `ANY_FILE` path of `Dis6502.openFile` already does the work.
+  the `ANY_FILE` path of `Dis6502.openFile` already does the work. Move the standard 
 - A review of `Oric.equ` (only 36 labels).
 - Persisting the window size and splitter positions (C++ does not do this
   either).
