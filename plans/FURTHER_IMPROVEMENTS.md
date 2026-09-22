@@ -73,8 +73,8 @@ Not port gaps - identical in C++ - but limits a user will meet:
   ZP-as-byte directive wrote its bytes with four hex digits
   (`.byte $00AD,...`), inherited from C++.
 - The live checks are scratch programs in `C:\TEMP\claude\dis6502-smoketest`
-  and not part of the suite. The reflection harness they use could become a
-  real "UI smoke" test in `TestRunner`.
+  and not part of the suite. Which of them should become tests, and what
+  that needs, is in `UI_SMOKE_TESTS_PROPOSAL.md` (2026-09-22).
 - There is no Oric or Atari 5200 fixture with a reassembly check, and no
   test for the Default Folders save/reload per computer system.
 

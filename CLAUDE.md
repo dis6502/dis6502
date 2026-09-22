@@ -39,5 +39,9 @@ be rediscovered:
 - [`plans/FURTHER_IMPROVEMENTS.md`](plans/FURTHER_IMPROVEMENTS.md) - what is
   left now that porting is over: unverified-on-screen items, remaining
   hard-coded UI strings, known limits, test coverage gaps, housekeeping.
+- [`plans/UI_SMOKE_TESTS_PROPOSAL.md`](plans/UI_SMOKE_TESTS_PROPOSAL.md) -
+  which of the throw-away UI smoke programs should become repository tests,
+  and what (settings isolation, test access to `Dis6502`) that needs
+  (status: proposal).
 
 New planning/guidance documents for future work should also go in `plans/`.
