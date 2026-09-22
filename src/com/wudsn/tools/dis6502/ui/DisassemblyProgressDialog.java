@@ -31,25 +31,14 @@ import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
  * A modal "please wait" dialog shown while a {@link Disassembly} runs, with
  * a Cancel button.
  * <p>
- * Ported from ui/DisassemblyProgressDialog.h/.cpp, but not its mechanism:
- * the C++ version runs the disassembly synchronously on the dialog's own
- * message-handling thread ({@code InitDialog} posts {@code
- * WM_USER_COMMAND}, whose handler calls {@code disassembly->
- * DisassembleInternal()} directly) and lets the user click Cancel by
- * manually pumping the Windows message queue from inside {@code
- * IsCancelled} ({@code PeekMessage}/{@code TranslateMessage}/{@code
- * DispatchMessage}, every 16 calls) - a Win32-specific technique with no
- * good Swing equivalent (nested event-queue pumping on the EDT is fragile
- * and discouraged). Instead, {@link Monitor#disassembleInternal} runs the
- * actual work on a {@link SwingWorker} background thread while this dialog
- * blocks the EDT showing progress, and {@link Monitor#isCancelled} reads a
- * plain {@link AtomicBoolean} the Cancel button's action listener sets -
- * idiomatic Swing background-work handling in place of the C++ mechanism,
- * with the same effect: {@link Disassembly} already checks {@code
- * isCancelled()} frequently (once per byte read, via {@code getNextByte}),
- * throwing an internal {@code DisassemblyCancelledException} each pass
- * method already catches, so no other change was needed to make
- * cancellation actually stop the work.
+ * {@link Monitor#disassembleInternal} runs the actual work on a {@link
+ * SwingWorker} background thread while this dialog blocks the EDT showing
+ * progress, and {@link Monitor#isCancelled} reads a plain {@link
+ * AtomicBoolean} the Cancel button's action listener sets. {@link
+ * Disassembly} already checks {@code isCancelled()} frequently (once per
+ * byte read, via {@code getNextByte}), throwing an internal {@code
+ * DisassemblyCancelledException} each pass method already catches, so no
+ * other change was needed to make cancellation actually stop the work.
  * <p>
  * {@link #getMonitor()} returns the {@link DisassemblyProgressMonitor} to
  * pass to {@link Disassembly#setProgressMonitor} - {@code Dis6502} creates
@@ -120,7 +109,7 @@ public final class DisassemblyProgressDialog extends JDialog {
 			super(application);
 		}
 
-		/** Ported from DisassemblyProgressDialog::DisassembleInternal/InitDialog - see this class's javadoc for why the mechanism differs. */
+		/** Runs the disassembly on a background thread, blocking this dialog until it finishes. */
 		@Override
 		protected void disassembleInternal(Disassembly disassembly) {
 			cancelled.set(false);
@@ -141,11 +130,9 @@ public final class DisassemblyProgressDialog extends JDialog {
 		}
 
 		/**
-		 * Ported from DisassemblyProgressDialog::SetPass - sets the inherited
-		 * {@code pass} field directly rather than calling {@code
-		 * super.setPass(pass)}, matching how the C++ override updates its own
-		 * {@code pass} member without calling the base class's logging
-		 * implementation (see this class's own javadoc).
+		 * Sets the inherited {@code pass} field directly rather than calling
+		 * {@code super.setPass(pass)}, so this override never logs - only
+		 * updates the dialog's labels.
 		 */
 		@Override
 		public void setPass(String pass) {
@@ -156,17 +143,13 @@ public final class DisassemblyProgressDialog extends JDialog {
 			});
 		}
 
-		/**
-		 * Ported from DisassemblyProgressDialog::SetSegmentNumber - like
-		 * {@link #setPass}, deliberately never calls {@code
-		 * super.setSegmentNumber(segmentNumber)}, so it doesn't log either.
-		 */
+		/** Like {@link #setPass}, deliberately never calls {@code super.setSegmentNumber(segmentNumber)}, so it doesn't log either. */
 		@Override
 		public void setSegmentNumber(int segmentNumber) {
 			SwingUtilities.invokeLater(() -> segmentLabel.setText(String.valueOf(segmentNumber)));
 		}
 
-		/** Ported from DisassemblyProgressDialog::IsCancelled, minus the message-pumping - see this class's javadoc. */
+		/** Reads whatever the Cancel button's action listener last set. */
 		@Override
 		public boolean isCancelled() {
 			return cancelled.get();

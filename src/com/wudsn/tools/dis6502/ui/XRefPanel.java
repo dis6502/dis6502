@@ -23,21 +23,17 @@ import com.wudsn.tools.dis6502.Texts;
  * ({@link com.wudsn.tools.dis6502.model.DisassemblyResult#findAndSelectLines}),
  * letting the user jump back to any of them.
  * <p>
- * Ported from ui/MainXRef.h / MainXRef.cpp and ui/XRefListWindow.h/.cpp.
- * {@code MainXRef::HandleSelectionChanged}'s memory inspector byte-range
- * sync is not wired up yet - the segment/disassembly-line sync it also
- * does is, see {@code Dis6502.performXRefSelected}.
+ * The memory inspector byte-range sync on selection change is not wired
+ * up yet - the segment/disassembly-line sync is, see {@code
+ * Dis6502.performXRefSelected}.
  * <p>
- * {@link #setComputerFont} is ported from {@code PartWindow::ApplyLayout}'s
- * blanket {@code SetFont(...)} call - {@code XRefListWindow} is a plain
- * native {@code ListBox} in C++, getting this automatically via {@code
- * WM_SETFONT}, matching {@link SegmentListPanel}'s own {@code
- * setComputerFont}: this list only ever shows already-formatted
- * disassembly line text, not raw byte values, so it needs none of {@link
- * ComputerFont}'s byte-indexed glyph lookup. It uses the shared {@link
- * ComputerFontListCellRenderer} (also used by {@link SegmentListPanel})
- * rather than plain {@code list.setFont(...)} - see that class's own
- * javadoc for why.
+ * This list only ever shows already-formatted disassembly line text, not
+ * raw byte values, so {@link #setComputerFont} needs none of {@link
+ * ComputerFont}'s byte-indexed glyph lookup, matching {@link
+ * SegmentListPanel}'s own {@code setComputerFont}. It uses the shared
+ * {@link ComputerFontListCellRenderer} (also used by {@link
+ * SegmentListPanel}) rather than plain {@code list.setFont(...)} - see
+ * that class's own javadoc for why.
  *
  * @author Peter Dell
  */
@@ -77,7 +73,7 @@ public final class XRefPanel extends JPanel {
 		this.selectionListener = selectionListener;
 	}
 
-	/** Ported from PartWindow::ApplyLayout's SetFont(partLayout->GetLayout()->GetFont()) - call whenever the workspace's computer system or double-height setting changes. */
+	/** Call whenever the workspace's computer system or double-height setting changes. */
 	public void setComputerFont(ComputerFont computerFont) {
 		list.setFont(computerFont.getAwtFont());
 		cellRenderer.setComputerFont(computerFont);
@@ -85,14 +81,8 @@ public final class XRefPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from MainXRef::UpdateList. {@code entries} is empty (matching
-	 * an empty {@code findString} in C++) to show "No label selected"
-	 * instead of a reference count/list. Now built from the actual
-	 * {@code Texts.XRefPanel_*Title} fields instead of a hand-written
-	 * literal - switching to them also fixed the wording ("No label
-	 * selected" vs. the resource's "No Label Selected", "N Reference(s)
-	 * to" vs. the resource's "N reference(s) for") to match the C++
-	 * source exactly.
+	 * {@code entries} empty shows "No label selected" instead of a reference
+	 * count/list. Built from the {@code Texts.XRefPanel_*Title} fields.
 	 */
 	public void updateList(String findString, List<Entry> entries) {
 		listModel.clear();
