@@ -6,9 +6,9 @@
 package com.wudsn.tools.dis6502.model;
 
 /**
- * New (not ported) test for {@link FolderType} as a WUDSN Base value set:
- * its texts come from {@code ValueSets.properties}, its keys stay what the
- * settings contain.
+ * Covers {@link FolderType} as a WUDSN Base value set: its texts come
+ * from {@code ValueSets.properties}, its keys stay what the settings
+ * contain.
  *
  * @author Peter Dell
  */

@@ -56,10 +56,10 @@ public final class ComputerSystemTest {
 	}
 
 	/**
-	 * New (not ported): a {@code .prg} must load as a binary segment, and
-	 * code trace must recognize {@code LDA #<irq / STA CINV / LDA #>irq / STA
-	 * CINV+1}, retag the two immediates as low/high byte of an address, and
-	 * follow the vector into the IRQ handler that nothing else references.
+	 * A {@code .prg} must load as a binary segment, and code trace must
+	 * recognize {@code LDA #<irq / STA CINV / LDA #>irq / STA CINV+1}, retag
+	 * the two immediates as low/high byte of an address, and follow the
+	 * vector into the IRQ handler that nothing else references.
 	 */
 	private static void testC64CodeTraceFollowsVector(ComputerSystem computerSystem) throws IOException {
 		int[] program = { 0x00, 0xC0, // Load address $C000.

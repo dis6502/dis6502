@@ -40,8 +40,8 @@ import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.Workspace;
 
 /**
- * New (not ported), the fourth test of {@code plans/UI_SMOKE_TESTS_PROPOSAL.md}:
- * what the two custom-painted grids and the disassembly popup produce, as
+ * The fourth test of {@code plans/UI_SMOKE_TESTS_PROPOSAL.md}: what the
+ * two custom-painted grids and the disassembly popup produce, as
  * far as that can be asserted without golden images (which break with
  * every look-and-feel, font and DPI change):
  * <ul>

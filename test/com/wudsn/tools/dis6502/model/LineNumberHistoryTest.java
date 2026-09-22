@@ -6,7 +6,7 @@
 package com.wudsn.tools.dis6502.model;
 
 /**
- * New (not ported) test for {@link LineNumberHistory}.
+ * Covers {@link LineNumberHistory}.
  *
  * @author Peter Dell
  */

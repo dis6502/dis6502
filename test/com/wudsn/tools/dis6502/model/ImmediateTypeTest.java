@@ -6,8 +6,8 @@
 package com.wudsn.tools.dis6502.model;
 
 /**
- * New (not ported) test for {@link Disassembly#setImmediateType} and its
- * counterpart {@link Disassembly#isInstructionWithImmediate}.
+ * Covers {@link Disassembly#setImmediateType} and its counterpart {@link
+ * Disassembly#isInstructionWithImmediate}.
  *
  * @author Peter Dell
  */

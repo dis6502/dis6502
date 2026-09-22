@@ -10,7 +10,7 @@ import java.io.File;
 import com.wudsn.tools.dis6502.model.Assert;
 
 /**
- * New (not ported) test for {@link CommandLineArguments}.
+ * Covers {@link CommandLineArguments}.
  *
  * @author Peter Dell
  */

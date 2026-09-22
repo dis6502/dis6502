@@ -35,7 +35,7 @@ import com.wudsn.tools.dis6502.model.ProcessorType;
 import com.wudsn.tools.dis6502.model.ProfileLogic;
 
 /**
- * New (not ported), the second test of {@code
+ * The second test of {@code
  * plans/UI_SMOKE_TESTS_PROPOSAL.md}: every dialog, panel and the main menu
  * constructs, and every text it shows is a real text - not empty, not a
  * property key that failed to resolve, not a {@code "{0}"} template that

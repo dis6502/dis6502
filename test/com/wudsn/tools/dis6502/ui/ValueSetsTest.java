@@ -12,10 +12,10 @@ import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.ProcessorType;
 
 /**
- * New (not ported) test for the value sets {@link ComputerSystemType},
- * {@link ProcessorType} and {@link GraphicMode} (see {@code EncodingTest},
- * {@code FolderTypeTest} and {@code FileChoosersTest} for the others), and
- * for {@link AtariError}'s texts, which come from {@code Messages} instead.
+ * Covers the value sets {@link ComputerSystemType}, {@link ProcessorType}
+ * and {@link GraphicMode} (see {@code EncodingTest}, {@code
+ * FolderTypeTest} and {@code FileChoosersTest} for the others), and
+ * {@link AtariError}'s texts, which come from {@code Messages} instead.
  * A value whose text were missing from {@code ValueSets.properties} would
  * not get this far: the repository loader ends the program at class load.
  *

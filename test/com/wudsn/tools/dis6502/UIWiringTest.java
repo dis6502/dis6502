@@ -46,14 +46,14 @@ import com.wudsn.tools.dis6502.ui.MainWindow;
 import com.wudsn.tools.dis6502.ui.MemoryInspectorPanel;
 
 /**
- * New (not ported), the third test of {@code plans/UI_SMOKE_TESTS_PROPOSAL.md}:
- * the application as the user gets it - started through {@link
+ * The third test of {@code plans/UI_SMOKE_TESTS_PROPOSAL.md}: the
+ * application as the user gets it - started through {@link
  * Dis6502#main}, its real menu items clicked, its real dialogs answered -
  * with the workspace, the menus and the dialogs asserted on afterwards.
- * This is where the wiring between model and UI lives, and where every
- * defect of the last porting sessions sat (the computer system reset on
- * open, code trace ignoring C64 segments, menu items enabled during an
- * edit); the headless tests could not see any of them.
+ * This is where the wiring between model and UI lives, and where several
+ * real defects sat (the computer system reset on open, code trace
+ * ignoring C64 segments, menu items enabled during an edit); the headless
+ * tests could not see any of them.
  * <p>
  * The scenarios are the former throw-away smoke programs, one method each.
  * The application is started once (it is a singleton) and the workspace

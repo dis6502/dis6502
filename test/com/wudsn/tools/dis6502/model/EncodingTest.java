@@ -12,9 +12,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 /**
- * New (not ported) test for {@link Encoding} as a WUDSN Base value set: its
- * texts come from {@code ValueSets.properties}, its keys stay what {@link
- * Profile} files contain.
+ * Covers {@link Encoding} as a WUDSN Base value set: its texts come from
+ * {@code ValueSets.properties}, its keys stay what {@link Profile} files
+ * contain.
  *
  * @author Peter Dell
  */

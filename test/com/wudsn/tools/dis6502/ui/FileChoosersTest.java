@@ -14,8 +14,8 @@ import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.FolderType;
 
 /**
- * New (not ported) test for the parts of {@link FileChoosers} that need no
- * dialog on screen, and for what each {@link FileType} tells them.
+ * Covers the parts of {@link FileChoosers} that need no dialog on screen,
+ * and what each {@link FileType} tells them.
  *
  * @author Peter Dell
  */
