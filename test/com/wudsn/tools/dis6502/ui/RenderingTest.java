@@ -6,22 +6,14 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
 import com.wudsn.tools.dis6502.Application;
@@ -29,7 +21,6 @@ import com.wudsn.tools.dis6502.model.Assert;
 import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
-import com.wudsn.tools.dis6502.model.DisassemblyResult;
 import com.wudsn.tools.dis6502.model.DisassemblySectionType;
 import com.wudsn.tools.dis6502.model.FileHeader;
 import com.wudsn.tools.dis6502.model.MemoryType;
@@ -40,22 +31,17 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
- * The fourth test of {@code plans/UI_SMOKE_TESTS_PROPOSAL.md}: what the
- * two custom-painted grids and the disassembly popup produce, as
- * far as that can be asserted without golden images (which break with
- * every look-and-feel, font and DPI change):
- * <ul>
- * <li>the popup menu a right-click on a {@code jsr} line builds - its item
- * set, enabled states and the immediate-type submenu's check mark - read
- * from the real {@link JPopupMenu} after a synthesized popup-trigger
- * {@link MouseEvent} went through the grid's own mouse handling;</li>
- * <li>{@link DisassemblyGridPanel} and {@link HexGridPanel} painted into an
- * off-screen image: the highlighted line's row contains the highlight
- * color, an unreferenced equate's row the grey, and the rows around them
- * do not.</li>
- * </ul>
- * Needs a display (see {@link UITest#isHeadless()}) - showing a popup
- * needs a showing component.
+ * {@link DisassemblyGridPanel} and {@link HexGridPanel} painted into an
+ * off-screen image, as far as that can be asserted without golden images
+ * (which break with every look-and-feel, font and DPI change): the
+ * highlighted line's row contains the highlight color, an unreferenced
+ * equate's row the grey, and the rows around them do not; the selected
+ * bytes' cells are painted yellow, the line after the selection is not.
+ * <p>
+ * Always runs, headless or not: both grids are plain {@link JComponent}s,
+ * painted directly into a {@link BufferedImage} without ever being added
+ * to a real {@link java.awt.Window} - unlike {@link PopupStructureTest},
+ * which needs a real, showing popup.
  *
  * @author Peter Dell
  */
@@ -68,14 +54,9 @@ public final class RenderingTest {
 	}
 
 	public static void testRendering() throws Exception {
-		if (UITest.isHeadless()) {
-			Assert.log("RenderingTest skipped: no display");
-			return;
-		}
 		Workspace workspace = disassembleSample();
 		SwingUtilities.invokeAndWait(() -> {
 			try {
-				testPopupStructure(workspace);
 				testDisassemblyGridPaint(workspace);
 				testHexGridPaint(workspace);
 			} catch (Exception ex) {
@@ -83,74 +64,6 @@ public final class RenderingTest {
 			}
 		});
 		Assert.log("RenderingTest completed");
-	}
-
-	/** The popup for a {@code jsr} line: Navigate to Definition offered, Back disabled (no history), the immediate submenu disabled. */
-	private static void testPopupStructure(Workspace workspace) throws Exception {
-		DisassemblyPanel panel = new DisassemblyPanel();
-		ComputerFont font = ComputerFont.get(ComputerSystemType.ATARI800, false);
-		panel.setComputerFont(font);
-		panel.setImmediateTypeProvider(line -> line.getLine().contains("#$") ? new DisassemblyPanel.ImmediateType(MemoryType.UNKNOWN, true) : null);
-		panel.refresh(workspace.getDisassemblyResult());
-
-		JFrame frame = new JFrame("RenderingTest");
-		frame.add(panel);
-		frame.setSize(600, 400);
-		frame.setVisible(true);
-		try {
-			List<DisassemblyLine> lines = codeLines(workspace.getDisassemblyResult());
-			int jsrIndex = indexOf(lines, "jsr L");
-			int firstCodeLineIndex = panelIndexOf(workspace.getDisassemblyResult(), lines.get(0));
-			int y = (firstCodeLineIndex + jsrIndex) * font.getGlyphHeight() + font.getGlyphHeight() / 2;
-			rightClick(panel.getGrid(), 20, y);
-
-			JPopupMenu popup = panel.getPopupMenu();
-			Assert.boolEquals(popup.isVisible(), true);
-			List<String> texts = new ArrayList<>();
-			for (Component component : popup.getComponents()) {
-				if (component instanceof JMenuItem) {
-					texts.add(((JMenuItem) component).getText().trim() + (component.isEnabled() ? "" : " (disabled)")); // Some labels end in padding after an accelerator hint.
-				}
-			}
-			String menu = String.join(" | ", texts);
-			Assert.boolEquals(menu.contains("Navigate to Definition of Label L"), true);
-			Assert.boolEquals(menu.contains("Navigate Back to Previous Position (disabled)"), true);
-			Assert.boolEquals(menu.contains("Change type of immediate byte to (disabled)"), true);
-			Assert.boolEquals(menu.contains("Find References for Label L"), true);
-			Assert.boolEquals(panel.editCommentMenuItem.isEnabled(), true);
-			popup.setVisible(false);
-
-			// An immediate-mode line: the submenu is enabled and its check mark is on the current type.
-			int ldaIndex = indexOf(lines, "lda #$");
-			y = (firstCodeLineIndex + ldaIndex) * font.getGlyphHeight() + font.getGlyphHeight() / 2;
-			rightClick(panel.getGrid(), 20, y);
-			JMenu submenu = null;
-			for (Component component : popup.getComponents()) {
-				if (component instanceof JMenu) {
-					submenu = (JMenu) component;
-				}
-			}
-			Assert.notNull(submenu);
-			Assert.boolEquals(submenu.isEnabled(), true);
-			List<String> checked = new ArrayList<>();
-			int enabledItems = 0;
-			for (Component component : submenu.getMenuComponents()) {
-				if (component instanceof JCheckBoxMenuItem) {
-					JCheckBoxMenuItem item = (JCheckBoxMenuItem) component;
-					if (item.isSelected()) {
-						checked.add(item.getText());
-					}
-					if (item.isEnabled()) {
-						enabledItems++;
-					}
-				}
-			}
-			Assert.stringEquals(String.join(",", checked), "Unknown");
-			Assert.longEquals(enabledItems, 5); // Char Constant included: the provider said the operand is printable.
-			popup.setVisible(false);
-		} finally {
-			frame.dispose();
-		}
 	}
 
 	/** The highlighted line's row is painted yellow, an unreferenced equate's row grey, the rows in between neither. */
@@ -210,7 +123,7 @@ public final class RenderingTest {
 	// ------------------------------------------------------------------
 
 	/** A small Atari 800 program: an immediate load, a subroutine call and its target, with the real system equates. */
-	private static Workspace disassembleSample() {
+	static Workspace disassembleSample() {
 		Workspace workspace = new Workspace(new ComputerSystemFactory());
 		workspace.setComputerSystemType(ComputerSystemType.ATARI800);
 		new com.wudsn.tools.dis6502.model.WorkspaceLogic(new Application()).loadSystemEquates(workspace);
@@ -236,43 +149,6 @@ public final class RenderingTest {
 		disassembly.setProgressMonitor(monitor);
 		monitor.startDisassembly(disassembly);
 		return workspace;
-	}
-
-	private static List<DisassemblyLine> codeLines(DisassemblyResult result) {
-		List<DisassemblyLine> lines = new ArrayList<>();
-		for (Iterator<DisassemblyLine> i = result.createLineIterator(DisassemblySectionType.CODE_LINES); i.hasNext();) {
-			lines.add(i.next());
-		}
-		return lines;
-	}
-
-	private static int indexOf(List<DisassemblyLine> lines, String startsWith) {
-		for (int i = 0; i < lines.size(); i++) {
-			if (lines.get(i).getLine().trim().startsWith(startsWith)) {
-				return i;
-			}
-		}
-		Assert.fail("No line starting with '" + startsWith + "'.");
-		return -1;
-	}
-
-	/** The index of {@code line} among all lines the panel shows - the sections before the code lines count, too. */
-	private static int panelIndexOf(DisassemblyResult result, DisassemblyLine line) {
-		int index = 0;
-		for (Iterator<DisassemblyLine> i = result.createLineIterator(); i.hasNext(); index++) {
-			if (i.next() == line) {
-				return index;
-			}
-		}
-		Assert.fail("Line not shown.");
-		return -1;
-	}
-
-	/** Windows shows popups on release: press, then release with the popup trigger flag, through the real event queue. */
-	private static void rightClick(Component target, int x, int y) {
-		target.dispatchEvent(new MouseEvent(target, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), InputEvent.BUTTON3_DOWN_MASK, x, y, 1,
-				false, MouseEvent.BUTTON3));
-		target.dispatchEvent(new MouseEvent(target, MouseEvent.MOUSE_RELEASED, System.currentTimeMillis(), 0, x, y, 1, true, MouseEvent.BUTTON3));
 	}
 
 	private static BufferedImage paint(JComponent component) {

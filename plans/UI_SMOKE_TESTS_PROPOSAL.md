@@ -19,7 +19,15 @@ everything except real dialogs - see `plans/HEADLESS_ACTIONS_TEST_PROPOSAL.md`.
 and every panel, plus per-menu mnemonic-uniqueness checks) now always
 runs, headless or not; `DialogTextsTest` keeps only the real-dialog and
 `ValueSetField` coverage, still skipped without a display. Their shared
-component-tree/text-checking helpers moved to `UITest`.
+component-tree/text-checking helpers moved to `UITest`. `RenderingTest`
+was split the same way: its two grid-painting checks paint directly into
+an off-screen image without ever adding the grid to a real window, so
+they now always run too; only the popup-menu check (needs a real,
+showing parent component to trigger a real `JPopupMenu`) moved out, into
+the new `PopupStructureTest`, and stayed guarded. `UIWiringTest` has no
+such split available: it starts the real application window as its very
+first step, so every one of its scenarios needs a display from the
+start.
 
 ## Background
 
