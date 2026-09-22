@@ -233,6 +233,21 @@ public final class Dis6502 {
 	Dis6502() {
 	}
 
+	// Package-private, for UIWiringTest (same package): the running instance and the
+	// state its scenarios assert on. The perform methods it drives directly - the ones
+	// without a public menu item to click - are package-private for the same reason.
+	static Dis6502 getInstance() {
+		return instance;
+	}
+
+	Workspace getWorkspace() {
+		return workspace;
+	}
+
+	MainWindow getMainWindow() {
+		return mainWindow;
+	}
+
 	void run(String[] args) {
 		application = new UIApplication();
 		ComputerSystemFactory computerSystemFactory = new ComputerSystemFactory();
@@ -574,7 +589,7 @@ public final class Dis6502 {
 	 * file-within-the-image, sectors) the menu item that first opened it
 	 * uses, matching {@code MainController::OnCommand}.
 	 */
-	private void openRecentFile(MRUEntry entry) {
+	void openRecentFile(MRUEntry entry) {
 		openFile(new File(entry.getFilePath()), entry.getFileType(), false);
 	}
 
@@ -610,7 +625,7 @@ public final class Dis6502 {
 	 * a file shares (menu, Recent Files/Workspaces, command line, drag and
 	 * drop).
 	 */
-	private void performOpenFile(FileType fileType, boolean add) {
+	void performOpenFile(FileType fileType, boolean add) {
 		String title = getFileTypeOpenTitle(fileType, add);
 		File file = fileType == FileType.ANY_FILE
 				? fileChoosers.chooseOpenAnyFile(mainWindow.getFrame(), title, workspace.getComputerSystem())
@@ -1448,7 +1463,7 @@ public final class Dis6502 {
 	 * shows for a line - ported from the immediate-operand part of
 	 * MainDisassembly::DrawMenu.
 	 */
-	private DisassemblyPanel.ImmediateType getDisassemblyImmediateType(DisassemblyLine line) {
+	DisassemblyPanel.ImmediateType getDisassemblyImmediateType(DisassemblyLine line) {
 		int[] immediateValue = new int[1];
 		MemoryType[] immediateMemoryType = new MemoryType[1];
 		if (!Disassembly.isInstructionWithImmediate(workspace, line.segmentIndex, line.offset, immediateValue,
@@ -1464,7 +1479,7 @@ public final class Dis6502 {
 	 * LowHighByteDialog} asks for the other half of the address for a low/
 	 * high byte; the change itself is {@link Disassembly#setImmediateType}.
 	 */
-	private void performSetDisassemblyImmediateType(DisassemblyLine line, MemoryType type) {
+	void performSetDisassemblyImmediateType(DisassemblyLine line, MemoryType type) {
 		int unknownByte = 0;
 		if (type == MemoryType.LOBYTE || type == MemoryType.HIBYTE) {
 			Segment segment = workspace.getSegmentList().getSegment(line.segmentIndex);
@@ -1635,7 +1650,7 @@ public final class Dis6502 {
 	 * where {@link FileChoosers} starts when it knows no better place - see
 	 * its javadoc.
 	 */
-	private void performShowDefaultFolders() {
+	void performShowDefaultFolders() {
 		DefaultFolders currentDefaultFolders = getDefaultFolders();
 		if (new DefaultFoldersDialog(mainWindow.getFrame()).show(currentDefaultFolders)) {
 			defaultFoldersLogic.save(currentDefaultFolders);
@@ -1700,7 +1715,7 @@ public final class Dis6502 {
 		return workspaceLogic.save(workspace, currentFile.getPath());
 	}
 
-	private boolean performSaveWorkspaceAs() {
+	boolean performSaveWorkspaceAs() {
 		File file = fileChoosers.chooseSaveFile(mainWindow.getFrame(), Texts.Dis6502_SaveWorkspaceFileAsTitle, FileType.WORKSPACE_FILE,
 				currentFile);
 		if (file == null) {

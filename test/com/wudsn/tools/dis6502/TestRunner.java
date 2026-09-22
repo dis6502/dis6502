@@ -149,6 +149,7 @@ public final class TestRunner {
 		runTest("ProfileNotationTest", ProfileNotationTest::testProfileNotation);
 		runTest("ReassemblyRoundTripTest", ReassemblyRoundTripTest::testReassemblyRoundTrip);
 		runTest("DialogTextsTest", DialogTextsTest::testDialogTexts);
+		runTest("UIWiringTest", UIWiringTest::testUIWiring);
 
 		if (failedCount == 0) {
 			log("INFO: All " + totalCount + " unit tests were successful.");
