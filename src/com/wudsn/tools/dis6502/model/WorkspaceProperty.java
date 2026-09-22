@@ -7,8 +7,6 @@ package com.wudsn.tools.dis6502.model;
 
 /**
  * Properties of a {@code Workspace} that can change and be listened to.
- * <p>
- * Ported from WorkspaceTypes.h.
  *
  * @author Peter Dell
  */

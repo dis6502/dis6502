@@ -8,8 +8,6 @@ package com.wudsn.tools.dis6502.model;
 /**
  * The four sections a {@link DisassemblyResult} is split into, in display
  * order.
- * <p>
- * Ported from DisassemblySectionType.h.
  *
  * @author Peter Dell
  */

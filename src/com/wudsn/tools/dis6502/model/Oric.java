@@ -15,8 +15,6 @@ import com.wudsn.tools.dis6502.Messages;
 /**
  * The Oric computer system.
  * <p>
- * Ported from systems/oric/Oric.h / Oric.cpp.
- * <p>
  * The Oric ".tap" file format, per
  * https://forum.defence-force.org/viewtopic.php?f=19&amp;t=201:
  *

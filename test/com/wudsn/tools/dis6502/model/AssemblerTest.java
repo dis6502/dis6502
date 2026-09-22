@@ -6,7 +6,7 @@
 package com.wudsn.tools.dis6502.model;
 
 /**
- * Ported from AssemblerTest.h / AssemblerTest.cpp.
+ * Test for {@link Assembler}.
  *
  * @author Peter Dell
  */

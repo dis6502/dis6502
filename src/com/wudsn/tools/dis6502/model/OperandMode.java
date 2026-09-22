@@ -7,8 +7,6 @@ package com.wudsn.tools.dis6502.model;
 
 /**
  * Addressing mode of an operand.
- * <p>
- * Ported from InstructionSet.h.
  *
  * @author Peter Dell
  */

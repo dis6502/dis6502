@@ -7,8 +7,6 @@ package com.wudsn.tools.dis6502.model;
 
 /**
  * Sequential reader over a {@link MemoryBlock}'s raw byte content.
- * <p>
- * Ported from MemoryBlockIterator.h / MemoryBlockIterator.cpp.
  *
  * @author Peter Dell
  */

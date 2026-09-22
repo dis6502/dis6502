@@ -11,8 +11,6 @@ import org.w3c.dom.Element;
  * A disassembly output formatting profile: syntax and layout settings for
  * one target assembler, used to render labels, numbers, bytes, comments, and
  * directives.
- * <p>
- * Ported from Profile.h / Profile.cpp.
  *
  * @author Peter Dell
  */

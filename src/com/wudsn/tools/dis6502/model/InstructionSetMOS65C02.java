@@ -9,8 +9,6 @@ package com.wudsn.tools.dis6502.model;
  * The MOS 65C02 instruction set. All mnemonics are considered legal, even
  * reserved NOPs; reserved NOPs should be output as .BYTE $xx[,$yy[,$zz]] in
  * the disassembly listing.
- * <p>
- * Ported from InstructionSet.cpp.
  *
  * @author Peter Dell
  */

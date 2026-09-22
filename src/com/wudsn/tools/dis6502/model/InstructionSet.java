@@ -7,8 +7,6 @@ package com.wudsn.tools.dis6502.model;
 
 /**
  * A processor's full set of 256 instructions, indexed by opcode.
- * <p>
- * Ported from InstructionSet.h / InstructionSet.cpp.
  *
  * @author Peter Dell
  */

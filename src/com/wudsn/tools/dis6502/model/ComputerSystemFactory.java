@@ -8,8 +8,6 @@ package com.wudsn.tools.dis6502.model;
 /**
  * Creates and holds the singleton {@link ComputerSystem} instance for each
  * {@link ComputerSystemType}.
- * <p>
- * Ported from systems/ComputerSystemFactory.h / ComputerSystemFactory.cpp.
  *
  * @author Peter Dell
  */

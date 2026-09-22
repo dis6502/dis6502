@@ -14,8 +14,6 @@ import com.wudsn.tools.dis6502.Messages;
 
 /**
  * The Atari 5200 computer system.
- * <p>
- * Ported from systems/atari5200/Atari5200.h / Atari5200.cpp.
  *
  * @author Peter Dell
  */

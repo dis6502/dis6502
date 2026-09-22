@@ -8,8 +8,6 @@ package com.wudsn.tools.dis6502.model;
 /**
  * A single 6502/65C02 instruction: its opcode, mnemonic, addressing mode and
  * how it accesses its (optional) label operand.
- * <p>
- * Ported from InstructionSet.h / InstructionSet.cpp.
  *
  * @author Peter Dell
  */

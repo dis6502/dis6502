@@ -8,8 +8,6 @@ package com.wudsn.tools.dis6502.model;
 /**
  * An address referenced by code, or defined through a fix-up, within a
  * {@link Segment}. Transient - not serialized to XML.
- * <p>
- * Ported from AddressLabel.h / AddressLabel.cpp.
  *
  * @author Peter Dell
  */

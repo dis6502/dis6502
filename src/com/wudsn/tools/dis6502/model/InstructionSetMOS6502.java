@@ -8,8 +8,6 @@ package com.wudsn.tools.dis6502.model;
 /**
  * The MOS 6502 instruction set, including its documented illegal opcodes
  * (their mnemonics are given in lower case).
- * <p>
- * Ported from InstructionSet.cpp.
  *
  * @author Peter Dell
  */

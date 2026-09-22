@@ -7,8 +7,6 @@ package com.wudsn.tools.dis6502.model;
 
 /**
  * Marker bytes found in an SDX fix-up block.
- * <p>
- * Ported from Fixup.h.
  *
  * @author Peter Dell
  */

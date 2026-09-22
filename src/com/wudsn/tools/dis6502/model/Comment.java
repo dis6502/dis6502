@@ -10,8 +10,6 @@ import org.w3c.dom.Element;
 /**
  * A comment attached to one memory offset within a {@link Segment}; its text
  * can be multi-line.
- * <p>
- * Ported from Comment.h / Comment.cpp.
  *
  * @author Peter Dell
  */

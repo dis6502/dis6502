@@ -9,8 +9,6 @@ package com.wudsn.tools.dis6502.model;
  * Status codes for {@link DiskImage} operations - the first two identify a
  * successfully recognized disk image type, the rest are error conditions
  * (see {@link DiskImage#isError}).
- * <p>
- * Ported from DiskImage.h ({@code ImgError}).
  *
  * @author Peter Dell
  */

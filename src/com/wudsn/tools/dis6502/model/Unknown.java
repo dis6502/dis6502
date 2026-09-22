@@ -9,8 +9,6 @@ import java.util.List;
 
 /**
  * Fallback computer system for a workspace with no specific target system.
- * <p>
- * Ported from systems/unknown/Unknown.h / Unknown.cpp.
  *
  * @author Peter Dell
  */

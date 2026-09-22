@@ -8,8 +8,6 @@ package com.wudsn.tools.dis6502.model;
 /**
  * A circular 3-byte buffer of the most recently disassembled opcode bytes,
  * written out as a comment showing the raw bytes of an instruction.
- * <p>
- * Ported from DisassemblyOpcodeBuffer.h / DisassemblyOpcodeBuffer.cpp.
  *
  * @author Peter Dell
  */

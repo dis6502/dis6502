@@ -18,8 +18,6 @@ import com.wudsn.tools.base.common.Log;
 /**
  * The list of {@link Segment}s of a {@link Workspace}, plus the transient
  * "global segment" that holds address labels not owned by any real segment.
- * <p>
- * Ported from SegmentList.h / SegmentList.cpp.
  *
  * @author Peter Dell
  */

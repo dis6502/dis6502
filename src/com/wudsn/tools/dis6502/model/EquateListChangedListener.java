@@ -6,7 +6,7 @@
 package com.wudsn.tools.dis6502.model;
 
 /**
- * Ported from EquateListChangedListener.h.
+ * Callback for a change to an {@link EquateList}.
  *
  * @author Peter Dell
  */

@@ -18,8 +18,6 @@ import com.wudsn.tools.dis6502.Messages;
 /**
  * The Atari 800 computer system: the primary/default target of this tool.
  * <p>
- * Ported from systems/atari800/Atari800.h / Atari800.cpp.
- * <p>
  * Design deviations:
  * <ul>
  * <li>The C++ source's free-standing {@code Read}/{@code ReadData}/{@code

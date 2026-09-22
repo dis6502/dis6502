@@ -6,7 +6,7 @@
 package com.wudsn.tools.dis6502.model;
 
 /**
- * Ported from SegmentTest.h / SegmentTest.cpp.
+ * Test for {@link Segment}.
  *
  * @author Peter Dell
  */

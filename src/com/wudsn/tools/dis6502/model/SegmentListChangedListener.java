@@ -8,7 +8,7 @@ package com.wudsn.tools.dis6502.model;
 import java.util.List;
 
 /**
- * Ported from SegmentListChangedListener.h.
+ * Callback for a change to a {@link SegmentList}.
  *
  * @author Peter Dell
  */
