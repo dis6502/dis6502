@@ -53,5 +53,10 @@ be rediscovered:
   `model.system`/`model.system.<name>` subpackage split (mirroring the
   C++ source's `systems/<name>/` folders), what stays in `model/` instead,
   why `ui/` stays flat, and how to add a new computer system.
+- [`plans/HEADLESS_ACTIONS_TEST_PROPOSAL.md`](plans/HEADLESS_ACTIONS_TEST_PROPOSAL.md) -
+  expanding headless test coverage now that WUDSN Base's `KeyStroke` no
+  longer throws when loading `Actions` on a display-less JVM - which UI
+  tests can drop their `isHeadless()` guard, and a new purely-reflective
+  `ActionsTest` (status: proposal).
 
 New planning/guidance documents for future work should also go in `plans/`.
