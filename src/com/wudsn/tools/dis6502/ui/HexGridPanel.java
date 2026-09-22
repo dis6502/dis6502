@@ -361,12 +361,9 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Advances the blink phase (matching {@code wTimerCount = (wTimerCount+1)%4})
-	 * and repaints only the cursor's line, ported from {@code
-	 * MemoryInspectorControlImpl::Timer} - unlike that method, which calls
-	 * {@code Refresh()} to repaint the whole control on every 250ms tick, this
-	 * uses a targeted {@link #repaint(Rectangle)} since {@link #paintComponent}
-	 * already supports clip-rect-limited repainting.
+	 * Advances the blink phase (cycling through 4 states) and repaints only
+	 * the cursor's line, using a targeted {@link #repaint(Rectangle)} since
+	 * {@link #paintComponent} already supports clip-rect-limited repainting.
 	 */
 	public void advanceBlinkPhase() {
 		blinkPhase = (blinkPhase + 1) % 4;
@@ -613,12 +610,11 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Paints the hex pane's two-nibble cell for the byte the edit cursor is on,
-	 * ported from {@code PrintLine}'s edit-cursor block (lines ~581-619): the
-	 * nibble actually being edited gets a yellow background and blinks (hidden
-	 * on {@code blinkPhase == 0}); if the ASCII pane is active instead, both
-	 * nibbles get a steady (non-blinking) yellow background; otherwise the
-	 * sibling nibble is left completely unhighlighted.
+	 * Paints the hex pane's two-nibble cell for the byte the edit cursor is
+	 * on: the nibble actually being edited gets a yellow background and
+	 * blinks (hidden on {@code blinkPhase == 0}); if the ASCII pane is active
+	 * instead, both nibbles get a steady (non-blinking) yellow background;
+	 * otherwise the sibling nibble is left completely unhighlighted.
 	 */
 	private void paintCursorHexCell(Graphics2D g2, String hex, Color color, int hexX, int cellW, int cellH, int y) {
 		EditPane editCursorPane = getEditCursorPane();
@@ -644,12 +640,11 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Paints the ASCII pane's one-character cell for the byte the edit cursor is
-	 * on, ported from {@code PrintLine}'s edit-cursor block (lines ~640-652):
-	 * always a yellow background while the cursor is on this byte's row, but the
-	 * glyph itself only blinks (hidden on {@code blinkPhase == 0}) when the
-	 * ASCII pane is the one actually being edited - otherwise it is shown
-	 * steadily.
+	 * Paints the ASCII pane's one-character cell for the byte the edit
+	 * cursor is on: always a yellow background while the cursor is on this
+	 * byte's row, but the glyph itself only blinks (hidden on {@code
+	 * blinkPhase == 0}) when the ASCII pane is the one actually being
+	 * edited - otherwise it is shown steadily.
 	 */
 	private void paintCursorAsciiCell(Graphics2D g2, int displayValue, int charX, int cellW, int cellH, int y) {
 		g2.setColor(HIGHLIGHT_COLOR);

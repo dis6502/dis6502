@@ -241,10 +241,8 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	/**
 	 * The single item of the ad hoc popup shown, instead of {@link #popupMenu},
-	 * while edit mode is active - ported from {@code MemoryInspector::DrawMenu},
-	 * which likewise builds a separate menu rather than filtering the normal one,
-	 * since every other command is modally blocked while editing (see
-	 * {@code MainMemoryInspector::PerformCommands}).
+	 * while edit mode is active, since every other command is modally
+	 * blocked while editing.
 	 */
 	public final JMenuItem quitEditModeMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_QuitEditMode,
 			"quitEditModeMenuItem");
@@ -550,23 +548,19 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Reports that a mouse-driven byte selection just finished - ported from
-	 * {@code MemoryInspectorControlImpl::LButtonUp}'s {@code SELECTION_CHANGED}
-	 * notification, which fires only once the mouse button is released, not on
-	 * every intermediate {@code
-	 * MouseMove} while dragging. {@code Dis6502} uses this to sync the disassembly
-	 * listing to the selection, matching {@code
-	 * MemoryInspector::SelectionChanged}.
+	 * Reports that a mouse-driven byte selection just finished - fires only
+	 * once the mouse button is released, not on every intermediate move
+	 * while dragging. {@code Dis6502} uses this to sync the disassembly
+	 * listing to the selection.
 	 */
 	public void setSelectionChangedListener(SelectionChangedListener selectionChangedListener) {
 		this.selectionChangedListener = selectionChangedListener;
 	}
 
 	/**
-	 * Reports that edit mode just ended, for any reason - ported from {@code
-	 * MainController::QuitEditMode}'s {@code UpdateDisassembly()} call. {@code
-	 * Dis6502} uses this to re-run the disassembly, matching
-	 * {@code performShowAssembleDialog}/{@code performGuessCode}'s own
+	 * Reports that edit mode just ended, for any reason. {@code Dis6502}
+	 * uses this to re-run the disassembly, matching {@code
+	 * performShowAssembleDialog}/{@code performGuessCode}'s own
 	 * mutate-then-refresh pattern.
 	 */
 	public void setEditModeExitedListener(EditModeExitedListener editModeExitedListener) {
@@ -910,10 +904,9 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	/**
 	 * Translates a raw arrow/Home/End {@link KeyEvent} into a {@link
-	 * EditCursorMovement} and hands the actual navigation math
-	 * to {@link MutableMemoryInspectorState#moveEditCursor} - ported from {@code
-	 * MemoryInspectorControlImpl::KeyDown}'s edit-mode branch, now split so
-	 * that math is headlessly unit-testable, free of any Swing dependency.
+	 * EditCursorMovement} and hands the actual navigation math to {@link
+	 * MutableMemoryInspectorState#moveEditCursor}, keeping that math
+	 * headlessly unit-testable, free of any Swing dependency.
 	 */
 	private void handleEditKeyPressed(KeyEvent e) {
 		if (!isEditMode()) {
@@ -949,12 +942,10 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	/**
 	 * Hands the typed character straight to {@link
-	 * MutableMemoryInspectorState#typeEditChar} - ported from {@code
-	 * MemoryInspectorControlImpl::Char}: hex-digit/ASCII data entry, plus Tab
-	 * to switch panes, now split so that logic is headlessly unit-testable,
+	 * MutableMemoryInspectorState#typeEditChar}: hex-digit/ASCII data entry,
+	 * plus Tab to switch panes, keeping that logic headlessly unit-testable,
 	 * free of any Swing dependency. Deliberately does not call {@link
-	 * KeyEvent#consume()} on the {@code HANDLED_AT_BUFFER_END} exit path,
-	 * matching this method's own prior behavior.
+	 * KeyEvent#consume()} on the {@code HANDLED_AT_BUFFER_END} exit path.
 	 */
 	private void handleEditKeyTyped(KeyEvent e) {
 		if (!isEditMode()) {

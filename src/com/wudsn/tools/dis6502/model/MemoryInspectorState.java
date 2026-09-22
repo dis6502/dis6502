@@ -80,9 +80,8 @@ public interface MemoryInspectorState {
 	}
 
 	/**
-	 * A semantic cursor movement the Memory Inspector's edit mode accepts - the
-	 * model-layer counterpart of the arrow/Home/End keys {@code
-	 * MemoryInspectorControlImpl::KeyDown}'s edit-mode branch handles. {@code
+	 * A semantic cursor movement the Memory Inspector's edit mode accepts -
+	 * the model-layer counterpart of the arrow/Home/End keys. {@code
 	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel} maps a raw {@link
 	 * java.awt.event.KeyEvent} to one of these before calling {@link
 	 * MutableMemoryInspectorState#moveEditCursor}, keeping the actual

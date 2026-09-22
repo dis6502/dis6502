@@ -935,7 +935,7 @@ public final class Dis6502 {
 		throw new IllegalArgumentException("Parameter 'fileType' has unsupported value " + fileType.getKey() + ".");
 	}
 
-	/** {@link #openReadableFile}'s per-{@link FileType} "opening file" log message, matching {@code MainFile::OpenFile}'s dispatch to {@code OpenExecutableFile}/{@code OpenRomImageFile}/{@code OpenCassetteImageFile}. */
+	/** {@link #openReadableFile}'s per-{@link FileType} "opening file" log message. */
 	private static Message getFileTypeOpenMessage(FileType fileType) {
 		if (fileType == FileType.EXECUTABLE_FILE) {
 			return Messages.I021;
@@ -1700,8 +1700,7 @@ public final class Dis6502 {
 		} catch (RuntimeException ex) {
 			application.sendErrorMessage(ex);
 		}
-		// Matches MainDisassembly::RefreshDisControl pushing the current profile's
-		// useLineNumbers into the control on every refresh.
+		// Pushes the current profile's useLineNumbers into the control on every refresh.
 		mainWindow.disassemblyPanel.setLineNumbersActive(workspace.getProfile().useLineNumbers);
 		mainWindow.disassemblyPanel.refresh(workspace.getDisassemblyResult());
 		mainWindow.disassemblyPanel.findField.setText("");
@@ -1710,12 +1709,10 @@ public final class Dis6502 {
 
 	/**
 	 * Searches the current disassembly for lines containing the {@link
-	 * DisassemblyPanel#findField} text, ported from {@code
-	 * MainDisassembly::Find}/{@code FindString} and {@code RefreshXRef}
-	 * (triggered there from a label double-click; this port uses an
-	 * explicit search field instead - see {@link DisassemblyPanel}'s
-	 * javadoc). Populates {@link XRefPanel} with every matching line and
-	 * scrolls the disassembly view to the first one.
+	 * DisassemblyPanel#findField} text - this port uses an explicit search
+	 * field rather than triggering from a label double-click, see {@link
+	 * DisassemblyPanel}'s javadoc. Populates {@link XRefPanel} with every
+	 * matching line and scrolls the disassembly view to the first one.
 	 */
 	private void performFindInDisassembly() {
 		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();

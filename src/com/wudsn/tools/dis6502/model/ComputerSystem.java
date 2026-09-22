@@ -155,7 +155,7 @@ public abstract class ComputerSystem {
 		return value;
 	}
 
-	/** Reads a little-endian 16 bit word (low byte first), matching a raw read into a native {@code Memory::address}. */
+	/** Reads a little-endian 16 bit word (low byte first). */
 	protected static int readWordLE(InputStream inputStream) throws IOException {
 		int low = readByte(inputStream);
 		int high = readByte(inputStream);

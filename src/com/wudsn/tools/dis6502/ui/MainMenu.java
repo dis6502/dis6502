@@ -56,8 +56,8 @@ import com.wudsn.tools.dis6502.Actions;
  * "Help" reuse {@code com.wudsn.tools.base.Actions}' own shared {@code
  * MainMenu_File}/{@code MainMenu_Help} fields instead of duplicating them,
  * matching every other WUDSN Swing tool's own main menu. {@link
- * #applyIcons} restores the icons {@code MainWindowMenu::CreateControl}
- * attaches to a subset of these same items - see that method's own javadoc.
+ * #applyIcons} attaches icons to a subset of these same items - see that
+ * method's own javadoc.
  *
  * @author Peter Dell
  */

@@ -203,8 +203,7 @@ public final class MutableMemoryInspectorState implements MemoryInspectorState {
 	}
 
 	/**
-	 * Ported from {@code MemoryInspectorControlImpl::KeyDown}'s edit-mode
-	 * branch: pure cursor navigation, no data change. The hex panes ({@code
+	 * Pure cursor navigation, no data change. The hex panes ({@code
 	 * HEX_HIGH}/{@code HEX_LOW}) move nibble-wise on {@code LEFT}/{@code
 	 * RIGHT} (crossing to the adjacent byte's far nibble at a boundary) and a
 	 * whole line on {@code UP}/{@code DOWN}, resetting to the high nibble; the

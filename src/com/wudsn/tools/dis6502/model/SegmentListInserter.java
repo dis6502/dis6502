@@ -34,12 +34,10 @@ public final class SegmentListInserter implements AutoCloseable {
 	}
 
 	/**
-	 * Throws IllegalStateException if no further segment can be inserted -
-	 * ported from {@code SegmentListInserter::InsertSegment}'s {@code
-	 * g_Application->ThrowErrorMessageWithID(IDS_ERR_NO_FREE_SEG)} (now {@link
-	 * Messages#E035}), kept as an unchecked exception here since this class has
-	 * no {@code Application} reference to log through and its call sites don't
-	 * expect a checked one.
+	 * Throws IllegalStateException ({@link Messages#E035}) if no further
+	 * segment can be inserted, kept as an unchecked exception here since
+	 * this class has no {@code Application} reference to log through and
+	 * its call sites don't expect a checked one.
 	 */
 	public Segment insertSegment() {
 		assert active;

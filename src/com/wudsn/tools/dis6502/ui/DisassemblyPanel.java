@@ -620,7 +620,7 @@ public final class DisassemblyPanel extends JPanel {
 		header.setComputerFont(computerFont);
 	}
 
-	/** See {@link DisassemblyGridPanel#setLineNumbersActive} - call alongside every {@link #refresh}, matching {@code MainDisassembly::RefreshDisControl}. */
+	/** See {@link DisassemblyGridPanel#setLineNumbersActive} - call alongside every {@link #refresh}. */
 	public void setLineNumbersActive(boolean lineNumbersActive) {
 		grid.setLineNumbersActive(lineNumbersActive);
 	}
@@ -655,10 +655,9 @@ public final class DisassemblyPanel extends JPanel {
 	}
 
 	/**
-	 * Scrolls to and highlights the given disassembly line number, matching
-	 * the effect of {@code DisassemblyControl::SelectLine}. Returns {@code
-	 * false} if {@code lineNumber} is not part of the currently displayed
-	 * disassembly (e.g. stale after a new one replaced it).
+	 * Scrolls to and highlights the given disassembly line number. Returns
+	 * {@code false} if {@code lineNumber} is not part of the currently
+	 * displayed disassembly (e.g. stale after a new one replaced it).
 	 */
 	public boolean navigateToLine(int lineNumber) {
 		Integer index = lineNumberToIndex.get(lineNumber);
