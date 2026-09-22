@@ -29,33 +29,27 @@ import com.wudsn.tools.dis6502.model.ComputerSystemType;
  * Classic" by Style) - loaded as a genuine TrueType font and drawn with
  * standard {@link Font}/{@link Graphics2D#drawString} calls.
  * <p>
- * Ported from ui/ComputerFont.h/.cpp, but not its mechanism: the C++
- * version registers one of the {@code systems/*&#47;*.fon} files (legacy
- * 16-bit Windows raster font resources) as a GDI private font resource,
- * which Java cannot load at all. An earlier version of this class instead
- * hand-rasterized each system's {@code .fon} file into a PNG glyph atlas
- * (via a small standalone GDI helper, {@code tools/FontRasterizer} in the
- * C++ repository) and blitted tinted sub-images - a real, correctly-
- * licensed TTF for each system replaces that custom-painted-bitmap
- * approach entirely, using standard Swing text rendering instead: a byte
- * value's <em>authentic hardware</em> glyph (see {@link #drawGlyph}) is
- * the character at {@code codePointBase + byteValue} in the relevant
- * font, drawn with a normal {@link Graphics2D#drawString} call, anti-
- * aliasing disabled to keep this pixel-art font's hard edges crisp. The
- * two fonts' byte-indexed ranges use two different conventions, not a
- * shared one: Atari Classic's Private Use Area block at U+E000 is
- * confirmed pixel-identical, byte value for byte value, to the earlier
- * GDI-rasterized Atari atlas; C64 Classic's block at U+0100 turned out,
- * after an initial mismatch (hex digits '0'-'9' looked right, 'A'-'F'
- * did not), to be indexed by real C64 hardware <em>screen code</em>
- * order rather than raw byte value (screen code 1 is 'A', not byte value
- * 65) - there never was a real earlier C64 atlas to compare against
- * anyway, since the C++ source's own {@code C64.fon} turned out to be a
- * byte-for-byte copy of {@code Atari800.fon} (a mislabeled asset, not a
- * genuine PETSCII character set) - so this is this port's first-ever
- * authentic PETSCII rendering, screen-code trade-off and all. Because of
- * that screen-code mismatch, only {@link #drawGlyph} (a single raw
- * memory byte) uses the shift; {@link #drawText} (this port's own
+ * An earlier version of this class hand-rasterized each system's legacy
+ * raster font file into a PNG glyph atlas (via a small standalone helper
+ * tool) and blitted tinted sub-images. A real, correctly-licensed TTF for
+ * each system replaces that custom-painted-bitmap approach entirely, using
+ * standard Swing text rendering instead: a byte value's <em>authentic
+ * hardware</em> glyph (see {@link #drawGlyph}) is the character at
+ * {@code codePointBase + byteValue} in the relevant font, drawn with a
+ * normal {@link Graphics2D#drawString} call, anti-aliasing disabled to
+ * keep this pixel-art font's hard edges crisp. The two fonts' byte-indexed
+ * ranges use two different conventions, not a shared one: Atari Classic's
+ * Private Use Area block at U+E000 is confirmed pixel-identical, byte
+ * value for byte value, to the earlier rasterized Atari atlas; C64
+ * Classic's block at U+0100 turned out, after an initial mismatch (hex
+ * digits '0'-'9' looked right, 'A'-'F' did not), to be indexed by real C64
+ * hardware <em>screen code</em> order rather than raw byte value (screen
+ * code 1 is 'A', not byte value 65) - there never was a real earlier C64
+ * atlas to compare against anyway, since no earlier asset for this system
+ * was genuine PETSCII data to begin with - so this is this port's
+ * first-ever authentic PETSCII rendering, screen-code trade-off and all.
+ * Because of that screen-code mismatch, only {@link #drawGlyph} (a single
+ * raw memory byte) uses the shift; {@link #drawText} (this port's own
  * generated text - hex digits, addresses, disassembly mnemonics) draws
  * every character at its own direct, unshifted code point instead, which
  * both fonts render correctly - see that method's own javadoc.
@@ -85,28 +79,23 @@ import com.wudsn.tools.dis6502.model.ComputerSystemType;
  * No TTF is available for Oric/Unknown - those fall back to a plain
  * {@link Font#MONOSPACED} system font with no byte-index shift ({@link
  * #codePointBase} {@code < 0}, drawing each byte value as its raw Unicode
- * code point directly), matching {@code ComputerFont::Load}'s own
- * fallback to {@code "Courier New"} when a system's {@code .fon} file
- * cannot be loaded - the same idea, just Java has no {@code .fon} to fail
- * to load in the first place. This is a real accuracy trade-off accepted
- * for those two systems (their true character sets are known to differ,
- * see the earlier atlas-diffing history in this class's git log) in
- * exchange for one simple, standard rendering mechanism everywhere,
- * rather than keeping a second, bitmap-based code path alive for just
- * two systems.
+ * code point directly). This is a real accuracy trade-off accepted for
+ * those two systems (their true character sets are known to differ, see
+ * the earlier atlas-diffing history in this class's git log) in exchange
+ * for one simple, standard rendering mechanism everywhere, rather than
+ * keeping a second, bitmap-based code path alive for just two systems.
  * <p>
  * {@link #getGlyphWidth}/{@link #getGlyphHeight} already include the 2x
  * on-screen scale {@link HexGridPanel}/{@link
  * DisassemblyGridPanel} need for legibility (baked into the point size
  * passed to {@link Font#deriveFont}, not a separate scaling step those
- * callers used to do themselves) - the C++ source's own {@code "TODO:
- * Test this, the actual dialog is too small!"} comment already justified
- * that adjustment for {@link GraphicPanel}, and the same reasoning applies
- * here. {@link #getAwtFont()} exposes the plain derived {@link Font} for
- * components that just need normal Unicode text at the real system font's
- * style (e.g. {@link SegmentListPanel}'s segment metadata, which is
- * already-formatted text - titles, hex addresses - not raw byte values,
- * so it needs no {@link #codePointBase} shift at all).
+ * callers used to do themselves) - the same 2x adjustment applies to
+ * {@link GraphicPanel} as well. {@link #getAwtFont()} exposes the plain
+ * derived {@link Font} for components that just need normal Unicode text
+ * at the real system font's style (e.g. {@link SegmentListPanel}'s
+ * segment metadata, which is already-formatted text - titles, hex
+ * addresses - not raw byte values, so it needs no {@link #codePointBase}
+ * shift at all).
  *
  * @author Peter Dell
  */
@@ -140,7 +129,7 @@ public final class ComputerFont {
 		this.codePointBase = codePointBase;
 	}
 
-	/** Ported from ComputerFont::Get, split by height instead of returning both via GetFont(bool). */
+	/** Caches one instance per {@link ComputerSystemType}, separately for normal and double-height fonts. */
 	public static synchronized ComputerFont get(ComputerSystemType type, boolean doubleHeight) {
 		Map<ComputerSystemType, ComputerFont> instances = doubleHeight ? DOUBLE_HEIGHT_INSTANCES : NORMAL_INSTANCES;
 		ComputerFont existing = instances.get(type);
@@ -162,10 +151,7 @@ public final class ComputerFont {
 	}
 
 	/**
-	 * Ported from {@code ComputerFont::CreateFonts}'s two {@code CreateFont}
-	 * calls - the C++ source only doubles the {@code nHeight} parameter for
-	 * its double-height font, leaving width at its natural (auto) value, so
-	 * double-height text there comes out taller but no wider, not simply a
+	 * Double-height text needs to come out taller but no wider, not simply a
 	 * bigger font. {@link Font#deriveFont(float)} alone cannot do that (it
 	 * scales a font uniformly), so double-height instead derives the normal-
 	 * size font first, then applies a Y-only {@link AffineTransform} scale

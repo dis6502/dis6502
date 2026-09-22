@@ -31,9 +31,8 @@ import com.wudsn.tools.dis6502.model.MemoryType;
  * MemoryType#LOBYTE}/{@link MemoryType#HIBYTE}, to supply the other,
  * unknown half's value.
  * <p>
- * Ported from ui/LowHighByteDialog.h / LowHighByteDialog.cpp, folded into
- * one blocking {@link #show} call as is idiomatic for a Swing modal
- * {@link JDialog}.
+ * Folded into one blocking {@link #show} call, as is idiomatic for a Swing
+ * modal {@link JDialog}.
  *
  * @author Peter Dell
  */
@@ -111,7 +110,7 @@ public final class LowHighByteDialog extends JDialog {
 		setLocationRelativeTo(owner);
 	}
 
-	/** Ported from LowHighByteDialog::OnOK. */
+	/** Parses and commits {@link #unknownByte}. */
 	private void performOK() {
 		try {
 			unknownByte = Integer.parseInt(unknownByteField.getText().trim(), 16) & 0xFF;
@@ -126,7 +125,7 @@ public final class LowHighByteDialog extends JDialog {
 		return unknownByte;
 	}
 
-	/** Ported from LowHighByteDialog::Show/InitDialog. */
+	/** Opens the dialog labeled for whichever half is known; returns whether the user clicked OK. */
 	public boolean show(MemoryType memoryType, int knownByte) {
 		boolean lowIsKnown = memoryType == MemoryType.LOBYTE;
 		ElementUtilities.applyLabel(knownByteLabel, lowIsKnown ? DataTypes.LowHighByteDialog_LowByte : DataTypes.LowHighByteDialog_HighByte,

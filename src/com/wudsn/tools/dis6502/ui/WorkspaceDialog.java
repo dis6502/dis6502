@@ -26,10 +26,8 @@ import com.wudsn.tools.dis6502.model.Workspace;
 /**
  * A dialog for choosing the computer system a new workspace targets.
  * <p>
- * Ported from ui/WorkspaceDialog.h / WorkspaceDialog.cpp, folded into one
- * blocking {@link #show} call as is idiomatic for a Swing modal
- * {@link JDialog}. Offers the same four systems, in the same order, as
- * {@code CreateControls}.
+ * Folded into one blocking {@link #show} call, as is idiomatic for a Swing
+ * modal {@link JDialog}.
  *
  * @author Peter Dell
  */
@@ -77,7 +75,7 @@ public final class WorkspaceDialog extends JDialog {
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 	}
 
-	/** Ported from WorkspaceDialog::OnOK. */
+	/** Commits the selected computer system to the workspace and closes the dialog. */
 	private void performOK() {
 		ComputerSystemType selected = computerSystemField.getValue();
 		if (selected != null) {
@@ -87,7 +85,7 @@ public final class WorkspaceDialog extends JDialog {
 		setVisible(false);
 	}
 
-	/** Ported from WorkspaceDialog::Show/InitDialog/CreateControls. */
+	/** Opens the dialog pre-selecting the workspace's current computer system, if selectable. */
 	public boolean show(Workspace workspace) {
 		this.workspace = workspace;
 

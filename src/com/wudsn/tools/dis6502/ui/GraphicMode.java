@@ -18,27 +18,17 @@ import com.wudsn.tools.dis6502.ValueSets;
  * The characteristics of one Atari ANTIC graphics mode (8 through 15), as
  * used to render a raw byte buffer as a picture in {@link GraphicPanel}.
  * <p>
- * Ported from the {@code wSpriteNbRows}/{@code wSpriteNbLines}/{@code
- * wSpriteNbColors}/{@code wSpriteNbBytesPerLine}/{@code
- * wSpriteNbPixelsPerByte}/{@code wSpritePixelWidth}/{@code
- * wSpritePixelHeight} parallel arrays in ui/SpriteControlImpl.cpp, and the
- * C++ {@code IDS_SPRITE_ANTIC_8}..{@code _F} resource strings (dis6502.rc)
- * for {@link #getText()}, now {@code GraphicMode_ANTIC_8}..{@code _F} in
- * {@code ValueSets.properties}: this is a WUDSN Base {@link ValueSet}, not
- * a Java {@code enum}, with the per-mode numbers as additional attributes
- * of each value. See {@link SelectGraphicsDialog}'s own javadoc for why this
- * port renames the C++ source's "Sprite" naming to "Graphic" throughout,
- * despite these citations staying accurate to the real C++ identifiers.
- * {@code colors} is kept for fidelity even though nothing
- * in this port (or, as far as {@link #bitsPerPixel} suggests, the C++
- * source either) actually uses it for pixel decoding - that is fixed per
- * mode via {@link #bitsPerPixel}, matching the C++ version's hardcoded
- * per-mode choice between its {@code SPRITE_GET_PIXEL_1}/{@code _2}
- * macros. Note {@link #ANTIC_F}'s text says "2 Colors" while {@code
- * wSpriteNbColors} records 1 for it - both are defensible (it renders
- * exactly two colors, black and white, using 1 bit per pixel) and this
- * keeps the mismatch exactly as found rather than guessing which one to
- * "fix".
+ * See {@link SelectGraphicsDialog}'s own javadoc for why this port calls
+ * these "Graphic" modes rather than "Sprite". This is a WUDSN Base {@link
+ * ValueSet}, not a Java {@code enum}, with the per-mode numbers as
+ * additional attributes of each value; {@link #getText()} comes from
+ * {@code GraphicMode_ANTIC_8}..{@code _F} in {@code ValueSets.properties}.
+ * {@code colors} is kept even though nothing actually uses it for pixel
+ * decoding - that is fixed per mode via {@link #bitsPerPixel} instead.
+ * Note {@link #ANTIC_F}'s text says "2 Colors" while {@code colors}
+ * records 1 for it - both are defensible (it renders exactly two colors,
+ * black and white, using 1 bit per pixel) and this keeps the mismatch as
+ * is rather than guessing which one to "fix".
  *
  * @author Peter Dell
  */
@@ -103,7 +93,7 @@ public final class GraphicMode extends ValueSet {
 		return Collections.unmodifiableList(new ArrayList<GraphicMode>(values.values()));
 	}
 
-	/** Ported from the choice between SPRITE_GET_PIXEL_1 (1 bit) and SPRITE_GET_PIXEL_2 (2 bits) in PaintAll's per-mode switch. */
+	/** 2 bits for a 4-color mode, 1 bit otherwise. */
 	public int bitsPerPixel() {
 		return colors == 4 ? 2 : 1;
 	}
