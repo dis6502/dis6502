@@ -315,22 +315,10 @@ debugging without implying a dispatch mechanism that isn't actually used.
 
 ## Out of scope
 
-- ~~The three popup menus~~ **Done.** `SegmentListPanel`/`DisassemblyPanel`/
-  `MemoryInspectorPanel` all build their popup items from `Actions`/
-  `ElementFactory` too. The dynamically-formatted labels (e.g.
-  `"Navigate to Definition of Label {0}"`) turned out to need a small
-  local helper after all (`DisassemblyPanel.setDynamicLabel`): those seven
-  items stay as plain `JMenuItem`s (no fixed label to give
-  `ElementFactory.createMenuItem` at construction time), and the helper
-  applies `TextUtility.format` to the `Action`'s `"{0}"`-templated label,
-  then wraps the result in a temporary `Action` to reuse
-  `ElementFactory.setButtonTextAndMnemonic` for the mnemonic. Two
-  decisions were made explicitly along the way (see `Actions`' own class
-  javadoc for the full reasoning): popup items keep today's accelerators
-  only (no new ones wired for the many C++ `\tAccelerator` hints that were
-  never live in this port), and items with no `&` in the C++ source were
-  given a newly-chosen mnemonic anyway (unlike the main menu, where every
-  mnemonic added already existed in `dis6502.rc`).
+- The three popup menus were done afterwards, the same way (see `Actions`'
+  class javadoc for the two decisions taken: popup items keep only the
+  accelerators that were live, and items without an `&` in the C++ source
+  got a newly chosen mnemonic).
 - Any toolbar (icons - `Action`/`ElementFactory` have no icon support at
   all, as noted above) - still open, no toolbar exists in this port yet.
 - Dialogs (`ButtonBar_OK`/`ButtonBar_Cancel`/etc. from the shared

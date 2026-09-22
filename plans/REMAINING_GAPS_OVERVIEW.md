@@ -6,14 +6,19 @@ incomplete, or broken in this Java port, as of 2026-09-21. It exists so a
 future porting session can pick up where this snapshot left off without
 re-auditing both codebases from scratch.
 
-**Status**: every gap originally tracked in this document (#1-#9) is now
-fixed or resolved as of 2026-09-21. Most fixed gaps are removed from this
-document entirely once done, relying on git history for their write-up
-(#1, #2, #3, #6, #7, #8, #9); #4 and #5 are kept below with a "FIXED"/
-"RESOLVED" write-up instead, since both had a factually incorrect original
-description worth correcting for the record. Numbers are kept as originally
-assigned rather than renumbered, so references elsewhere (commit messages,
-`plans/MEMORY.md`) stay valid.
+**Status**: every gap this document tracked (#1-#9) is fixed and removed
+from it, per this project's convention - git history has each write-up
+(gaps #4 and #5 had a factually wrong original description, corrected in
+their commits: `LogPanel` coloring, and `MainUITest.cpp` being a headless
+console suite rather than a UI driver). The "explicitly unverified" items of
+the first pass were all settled by the second audit
+([`FINAL_GAP_ANALYSIS.md`](FINAL_GAP_ANALYSIS.md)) or since: the legacy
+loaders are tested against real `WRK14`/`PRF17` fixtures, `ImgError`/`AtariError`
+match the C++ enums one to one, `Application`'s settings and messages are
+exercised by the suite, C++'s `OperatingSystem::ExecuteCommand` was only ever
+used by its test harness, and menu commands and icons were checked one by
+one. Numbers are kept as originally assigned, so references elsewhere
+(commit messages, `plans/MEMORY.md`) stay valid.
 
 **Note (2026-09-21):** the porting phase itself is now over - see
 `plans/PORTING_GUIDE.md`'s status note and `plans/MEMORY.md`'s top section.
@@ -37,79 +42,6 @@ body; several items below are flagged explicitly as unverified rather than
 guessed at. Treat "fully ported" entries as spot-checked, not proven, and
 re-verify against the current C++ source before relying on any single line
 here - both repos continue to change.
-
-## Confirmed gaps - UI layer
-
-### 4. ~~`LogPanel` had no visual way to distinguish error lines from info lines~~ - FIXED 2026-09-21
-
-- **Correction to the original write-up**: this gap was originally described
-  as "`LogPanel` is a plain `JTextArea`, not the C++'s multi-column,
-  severity-colored list view," based on `LogListWindow`'s name/shape, not
-  its actual behavior. On investigation while fixing this: C++'s
-  `LogListWindow` is a plain, single-column, uncolored `ListBox` with no
-  owner-draw painting at all, and `LogListWindow::AddText` - the only way
-  text would ever reach it - is never called anywhere in the C++ codebase.
-  There was no real C++ multi-column/colored behavior to port; the actual,
-  narrower problem was that error and info lines looked identical in
-  `LogPanel`, making errors hard to spot at a glance.
-- **Fix**: per the project's now-current direction (intentional divergence
-  from C++ is expected - see `plans/MEMORY.md`'s top section), this is a
-  Java-native fix for that real usability problem: `LogPanel` switched from
-  `JTextArea` to `JTextPane` with per-insert `SimpleAttributeSet` styling -
-  a new `appendErrorLine` (dark red) alongside the existing `appendLine`
-  (default color). `JTextPane` was chosen over a colored `JList` (the
-  pattern `XRefPanel`/`SegmentListPanel` use) specifically to keep native
-  text selection/copy working. `UIApplication.sendErrorLogMessage` now
-  calls `appendErrorLine` instead of hand-prepending `"ERROR: "` as
-  undifferentiated plain text (the prefix itself is kept, now also
-  colored).
-- Verified with a clean `mvn -o compile`/`test-compile`, the full
-  `TestRunner` suite, and a live screenshot showing info lines in black and
-  error lines in red.
-
-### 5. ~~No Java equivalent of `MainUITest.cpp`'s interactive self-test harness~~ - RESOLVED (partial port) 2026-09-21
-
-- **Correction to the original write-up**: this gap was originally described
-  as "C++ has a command-line self-test mode... that drives the UI
-  programmatically in a loop" - wrong, in the same way gap #4's original
-  `LogPanel` description was wrong. `MainUITest.cpp` is a 20-line dispatcher
-  with no UI-automation content at all: it parses a `/TEST:DEV|FAST|NORMAL|
-  DEEP` argument, allocates a console, and delegates to `MainTest.cpp` - a
-  headless console-mode integration suite, not a UI driver. `test-dis6502-
-  DEEP.bat`/`-FAST.bat` just relaunch the executable with that flag in a
-  `pause`/`goto` loop for manual soak-testing.
-- **What `MainTest.cpp` actually does**: (1) runs the same per-class unit
-  tests Java's `TestRunner` already ran - no gap there; (2) `TestWorkspace()`
-  - loads a real `.wrk` file, then splits a segment and asserts each half's
-  user comment survived at its correctly rebased offset - genuinely
-  untested in Java before this fix; (3) `ExecuteVariant()` - for up to 16
-  notation-variant combinations, disassembles four fixture programs,
-  reassembles the listing with a real MADS assembler, and byte-compares the
-  result against a reference binary - a real end-to-end disassembly-
-  correctness check, also genuinely uncovered in Java before this fix (the
-  `TestRunner` javadoc's old excuse, that this "depends on `WorkspaceLogic`
-  ... not ported yet," was stale - `WorkspaceLogic` has been fully ported
-  for a while).
-- **Fix (a deliberate partial port, not a full one - see the proposal this
-  was decided from)**: recovered the two genuinely non-redundant checks as
-  new `TestRunner` tests - `WorkspaceLogicTest` (from `TestWorkspace`) and
-  `ReassemblyRoundTripTest` (from `ExecuteUnitTestItem`/`ExecuteVariant`,
-  covering all four fixtures but only the one notation-variant combination
-  the default `Profile` already produces, not the full 16-variant sweep -
-  see that test's own javadoc for why). Deliberately did **not** port
-  `MainUITest.cpp`'s `/TEST:` command-line dispatch, console-mode output, or
-  the `DEV`/`FAST`/`NORMAL`/`DEEP` variant-count distinction itself -
-  `TestRunner` already is the "run everything once, report pass/fail" tool
-  a console mode would otherwise provide, and the repeated-relaunch soak-
-  test loop has no obvious Java equivalent need.
-- New fixtures under `test-resources/asm/mads/` (the vendored MADS
-  assembler binary) and `test-resources/disassembly/unit00{1,2,3,4}/`,
-  copied from the C++ repo's `tst/suite/asm/mads` and
-  `tst/suite/disassembly/unit00{1,2,3,4}`; `test-resources/workspace/`
-  (the `SynCalc` fixture `TestWorkspace` loads).
-- Verified with a clean `mvn -o compile`/`test-compile` and the full
-  `TestRunner` suite, including a real MADS subprocess invocation and
-  byte-exact comparison for all four fixtures.
 
 ## Divergences where the Java port fixed a real C++ bug (not a Java gap)
 
@@ -251,39 +183,6 @@ six modes in both files), never through `Instruction::GetLength()`/
 `getLength()`. Not a gap - `InstructionSet`'s own `GetLength()` is simply
 unused for these modes in both codebases.
 
-## Explicitly unverified - needs a follow-up pass
-
-These were not checked deeply enough to classify as either "fine" or "a
-gap" - flag them for a dedicated follow-up rather than assuming either way:
-
-- **`Workspace1X`/`Profile1X`** (legacy-format loaders) - classes exist with
-  plausible content, but not every legacy field/quirk C++ handles was
-  verified as preserved.
-- **`ImgError`/`ImgInfo`/`ImgRWPacket`/`AtariError`/`AtariFile`** - these
-  Java classes have no like-named C++ header; they appear to be the Java
-  port's own decomposition of `AtariDiskImage`/`AtariDOS`'s C-style
-  output-parameter structs into proper value objects (an architecture
-  improvement), but 1:1 field/error-code parity against the C++
-  enums/structs was not verified.
-- **`Application.h`/`ApplicationSettingsSection.h`** (the abstract C++ app
-  class: settings-file sections, `SendInfoMessage`/`SendErrorMessage`/
-  `ThrowErrorMessage` with Text IDs) has no `model`-package Java file, but an
-  `application.sendInfoMessage(...)`/`sendErrorMessage(...)` abstraction
-  clearly exists and is actively used throughout the model and UI layers
-  (`Application.java`) - it must live in the `ui` package (now the top-level
-  `com.wudsn.tools.dis6502` package). Full parity (settings persistence,
-  every message variant) was not verified.
-- **`OperatingSystem.h`** (`ExecuteCommand` - shell/process execution) has no
-  Java model counterpart; likely superseded by `java.awt.Desktop`/
-  `ProcessBuilder` somewhere in `ui`, not verified.
-- **`DiskImageExecutableFileDialog`** and several of the "fully ported"
-  dialogs listed above were confirmed present and non-trivial in size/content
-  but not verified command-by-command against the C++ `.rc` resource /
-  `ProcessCommand` switch.
-- **`MainWindowMenu.cpp`'s per-item icon loading** (`AddIconToMenu`, 26
-  call sites) appears present in `MainMenu.java` (29 `setIcon`/`Icon(`
-  occurrences) but wasn't spot-verified icon-by-icon.
-
 ## Shared C++ limitations - not Java-specific gaps
 
 These exist in the C++ source itself, so their presence/absence in Java
@@ -305,12 +204,3 @@ doesn't support, without a separate decision to add a genuinely new feature:
 - **C++-only test classes `CommonTest`, `StreamTest`, `FileIOTest`** have no
   Java counterpart - consistent with the I/O-abstraction supersession noted
   above (`java.io.*` + WUDSN-Base), not a gap.
-
-## Suggested priority order for closing these
-
-None remain - every gap originally tracked in this document (#1-#9) has
-been fixed or explicitly resolved as of 2026-09-21; see the "Confirmed
-gaps" section above for #4/#5's write-ups and git history for the rest.
-Nothing here currently drives new work - see the status note at the top on
-why this document's "what's missing relative to C++" framing is no longer
-the operative one going forward.
