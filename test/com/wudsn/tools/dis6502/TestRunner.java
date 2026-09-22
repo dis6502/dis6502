@@ -21,6 +21,7 @@ import com.wudsn.tools.dis6502.model.LineNumberHistoryTest;
 import com.wudsn.tools.dis6502.model.MemoryInspectorStateTest;
 import com.wudsn.tools.dis6502.model.MemoryInspectorTest;
 import com.wudsn.tools.dis6502.model.Profile1XTest;
+import com.wudsn.tools.dis6502.model.ProfileNotationTest;
 import com.wudsn.tools.dis6502.model.ReassemblyRoundTripTest;
 import com.wudsn.tools.dis6502.model.SegmentTest;
 import com.wudsn.tools.dis6502.model.Workspace;
@@ -120,6 +121,7 @@ public final class TestRunner {
 		runTest("EncodingTest", EncodingTest::testEncoding);
 		runTest("FolderTypeTest", FolderTypeTest::testFolderType);
 		runTest("ValueSetsTest", ValueSetsTest::testValueSets);
+		runTest("ProfileNotationTest", ProfileNotationTest::testProfileNotation);
 		runTest("ReassemblyRoundTripTest", ReassemblyRoundTripTest::testReassemblyRoundTrip);
 
 		if (failedCount == 0) {

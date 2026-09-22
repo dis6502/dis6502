@@ -63,8 +63,15 @@ Not port gaps - identical in C++ - but limits a user will meet:
 
 ## 4. Test coverage gaps
 
-- `ReassemblyRoundTripTest` runs one notation variant per fixture; C++
-  sweeps 16 (`ExecuteVariant`).
+- ~~`ReassemblyRoundTripTest` runs one notation variant per fixture; C++
+  sweeps 16 (`ExecuteVariant`)~~ - resolved 2026-09-22 differently: a round
+  trip can only show that a variant still assembles, not that a flag changes
+  the text (a comment or string constant leaves the bytes alone). New
+  `ProfileNotationTest` asserts each of the four flags' effect on the listing
+  text; `ReassemblyRoundTripTest` runs two fixtures once more with the
+  operand-changing flags flipped. Found and fixed on the way: the
+  ZP-as-byte directive wrote its bytes with four hex digits
+  (`.byte $00AD,...`), inherited from C++.
 - The live checks are scratch programs in `C:\TEMP\claude\dis6502-smoketest`
   and not part of the suite. The reflection harness they use could become a
   real "UI smoke" test in `TestRunner`.
@@ -89,8 +96,6 @@ Not port gaps - identical in C++ - but limits a user will meet:
 
 ## 6. Improvements to consider
 
-- ~~An "Open File..." that lists all supported files and guesses the type~~ - done 2026-09-22 ("Open Any File..."/"Add Any File..." at the top of the Open File/Add File submenus, filter for every readable type plus `.wrk`, type guessed by `openFile`) -
-  the `ANY_FILE` path of `Dis6502.openFile` already does the work. Move the standard 
 - A review of `Oric.equ` (only 36 labels).
 - Persisting the window size and splitter positions (C++ does not do this
   either).

@@ -1392,9 +1392,11 @@ public final class Disassembly {
 
 				if (address < 0x100 && profile.showZPAbsoluteAsByte && by != 0x20 /* JSR */ && by != 0x4C /* JMP */) {
 					disassemblyWriter.flushBytes();
-					lineWriter.string(profile.directiveBYTE).space().number(by)
-							.string(profile.directiveBYTESeparator).number(address & 0xFF)
-							.string(profile.directiveBYTESeparator).number((address >> 8) & 0xFF);
+					// byteValue, as in the two indexed-mode branches below - the C++ version wrote
+					// these three bytes with Number (four hex digits: ".byte $00AD,...").
+					lineWriter.string(profile.directiveBYTE).space().byteValue(by)
+							.string(profile.directiveBYTESeparator).byteValue(address & 0xFF)
+							.string(profile.directiveBYTESeparator).byteValue((address >> 8) & 0xFF);
 					lineWriter.spaceUntil34();
 					lineWriter.space().string(profile.commentPrefix).space().instruction(opcodeSegment, by).space();
 					lineWriter.labelOrAddress(segmentList, newSegmentIndex, newPC, address, byteType, by);

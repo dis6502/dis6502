@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 import com.wudsn.tools.dis6502.Application;
 
@@ -26,12 +27,12 @@ import com.wudsn.tools.dis6502.Application;
  * not just that individual methods behave as expected.
  * <p>
  * Unlike C++'s {@code ExecuteVariant}, which sweeps up to 16 notation-flag
- * combinations per fixture, this only exercises the one combination the
- * default {@link Profile} already produces ({@code useHexNotation}/{@code
- * showNonASCIIChararactersAsBytes} true, {@code showZPAbsoluteAsByte}/{@code
- * showOpcodeAsComment} false - matching the values C++'s {@code DEV}/{@code
- * FAST} test mode used) - a deliberate scope reduction, not an oversight;
- * see the gap #5 proposal for why. The real Atari 800 system equates are
+ * combinations per fixture, this runs the default {@link Profile} for every
+ * fixture and one more run with the operand-changing flags flipped for two
+ * of them: a round trip can only show that a variant still assembles to the
+ * same bytes, and one run with all of them flipped shows that as well as
+ * sixteen do; whether each flag changes the text the way it should is
+ * {@link ProfileNotationTest}'s job. The real Atari 800 system equates are
  * loaded the same way the application does it, so the listing references
  * genuine OS/hardware labels and must still reassemble byte-exactly. A
  * fifth, C64 unit (new, not ported) does the same for a system other than
@@ -60,6 +61,15 @@ public final class ReassemblyRoundTripTest {
 		testUnit("c64", FileType.WORKSPACE_FILE, "test-resources/system/c64/HelloWorld.wrk",
 				"test-resources/system/c64/HelloWorld.prg");
 
+		// The notation variants: the settings that change operands, all flipped at once,
+		// must still reassemble byte-exactly (their text is ProfileNotationTest's job).
+		// showNonASCIIChararactersAsBytes stays on - a character above $7F inside a
+		// string constant cannot survive an ASCII listing at all.
+		testUnit("unit001-variant", FileType.EXECUTABLE_FILE, "test-resources/disassembly/unit001/in/autorun.xex",
+				"test-resources/disassembly/unit001/ref/autorun.xex", ALL_VARIANTS);
+		testUnit("unit004-variant", FileType.WORKSPACE_FILE, "test-resources/disassembly/unit004/in/predux-220810.wrk",
+				"test-resources/disassembly/unit004/ref/predux-220810.xex", ALL_VARIANTS);
+
 		Assert.log("ReassemblyRoundTripTest completed");
 	}
 
@@ -82,8 +92,20 @@ public final class ReassemblyRoundTripTest {
 		return prg;
 	}
 
+	private static final Consumer<Profile> ALL_VARIANTS = profile -> {
+		profile.useHexNotation = false;
+		profile.showZPAbsoluteAsByte = true;
+		profile.showOpcodeAsComment = true;
+	};
+
 	private static void testUnit(String unitName, FileType fileType, String inFilePath, String refFilePath)
 			throws IOException, InterruptedException {
+		testUnit(unitName, fileType, inFilePath, refFilePath, profile -> {
+		});
+	}
+
+	private static void testUnit(String unitName, FileType fileType, String inFilePath, String refFilePath,
+			Consumer<Profile> profileChanges) throws IOException, InterruptedException {
 		Application application = new Application();
 		WorkspaceLogic workspaceLogic = new WorkspaceLogic(application);
 		Workspace workspace = new Workspace(new ComputerSystemFactory());
@@ -97,6 +119,7 @@ public final class ReassemblyRoundTripTest {
 		if (workspace.getSystemEquateList().isEmpty()) {
 			workspaceLogic.loadSystemEquates(workspace);
 		}
+		profileChanges.accept(workspace.getProfile());
 
 		Disassembly disassembly = new Disassembly();
 		disassembly.setWorkspace(workspace);
