@@ -1484,22 +1484,19 @@ public final class Dis6502 {
 		updateDisassembly(false);
 	}
 
-	/** Ported from MemoryInspector::Guess (IDM_DUMP_START_CODE_TRACE). */
+	/** Runs code-tracing on the memory inspector's current selection. */
 	private void performGuessCode() {
 		mainWindow.memoryInspectorPanel.guess();
 		updateDisassembly(false);
 	}
 
 	/**
-	 * Ported from MainController::QuitEditMode, fired whenever the Memory
-	 * Inspector's edit mode ends for any reason (Esc, the ad hoc Quit Edit
-	 * Mode popup item, switching segment/segment list/XRef selection,
-	 * clearing the workspace, or typing past the end of the buffer). Unlike
-	 * the C++ source, this fires - and therefore always refreshes the
-	 * disassembly - on every exit path uniformly, including typing off the
-	 * end of the buffer; see the TODO left in
-	 * MemoryInspectorControlImpl.cpp's Char method for the C++-side
-	 * inconsistency this fixes.
+	 * Fired whenever the Memory Inspector's edit mode ends for any reason
+	 * (Esc, the ad hoc Quit Edit Mode popup item, switching
+	 * segment/segment list/XRef selection, clearing the workspace, or
+	 * typing past the end of the buffer) - fires, and therefore always
+	 * refreshes the disassembly, on every exit path uniformly, including
+	 * typing off the end of the buffer.
 	 */
 	private void performMemoryInspectorEditModeExited() {
 		updateFileMenuState();
@@ -1507,11 +1504,10 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from MemoryInspector::ShowSelectSpritesDialog
-	 * (IDM_DUMP_SELECT_SPRITES): non-mutating, unlike its neighbors above -
-	 * just ends in the same {@link
-	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#select} every other
-	 * Select* action uses, so no {@link #updateDisassembly} call follows.
+	 * Non-mutating, unlike its neighbors above - just ends in the same
+	 * {@link com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#select} every
+	 * other Select* action uses, so no {@link #updateDisassembly} call
+	 * follows.
 	 */
 	private void performShowSelectGraphicsDialog() {
 		if (!memoryInspectorState.hasSegment()) {
@@ -1524,27 +1520,24 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from MemoryInspector::ToggleDisplayAsScreenCode. Switches the
-	 * Memory Inspector's ASCII column between plain byte values and their
-	 * Atari internal (ANTIC screen code) equivalent.
+	 * Switches the Memory Inspector's ASCII column between plain byte values
+	 * and their Atari internal (ANTIC screen code) equivalent.
 	 */
 	private void performToggleDisplayAsScreenCode() {
 		workspace.setViewDisplayAsScreenCode(mainWindow.memoryInspectorPanel.displayAsScreenCodeButton.isSelected());
 		mainWindow.memoryInspectorPanel.setDisplayAsScreenCode(workspace.isViewDisplayAsScreenCode());
 	}
 
-	/** Ported from Main::ToggleViewDisassembly. */
+	/** Toggles the "No Disassembly" view mode. */
 	private void performToggleViewDisassembly() {
 		workspace.setViewNoDisassembly(mainWindow.mainMenu.noDisassemblyMenuItem.isSelected());
-		updateDisassembly(false); // Will do nothing if it is now true, matching the C++ comment at the same spot.
+		updateDisassembly(false); // No-op if "No Disassembly" is now on.
 	}
 
 	/**
-	 * Ported from Main::ToggleViewDoubleFontHeight. The font-resizing this
-	 * notification is meant to trigger ({@code Main::SetLayoutFont}/{@code
-	 * layout->Compute}) is fully ported: {@link #updateFonts} reacts to it,
-	 * switching both {@link com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}
-	 * and {@link com.wudsn.tools.dis6502.ui.DisassemblyPanel} between {@link
+	 * {@link #updateFonts} reacts to this, switching both {@link
+	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel} and {@link
+	 * com.wudsn.tools.dis6502.ui.DisassemblyPanel} between {@link
 	 * ComputerFont#get}'s normal/double-height glyph atlases.
 	 */
 	private void performToggleViewDoubleFontHeight() {
@@ -1553,9 +1546,8 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from Main::ShowDefaultFoldersDialog. What is edited here is
-	 * where {@link FileChoosers} starts when it knows no better place - see
-	 * its javadoc.
+	 * What is edited here is where {@link FileChoosers} starts when it
+	 * knows no better place - see its javadoc.
 	 */
 	void performShowDefaultFolders() {
 		DefaultFolders currentDefaultFolders = getDefaultFolders();
