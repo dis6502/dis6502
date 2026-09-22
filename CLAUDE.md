@@ -20,9 +20,9 @@ be rediscovered:
   (build and test commands live here), coding conventions to carry forward,
   the bug-handling policy for when the C++ source itself looks wrong, testing
   strategy, and a process lesson on when to ask before deciding silently.
-- [`plans/ACTIONS_ELEMENT_FACTORY_MIGRATION.md`](plans/ACTIONS_ELEMENT_FACTORY_MIGRATION.md) -
-  history of adopting WUDSN Base's `Action`/`Actions`/`ElementFactory`
-  pattern for menu items and dialog buttons (status: done).
+- [`plans/RULES_WUDSN_BASE.md`](plans/RULES_WUDSN_BASE.md) - standing rules
+  for using WUDSN Base's repository/`Action`/`ElementFactory` pattern for
+  menu items, buttons, and other labeled Swing components.
 - [`plans/POPUP_MENU_ACCELERATORS_PLAN.md`](plans/POPUP_MENU_ACCELERATORS_PLAN.md) -
   history of wiring up popup-menu keyboard accelerators via
   `InputMap`/`ActionMap` instead of relying on `JPopupMenu` item accelerators,
