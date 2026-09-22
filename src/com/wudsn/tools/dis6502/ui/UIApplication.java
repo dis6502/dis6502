@@ -30,6 +30,15 @@ public final class UIApplication extends Application {
 
 	private LogPanel logPanel;
 
+	public UIApplication() {
+		super();
+	}
+
+	/** See {@link Application#Application(java.util.prefs.Preferences)}. */
+	public UIApplication(java.util.prefs.Preferences settingsRoot) {
+		super(settingsRoot);
+	}
+
 	public void setLogPanel(LogPanel logPanel) {
 		this.logPanel = logPanel;
 	}

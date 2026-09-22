@@ -52,7 +52,38 @@ import com.wudsn.tools.base.repository.Message;
  */
 public class Application {
 
+	/**
+	 * System property naming a child node of the application's {@link
+	 * Preferences} node to keep all settings under, e.g. {@code
+	 * -Ddis6502.settingsNode=test}. Set by {@code TestRunner} so that tests
+	 * which start the real application (which builds its own {@link
+	 * Application}) never touch the user's settings; the tests remove that
+	 * node afterwards. Unset in normal use.
+	 */
+	public static final String SETTINGS_NODE_PROPERTY = "dis6502.settingsNode";
+
+	private final Preferences settingsRoot;
 	private final Map<String, ApplicationSettingsSection> settingsSections = new HashMap<>();
+
+	/** Keeps its settings under {@link #getDefaultSettingsRoot()}. */
+	public Application() {
+		this(getDefaultSettingsRoot());
+	}
+
+	/** Keeps its settings under {@code settingsRoot} - a throw-away node, for a test. */
+	public Application(Preferences settingsRoot) {
+		if (settingsRoot == null) {
+			throw new IllegalArgumentException("Parameter 'settingsRoot' must not be null.");
+		}
+		this.settingsRoot = settingsRoot;
+	}
+
+	/** The user's node for this application, or the child of it that {@link #SETTINGS_NODE_PROPERTY} names. */
+	public static Preferences getDefaultSettingsRoot() {
+		Preferences root = Preferences.userNodeForPackage(Application.class);
+		String nodeName = System.getProperty(SETTINGS_NODE_PROPERTY, "");
+		return nodeName.isEmpty() ? root : root.node(nodeName);
+	}
 
 	protected void sendLogMessage(String text) {
 		Log.logInfo("{0}", new Object[] { text });
@@ -96,8 +127,7 @@ public class Application {
 	}
 
 	public ApplicationSettingsSection getSettingsSection(String name) {
-		return settingsSections.computeIfAbsent(name,
-				key -> new ApplicationSettingsSection(Preferences.userNodeForPackage(Application.class).node(key)));
+		return settingsSections.computeIfAbsent(name, key -> new ApplicationSettingsSection(settingsRoot.node(key)));
 	}
 
 	/** Resolves {@code relativeFilePath} against the directory containing this application's own jar/classes. */

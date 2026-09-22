@@ -5,6 +5,9 @@
  */
 package com.wudsn.tools.dis6502;
 
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
+
 import com.wudsn.tools.dis6502.model.AssemblerTest;
 import com.wudsn.tools.dis6502.model.AtariDiskImageTest;
 import com.wudsn.tools.dis6502.model.ByteRangeSelectionTest;
@@ -84,11 +87,32 @@ public final class TestRunner {
 	private int totalCount;
 	private int failedCount;
 
+	/** The settings node every test - including the real application some of them start - writes to; removed again afterwards. */
+	private static final String SETTINGS_NODE = "test";
+
 	public static void main(String[] args) {
+		System.setProperty(Application.SETTINGS_NODE_PROPERTY, SETTINGS_NODE);
 		TestRunner runner = new TestRunner();
-		runner.execute();
+		try {
+			runner.execute();
+		} finally {
+			removeTestSettings();
+		}
 		if (runner.failedCount > 0) {
 			System.exit(1);
+		}
+	}
+
+	/** Leaves the user's settings as they were: whatever the tests stored under the test node is dropped. */
+	private static void removeTestSettings() {
+		try {
+			Preferences root = Preferences.userNodeForPackage(Application.class);
+			if (root.nodeExists(SETTINGS_NODE)) {
+				root.node(SETTINGS_NODE).removeNode();
+				root.flush();
+			}
+		} catch (BackingStoreException ex) {
+			log("ERROR: Could not remove the test settings: " + ex);
 		}
 	}
 
