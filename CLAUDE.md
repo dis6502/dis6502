@@ -58,5 +58,10 @@ be rediscovered:
   longer throws when loading `Actions` on a display-less JVM: `MainMenu`
   and every panel now get checked (including menu-mnemonic uniqueness)
   on every CI run, not just with a display (status: done).
+- [`plans/TESTRUNNER_NAME_REFLECTION_PROPOSAL.md`](plans/TESTRUNNER_NAME_REFLECTION_PROPOSAL.md) -
+  whether `TestRunner`'s `runTest("ValueSetsTest", ValueSetsTest::testValueSets)`
+  pattern can drop the redundant string via reflection; options considered
+  and a `SerializedLambda` proof-of-concept, no option chosen yet
+  (status: proposal).
 
 New planning/guidance documents for future work should also go in `plans/`.
