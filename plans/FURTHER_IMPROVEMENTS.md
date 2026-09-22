@@ -73,10 +73,13 @@ Not port gaps - identical in C++ - but limits a user will meet:
 
 ## 5. Housekeeping
 
-- There is no `.gitattributes`. Every commit warns about LF versus CRLF, and
-  one mechanical edit silently rewrote the line endings of eight files
-  (restored before committing). A single `* text=auto` rule, or `eol=crlf`
-  for `*.java`, would end that.
+- ~~There is no `.gitattributes`~~ - done 2026-09-22: `* text=auto` (LF in
+  the repository, which the index already was throughout; platform line
+  endings in the working tree, which is what Eclipse writes), explicit
+  `binary` for the fixtures and resources, `.wrk`/`.prf`/`.exported` left to
+  detection since each exists in a text and a binary form. The working tree
+  was re-checked-out once so every text file is CRLF; the per-commit
+  warnings are gone.
 - `plans/REMAINING_GAPS_OVERVIEW.md` still has an "Explicitly unverified"
   section from the first audit; the second audit has since checked most of
   those items. Fold it into `FINAL_GAP_ANALYSIS.md` or retire it.
@@ -96,6 +99,6 @@ Not port gaps - identical in C++ - but limits a user will meet:
 
 1. ~~The on-screen pass (section 1) and cleaning the Recent lists.~~ Done.
 2. ~~The remaining hard-coded strings (section 2).~~ Done.
-3. `.gitattributes` (section 5).
+3. ~~`.gitattributes` (section 5).~~ Done.
 
 The rest is optional.
