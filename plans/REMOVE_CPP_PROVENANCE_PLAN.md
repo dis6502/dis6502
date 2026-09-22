@@ -1,6 +1,17 @@
 # Plan: remove "Ported from" and other C++-provenance references from the code
 
-Status: proposal, 2026-09-22. Nothing below is implemented.
+**Status: done, 2026-09-23.** Every file under `src/**/*.java` and
+`test/**/*.java` is clean of "C++"/"Ported from" references (literal and
+case-insensitive, including embedded `Class::Method` citations with no
+trigger word), the "not ported"/"New (not ported)" classification
+framing, and `IDS_`/`IDM_` breadcrumbs - verified with a final whole-tree
+sweep and a clean `mvn -o compile`/`test-compile` plus a full green
+`TestRunner` run (27/27) on the final state. Scope stayed as proposed
+below (`plans/*.md`, `README.md`, `CLAUDE.md` excluded); Tier 3 got the
+full rewrite-in-place treatment throughout, not a lighter touch. What
+follows is the original plan, left as-is for the tier rules and rationale
+it captures - still the reference for the same kind of cleanup in a
+future file.
 
 ## Goal
 

@@ -47,6 +47,6 @@ be rediscovered:
 - [`plans/REMOVE_CPP_PROVENANCE_PLAN.md`](plans/REMOVE_CPP_PROVENANCE_PLAN.md) -
   removing "Ported from"/C++-comparison framing from code comments now that
   the port is the final codebase, while preserving the design rationale
-  some of those comments carry (status: proposal).
+  some of those comments carry (status: done).
 
 New planning/guidance documents for future work should also go in `plans/`.
