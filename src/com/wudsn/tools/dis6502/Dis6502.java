@@ -465,18 +465,16 @@ public final class Dis6502 {
 		}
 	}
 
-	/** Ported from MemoryInspector::SegmentChanged's trigger (Main::HandleWorkspaceChanged's SEGMENTS/SELECTED_SEGMENT handling). */
+	/** Syncs the memory inspector's segment with the workspace's current selection. */
 	private void updateMemoryInspectorSegment() {
 		memoryInspectorState.setSegmentIndex(workspace.getSegmentList().getSelectedIndex());
 		mainWindow.memoryInspectorPanel.segmentChanged(memoryInspectorState);
 	}
 
 	/**
-	 * Ported from {@code PartWindow::ApplyLayout}'s reaction to a {@link
-	 * WorkspaceProperty#COMPUTER_SYSTEM_TYPE}/{@link WorkspaceProperty#FONT}
-	 * change (via {@code Main::SetLayoutFont}/{@code
-	 * WorkspaceFont::GetResizedFont}) - every part window shares one font set
-	 * on a common {@code Layout}, matching {@link ComputerFont}'s javadoc.
+	 * Reacts to a {@link WorkspaceProperty#COMPUTER_SYSTEM_TYPE}/{@link
+	 * WorkspaceProperty#FONT} change - every part window shares one font
+	 * set, matching {@link ComputerFont}'s javadoc.
 	 */
 	private void updateFonts() {
 		ComputerFont computerFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
@@ -487,7 +485,7 @@ public final class Dis6502 {
 		mainWindow.segmentListPanel.setComputerFont(computerFont);
 	}
 
-	/** Ported from Main::UpdateMenuState's Equates-menu part (ui/Main.cpp). */
+	/** Enables/disables the Equates menu's Clear/Save/Export items based on whether system/user equates exist. */
 	private void updateEquatesMenuState() {
 		boolean hasSystemEquates = !workspace.getSystemEquateList().isEmpty();
 		boolean hasUserEquates = !workspace.getUserEquateList().isEmpty();
@@ -498,22 +496,17 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Enables the File menu's commands. Ported from the {@code WM_INITMENU}
-	 * handler in {@code ui/Main.cpp}, with its three rules:
+	 * Enables the File menu's commands, following three rules:
 	 * <ul>
 	 * <li>Nothing that replaces, extends or saves the workspace while the
 	 * memory inspector is in edit mode - the half-typed byte belongs to the
 	 * workspace as it is now. (A disabled item's accelerator is dead too.)</li>
 	 * <li>An Open/Add item only if the workspace's computer system can read
 	 * that file type at all - no cassette or disk images for the C64, say.</li>
-	 * <li>The Save items only if there is something to save. The C++ version
-	 * does not gate {@code ID_FILE_SAVE_DISASSEMBLY_FILES} at all, and gates
-	 * {@code ID_FILE_SAVE_DISK_IMAGE_BOOT_SECTORS} ("Write Boot Disk" here -
-	 * see {@link Actions}'s own javadoc for the naming) on the memory
-	 * inspector's selection having a segment; both simply follow {@code
-	 * ID_FILE_SAVE_WORKSPACE}'s "has segments" here - simpler, and avoiding
-	 * the awkwardness the C++ source's own {@code // TODO Move to segment
-	 * context menu} comment on that line already flags.</li>
+	 * <li>The Save items only if there is something to save - all of them,
+	 * including "Save Disassembly Files" and "Write Boot Disk" (see {@link
+	 * Actions}'s own javadoc for that naming), simply follow "has
+	 * segments".</li>
 	 * </ul>
 	 */
 	private void updateFileMenuState() {
@@ -569,20 +562,17 @@ public final class Dis6502 {
 	 * A "Recent Files" selection - routed through {@link #openFile}, so a
 	 * raw file or disk image reopens through the same dialog (load address,
 	 * file-within-the-image, sectors) the menu item that first opened it
-	 * uses, matching {@code MainController::OnCommand}.
+	 * uses.
 	 */
 	void openRecentFile(MRUEntry entry) {
 		openFile(new File(entry.getFilePath()), entry.getFileType(), false);
 	}
 
 	/**
-	 * Ported from MainMenu::PerformFileMenuCommands's ID_FILE_NEW_WORKSPACE/
-	 * ID_FILE_NEW case: {@link #confirmClearWorkspace} plus {@code
-	 * workspace.init()} together mirror {@code Main::PromptToClearWorkspace}
-	 * (which does the actual clearing itself in the C++ version, unlike
-	 * this port's split - see that method's javadoc), then
-	 * {@link WorkspaceDialog} lets the user pick the new workspace's
-	 * computer system instead of always defaulting to Atari 800.
+	 * {@link #confirmClearWorkspace} plus {@code workspace.init()} together
+	 * clear the workspace, then {@link WorkspaceDialog} lets the user pick
+	 * the new workspace's computer system instead of always defaulting to
+	 * Atari 800.
 	 */
 	private void performNewWorkspace() {
 		if (!confirmClearWorkspace()) {
@@ -619,15 +609,14 @@ public final class Dis6502 {
 
 	/**
 	 * Opens (replacing the workspace's content, after {@link
-	 * #confirmClearWorkspace}) or adds a file of the given type. Ported from
-	 * MainFile::OpenFile: {@link FileType#ANY_FILE} - used by the command
-	 * line and by drag and drop, which only have a path - is resolved via
-	 * {@link ComputerSystem#guessFileType(File)} for the workspace's current
-	 * computer system, then by the {@code .wrk} extension. Unlike the C++
-	 * version, which silently does nothing with a file it cannot classify,
-	 * such a file is offered as a raw file: {@link RawFileDialog} lets the
-	 * user say where it belongs in memory, and every system supports that.
-	 * Returns whether the file was actually opened/added.
+	 * #confirmClearWorkspace}) or adds a file of the given type. {@link
+	 * FileType#ANY_FILE} - used by the command line and by drag and drop,
+	 * which only have a path - is resolved via {@link
+	 * ComputerSystem#guessFileType(File)} for the workspace's current
+	 * computer system, then by the {@code .wrk} extension. A file that
+	 * cannot be classified is offered as a raw file: {@link RawFileDialog}
+	 * lets the user say where it belongs in memory, and every system
+	 * supports that. Returns whether the file was actually opened/added.
 	 */
 	boolean openFile(File file, FileType fileType, boolean add) {
 		// The menu commands are disabled while editing, but a dropped file gets here regardless.
