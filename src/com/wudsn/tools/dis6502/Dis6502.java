@@ -1414,25 +1414,16 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from MainDisassembly::FindRef1/FindRef2 (both just call this with a
-	 * different label) and, via {@link #performDisassemblyLineSelected}, the
-	 * DIS_XREF case of MainDisassembly::Proc reached on every plain line
-	 * click/drag - the same find-and-populate-XRef shape as
-	 * {@link #performFindInDisassembly}, but keyed to a label instead of the
-	 * find field's text, and using a fresh, local line-number holder so it does
-	 * not disturb the ongoing Find/Find Next search state, matching how the
-	 * C++ version's {@code SelectAllReferences}/{@code RefreshXRef} never touch
-	 * {@code findString}/{@code findFirstLineNumber} either. Unlike
-	 * {@link #performFindInDisassembly}/{@link #performFindNextInDisassembly},
-	 * this deliberately never navigates: {@code
-	 * DisassemblyControl::SelectAllLabelReferences} always passes {@code
-	 * bSelect=FALSE}, so {@code DisassemblyControlImpl::SelectAllReferences}'s
-	 * own {@code if (selectedDisLine && bSelect) SyncLine(...)} guard never
-	 * fires for it - navigating to a label's definition is a distinct, only
-	 * explicitly user-requested action (Return or a double-click; see
-	 * {@link com.wudsn.tools.dis6502.ui.DisassemblyPanel#setNavigateToDefinitionListener})
-	 * matching {@code DisassemblyControlImpl::SelectDefinition}, not this method.
-	 * An earlier version of this port called {@link
+	 * Reached via {@link #performDisassemblyLineSelected} on every plain
+	 * line click/drag - the same find-and-populate-XRef shape as {@link
+	 * #performFindInDisassembly}, but keyed to a label instead of the find
+	 * field's text, and using a fresh, local line-number holder so it does
+	 * not disturb the ongoing Find/Find Next search state. This
+	 * deliberately never navigates: navigating to a label's definition is
+	 * a distinct, only explicitly user-requested action (Return or a
+	 * double-click; see {@link
+	 * com.wudsn.tools.dis6502.ui.DisassemblyPanel#setNavigateToDefinitionListener}),
+	 * not this method. An earlier version of this port called {@link
 	 * com.wudsn.tools.dis6502.ui.DisassemblyPanel#navigateToLine} here too,
 	 * which wrongly jumped the listing away from whatever line the user had
 	 * just clicked, every time that line happened to reference a label.
@@ -1455,7 +1446,7 @@ public final class Dis6502 {
 		mainWindow.xrefPanel.updateList(label, entries);
 	}
 
-	/** Ported from MainDisassembly::RenameDef/RenameRef (both just call this with a different label), via EquateListController::Edit. */
+	/** Opens {@link EquateDialog} pre-filled for the equate {@code label} refers to. */
 	private void performRenameDisassemblyLabel(String label) {
 		String address = Equate.extractAddress(label);
 		if (address.isEmpty()) {
@@ -1467,7 +1458,7 @@ public final class Dis6502 {
 		}
 	}
 
-	/** Ported from MainDisassembly::AddrRangeDef/AddrRangeRef (both just call this with a different label), via EquateListController::DefineUserAddressRange. */
+	/** Opens {@link EquateRangeDialog} pre-filled for the equate {@code label} refers to. */
 	private void performDefineAddressRangeForLabel(String label) {
 		String address = Equate.extractAddress(label);
 		if (address.isEmpty()) {
@@ -1480,11 +1471,9 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from MainMemoryInspector::PerformCommands's IDM_DUMP_ASSEMBLE
-	 * case: unlike every other memory inspector action wired in this
-	 * class, this calls {@link #updateDisassembly} unconditionally once
-	 * the dialog closes, matching the C++ call site, which does not check
-	 * {@code AssembleDialog::Show}'s return value either.
+	 * Unlike every other memory inspector action wired in this class, this
+	 * calls {@link #updateDisassembly} unconditionally once the dialog
+	 * closes, without checking whether anything was actually assembled.
 	 */
 	private void performShowAssembleDialog() {
 		if (memoryInspectorState.isSelectionEmpty()) {
