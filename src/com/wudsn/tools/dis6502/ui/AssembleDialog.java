@@ -32,25 +32,17 @@ import com.wudsn.tools.dis6502.model.Workspace;
  * segment at the memory inspector's current selection, one at a time,
  * advancing the selection after each one.
  * <p>
- * Ported from ui/AssembleDialog.h / AssembleDialog.cpp, folded into one
- * blocking {@link #show} call as is idiomatic for a Swing modal
- * {@link JDialog}, on top of the already-complete {@link Assembler#parseLine}.
- * {@link #performAssemble} re-reads {@code memoryInspectorState}'s
- * begin offset on every call (matching {@code
- * MemoryInspectorControl::GetNonEmptySelection} in {@code OnOK}), rather
- * than tracking its own copy, since a successful assemble advances that
- * same selection via {@link MemoryInspectorPanel#select} - the position
- * genuinely lives there, not in the dialog.
+ * Folded into one blocking {@link #show} call, as is idiomatic for a Swing
+ * modal {@link JDialog}, on top of the already-complete {@link
+ * Assembler#parseLine}. {@link #performAssemble} re-reads {@code
+ * memoryInspectorState}'s begin offset on every call, rather than tracking
+ * its own copy, since a successful assemble advances that same selection
+ * via {@link MemoryInspectorPanel#select} - the position genuinely lives
+ * there, not in the dialog.
  * <p>
- * The C++ dialog's own resource ({@code ASSEMBLEBOX}) labels its {@code
- * IDOK} button "&amp;Assemble" and pairs it with a separate "&amp;Close"
- * ({@code IDCANCEL}) button - a repeatable action, matching how {@code
- * OnOK} resets the edit field and advances the address label ready for
- * the next instruction - but {@code OnOK} closed the dialog after every
- * single press regardless, making that reset unreachable in practice.
- * Fixed here (and in the C++ source, in a separate commit): {@link
- * #assembleButton} (and pressing Enter in {@link #instructionField})
- * only close this dialog via {@link #closeButton}.
+ * "Assemble" is a repeatable action: it resets the edit field and advances
+ * the address label ready for the next instruction, without closing the
+ * dialog. Only {@link #closeButton} closes this dialog.
  *
  * @author Peter Dell
  */
@@ -116,7 +108,7 @@ public final class AssembleDialog extends JDialog {
 		setLocationRelativeTo(owner);
 	}
 
-	/** Ported from AssembleDialog::OnOK, minus the dialog-closing bug described in this class's javadoc. */
+	/** Parses and assembles one instruction, writing its bytes into the segment and advancing the selection. */
 	private void performAssemble() {
 		int beginOffset = memoryInspectorState.getBegin();
 		int address = segment.wBegin + beginOffset;
@@ -170,7 +162,7 @@ public final class AssembleDialog extends JDialog {
 		resultLabel.setText(result);
 	}
 
-	/** Ported from AssembleDialog::Show/InitDialog. Returns whether at least one instruction was actually assembled. */
+	/** Opens the dialog at the current selection. Returns whether at least one instruction was actually assembled. */
 	public boolean show(Workspace workspace, Segment segment, MutableMemoryInspectorState memoryInspectorState,
 			MemoryInspectorPanel memoryInspectorPanel) {
 		this.workspace = workspace;

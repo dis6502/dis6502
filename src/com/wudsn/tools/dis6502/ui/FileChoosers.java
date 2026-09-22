@@ -28,26 +28,21 @@ import com.wudsn.tools.dis6502.model.FileType;
  * the same: which folder they start in, which files they show, and what
  * happens to the file name picked for saving.
  * <p>
- * Replaces the C++ version's {@code FileDialogs}, driven by what each {@link
- * FileType} knows about itself:
+ * Driven by what each {@link FileType} knows about itself:
  * <ul>
  * <li>The folder to start in is, in this order: the suggested file's (when
  * saving something that already has a file); where a file of this type was
  * last picked in this session; where the most recently used file of this
  * type is ({@link MRUController#getLastFilePath}); the {@link
- * DefaultFolders} entry for the type's folder type. The C++ version has no
- * per-session memory, so its choosers for types that never reach the MRU
- * list (equates, profiles, disassembly files, saved segments) always start
- * in the default folder again.</li>
+ * DefaultFolders} entry for the type's folder type.</li>
  * <li>The filter shows the type's extensions, e.g. "Executable Files
  * (*.bin, *.com, ...)"; "All Files" stays available. A type any file can
  * have (raw) has no filter, and {@link FileType#ANY_FILE} - "open a file,
  * find out what it is" ({@link #chooseOpenAnyFile}) - filters for
  * everything the computer system can read at once.</li>
  * <li>A file saved without an extension gets the type's default one, and
- * overwriting an existing file has to be confirmed - {@code JFileChooser}
- * does neither on its own, where the Win32 dialog does both ({@code
- * lpstrDefExt}/{@code OFN_OVERWRITEPROMPT}).</li>
+ * overwriting an existing file has to be confirmed - neither is
+ * {@code JFileChooser}'s default behavior.</li>
  * </ul>
  *
  * @author Peter Dell

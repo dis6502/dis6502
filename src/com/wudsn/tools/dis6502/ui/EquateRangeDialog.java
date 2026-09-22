@@ -33,13 +33,10 @@ import com.wudsn.tools.dis6502.model.EquateList;
  * A dialog for defining a range of user equates ("LABEL+1", "LABEL+2", ...)
  * relative to a chosen base equate.
  * <p>
- * Ported from ui/EquateRangeDialog.h / EquateRangeDialog.cpp. The base
- * equate can be chosen from either the system or user equate list (both
- * are offered in {@link #baseEquateComboBox}, matching {@code
- * CreateControls}'s two {@code FillCombobox} calls), but {@link
+ * The base equate can be chosen from either the system or user equate
+ * list, both offered in {@link #baseEquateComboBox}, but {@link
  * EquateList#setRange} is always applied to the user equate list passed to
- * {@link #show}, matching {@code EquateRangeDialog::OnOK} and {@code
- * EquateListController::DefineUserAddressRange}.
+ * {@link #show}.
  *
  * @author Peter Dell
  */
@@ -123,7 +120,7 @@ public final class EquateRangeDialog extends JDialog {
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 	}
 
-	/** Ported from EquateRangeDialog::OnOK. Unlike the C++ version, a validation failure only shows the error - it never closes the dialog either way, so no explicit "keep it open" step is needed. */
+	/** Validates the fields and, if they check out, applies the range and closes the dialog; a validation failure just shows the error and leaves the dialog open. */
 	private void performOK() {
 		int startAddress = getAddress(startAddressField);
 		int endAddress = getAddress(endAddressField);
@@ -150,7 +147,7 @@ public final class EquateRangeDialog extends JDialog {
 		}
 	}
 
-	/** Ported from EditControl::GetAddress: an unparseable value is silently treated as 0, matching {@code swscanf(..., L"%04hX", ...)}'s behavior on no match. */
+	/** Parses a plain hexadecimal address field; an unparseable value is silently treated as 0. */
 	private static int getAddress(JTextField field) {
 		try {
 			return Integer.parseInt(field.getText().trim(), 16) & 0xFFFF;
@@ -159,7 +156,7 @@ public final class EquateRangeDialog extends JDialog {
 		}
 	}
 
-	/** Ported from EquateRangeDialog::FillCombobox, including the pre-selection of an equate matching {@code address}. */
+	/** Adds every non-range equate from {@code equateList}, pre-selecting one matching {@code address} if given. */
 	private void fillComboBox(EquateList equateList, boolean addressSpecified, int address) {
 		for (Equate equate : equateList.getEquates()) {
 			if (!equate.isRange()) {
@@ -172,11 +169,10 @@ public final class EquateRangeDialog extends JDialog {
 	}
 
 	/**
-	 * Ported from EquateRangeDialog::Show/InitDialog/OnOK, folded into one
-	 * blocking call as is idiomatic for a Swing modal {@link JDialog}.
-	 * {@code address}, if non-empty, is a plain (no "$" prefix) hexadecimal
-	 * address used to pre-select a matching base equate - not exercised by
-	 * any current caller (see {@code Dis6502}), same as the C++ version.
+	 * Opens the dialog as one blocking call, idiomatic for a Swing modal
+	 * {@link JDialog}. {@code address}, if non-empty, is a plain (no "$"
+	 * prefix) hexadecimal address used to pre-select a matching base equate -
+	 * not exercised by any current caller (see {@code Dis6502}).
 	 */
 	public boolean show(EquateList systemEquateList, EquateList userEquateList, String address) {
 		this.userEquateList = userEquateList;

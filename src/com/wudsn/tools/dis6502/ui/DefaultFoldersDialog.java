@@ -31,13 +31,11 @@ import com.wudsn.tools.dis6502.model.FolderType;
  * A dialog for editing the remembered default folder for each
  * {@link FolderType} of one computer system.
  * <p>
- * Ported from ui/DefaultFoldersDialog.h / DefaultFoldersDialog.cpp,
- * simplified: the C++ version's {@code ShellSelectFolder} (a raw
- * {@code IFileOpenDialog} COM call with {@code FOS_PICKFOLDERS}) becomes a
- * {@link JFileChooser} in {@link JFileChooser#DIRECTORIES_ONLY} mode. Like
- * the C++ version, {@link FolderType#UNKNOWN} has no field here - it
- * is never user-editable, only ever set from the application's own module
- * path (see {@code DefaultFoldersLogic.createDefaultFolders}).
+ * Folder selection uses a {@link JFileChooser} in {@link
+ * JFileChooser#DIRECTORIES_ONLY} mode. {@link FolderType#UNKNOWN} has no
+ * field here - it is never user-editable, only ever set from the
+ * application's own module path (see {@code
+ * DefaultFoldersLogic.createDefaultFolders}).
  *
  * @author Peter Dell
  */
@@ -110,7 +108,7 @@ public final class DefaultFoldersDialog extends JDialog {
 		setLocationRelativeTo(owner);
 	}
 
-	/** Ported from DefaultFoldersDialog::SelectFolder. */
+	/** Opens a directory chooser for {@code folderType}'s field. */
 	private void browse(FolderType folderType, JTextField field) {
 		JFileChooser fileChooser = new JFileChooser(field.getText());
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -121,8 +119,7 @@ public final class DefaultFoldersDialog extends JDialog {
 	}
 
 	/**
-	 * Ported from DefaultFoldersDialog::Show/SetDialogValues/GetDialogValues/
-	 * OnOK, folded into one blocking call as is idiomatic for a Swing modal
+	 * Opens the dialog as one blocking call, idiomatic for a Swing modal
 	 * {@link JDialog}. Returns {@code true}, and writes the edited values
 	 * back into {@code defaultFolders}, only if the user clicked OK.
 	 */

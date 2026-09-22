@@ -33,21 +33,14 @@ import com.wudsn.tools.dis6502.model.AtariFile;
  * A dialog for picking one executable file from an Atari DOS 2.x disk
  * image's directory.
  * <p>
- * Ported from ui/DiskImageExecutableFileDialog.h / .cpp. Unlike the C++
- * version, which stores only a {@code directoryIndex} per listbox item
- * (Win32 listbox item data is a single pointer-sized value) and re-reads
- * the full directory entry via {@code AtariDisk::GetFileFromIndex} when the
- * selection changes or OK is clicked, this stores each entry's already-
- * formatted display text and file name directly (an {@link Entry}) at
- * listing time, since {@link AtariFile} is a mutable, reused out-parameter
- * for {@link AtariDisk#findFirst}/{@link AtariDisk#findNext} - keeping a
- * reference to it across iterations would alias every list item onto
- * whatever the last directory entry happened to be. The listed text uses
- * {@link AtariFile#getDirectoryText()} (locked flag, 8.3 name, sector
- * count) rather than the C++ version's own inline {@code " %s %s %4hu
- * %4hu"} format (which also shows the start sector number) - close enough
- * for picking a file by name, and avoids duplicating formatting logic that
- * already exists on {@link AtariFile}.
+ * Stores each entry's already-formatted display text and file name
+ * directly (an {@link Entry}) at listing time, since {@link AtariFile} is
+ * a mutable, reused out-parameter for {@link AtariDisk#findFirst}/{@link
+ * AtariDisk#findNext} - keeping a reference to it across iterations would
+ * alias every list item onto whatever the last directory entry happened to
+ * be. The listed text uses {@link AtariFile#getDirectoryText()} (locked
+ * flag, 8.3 name, sector count) rather than duplicating that formatting
+ * logic here.
  *
  * @author Peter Dell
  */
@@ -120,7 +113,7 @@ public final class DiskImageExecutableFileDialog extends JDialog {
 		setLocationRelativeTo(owner);
 	}
 
-	/** Ported from DiskImageExecutableFileDialog::OnOK. */
+	/** Confirms the selected file and closes the dialog. */
 	private void performOK() {
 		Entry selected = filesList.getSelectedValue();
 		if (selected == null) {
@@ -132,11 +125,10 @@ public final class DiskImageExecutableFileDialog extends JDialog {
 	}
 
 	/**
-	 * Ported from DiskImageExecutableFileDialog::Show/InitDialog, folded
-	 * into one blocking call as is idiomatic for a Swing modal {@link
-	 * JDialog}. Returns {@code true} if the user picked a file and clicked
-	 * OK (or double-clicked it); {@link #getExecutableFileName} then gives
-	 * its name.
+	 * Opens the dialog as one blocking call, idiomatic for a Swing modal
+	 * {@link JDialog}. Returns {@code true} if the user picked a file and
+	 * clicked OK (or double-clicked it); {@link #getExecutableFileName} then
+	 * gives its name.
 	 */
 	public boolean show(AtariDisk atariDisk) throws IOException {
 		diskImageFilePathField.setText(atariDisk.getDiskImageFilePath());
