@@ -41,33 +41,19 @@ import com.wudsn.tools.dis6502.model.ProfileLogic;
  * A dialog for editing a {@link Profile}'s disassembly output syntax and
  * layout settings.
  * <p>
- * Ported from ui/ProfileDialog.h / ProfileDialog.cpp and the {@code
- * PROFILEBOX} resource in dis6502.rc, reorganized into three titled
- * sections ("General", "Directive Syntax", "Disassembly Listing", matching
- * the .rc's group boxes) stacked with plain Swing layout instead of the
- * .rc's pixel-exact control coordinates - see the {@code ui} package's
- * general porting note on Swing idioms vs. literal Win32 translation.
- * {@code ProfilesController} (a thin {@link ProfileLogic} plus file-chooser
- * wrapper) is folded directly into this class's Load/Save button handlers
- * instead of being ported separately.
+ * Reorganized into three titled sections ("General", "Directive Syntax",
+ * "Disassembly Listing") stacked with plain Swing layout. Load/Save
+ * button handlers fold a thin {@link ProfileLogic} plus file-chooser
+ * wrapper directly into this class, rather than a separate class.
  * <p>
- * The C++ version originally had a bug here, found while porting it: its
- * checkbox/radio-button change handler called {@code
- * GetDialogValues(*profile)} - writing the widgets' current values straight
- * into the real, caller-owned {@code profile} - purely to recompute the
- * other widgets' enabled state via the following {@code
- * SetDialogValues(*profile)}. Since {@code OnCancel} never reverted this,
- * clicking Cancel after toggling even one checkbox left the real {@code
- * Profile} object partially mutated. This port recomputes enabled state
- * against a private scratch {@link Profile} ({@link #workingProfile}) and
- * only writes into the real one passed to {@link #show} when the user
- * clicks OK, so Cancel is always a true no-op - the same "decouple the edit
- * session from the real model until commit" fix already applied to {@link
- * EquateDialog}. The C++ source has since been fixed the same way (see that
- * commit), using its own {@code workingProfile} member kept in sync via the
- * same {@code SetDialogValues}/{@code GetDialogValues} round trip, since
- * {@code Profile} cannot be copy-assigned there ({@code XML::Serializable}
- * explicitly deletes copy/move).
+ * Enabled state is recomputed against a private scratch {@link Profile}
+ * ({@link #workingProfile}), not the real one passed to {@link #show}:
+ * recomputing directly against the real object would leave it partially
+ * mutated if the user then clicked Cancel, since only the working copy
+ * gets discarded. The real object is written to only when the user clicks
+ * OK, so Cancel is always a true no-op - the same "decouple the edit
+ * session from the real model until commit" pattern used by {@link
+ * EquateDialog}.
  *
  * @author Peter Dell
  */
@@ -146,8 +132,7 @@ public final class ProfileDialog extends JDialog {
 		includeFileGroup.add(radioIncludeAllFiles);
 		includeFileGroup.add(radioIncludeNextFile);
 
-		// Ported from ProcessCommand's recursion-preventing "GetDialogValues then
-		// SetDialogValues" pattern, run against workingProfile (see class javadoc).
+		// Recomputes enabled state against workingProfile on every toggle (see class javadoc).
 		java.awt.event.ActionListener refreshListener = e -> refresh();
 		useHexCheckBox.addActionListener(refreshListener);
 		showZPAsByteCheckBox.addActionListener(refreshListener);
@@ -354,13 +339,13 @@ public final class ProfileDialog extends JDialog {
 		panel.add(field2, f2);
 	}
 
-	/** Ported from ProfileDialog::ProcessCommand's checkbox/radio-button "value changed" handling. */
+	/** Recomputes enabled state after a checkbox/radio-button toggle, without touching the real profile. */
 	private void refresh() {
 		getDialogValues(workingProfile);
 		setDialogValues(workingProfile);
 	}
 
-	/** Ported from ProfileDialog::SetDialogValues. */
+	/** Populates every field from {@code profile}. */
 	private void setDialogValues(Profile profile) {
 		commentField.setText(profile.commentPrefix);
 
@@ -433,7 +418,7 @@ public final class ProfileDialog extends JDialog {
 		maxIncludeLinesField.setText(String.valueOf(profile.directiveINCLUDEMaximumNumberOfLinesPerFile));
 	}
 
-	/** Ported from ProfileDialog::GetDialogValues. */
+	/** Writes every field's current value into {@code profile}. */
 	private void getDialogValues(Profile profile) {
 		profile.commentPrefix = commentField.getText();
 		profile.hexNotationPrefix = hexNotationField.getText();
@@ -489,7 +474,7 @@ public final class ProfileDialog extends JDialog {
 		profile.directiveINCLUDEMaximumNumberOfLinesPerFile = getNumber(maxIncludeLinesField);
 	}
 
-	/** Ported from EditControl::GetNumber: an unparseable value is silently treated as 0, matching {@code swscanf(..., L"%u", ...)}'s behavior on no match. */
+	/** Parses a non-negative integer field; an unparseable value is silently treated as 0. */
 	private static int getNumber(JTextField field) {
 		try {
 			int value = Integer.parseInt(field.getText().trim());
@@ -499,7 +484,7 @@ public final class ProfileDialog extends JDialog {
 		}
 	}
 
-	/** Ported from ProfileDialog::ProcessCommand's {@code ID_LOAD_PROFILE} case. */
+	/** Loads a profile file and applies it to the dialog's fields. */
 	private void performLoadProfile() {
 		File file = fileChoosers.chooseOpenFile(this, Texts.ProfileDialog_LoadFileTitle, FileType.PROFILE_FILE);
 		if (file == null) {
@@ -517,7 +502,7 @@ public final class ProfileDialog extends JDialog {
 		}
 	}
 
-	/** Ported from ProfileDialog::ProcessCommand's {@code ID_SAVE_PROFILE} case. */
+	/** Saves the dialog's current field values as a profile file. */
 	private void performSaveProfile() {
 		File file = fileChoosers.chooseSaveFile(this, Texts.ProfileDialog_SaveFileTitle, FileType.PROFILE_FILE, lastProfileFile);
 		if (file == null) {
@@ -531,12 +516,10 @@ public final class ProfileDialog extends JDialog {
 	}
 
 	/**
-	 * Ported from ProfileDialog::Show/InitDialog/OnOK/OnCancel, folded into
-	 * one blocking call as is idiomatic for a Swing modal {@link JDialog}.
-	 * Returns {@code true}, and writes the edited values back into {@code
-	 * profile}, only if the user clicked OK - see the class javadoc for why
-	 * that is a real behavioral improvement over the C++ version, not just
-	 * an implementation detail.
+	 * Opens the dialog as one blocking call, idiomatic for a Swing modal
+	 * {@link JDialog}. Returns {@code true}, and writes the edited values
+	 * back into {@code profile}, only if the user clicked OK - see the class
+	 * javadoc for why that matters, not just as an implementation detail.
 	 */
 	public boolean show(Profile profile, ComputerSystemType computerSystemType) {
 		this.computerSystemType = computerSystemType;
