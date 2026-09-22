@@ -31,29 +31,22 @@ import com.wudsn.tools.dis6502.model.MemoryType;
  * A read-only, custom-painted hex/ASCII dump of a {@link #setByteSource}'s
  * bytes, drawn with the real per-computer-system font from {@link
  * ComputerFont} instead of a Java system font - so every byte value (not
- * just the ones that happen to coincide with printable ASCII) renders as its
- * actual Atari ATASCII/C64 PETSCII character, matching what dis6502.exe
- * itself shows.
+ * just the ones that happen to coincide with printable ASCII) renders as
+ * its actual Atari ATASCII/C64 PETSCII character.
  * <p>
- * Ported from ui/MemoryInspectorControlImpl.cpp's {@code PrintLine} (address,
- * hex bytes color-coded by {@link MemoryType}, and the ASCII/ ATASCII column) -
- * not the rest of that class: this renders every line of the byte source as
- * one plain (if tall) component inside a {@link javax.swing.JScrollPane}, relying
- * on Swing's own clip-rect-based repaint for virtualization instead of
- * {@code PrintLine}/{@code ScrollUp}/{@code
- * ScrollDown}'s manual line-range/{@code BitBlt} scrolling.
- * {@link #offsetAtPoint} ports {@code LButtonDown}/{@code SetEndOfSelection}'s
- * pixel-to-byte mapping (the non-edit-mode case only), and this class's own
- * built-in {@link DragSelectionListener} wiring (see {@link
- * #setDragSelectionListener}) reproduces {@code LButtonDown}/{@code
- * SetEndOfSelection}/{@code LButtonUp}'s anchor-and-drag tracking, but with
- * {@link java.awt.event.MouseListener}/{@link java.awt.event.MouseMotionListener}
- * instead of mouse capture and manual {@code SetCapture}/{@code ReleaseCapture}
- * bookkeeping - Swing already delivers {@code mouseDragged} only to the
- * component that received the matching {@code mousePressed} while the
- * button stays down. Unlike the C++ source, dragging past the viewport's top
- * or bottom edge does not auto-scroll (no {@code SetEndOfSelection}-style
- * {@code VScroll} branch here); {@link #offsetAtPoint} simply clamps to the
+ * This renders every line of the byte source as one plain (if tall)
+ * component inside a {@link javax.swing.JScrollPane}, relying on Swing's
+ * own clip-rect-based repaint for virtualization rather than manual
+ * line-range scrolling. {@link #offsetAtPoint} handles the pixel-to-byte
+ * mapping (the non-edit-mode case only), and this class's own built-in
+ * {@link DragSelectionListener} wiring (see {@link
+ * #setDragSelectionListener}) tracks an anchor-and-drag selection using
+ * {@link java.awt.event.MouseListener}/{@link
+ * java.awt.event.MouseMotionListener}: Swing already delivers {@code
+ * mouseDragged} only to the component that received the matching {@code
+ * mousePressed} while the button stays down, so no manual mouse-capture
+ * bookkeeping is needed. Dragging past the viewport's top or bottom edge
+ * does not auto-scroll; {@link #offsetAtPoint} simply clamps to the
  * nearest visible line instead - a deliberate, minor simplification.
  * {@link #cellAtPoint} is {@link #offsetAtPoint}'s edit-mode sibling,
  * additionally resolving which hex nibble or ASCII character a point falls in
@@ -70,34 +63,27 @@ import com.wudsn.tools.dis6502.model.MemoryType;
  * #setByteSource}/{@link #setSelection} vs. the narrower, edit-mode-only
  * {@link #setMemoryInspectorState}.
  * <p>
- * {@link #getBytesPerLine} is responsive, not the fixed 16 it used to be:
- * ported from {@code Layout::Compute}'s own {@code
- * memoryInspectorNumberOfBytesPerLine} decision, which drops from 16 to 8
- * once the *whole* main window is narrower than a fixed 152-column
- * threshold (computed once per window resize by that hand-rolled manual
- * layout system, which positions every panel from the window's raw pixel
- * dimensions). This class has no equivalent whole-window computation to
- * hook into - {@code MainWindow} nests ordinary {@link
- * javax.swing.JSplitPane}s instead - so {@link #updateBytesPerLine} reacts
- * to this component's own enclosing {@link javax.swing.JScrollPane}
- * viewport's width instead (already reduced correctly for whatever room
- * the surrounding split panes end up giving this panel): wide enough to
- * fit all 16 bytes/line without horizontal scrolling, and it does; too
- * narrow, and it drops to 8. {@link MutableMemoryInspectorState#moveEditCursor}'s
- * Up/Down navigation needs this same value for its whole-line jump, so it
- * takes it as a parameter from {@link MemoryInspectorPanel} rather than
- * owning any bytes-per-line concept of its own - a UI-computed fact like
- * this has no business being model state.
+ * {@link #getBytesPerLine} is responsive, not a fixed 16: {@link
+ * #updateBytesPerLine} reacts to this component's own enclosing {@link
+ * javax.swing.JScrollPane} viewport's width (already reduced correctly for
+ * whatever room the surrounding split panes end up giving this panel),
+ * comparing it against the actual pixel width 16 bytes/line would need at
+ * the current {@link ComputerFont}'s glyph width - wide enough, and it
+ * shows all 16 bytes/line without horizontal scrolling; too narrow, and it
+ * drops to 8. {@link MutableMemoryInspectorState#moveEditCursor}'s Up/Down
+ * navigation needs this same value for its whole-line jump, so it takes it
+ * as a parameter from {@link MemoryInspectorPanel} rather than owning any
+ * bytes-per-line concept of its own - a UI-computed fact like this has no
+ * business being model state.
  * <p>
  * The selection range is read live from {@link #setSelection}'s {@link
  * ByteRangeSelection}, and the edit-mode cursor from {@link
  * #setMemoryInspectorState}'s {@link MemoryInspectorState} - this class does
  * not own or mirror either as its own fields, it just paints whatever they
- * currently say (matching {@code Char}/{@code KeyDown}'s edit mode and its
- * blinking-cursor {@code WM_TIMER}, ported in {@link #paintLine} and {@link
- * #advanceBlinkPhase}) - see {@link MemoryInspectorPanel} for the
- * keyboard/focus/timer wiring that mutates the state and then calls {@link
- * #refreshSelection}/{@link #refreshEditMode}/{@link #refreshEditCursor} to
+ * currently say (see {@link #paintLine} and {@link #advanceBlinkPhase} for
+ * the edit mode and its blinking cursor) - see {@link MemoryInspectorPanel}
+ * for the keyboard/focus/timer wiring that mutates the state and then calls
+ * {@link #refreshSelection}/{@link #refreshEditMode}/{@link #refreshEditCursor} to
  * ask this class to notice. {@link #byteSource}, by contrast, stays an
  * explicit, separately-pushed field via {@link #setByteSource} rather than
  * read from {@code MemoryInspectorState.getSegment()} directly: {@code
@@ -108,13 +94,11 @@ import com.wudsn.tools.dis6502.model.MemoryType;
  * painter; {@link DiskImageSectorsDialog} never calls {@link
  * #setMemoryInspectorState} at all, since it has no edit mode.
  * <p>
- * {@code PrintLine}'s hex-byte/ASCII-column color, including its LOBYTE/
- * HIBYTE-adjacency-to-CODE-color rule, is ported verbatim (see
- * {@link #computeDisplayType}) since it directly affects what a real, already
- * pixel-accurate rendering should look like; its {@code cOldType} reset once
- * per displayed line (not once per segment) is preserved by resetting
- * {@code oldType} at the start of each line's row loop here too, the same scope
- * {@code PrintLine} has (it is called once per line).
+ * {@link #computeDisplayType}'s hex-byte/ASCII-column color, including its
+ * LOBYTE/HIBYTE-adjacency-to-CODE-color rule, directly affects what a
+ * real, pixel-accurate rendering should look like; its type-tracking state
+ * resets once per displayed line (not once per segment), by resetting
+ * {@code oldType} at the start of each line's row loop.
  * <p>
  * Cell dimensions come straight from {@link ComputerFont#getGlyphWidth}/
  * {@link ComputerFont#getGlyphHeight} - already scaled for on-screen
@@ -255,13 +239,10 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Ported from {@code Layout::Compute}'s {@code
-	 * memoryInspectorNumberOfBytesPerLine} decision - see this class's own
-	 * javadoc for the full explanation of what this reacts to instead of
-	 * the C++ source's whole-window column count. A no-op until {@link
-	 * #computerFont} is known (glyph width isn't available yet to size the
-	 * comparison), and whenever the result doesn't actually change from
-	 * the current value.
+	 * See this class's own javadoc for the full explanation of what this
+	 * reacts to. A no-op until {@link #computerFont} is known (glyph width
+	 * isn't available yet to size the comparison), and whenever the result
+	 * doesn't actually change from the current value.
 	 */
 	private void updateBytesPerLine() {
 		if (computerFont == null) {
@@ -322,13 +303,11 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Ported from the selection-highlight side of {@code PrintLine}/{@code
-	 * Refresh}: call after {@link #setMemoryInspectorState}'s selection range
-	 * changes (a new selection, or it being cleared). Repaints unconditionally
-	 * (cheap: the highlight itself, not the whole grid's content, is what
-	 * changed) and, only while there actually is a selection, scrolls its
-	 * first byte into view - matching {@code MemoryInspector::Select}'s own
-	 * scroll-to-selection behavior; clearing a selection never scrolls.
+	 * Call after {@link #setMemoryInspectorState}'s selection range changes (a
+	 * new selection, or it being cleared). Repaints unconditionally (cheap:
+	 * the highlight itself, not the whole grid's content, is what changed)
+	 * and, only while there actually is a selection, scrolls its first byte
+	 * into view; clearing a selection never scrolls.
 	 */
 	public void refreshSelection() {
 		repaint();
@@ -343,12 +322,9 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Ported from {@code MemoryInspector::SetEditMode}'s effect on the control:
-	 * switches the cursor-highlight painting on/off (mutually exclusive with the
-	 * plain selection highlight - see {@code !bEditMode}'s gate on
-	 * {@code PrintLine}'s selection-highlight block) and resets the blink phase,
-	 * matching {@code SetEditMode(TRUE, ...)}'s {@code SetTimerCount(0)}. Call
-	 * after {@link #setMemoryInspectorState}'s {@code isEditMode()} changes.
+	 * Switches the cursor-highlight painting on/off (mutually exclusive with
+	 * the plain selection highlight) and resets the blink phase. Call after
+	 * {@link #setMemoryInspectorState}'s {@code isEditMode()} changes.
 	 */
 	public void refreshEditMode() {
 		this.blinkPhase = 0;
@@ -362,9 +338,7 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 	/**
 	 * Call after {@link #setMemoryInspectorState}'s edit cursor offset/pane
 	 * changes: scrolls the new position into view and repaints just the old
-	 * and new cursor lines - not the whole grid, unlike {@code
-	 * MemoryInspectorControlImpl::Refresh}'s full-panel repaint on every
-	 * change.
+	 * and new cursor lines - not the whole grid.
 	 */
 	public void refreshEditCursor() {
 		int offset = getEditCursorOffset();
@@ -423,15 +397,13 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Maps a point to the exact hex nibble or ASCII character under it, ported
-	 * from {@code MemoryInspectorControlImpl::LButtonDown}/{@code
-	 * SetEndOfSelection}'s edit-mode pixel math - {@link #offsetAtPoint}'s
-	 * sibling, used only for positioning the in-place edit cursor (double-click-
-	 * to-edit-at-position). Unlike the C++ source's {@code WORD} (unsigned
-	 * 16-bit) arithmetic, which relies on wraparound-then-clamp for an
-	 * out-of-range low x, this clamps both ends explicitly, since Java's signed
-	 * int arithmetic would otherwise produce a small negative row instead of a
-	 * huge positive one. Returns {@code null} if there is no segment displayed.
+	 * Maps a point to the exact hex nibble or ASCII character under it -
+	 * {@link #offsetAtPoint}'s sibling, used only for positioning the
+	 * in-place edit cursor (double-click-to-edit-at-position). Clamps both
+	 * ends of the pixel math explicitly, since a negative pixel coordinate
+	 * would otherwise produce a small negative row rather than being
+	 * treated as the leftmost/topmost one. Returns {@code null} if there is
+	 * no segment displayed.
 	 */
 	public CellHit cellAtPoint(int x, int y) {
 		if (byteSource == null || computerFont == null) {
@@ -462,14 +434,13 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Maps a point within this grid to the byte offset under it, ported from
-	 * {@code MemoryInspectorControlImpl::LButtonDown}/{@code
-	 * SetEndOfSelection}'s pixel-to-line/row mapping (the non-edit-mode case only -
-	 * this port has no in-place hex editing) - clicking left of the hex pane (the
-	 * address gutter) maps to row 0, matching the C++ source, and a point past the
-	 * last line/row clamps to the nearest valid one rather than returning no match,
-	 * so a drag that leaves the grid still extends the selection sensibly. Returns
-	 * -1 if there is no segment displayed or it has no bytes.
+	 * Maps a point within this grid to the byte offset under it - the plain,
+	 * non-edit-mode case; see {@link #cellAtPoint} for placing the in-place
+	 * edit cursor. Clicking left of the hex pane (the address gutter) maps
+	 * to row 0, and a point past the last line/row clamps to the nearest
+	 * valid one rather than returning no match, so a drag that leaves the
+	 * grid still extends the selection sensibly. Returns -1 if there is no
+	 * segment displayed or it has no bytes.
 	 */
 	public int offsetAtPoint(int x, int y) {
 		if (byteSource == null || computerFont == null) {
@@ -497,10 +468,7 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 		return line * bytesPerLine + row;
 	}
 
-	/**
-	 * Ported from PrintLine's cType computation (the
-	 * LOBYTE/HIBYTE-adjacency-to-CODE-color rule).
-	 */
+	/** The LOBYTE/HIBYTE-adjacency-to-CODE-color rule - see this class's own javadoc. */
 	private MemoryType computeDisplayType(int offset, MemoryType oldType) {
 		MemoryType type = byteSource.getType(offset);
 		if (offset > 0) {
@@ -518,8 +486,10 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Ported from MemoryInspectorPanel's (formerly MemoryInspectorControlImpl.cpp
-	 * PrintLine's) bInternal transform.
+	 * The ASCII-to-"internal" (Atari screen code) DISPLAY-direction
+	 * transform, covering the full 0-255 byte range - see {@link
+	 * com.wudsn.tools.dis6502.model.MemoryType#toSbyteInternalCode}'s
+	 * javadoc for the WRITE-direction counterpart.
 	 */
 	private static int toInternalCode(int value) {
 		if (value < 64) {

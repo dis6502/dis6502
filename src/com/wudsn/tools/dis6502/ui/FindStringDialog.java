@@ -9,17 +9,10 @@ package com.wudsn.tools.dis6502.ui;
  * Keeps a search string's ASCII and hexadecimal-bytes representations in
  * sync, as typed into either of a find dialog's two linked text fields.
  * <p>
- * Ported from ui/FindStringDialog.h / FindStringDialog.cpp. Despite the
- * name (kept for traceability back to the C++ class), this is a plain
- * value/conversion helper, not a dialog itself - it is composed into an
- * actual dialog ({@link MemoryInspectorFindStringDialog}) the same way the
- * C++ version is composed into {@code MemoryInspectorFindStringDialog}/
- * {@code DisassemblyFindStringDialog}. Unlike the C++ version, which reads
- * and writes a dialog's edit controls directly (via a passed-in {@code
- * Dialog&}) and manages fixed-size buffers sized from {@code nMaxChars},
- * this works on plain {@link String}s passed in and returned by the
- * caller - {@code nMaxChars} has no Java equivalent, since a
- * {@link javax.swing.JTextField} does not need a preallocated buffer size.
+ * Despite the name, this is a plain value/conversion helper, not a dialog
+ * itself - it is composed into an actual dialog ({@link
+ * MemoryInspectorFindStringDialog}). Works on plain {@link String}s passed
+ * in and returned by the caller.
  *
  * @author Peter Dell
  */
@@ -36,25 +29,25 @@ public final class FindStringDialog {
 		return hexString;
 	}
 
-	/** Ported from FindStringDialog::SetAsciiString. */
+	/** Sets {@link #asciiString} and recomputes {@link #hexString} from it. */
 	public void setAsciiString(String asciiString) {
 		this.asciiString = asciiString;
 		convertAsciiStringToHexString();
 	}
 
-	/** Ported from FindStringDialog::AsciiStringToHexString: updates both fields from a newly-typed ASCII string. */
+	/** Updates both fields from a newly-typed ASCII string. */
 	public boolean asciiStringToHexString(String asciiFieldText) {
 		this.asciiString = asciiFieldText;
 		return convertAsciiStringToHexString();
 	}
 
-	/** Ported from FindStringDialog::HexStringToAsciiString: updates both fields from a newly-typed hex string. */
+	/** Updates both fields from a newly-typed hex string. */
 	public boolean hexStringToAsciiString(String hexFieldText) {
 		this.hexString = hexFieldText;
 		return convertHexStringToAsciiString();
 	}
 
-	/** Ported from FindStringDialog::ConvertAsciiStringToHexString. */
+	/** Recomputes {@link #hexString} from {@link #asciiString}. */
 	private boolean convertAsciiStringToHexString() {
 		StringBuilder builder = new StringBuilder();
 		for (int i = 0; i < asciiString.length(); i++) {
@@ -65,11 +58,10 @@ public final class FindStringDialog {
 	}
 
 	/**
-	 * Ported from FindStringDialog::ConvertHexStringToAsciiString: each
-	 * space-separated token is one or two hex digits - a lone digit is
-	 * treated as the low nibble of a byte (high nibble 0), matching the
-	 * C++ version's {@code "0x00"} padding. Returns {@code false}, leaving
-	 * {@link #asciiString} unset, if any token is not valid hex.
+	 * Each space-separated token is one or two hex digits - a lone digit is
+	 * treated as the low nibble of a byte (high nibble 0). Returns {@code
+	 * false}, leaving {@link #asciiString} unset, if any token is not valid
+	 * hex.
 	 */
 	private boolean convertHexStringToAsciiString() {
 		StringBuilder builder = new StringBuilder();
