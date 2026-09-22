@@ -11,15 +11,9 @@ import com.wudsn.tools.base.common.Log;
  * A minimal, dependency-free assertion helper for the hand-rolled test
  * harness.
  * <p>
- * Ported from Assertions.h / Assertions.cpp ({@code Assert}/{@code
- * AssertionError}). The C++ version has separate overloads for byte/long/
- * pointer/string comparisons (since C++ has no common numeric or reference
- * supertype); Java's {@code long} covers every integer comparison the
- * ported tests need, so {@code ByteEquals} is not ported separately, and
- * {@code java.lang.AssertionError} is thrown directly instead of porting a
- * dedicated {@code AssertionError} class. {@code PointerEquals} is not
- * ported (no test needs it); {@code PointerNotNull} is ported as {@link
- * #notNull}.
+ * Java's {@code long} covers every integer comparison the tests need, and
+ * {@code java.lang.AssertionError} is thrown directly rather than a
+ * dedicated class.
  *
  * @author Peter Dell
  */
@@ -64,7 +58,6 @@ public final class Assert {
 		}
 	}
 
-	/** Ported from {@code Assert::PointerEquals(actual, nullptr)}. */
 	public static void isNull(Object actual) {
 		if (actual != null) {
 			logValue("Actual Value  ", String.valueOf(actual));

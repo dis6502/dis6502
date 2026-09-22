@@ -11,12 +11,7 @@ import java.io.IOException;
 import com.wudsn.tools.dis6502.Application;
 
 /**
- * Ported from {@code MainTest::TestWorkspace} (C++'s {@code MainTest.cpp},
- * itself only reachable through the console-mode self-test harness
- * ({@code MainUITest.cpp}/the {@code /TEST:} command-line modes) that this
- * port does not have - see gap #5's history in {@code
- * plans/REMAINING_GAPS_OVERVIEW.md} for why only this method's two concrete
- * checks were worth recovering, not the harness itself.
+ * Covers {@link WorkspaceLogic}.
  *
  * @author Peter Dell
  */
@@ -37,7 +32,7 @@ public final class WorkspaceLogicTest {
 		Assert.log("WorkspaceLogicTest completed");
 	}
 
-	/** Ported from the first half of {@code MainTest::TestWorkspace}: loading a real, non-trivial workspace file must succeed. */
+	/** Loading a real, non-trivial workspace file must succeed. */
 	private static void testLoad() {
 		Application application = new Application();
 		WorkspaceLogic workspaceLogic = new WorkspaceLogic(application);
@@ -48,11 +43,11 @@ public final class WorkspaceLogicTest {
 	}
 
 	/**
-	 * New (not ported): every computer system that ships a system equates
-	 * file must load it completely (every line of the file yields exactly
-	 * one equate, so a count equal to the file's line count proves no line
-	 * was rejected), a system without one must end up empty, and switching
-	 * systems must replace - not append to - the previous system's equates.
+	 * Every computer system that ships a system equates file must load it
+	 * completely (every line of the file yields exactly one equate, so a
+	 * count equal to the file's line count proves no line was rejected), a
+	 * system without one must end up empty, and switching systems must
+	 * replace - not append to - the previous system's equates.
 	 */
 	private static void testLoadSystemEquates() {
 		Application application = new Application();
@@ -89,10 +84,10 @@ public final class WorkspaceLogicTest {
 	}
 
 	/**
-	 * New (not ported): a workspace for a system other than the Atari 800 -
-	 * {@code HelloWorld.prg} loaded as C64, its BASIC stub marked as bytes,
-	 * its machine code traced, two user comments added - must load with all
-	 * of that intact, and must survive being saved and loaded again.
+	 * A workspace for a system other than the Atari 800 - {@code
+	 * HelloWorld.prg} loaded as C64, its BASIC stub marked as bytes, its
+	 * machine code traced, two user comments added - must load with all of
+	 * that intact, and must survive being saved and loaded again.
 	 */
 	private static void testC64Workspace() throws IOException {
 		Application application = new Application();
@@ -135,13 +130,12 @@ public final class WorkspaceLogicTest {
 	}
 
 	/**
-	 * Ported from the second half of {@code MainTest::TestWorkspace}: a
-	 * segment with two user comments split at offset 0x80 must end up with
+	 * A segment with two user comments split at offset 0x80 must end up with
 	 * each half's comment surviving at its correctly rebased offset - the
 	 * same {@link Segment#splitAt} comment-rebasing loop {@link
 	 * SegmentTest#testSegmentRangeEdit} covers for {@link
-	 * Segment#deleteRange}/{@link Segment#insertRange}, recovered here as a
-	 * second, independent set of hand-computed values from the C++ source.
+	 * Segment#deleteRange}/{@link Segment#insertRange}, checked here with a
+	 * second, independent set of hand-computed values.
 	 */
 	private static void testSplitAtRebasesComments() {
 		Workspace workspace = new Workspace(new ComputerSystemFactory());

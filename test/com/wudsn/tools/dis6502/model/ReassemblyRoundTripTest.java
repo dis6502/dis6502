@@ -14,29 +14,23 @@ import java.util.function.Consumer;
 import com.wudsn.tools.dis6502.Application;
 
 /**
- * Ported from the one part of {@code MainTest::ExecuteUnitTestItem}/{@code
- * ExecuteVariant} (C++'s {@code MainTest.cpp}, reachable only through the
- * console-mode self-test harness this port does not have - see gap #5's
- * history in {@code plans/REMAINING_GAPS_OVERVIEW.md}) worth recovering on
- * its own: for each of four real fixture programs, disassemble it, feed the
- * disassembly listing back through the real MADS assembler
- * ({@code test-resources/asm/mads/mads.exe}, the same binary C++'s own test
- * suite vendors under {@code tst/suite/asm/mads}), and assert the
- * reassembled binary is byte-for-byte identical to a known-good reference -
- * an end-to-end check that the disassembler's output is actually correct,
- * not just that individual methods behave as expected.
+ * For each of four real fixture programs, disassembles it, feeds the
+ * disassembly listing back through the real MADS assembler ({@code
+ * test-resources/asm/mads/mads.exe}), and asserts the reassembled binary
+ * is byte-for-byte identical to a known-good reference - an end-to-end
+ * check that the disassembler's output is actually correct, not just that
+ * individual methods behave as expected.
  * <p>
- * Unlike C++'s {@code ExecuteVariant}, which sweeps up to 16 notation-flag
- * combinations per fixture, this runs the default {@link Profile} for every
- * fixture and one more run with the operand-changing flags flipped for two
- * of them: a round trip can only show that a variant still assembles to the
- * same bytes, and one run with all of them flipped shows that as well as
- * sixteen do; whether each flag changes the text the way it should is
- * {@link ProfileNotationTest}'s job. The real Atari 800 system equates are
+ * Runs the default {@link Profile} for every fixture and one more run
+ * with the operand-changing flags flipped for two of them: a round trip
+ * can only show that a variant still assembles to the same bytes, and one
+ * run with all of them flipped shows that as well as more would; whether
+ * each flag changes the text the way it should is {@link
+ * ProfileNotationTest}'s job. The real Atari 800 system equates are
  * loaded the same way the application does it, so the listing references
  * genuine OS/hardware labels and must still reassemble byte-exactly. A
- * fifth, C64 unit (new, not ported) does the same for a system other than
- * the Atari 800, with {@code C64.equ}'s labels.
+ * fifth, C64 unit does the same for a system other than the Atari 800,
+ * with {@code C64.equ}'s labels.
  *
  * @author Peter Dell
  */
@@ -61,7 +55,7 @@ public final class ReassemblyRoundTripTest {
 		testUnit("unit004", FileType.WORKSPACE_FILE, "test-resources/disassembly/unit004/in/predux-220810.wrk",
 				"test-resources/disassembly/unit004/ref/predux-220810.xex");
 
-		// New (not ported): a C64 workspace, checked against the very .prg it was made from.
+		// A C64 workspace, checked against the very .prg it was made from.
 		testUnit("c64", FileType.WORKSPACE_FILE, "test-resources/system/c64/HelloWorld.wrk",
 				"test-resources/system/c64/HelloWorld.prg");
 
