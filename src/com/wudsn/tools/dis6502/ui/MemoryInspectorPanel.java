@@ -732,16 +732,14 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from the non-LOBYTE/HIBYTE branch of {@code
-	 * MemoryInspector::SetType} - the LOBYTE/HIBYTE case needs a dialog
-	 * ({@link LowHighByteDialog}) to ask for the other, unknown half of the
-	 * "assumed word", and stricter validation (a single-byte selection, not at
-	 * offset 0, on an immediate-mode instruction's operand), so {@code Dis6502}
-	 * handles that case directly instead of calling this method - see
-	 * {@code Dis6502#performSetMemoryInspectorType}. The caller is responsible for
-	 * re-running the disassembly afterward (matching {@code Refresh()}'s
-	 * {@code UpdateDisassembly} call), since this panel does not trigger that
-	 * itself - see {@link DisassemblyPanel}.
+	 * The LOBYTE/HIBYTE case needs a dialog ({@link LowHighByteDialog}) to ask
+	 * for the other, unknown half of the "assumed word", and stricter
+	 * validation (a single-byte selection, not at offset 0, on an
+	 * immediate-mode instruction's operand), so {@code Dis6502} handles that
+	 * case directly instead of calling this method - see {@code
+	 * Dis6502#performSetMemoryInspectorType}. The caller is responsible for
+	 * re-running the disassembly afterward, since this panel does not
+	 * trigger that itself - see {@link DisassemblyPanel}.
 	 */
 	public void setType(MemoryType type) {
 		if (memoryInspectorState == null || !memoryInspectorState.hasSelection()) {
@@ -767,12 +765,11 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from MemoryInspector::SetUnknownBlockToByte
-	 * (IDM_DUMP_SET_UNKNOWN_BLOCK_TO_BYTE): reclassifies every byte in the
-	 * selection that is still {@link MemoryType#UNKNOWN} - and not the repurposed
-	 * type slot right after a {@link MemoryType#LOBYTE}/{@link MemoryType#HIBYTE}
-	 * byte (see {@link MemoryType}'s javadoc) - as {@link MemoryType#BYTE}. Like
-	 * {@link #setType}, the caller is responsible for re-running the disassembly
+	 * Reclassifies every byte in the selection that is still {@link
+	 * MemoryType#UNKNOWN} - and not the repurposed type slot right after a
+	 * {@link MemoryType#LOBYTE}/{@link MemoryType#HIBYTE} byte (see {@link
+	 * MemoryType}'s javadoc) - as {@link MemoryType#BYTE}. Like {@link
+	 * #setType}, the caller is responsible for re-running the disassembly
 	 * afterward.
 	 */
 	public void setUnknownBlockToByte() {
@@ -796,10 +793,9 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from MemoryInspector::Guess (IDM_DUMP_START_CODE_TRACE): runs
-	 * {@link GuessCodeLogic} starting from the selection's first byte. Like
-	 * {@link #setType}/{@link #setUnknownBlockToByte}, the caller is responsible
-	 * for re-running the disassembly afterward.
+	 * Runs {@link GuessCodeLogic} starting from the selection's first byte.
+	 * Like {@link #setType}/{@link #setUnknownBlockToByte}, the caller is
+	 * responsible for re-running the disassembly afterward.
 	 */
 	public void guess() {
 		if (memoryInspectorState == null || !memoryInspectorState.hasSelection()) {
@@ -820,21 +816,17 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from {@code MainMemoryInspector::Edit} (F2/{@code IDM_DUMP_EDIT}):
-	 * enters edit mode at the current selection's first byte, snapping a
-	 * multi-byte selection down to that one byte - matching {@code
-	 * MemoryInspector::SetEditMode}'s {@code IsEmpty()} guard and its
-	 * {@code SetSelection(nBegin, nBegin)} call - with the cursor starting on the
-	 * hex pane's high nibble.
+	 * Enters edit mode at the current selection's first byte, snapping a
+	 * multi-byte selection down to that one byte, with the cursor starting
+	 * on the hex pane's high nibble.
 	 */
 	public void enterEditMode() {
 		enterEditModeAt(-1, EditPane.HEX_HIGH);
 	}
 
 	/**
-	 * Ported from {@code MemoryInspectorControlImpl::LButtonDblClk}'s two-step
-	 * sequence: enters edit mode the normal way (snapping to the selection's
-	 * first byte), then immediately repositions the cursor to the exact nibble/
+	 * Enters edit mode the normal way (snapping to the selection's first
+	 * byte), then immediately repositions the cursor to the exact nibble/
 	 * character double-clicked.
 	 */
 	private void enterEditModeAtPoint(int x, int y) {
@@ -873,15 +865,13 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from {@code MainController::QuitEditMode}: leaves edit mode, if it
-	 * was active - a no-op otherwise, matching the C++ source's {@code
-	 * oldEditMode} check. Unlike the C++ source, this is the single exit point
-	 * for every way edit mode can end (Esc, {@link #quitEditModeMenuItem},
-	 * typing past the end of the buffer, or the segment changing), so the
-	 * selection-resync below and {@link #editModeExitedListener} both fire
-	 * uniformly on every exit - see this class's javadoc for the two C++ exit
-	 * quirks this fixes. {@link MutableMemoryInspectorState#quitEditMode()} only
-	 * releases the model-level lock; the UI-facing consequences (the
+	 * Leaves edit mode, if it was active - a no-op otherwise. This is the
+	 * single exit point for every way edit mode can end (Esc, {@link
+	 * #quitEditModeMenuItem}, typing past the end of the buffer, or the
+	 * segment changing), so the selection-resync below and {@link
+	 * #editModeExitedListener} both fire uniformly on every exit - see this
+	 * class's javadoc. {@link MutableMemoryInspectorState#quitEditMode()}
+	 * only releases the model-level lock; the UI-facing consequences (the
 	 * selection resync, the grid/blink-timer state, notifying {@link
 	 * #editModeExitedListener}) stay this method's job, not that one's.
 	 */
@@ -982,13 +972,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		e.consume();
 	}
 
-	/**
-	 * Ported from the enablement logic in MemoryInspectorPopupMenu::Update for
-	 * IDM_DUMP_FIND/IDM_DUMP_FIND_NEXT/IDM_DUMP_SELECT_ALL/
-	 * IDM_DUMP_SELECT_NEXT_UNKNOWN_BLOCK/IDM_DUMP_SAVE_NO_HEADER/
-	 * IDM_DUMP_SAVE_HEADER/IDM_DUMP_SPLIT_AT_SELECTION/
-	 * IDM_DUMP_SET_UNKNOWN_BLOCK_TO_BYTE and the type submenu's enablement.
-	 */
+	/** Enables/disables every popup item (and the type submenu) based on whether a segment/selection exists. */
 	private void updatePopupMenuItemsState() {
 		findMenuItem.setEnabled(canFind(true));
 		findNextMenuItem.setEnabled(canFind(false));
@@ -1017,7 +1001,7 @@ public final class MemoryInspectorPanel extends JPanel {
 				&& memoryInspectorState.getSegment().canSplitAt(memoryInspectorState.getBegin()));
 	}
 
-	/** Ported from MemoryInspector::HasFindString. */
+	/** Whether a find string has been set. */
 	public boolean hasFindString() {
 		return !findText.isEmpty();
 	}
@@ -1030,7 +1014,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		return findAllSegments;
 	}
 
-	/** Ported from MemoryInspector::CanFind. */
+	/** Whether {@link #findNextString} (or a first {@link #findString}) can currently run. */
 	public boolean canFind(boolean first) {
 		if (memoryInspectorState == null || memoryInspectorState.getSegment() == null) {
 			return false;
@@ -1041,7 +1025,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		return true;
 	}
 
-	/** Ported from MemoryInspector::FindString. */
+	/** Starts a fresh search for {@code findAscii}, from the beginning. */
 	public boolean findString(String findAscii, boolean allSegments) {
 		findSegmentIndex = allSegments ? 0 : memoryInspectorState.getSegmentIndex();
 		findText = findAscii;
@@ -1052,11 +1036,9 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from MemoryInspector::FindNextString, minus the "not found" alert -
-	 * unlike the C++ version, which shows it itself via {@code
-	 * FindStringDialog::ShowStringNotFoundMessage}, that is left to the caller here
-	 * (see {@code Dis6502}), matching how the rest of this class stays free of its
-	 * own popups.
+	 * Continues the search, minus the "not found" alert - that is left to the
+	 * caller (see {@code Dis6502}), matching how the rest of this class stays
+	 * free of its own popups.
 	 */
 	public boolean findNextString() {
 		if (findSegmentIndex != SegmentList.NO_SEGMENT_INDEX) {
@@ -1079,7 +1061,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		return false;
 	}
 
-	/** Ported from MemoryInspector::SearchString. */
+	/** Searches {@code segment} from {@link #findOffset}; selects and returns true on a match. */
 	private boolean searchString(int segmentIndex, Segment segment) {
 		int size = segment.getSize();
 		if (size < findSize) {
