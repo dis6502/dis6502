@@ -1,0 +1,132 @@
+(C'est un fichier DOS, alors les accents sous windows...)
+
+Salut, alors voila le format des cassettes Oric.
+D'abord, il n'y a g‚n‚ralement pas d'extension au nom du fichier.
+Ca peut-ˆtre soit "Defender" soit "defender.tap" soit "defender.k7".
+En bref, pour savoir si c'est une K7 oric, il ne faut pas se baser sur
+le nom, mais plut“t sur l'entˆte !
+Donc, voila le format que l'on a en g‚n‚ral:
+
+
+- $16 $16 $16 $24
+	Octets de synchronisation
+	(En g‚n‚ral, il y a 3x$16, mais on en trouve plus sur certaines
+	vieilles K7.)
+
+- $00 $00
+	Je ne sais pas … quoi ca sert. Je n'ai toujours trouv‚ que 0 !
+
+- a b
+	Si [a] vaut $00, c'est un fichier basic. Sinon, c'est un fichier
+	de type binaire. En g‚n‚ral, on trouve $80 pour les fichiers en
+	assembleur. Parfois, c'est $01.
+	Si [b] vaut $00, il ne s'ex‚cute pas automatiquement au chargement,
+	si b vaut $C7, c'est un auto-ex‚cutable.
+	(en clair, $80 $C7 -> Code assembleur … lancer)
+
+- a b
+	[a] est l'octet de poids fort de l'adresse de FIN o— il faut charger
+	le fichier, et [b] est l'octet de poids faible.
+
+- a b
+	Pareil pour l'adresse de d‚part.
+
+- $00
+
+- "...."
+	Une chaine de caractŠre d'au maximum 15 octets.
+
+- $00
+	Un octet qui indique la fin du nom.
+
+- $xx
+	Le fichier lui-mˆme !
+
+
+Il peut-y a voir plusieurs fichiers … suivre dans la mˆme K7. En g‚n‚ral, il
+y a un loader (en Basic), qui charge une image directement dans l'adresse
+‚cran, et ‚ventuellement d'autre morceaux du programme (en asm 6502).
+
+
+Adresses int‚ressantes:
+
+(.B)	-> Un octet
+(.W)	-> Une valeur sur 16 bits
+
+PAGE 0
+
+$031	.b	LINWID
+		Largeur de l'‚cran (40 par d‚faut) en caractŠres
+
+$094	.w	TXTTAB
+		D‚but du programme basic.
+
+$9C	.w	VARTAB
+		D‚but des variables basic.
+
+$9E	.w	ARYTAB
+		D‚but des tableaux basic.
+
+$A0	.w	STREND
+		Fin des variables.
+
+$A6	.w	MEMSIZ
+		Sommet de la m‚moire disponible
+
+
+
+PAGE 2
+
+$208	.b	KEYAD
+		Valeur de la derniŠre touche enfonc‚e
+$209	.b	KBSTAT
+		$a4=LSHIFT
+		$a7=RSHIFT
+		$a2=CTRL
+		$a5=FUNCT
+
+$20c	.b	CAPLCK
+		$ff=majuscules
+		$7f=minuscules
+
+$213	.b	PAT
+		Motif binaire pour l'affichage des lignes et cercles.
+
+$219	.b	CURX
+		Position horizontale du curseur en HIRES
+
+$21a	.b	CURY
+		Position verticale du curseur en HIRES
+
+$21f	.b	GRA
+		1=HIRES
+		0=TEXT/LORES
+
+$220	.b	SXTNK
+		1=Oric 16k
+		sinon, Oric 48k
+
+$238	.w	XVDU:	Pointeur sur routine VDU
+$23b	.w	XGETKY: Pointeur sur routine GTORKB
+$23e	.w	XPRTCH: Pointeur sur routine PRTCHR
+$241	.w	XSTOUT: Pointeur sur routine STOUT
+$244	.w	INTFS:	Pointeur sur handler d'interuptions
+$247	.w	NMIJP:	Pointeur sur handler d'interuption Non Masquable (NMI)
+
+$24E	.b	D‚lai avant r‚p‚tition du clavier
+$24F	.b	Vitesse de r‚p‚tition du clavier
+
+$2E0	.w	Zone de paramŠtres pour les routines basic
+
+$2FC	.w	Adresse de la routine … appeler pour les routines ASM appell‚es
+		a partir du basic.
+
+ROM
+
+$FFFC	.w	Pointeur sur la routine de la ROM qui r‚initialise l'Oric.
+		(RESET froid)
+
+$FFFA	.w	Idem, mais pour faire un RESET chaud.
+
+
+
