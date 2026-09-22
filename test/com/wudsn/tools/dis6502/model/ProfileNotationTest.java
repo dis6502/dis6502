@@ -13,12 +13,12 @@ import java.util.function.Consumer;
 import com.wudsn.tools.dis6502.Application;
 
 /**
- * New (not ported): each of the four notation settings of a {@link Profile}
- * that C++'s {@code MainTest::ExecuteVariant} swept in 16 combinations
- * must change the listing the way it says - checked on the listing text,
- * which a reassembly round trip cannot do for a comment or a string
- * constant (they leave the bytes alone). {@link ReassemblyRoundTripTest}
- * covers "and it still assembles" for the flags that change operands.
+ * Each of the four notation settings of a {@link Profile}, in 16
+ * combinations, must change the listing the way it says - checked on the
+ * listing text, which a reassembly round trip cannot do for a comment or
+ * a string constant (they leave the bytes alone). {@link
+ * ReassemblyRoundTripTest} covers "and it still assembles" for the flags
+ * that change operands.
  *
  * @author Peter Dell
  */

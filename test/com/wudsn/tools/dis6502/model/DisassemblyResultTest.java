@@ -6,11 +6,9 @@
 package com.wudsn.tools.dis6502.model;
 
 /**
- * Ported from DisassemblyResultTest.h / DisassemblyResultTest.cpp. The C++
- * version allocates lines through a {@code DIS_BUFFER} obtained from {@code
- * DisassemblySection::AllocBuffer}; this port's {@link DisassemblySection}
- * has no such buffer indirection (see its javadoc), so lines are appended
- * directly via {@link DisassemblySection#addLine}.
+ * This port's {@link DisassemblySection} appends lines directly via
+ * {@link DisassemblySection#addLine}, with no buffer indirection - see
+ * its javadoc.
  *
  * @author Peter Dell
  */

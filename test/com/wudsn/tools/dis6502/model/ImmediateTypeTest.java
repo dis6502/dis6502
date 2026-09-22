@@ -45,7 +45,7 @@ public final class ImmediateTypeTest {
 		Assert.longEquals(segment.memoryBlock.getType()[1] & 0xFF, 0x30);
 		Assert.boolEquals(getImmediateType(workspace, 0) == MemoryType.LOBYTE, true);
 
-		// High byte -> char constant: the marker must come off the opcode again (the C++ version leaves it on).
+		// High byte -> char constant: the marker must come off the opcode again.
 		Assert.boolEquals(Disassembly.setImmediateType(workspace, 0, 0, MemoryType.HIBYTE, 0x12), true);
 		Assert.boolEquals(getImmediateType(workspace, 0) == MemoryType.HIBYTE, true);
 		Assert.boolEquals(Disassembly.setImmediateType(workspace, 0, 0, MemoryType.STRING, 0), true);

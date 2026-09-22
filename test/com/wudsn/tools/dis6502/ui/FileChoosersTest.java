@@ -52,7 +52,7 @@ public final class FileChoosersTest {
 		Assert.stringEquals(executable.getFilterText(), "Executable Files");
 		Assert.stringEquals(executable.getDefaultExtension(), ".xex");
 		Assert.boolEquals(executable.getFolderType() == FolderType.EXECUTABLE_FILES, true);
-		Assert.boolEquals(executable.getFilterExtensions().contains(".prg"), true); // C64 - the C++ list was Atari-only.
+		Assert.boolEquals(executable.getFilterExtensions().contains(".prg"), true); // C64.
 		Assert.boolEquals(FileType.fromKey("no such key") == FileType.ANY_FILE, true);
 
 		// Three file types, one kind of file on disk - and one filter text.

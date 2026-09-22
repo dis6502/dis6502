@@ -27,7 +27,7 @@ public final class FolderTypeTest {
 			Assert.boolEquals(folderType.getText().isEmpty() || folderType.getText().equals(folderType.getKey()), false);
 		}
 
-		// Keys - what the settings are stored under, the same as in the C++ version.
+		// Keys - what the settings are stored under.
 		Assert.stringEquals(FolderType.EXECUTABLE_FILES.getKey(), "EXECUTABLE_FILES");
 		Assert.stringEquals(FolderType.UNKNOWN.getKey(), "UNKNOWN");
 		Assert.boolEquals(FolderType.fromKey("DISK_IMAGE_FILES") == FolderType.DISK_IMAGE_FILES, true);

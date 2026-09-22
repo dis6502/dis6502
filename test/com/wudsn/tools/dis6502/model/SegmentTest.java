@@ -44,11 +44,9 @@ public final class SegmentTest {
 	/**
 	 * Covers {@link Segment#deleteRange}/{@link Segment#insertRange}/{@link
 	 * Segment#canInsertRange} - the model-layer support for the Memory
-	 * Inspector's Delete/Cut/Paste Selection commands (gap #3), a
-	 * from-scratch Java design with no C++ reference behavior to recover
-	 * concrete assertions from (see {@code
-	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s class javadoc for
-	 * why). Hand-computed exact byte/offset values throughout, matching this
+	 * Inspector's Delete/Cut/Paste Selection commands (see {@code
+	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s class javadoc).
+	 * Hand-computed exact byte/offset values throughout, matching this
 	 * project's testing convention.
 	 */
 	public static void testSegmentRangeEdit() {

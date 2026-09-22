@@ -73,7 +73,7 @@ public final class EncodingTest {
 	/**
 	 * An ATASCII character is one byte: 255 is the last one that fits, and
 	 * anything above must be refused instead of being truncated to some
-	 * other character (the C++ version tests for 2555 here - a typo).
+	 * other character.
 	 */
 	private static void testAtasciiOutput() throws IOException {
 		Profile profile = new Profile();
