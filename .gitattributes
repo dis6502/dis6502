@@ -1,0 +1,41 @@
+# Line endings: LF in the repository, the platform's own in the working tree
+# (CRLF on Windows, what Eclipse writes there). This is what the repository
+# already contained; declaring it ends the per-file LF/CRLF warnings and
+# stops an editor or script from committing the other convention.
+* text=auto
+
+# Always text, whatever their content looks like.
+*.java text
+*.properties text
+*.md text
+*.xml text
+*.equ text
+*.txt text
+*.yml text
+*.py text
+*.ps1 text
+*.launch text
+*.classpath text
+*.project text
+.gitignore text
+.gitattributes text
+
+# Always binary: test fixtures and resources git must never touch.
+*.png binary
+*.ttf binary
+*.xex binary
+*.atr binary
+*.exe binary
+*.prg binary
+*.COM binary
+*.com binary
+*.SYS binary
+*.sys binary
+*.bin binary
+*.rom binary
+*.car binary
+*.cas binary
+*.xfd binary
+
+# Deliberately left to detection (text=auto): .wrk, .prf and .exported
+# fixtures exist in both a text (XML) and a legacy binary form.
