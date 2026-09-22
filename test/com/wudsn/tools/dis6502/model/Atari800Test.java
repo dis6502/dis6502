@@ -14,26 +14,22 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 
 /**
- * Ported from systems/atari800/Atari800Test.h / Atari800Test.cpp. Despite
- * the name (inherited as-is from the C++ source, where this class predates
- * the C64/Oric/Atari5200 systems), {@link #assertSegmentListEquals} is
- * generic and used by {@link ComputerSystemTest} to test every {@link
- * ComputerSystem}, not just Atari800.
+ * {@link #assertSegmentListEquals} is generic, despite the name, and used
+ * by {@link ComputerSystemTest} to test every {@link ComputerSystem}, not
+ * just Atari800.
  * <p>
- * Only the plain-file overload is ported. The C++ version's disk-image
- * overload (reading a file out of a legacy ATRDLL-based {@code DiskImage})
- * is not ported - that subsystem is only ever exercised by tests, never by
- * production code (see {@code AtariDOS}/{@code AtariDisk}, which is the
- * from-scratch DOS 2.x directory reader actually used at runtime).
+ * Only the plain-file overload exists; reading a file out of a disk image
+ * is not covered here - that subsystem is only ever exercised by tests,
+ * never by production code (see {@code AtariDOS}/{@code AtariDisk}, which
+ * is the from-scratch DOS 2.x directory reader actually used at runtime).
  * <p>
- * Unlike the C++ version, which compares the produced XML text
- * byte-for-byte against a checked-in reference file, this loads both the
- * freshly produced and the reference XML back into {@link SegmentList}s and
- * compares their fields structurally - {@code org.w3c.dom}'s attribute
- * ordering on output does not match tinyxml2's, so a byte-for-byte text
- * comparison against a C++-produced reference file would fail even for
- * semantically identical content. The exported binary file is still
- * compared byte-for-byte, since that format has no such ambiguity.
+ * The produced XML is loaded back into a {@link SegmentList} and compared
+ * to the reference structurally, not as raw text: the checked-in
+ * reference XML fixtures predate this tool and have their own attribute
+ * ordering, which {@code org.w3c.dom}'s output does not reproduce, so a
+ * byte-for-byte text comparison would fail even for semantically
+ * identical content. The exported binary file is still compared
+ * byte-for-byte, since that format has no such ambiguity.
  *
  * @author Peter Dell
  */

@@ -35,52 +35,37 @@ import com.wudsn.tools.dis6502.ui.RenderingTest;
 import com.wudsn.tools.dis6502.ui.ValueSetsTest;
 
 /**
- * Runs the ported unit tests and reports a pass/fail summary.
+ * Runs the unit tests and reports a pass/fail summary.
  * <p>
- * This is a new, minimal aggregator - not a port of {@code
- * MainUITest.h}/{@code .cpp} (the console-mode {@code /TEST:DEV|FAST|
- * NORMAL|DEEP} self-test harness) or of most of {@code MainTest.h}/{@code
- * .cpp} it delegates to. That harness itself is deliberately not ported -
- * see gap #5's history in {@code plans/REMAINING_GAPS_OVERVIEW.md}: this
- * class already is the "run everything once, report pass/fail" tool a
- * console mode would otherwise provide, and the repeated-relaunch soak-test
- * loop {@code test-dis6502-DEEP.bat}/{@code -FAST.bat} drove has no obvious
- * Java equivalent need. What was recovered from {@code MainTest.cpp}
- * instead is its two genuinely non-redundant checks: {@link
- * WorkspaceLogicTest} (from {@code MainTest::TestWorkspace} - a real
- * workspace-file load plus {@link com.wudsn.tools.dis6502.model.Segment#splitAt}'s
- * comment-rebasing, previously untested in Java) and {@link
- * ReassemblyRoundTripTest} (from {@code MainTest::ExecuteUnitTestItem}/{@code
- * ExecuteVariant} - disassemble four real fixtures, reassemble each with the
- * real MADS assembler, and byte-compare against a reference binary; see its
- * own javadoc for the deliberately reduced variant-sweep scope). This also
- * runs the tests that exercise every other already-ported model class:
- * {@link AssemblerTest}, {@link EquateTest}, {@link SegmentTest}, {@link
- * DisassemblyResultTest}, {@link DisassemblyResultFileTest}, {@link
- * ComputerSystemTest} (which in turn covers {@code Atari800Test} and the
- * C64 system), {@link Profile1XTest}, {@link EquateListLogicTest}, {@link
- * MemoryInspectorTest}, and {@link AtariDiskImageTest} (the last two ported
- * from C++ test helpers with no independent entry point of their own - see
- * their own javadoc for how their concrete assertions were recovered from
- * {@code MainTest.cpp}), plus {@link MemoryInspectorStateTest} and {@link
- * ByteRangeSelectionTest} - new (not ported) tests, since the in-place
- * hex-editing and standalone byte-range-selection logic they cover has no
- * concrete assertions to recover from any C++ test helper. {@code
- * CommonTest}/{@code FileIOTest}/{@code
- * StreamTest} are not ported for the same "only called from MainTest"
- * reason and additionally only test C++-specific infrastructure classes
- * ({@code ByteArray}, {@code DatatypeUtility}, a custom {@code FileIO}
- * wrapper) this port does not have.
+ * A minimal aggregator: the "run everything once, report pass/fail" tool
+ * a console mode would otherwise provide - repeated-relaunch soak-testing
+ * has no equivalent here (see gap #5's history in {@code
+ * plans/REMAINING_GAPS_OVERVIEW.md}). Its two most substantial checks are
+ * {@link WorkspaceLogicTest} (a real workspace-file load plus {@link
+ * com.wudsn.tools.dis6502.model.Segment#splitAt}'s comment-rebasing) and
+ * {@link ReassemblyRoundTripTest} (disassemble four real fixtures,
+ * reassemble each with the real MADS assembler, and byte-compare against
+ * a reference binary; see its own javadoc for the deliberately reduced
+ * variant-sweep scope). This also runs the tests that exercise every
+ * other model class: {@link AssemblerTest}, {@link EquateTest}, {@link
+ * SegmentTest}, {@link DisassemblyResultTest}, {@link
+ * DisassemblyResultFileTest}, {@link ComputerSystemTest} (which in turn
+ * covers {@code Atari800Test} and the C64 system), {@link Profile1XTest},
+ * {@link EquateListLogicTest}, {@link MemoryInspectorTest}, and {@link
+ * AtariDiskImageTest} (the last two with no independent entry point of
+ * their own - see their own javadoc), plus {@link
+ * MemoryInspectorStateTest} and {@link ByteRangeSelectionTest} for the
+ * in-place hex-editing and standalone byte-range-selection logic.
  * <p>
  * There is no JUnit (or other) test framework dependency: the offline Maven
  * repository this project builds against is missing the pieces Surefire
  * needs to actually run JUnit 5 (the {@code surefire-junit-platform}
- * provider and {@code junit-platform-launcher} jars), so this follows the
- * C++ project's own approach instead - a hand-rolled {@link
- * com.wudsn.tools.dis6502.model.Assert} plus a plain runner with a {@code
- * main} method, compiled via {@code mvn -o test-compile} and run directly
- * (e.g. {@code java -cp target/classes;target/test-classes;<wudsn-base
- * jars> com.wudsn.tools.dis6502.TestRunner}).
+ * provider and {@code junit-platform-launcher} jars), so this uses a
+ * hand-rolled {@link com.wudsn.tools.dis6502.model.Assert} plus a plain
+ * runner with a {@code main} method, compiled via {@code mvn -o
+ * test-compile} and run directly (e.g. {@code java -cp
+ * target/classes;target/test-classes;<wudsn-base jars>
+ * com.wudsn.tools.dis6502.TestRunner}).
  *
  * @author Peter Dell
  */
