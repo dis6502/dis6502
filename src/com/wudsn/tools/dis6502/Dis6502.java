@@ -947,7 +947,7 @@ public final class Dis6502 {
 		throw new IllegalArgumentException("Parameter 'fileType' has unsupported value " + fileType.getKey() + ".");
 	}
 
-	/** Ported from EquateListController::Clear. */
+	/** Confirms with the user, then clears {@code equateList} if there's anything to clear. */
 	private void performClearEquates(EquateList equateList) {
 		if (equateList.isEmpty()) {
 			return;
@@ -958,19 +958,18 @@ public final class Dis6502 {
 		if (JOptionPane.showConfirmDialog(mainWindow.getFrame(), message, Texts.Dis6502_ClearEquatesTitle,
 				JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 			equateList.clear();
-			updateDisassembly(false); // Matches Main::HandleWorkspaceChanged's non-forced refresh on a SYSTEM_EQUATES/USER_EQUATES change.
+			updateDisassembly(false); // Respects "No Disassembly" mode - skipped if that view toggle is on.
 		}
 	}
 
 	/**
-	 * Ported from EquateListController::Edit. Wraps the mutation {@link
-	 * EquateDialog#show} performs on OK in {@code beginUpdate}/{@code
-	 * endUpdate}, since {@link EquateList#clear()} (called first, to discard
-	 * the list's old content before re-adding the edited lines) would
-	 * otherwise fire an immediate "changed" notification while the list is
-	 * still momentarily empty - before the re-add loop that follows it in
-	 * the same method runs - matching the same "batch a multi-step mutation"
-	 * pattern {@link WorkspaceLogic#load} already uses.
+	 * Wraps the mutation {@link EquateDialog#show} performs on OK in {@code
+	 * beginUpdate}/{@code endUpdate}, since {@link EquateList#clear()}
+	 * (called first, to discard the list's old content before re-adding the
+	 * edited lines) would otherwise fire an immediate "changed" notification
+	 * while the list is still momentarily empty - before the re-add loop that
+	 * follows it in the same method runs - matching the same "batch a
+	 * multi-step mutation" pattern {@link WorkspaceLogic#load} already uses.
 	 */
 	private void performEditEquates(EquateList equateList, boolean editable) {
 		workspace.beginUpdate();
@@ -981,19 +980,19 @@ public final class Dis6502 {
 			workspace.endUpdate();
 		}
 		if (changed) {
-			updateDisassembly(false); // Matches Main::HandleWorkspaceChanged's non-forced refresh on a SYSTEM_EQUATES/USER_EQUATES change.
+			updateDisassembly(false); // Respects "No Disassembly" mode - skipped if that view toggle is on.
 		}
 	}
 
-	/** Ported from EquateListController::DefineUserAddressRange. */
+	/** Opens {@link EquateRangeDialog} and refreshes the disassembly if it defined a range. */
 	private void performDefineUserAddressRange() {
 		EquateRangeDialog dialog = new EquateRangeDialog(mainWindow.getFrame());
 		if (dialog.show(workspace.getSystemEquateList(), workspace.getUserEquateList(), "")) {
-			updateDisassembly(false); // Matches Main::HandleWorkspaceChanged's non-forced refresh on a SYSTEM_EQUATES/USER_EQUATES change.
+			updateDisassembly(false); // Respects "No Disassembly" mode - skipped if that view toggle is on.
 		}
 	}
 
-	/** Ported from EquateListController::LoadUserEquates. */
+	/** Lets the user pick a user-equates file to load. */
 	private void performOpenUserEquates() {
 		File file = fileChoosers.chooseOpenFile(mainWindow.getFrame(), Texts.Dis6502_OpenUserEquatesFileTitle, FileType.EQUATES_FILE);
 		if (file == null) {
@@ -1001,11 +1000,11 @@ public final class Dis6502 {
 		}
 		lastEquateFile = file;
 		if (equateListLogic.load(workspace.getUserEquateList(), lastEquateFile.getPath())) {
-			updateDisassembly(false); // Matches Main::HandleWorkspaceChanged's non-forced refresh on a SYSTEM_EQUATES/USER_EQUATES change.
+			updateDisassembly(false); // Respects "No Disassembly" mode - skipped if that view toggle is on.
 		}
 	}
 
-	/** Ported from EquateListController::Save, invoked for both "Save User Equates" ({@code xasm=false}) and "Export User Equates" ({@code xasm=true}). */
+	/** Invoked for both "Save User Equates" ({@code xasm=false}) and "Export User Equates" ({@code xasm=true}). */
 	private void performSaveUserEquates(boolean xasm) {
 		// The exported label table is a different format: do not suggest overwriting the equates file with it.
 		File file = fileChoosers.chooseSaveFile(mainWindow.getFrame(),
@@ -1020,7 +1019,7 @@ public final class Dis6502 {
 		equateListLogic.save(workspace.getUserEquateList(), file.getPath(), xasm);
 	}
 
-	/** Ported from MainSegment::PerformCommands's IDM_SEGMENT_MERGE case. */
+	/** Merges adjacent, compatible segments, if there's more than one segment. */
 	private void performMergeSegments() {
 		if (workspace.getSegmentList().getCount() > 1) {
 			int mergedCount = workspace.getSegmentList().mergeSegments();
@@ -1615,10 +1614,9 @@ public final class Dis6502 {
 
 	/**
 	 * The default folders of the workspace's current computer system - they
-	 * are kept per system. Ported from the {@code COMPUTER_SYSTEM_TYPE} case
-	 * of Main::HandleWorkspaceChanged, done on demand instead: when the
-	 * system has changed since the last call, the previous system's folders
-	 * are saved and the new one's loaded.
+	 * are kept per system, loaded on demand: when the system has changed
+	 * since the last call, the previous system's folders are saved and the
+	 * new one's loaded.
 	 */
 	private DefaultFolders getDefaultFolders() {
 		ComputerSystemType computerSystemType = workspace.getComputerSystem().getType();
@@ -1632,21 +1630,21 @@ public final class Dis6502 {
 		return defaultFolders;
 	}
 
-	/** Ported from Main::ShowProfileDialog. */
+	/** Opens {@link ProfileDialog} and, if changed, notifies and forces a disassembly refresh. */
 	private void performShowProfile() {
 		ProfileDialog dialog = new ProfileDialog(mainWindow.getFrame(), profileLogic, fileChoosers);
 		if (dialog.show(workspace.getProfile(), workspace.getComputerSystem().getType())) {
 			workspace.notifyProfileChanged();
-			updateDisassembly(true); // Matches Main::HandleWorkspaceChanged's forced refresh on a PROFILE change.
+			updateDisassembly(true); // Forced: refreshes even while "No Disassembly" is on.
 		}
 	}
 
 	/**
-	 * Ported from Main::PromptToClearWorkspace, minus the clearing itself and
-	 * its {@code loadSystemEquates} parameter - callers clear the workspace
-	 * and call {@link #loadSystemEquatesIfEmpty} themselves. Returns {@code
-	 * false} if the caller should abort (the user cancelled, or a requested
-	 * save failed).
+	 * Confirms with the user whether to discard the current workspace, saving
+	 * it first if they ask, before it gets cleared/replaced - callers clear
+	 * the workspace and call {@link #loadSystemEquatesIfEmpty} themselves.
+	 * Returns {@code false} if the caller should abort (the user cancelled,
+	 * or a requested save failed).
 	 */
 	private boolean confirmClearWorkspace() {
 		if (workspace.getSegmentList().isEmpty()) {
@@ -1738,19 +1736,10 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from Main::UpdateDisassembly, using the real {@link Disassembly}
-	 * pipeline the way {@code MainTest::ExecuteUnitTestItem} does. Unlike the
-	 * C++ version, whose callers compute {@code bForce} from which {@link
-	 * WorkspaceProperty} changed (see {@code Main::HandleWorkspaceChanged} -
-	 * that whole reactive dispatcher is not ported, {@code Dis6502} instead
-	 * calls this explicitly after each action), every call site here passes
-	 * {@code force=true} except the "No Disassembly" toggle - matching the
-	 * C++ behavior for the actions currently wired: opening/adding a file or
-	 * a workspace always corresponds to a {@code SEGMENTS} change, which C++
-	 * always forces. Runs behind a {@link DisassemblyProgressDialog}, matching
-	 * {@code Main::UpdateDisassembly}'s own {@code DisassemblyProgressDialog}
-	 * use - see that class's javadoc for why it runs the disassembly on a
-	 * background thread instead of the C++ mechanism.
+	 * Uses the real {@link Disassembly} pipeline. Every call site here passes
+	 * {@code force=true} except the "No Disassembly" toggle. Runs behind a
+	 * {@link DisassemblyProgressDialog} - see that class's javadoc for how
+	 * it runs the disassembly on a background thread.
 	 */
 	private void updateDisassembly(boolean force) {
 		if (workspace.getComputerSystem().getType() == ComputerSystemType.UNKNOWN) {
