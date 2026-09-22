@@ -31,6 +31,7 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemTest;
 import com.wudsn.tools.dis6502.model.system.atari800.AtariDiskImageTest;
 import com.wudsn.tools.dis6502.ui.DialogTextsTest;
 import com.wudsn.tools.dis6502.ui.FileChoosersTest;
+import com.wudsn.tools.dis6502.ui.PanelTextsTest;
 import com.wudsn.tools.dis6502.ui.RenderingTest;
 import com.wudsn.tools.dis6502.ui.ValueSetsTest;
 
@@ -139,6 +140,7 @@ public final class TestRunner {
 		runTest("ValueSetsTest", ValueSetsTest::testValueSets);
 		runTest("ProfileNotationTest", ProfileNotationTest::testProfileNotation);
 		runTest("ReassemblyRoundTripTest", ReassemblyRoundTripTest::testReassemblyRoundTrip);
+		runTest("PanelTextsTest", PanelTextsTest::testPanelTexts);
 		runTest("DialogTextsTest", DialogTextsTest::testDialogTexts);
 		runTest("RenderingTest", RenderingTest::testRendering);
 		runTest("UIWiringTest", UIWiringTest::testUIWiring);

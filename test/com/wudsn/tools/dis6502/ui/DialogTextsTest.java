@@ -5,27 +5,13 @@
  */
 package com.wudsn.tools.dis6502.ui;
 
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Window;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
-import javax.swing.AbstractButton;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
-import javax.swing.border.TitledBorder;
 
 import com.wudsn.tools.base.gui.ValueSetField;
 import com.wudsn.tools.base.repository.ValueSet;
@@ -37,50 +23,26 @@ import com.wudsn.tools.dis6502.model.ProfileLogic;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
- * The second test of {@code
- * plans/UI_SMOKE_TESTS_PROPOSAL.md}: every dialog, panel and the main menu
- * constructs, and every text it shows is a real text - not empty, not a
- * property key that failed to resolve, not a {@code "{0}"} template that
- * was meant to be filled in. A missing {@code Texts}/{@code Actions}/{@code
- * ValueSets} property ends the program at class load (see {@code
- * DataTypesTest} for {@code DataTypes}); this catches what a wrong key or a
- * forgotten {@code setText} would leave behind, and a dialog whose
- * constructor throws. The drop-downs built from a {@link ValueSet} must
- * list the expected values in the expected order and round-trip a value.
- * Every menu and popup also gets its mnemonics checked: every item has
- * one, and no two items in the same menu (or the same panel's popup)
- * share one - {@link com.wudsn.tools.base.gui.ElementFactory} itself only
- * ever checks that a label has a mnemonic at all, not that it is unique
- * among its siblings.
+ * Every dialog constructs, and every text it shows is a real text (see
+ * {@link UITest#checkText}) - a dialog whose constructor throws fails this
+ * test too. The drop-downs built from a {@link ValueSet} must list the
+ * expected values in the expected order and round-trip a value.
  * <p>
- * The panel/main-menu half of this test always runs, headless or not:
- * {@link MainMenu} and every panel are plain {@link JComponent}s, not
- * {@link Window}s, so they construct fine without a display. Only the
- * dialog half is skipped - not failed - when the JVM is headless: a
- * {@link JDialog} extends {@link Window}, which cannot be constructed
- * without one; see {@link UITest#isHeadless()}.
+ * Skipped - not failed - when the JVM is headless: a {@link JDialog}
+ * extends {@link java.awt.Window}, which cannot be constructed without a
+ * display; see {@link UITest#isHeadless()}. {@link PanelTextsTest} covers
+ * the same ground for panels and the main menu, which need no display.
  *
  * @author Peter Dell
  */
 public final class DialogTextsTest {
 
-	/** A property key that did not resolve looks like {@code Dis6502_OpenFileTitle}: word characters and underscores, no space. */
-	private static final Pattern KEY_LIKE = Pattern.compile("^[A-Za-z0-9]+(_[A-Za-z0-9]+)+$");
-
 	private DialogTextsTest() {
 	}
 
 	public static void testDialogTexts() throws Exception {
-		SwingUtilities.invokeAndWait(() -> {
-			try {
-				testPanelsAndMenu();
-			} catch (Exception ex) {
-				throw new RuntimeException(ex);
-			}
-		});
-
 		if (UITest.isHeadless()) {
-			Assert.log("DialogTextsTest: dialogs skipped, no display");
+			Assert.log("DialogTextsTest skipped: no display");
 			return;
 		}
 		SwingUtilities.invokeAndWait(() -> {
@@ -92,28 +54,6 @@ public final class DialogTextsTest {
 			}
 		});
 		Assert.log("DialogTextsTest completed");
-	}
-
-	private static void testPanelsAndMenu() throws Exception {
-		MainMenu mainMenu = new MainMenu();
-		checkTexts("MainMenu", mainMenu.menuBar);
-		checkMenuMnemonics(mainMenu.menuBar);
-		int menuItems = 0;
-		for (Component menu : mainMenu.menuBar.getComponents()) {
-			menuItems += countMenuItems((JMenu) menu);
-		}
-		Assert.longEquals(menuItems, 36); // File 23 (with its Open/Add submenus, the Recent ones empty until filled), Equates 8, View 4, Help 1.
-
-		checkTexts("DisassemblyPanel", new DisassemblyPanel());
-		checkTexts("LogPanel", new LogPanel());
-		checkTexts("XRefPanel", new XRefPanel());
-		checkTexts("SegmentListPanel", new SegmentListPanel());
-		checkTexts("MemoryInspectorPanel", new MemoryInspectorPanel());
-
-		// The popup menus are not in the component tree until shown, but their items are public fields.
-		checkPublicMenuItemFields("MemoryInspectorPanel", new MemoryInspectorPanel());
-		checkPublicMenuItemFields("SegmentListPanel", new SegmentListPanel());
-		checkPublicMenuItemFields("DisassemblyPanel", new DisassemblyPanel());
 	}
 
 	private static void testDialogs() {
@@ -162,94 +102,11 @@ public final class DialogTextsTest {
 		JDialog dialog = constructor.get();
 		try {
 			if (dialog.getTitle() != null && !dialog.getTitle().isEmpty()) { // Some titles are only formatted when shown ("Default Folders for {0}").
-				checkText(name + " title", dialog.getTitle());
+				UITest.checkText(name + " title", dialog.getTitle());
 			}
-			checkTexts(name, dialog);
+			UITest.checkTexts(name, dialog);
 		} finally {
 			dialog.dispose();
-		}
-	}
-
-	/** Walks the component tree under {@code root} and checks every visible text on it. */
-	private static void checkTexts(String name, Container root) {
-		for (Component component : root.getComponents()) {
-			if (component.getClass().getName().startsWith("javax.swing.plaf")) {
-				continue; // Look-and-feel internals: a combo box's arrow button, a scroll bar's buttons.
-			}
-			if (component instanceof AbstractButton) {
-				checkText(name + " " + component.getClass().getSimpleName(), ((AbstractButton) component).getText());
-			} else if (component instanceof JLabel) {
-				String text = ((JLabel) component).getText();
-				if (text != null && text.trim().length() > 1) { // " ", "-" and "" are legitimate placeholders.
-					checkText(name + " JLabel", text);
-				}
-			}
-			if (component instanceof JComponent && ((JComponent) component).getBorder() instanceof TitledBorder) {
-				checkText(name + " group", ((TitledBorder) ((JComponent) component).getBorder()).getTitle());
-			}
-			if (component instanceof JMenu) {
-				checkTexts(name, ((JMenu) component).getPopupMenu());
-			}
-			if (component instanceof Container && !(component instanceof Window)) {
-				checkTexts(name, (Container) component);
-			}
-		}
-	}
-
-	/**
-	 * Every public {@link JMenuItem} field of {@code panel} carries a text
-	 * and a mnemonic unique among the panel's other fields - except the
-	 * ones whose text is only known when the popup shows.
-	 */
-	private static void checkPublicMenuItemFields(String name, Object panel) throws Exception {
-		int count = 0;
-		Set<Character> mnemonics = new HashSet<>();
-		for (Field field : panel.getClass().getFields()) {
-			if (Modifier.isStatic(field.getModifiers()) || !JMenuItem.class.isAssignableFrom(field.getType())) {
-				continue;
-			}
-			JMenuItem item = (JMenuItem) field.get(panel);
-			boolean dynamic = panel instanceof DisassemblyPanel && (field.getName().startsWith("find") || field.getName().startsWith("rename")
-					|| field.getName().startsWith("addrRange"));
-			if (!dynamic) {
-				checkText(name + "." + field.getName(), item.getText());
-				checkMnemonicUnique(name + "." + field.getName(), item.getMnemonic(), mnemonics);
-				count++;
-			}
-		}
-		Assert.boolEquals(count > 0, true);
-	}
-
-	/** Checks every top-level menu's own mnemonic, then recurses into it via {@link #checkMenuMnemonics(JMenu)}. */
-	private static void checkMenuMnemonics(JMenuBar menuBar) {
-		Set<Character> topLevelMnemonics = new HashSet<>();
-		for (Component component : menuBar.getComponents()) {
-			JMenu menu = (JMenu) component;
-			checkMnemonicUnique("MainMenu." + menu.getText(), menu.getMnemonic(), topLevelMnemonics);
-			checkMenuMnemonics(menu);
-		}
-	}
-
-	/** Checks that {@code menu}'s direct children (items and submenu headers) have unique mnemonics among themselves, then recurses into every submenu. */
-	private static void checkMenuMnemonics(JMenu menu) {
-		Set<Character> mnemonics = new HashSet<>();
-		for (Component component : menu.getPopupMenu().getComponents()) {
-			if (component instanceof JMenuItem) {
-				JMenuItem item = (JMenuItem) component;
-				checkMnemonicUnique(menu.getText() + "." + item.getText(), item.getMnemonic(), mnemonics);
-			}
-			if (component instanceof JMenu) {
-				checkMenuMnemonics((JMenu) component);
-			}
-		}
-	}
-
-	/** Fails if {@code mnemonic} is 0 (missing) or already in {@code mnemonics}; otherwise records it. */
-	private static void checkMnemonicUnique(String where, int mnemonic, Set<Character> mnemonics) {
-		if (mnemonic == 0) {
-			Assert.fail(where + " has no mnemonic.");
-		} else if (!mnemonics.add(Character.toUpperCase((char) mnemonic))) {
-			Assert.fail(where + " has a mnemonic already used by another item in the same menu.");
 		}
 	}
 
@@ -267,27 +124,5 @@ public final class DialogTextsTest {
 
 		valueSetField.setValue(roundTripValue);
 		Assert.boolEquals(valueSetField.getValue() == roundTripValue, true);
-	}
-
-	private static void checkText(String where, String text) {
-		if (text == null || text.trim().isEmpty()) {
-			Assert.fail(where + " has no text.");
-		} else if (KEY_LIKE.matcher(text).matches()) {
-			Assert.fail(where + " shows a property key instead of a text: '" + text + "'.");
-		} else if (text.contains("{0}")) {
-			Assert.fail(where + " shows an unfilled template: '" + text + "'.");
-		}
-	}
-
-	private static int countMenuItems(JMenu menu) {
-		int count = 0;
-		for (Component component : menu.getPopupMenu().getComponents()) {
-			if (component instanceof JMenu) {
-				count += countMenuItems((JMenu) component);
-			} else if (component instanceof JMenuItem) {
-				count++;
-			}
-		}
-		return count;
 	}
 }
