@@ -184,7 +184,7 @@ public final class DiskImageSectorsDialog extends JDialog {
 		centerPanel.add(gridScrollPane, BorderLayout.CENTER);
 
 		JPanel itemsPanel = new JPanel(new BorderLayout(4, 4));
-		itemsPanel.add(new JLabel("Sectors to Add (Sector / Address / Begin / Size):"), BorderLayout.NORTH);
+		itemsPanel.add(new JLabel(Texts.DiskImageSectorsDialog_SectorsToAddLabel), BorderLayout.NORTH);
 		itemsPanel.add(new JScrollPane(itemsList), BorderLayout.CENTER);
 		itemsPanel.add(removeSectorButton, BorderLayout.SOUTH);
 

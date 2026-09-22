@@ -60,7 +60,7 @@ public final class AssembleDialog extends JDialog {
 
 	private final JTextField instructionField = new JTextField(30);
 	private final JLabel addressLabel = new JLabel();
-	private final JLabel resultLabel = new JLabel("Enter instruction, e.g. LDA #1");
+	private final JLabel resultLabel = new JLabel(Texts.AssembleDialog_Hint);
 	private final JButton assembleButton = ElementFactory.createButton(Actions.AssembleDialog_Assemble, true);
 	private final JButton closeButton = ElementFactory.createButton(Actions.AssembleDialog_Close, true);
 
@@ -179,7 +179,7 @@ public final class AssembleDialog extends JDialog {
 		this.memoryInspectorPanel = memoryInspectorPanel;
 
 		instructionField.setText("");
-		resultLabel.setText("Enter instruction, e.g. LDA #1");
+		resultLabel.setText(Texts.AssembleDialog_Hint);
 		addressLabel.setText(String.format("$%04X", (segment.wBegin + memoryInspectorState.getBegin()) & 0xFFFF));
 
 		assembledAny = false;

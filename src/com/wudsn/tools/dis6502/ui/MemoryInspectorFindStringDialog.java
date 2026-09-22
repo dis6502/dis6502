@@ -131,7 +131,7 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 		formPanel.add(hexField, c);
 
 		JPanel scopePanel = new JPanel(new GridBagLayout());
-		scopePanel.setBorder(BorderFactory.createTitledBorder("Scope"));
+		scopePanel.setBorder(BorderFactory.createTitledBorder(Texts.MemoryInspectorFindStringDialog_ScopeGroupTitle));
 		GridBagConstraints sc = new GridBagConstraints();
 		sc.anchor = GridBagConstraints.WEST;
 		sc.gridx = 0;

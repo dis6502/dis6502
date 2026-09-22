@@ -140,8 +140,8 @@ public final class DisassemblyPanel extends JPanel {
 
 	private final DisassemblyGridPanel grid = new DisassemblyGridPanel();
 	public final JTextField findField = new JTextField(24);
-	public final JButton findButton = new JButton("Find");
-	public final JButton findNextButton = new JButton("Find Next");
+	public final JButton findButton = ElementFactory.createButton(Actions.DisassemblyPanel_Find, false);
+	public final JButton findNextButton = ElementFactory.createButton(Actions.DisassemblyPanel_FindNext, false);
 	public final JMenuItem editCommentMenuItem = ElementFactory.createMenuItem(Actions.DisassemblyPopupMenu_EditComment, "editCommentMenuItem");
 	// findDefMenuItem/findRef1MenuItem/findRef2MenuItem/renameDefMenuItem/renameRefMenuItem/
 	// addrRangeDefMenuItem/addrRangeRefMenuItem stay plain JMenuItems, not built via

@@ -179,9 +179,9 @@ public final class ProfileDialog extends JDialog {
 		cc.weighty = 1;
 		contentPanel.add(rightPanel, cc);
 
-		JButton loadButton = new JButton("Load Profile...");
+		JButton loadButton = ElementFactory.createButton(com.wudsn.tools.dis6502.Actions.ProfileDialog_LoadProfile, true);
 		loadButton.addActionListener(e -> performLoadProfile());
-		JButton saveButton = new JButton("Save Profile...");
+		JButton saveButton = ElementFactory.createButton(com.wudsn.tools.dis6502.Actions.ProfileDialog_SaveProfile, true);
 		saveButton.addActionListener(e -> performSaveProfile());
 		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 		okButton.addActionListener(e -> {
@@ -215,7 +215,7 @@ public final class ProfileDialog extends JDialog {
 
 	private JPanel createGeneralPanel() {
 		JPanel panel = new JPanel(new GridBagLayout());
-		panel.setBorder(BorderFactory.createTitledBorder("General"));
+		panel.setBorder(BorderFactory.createTitledBorder(Texts.ProfileDialog_GeneralGroupTitle));
 		int row = 0;
 		addLabeledField(panel, row++, DataTypes.Profile_CommentPrefix, commentField, DataTypes.Profile_HexNotationPrefix, hexNotationField);
 		addFullWidth(panel, row++, illegalInstructionCheckBox);
@@ -239,7 +239,7 @@ public final class ProfileDialog extends JDialog {
 
 	private JPanel createDirectiveSyntaxPanel() {
 		JPanel panel = new JPanel(new GridBagLayout());
-		panel.setBorder(BorderFactory.createTitledBorder("Directive Syntax"));
+		panel.setBorder(BorderFactory.createTitledBorder(Texts.ProfileDialog_DirectiveSyntaxGroupTitle));
 		int row = 0;
 		addLabeledField(panel, row++, DataTypes.Profile_DirectiveBYTE, byteSyntaxField, DataTypes.Profile_DirectiveBYTESeparator, byteSeparatorField);
 		addFullWidth(panel, row++, numOnlyInByteCheckBox);
@@ -254,7 +254,7 @@ public final class ProfileDialog extends JDialog {
 
 	private JPanel createDisassemblyListingPanel() {
 		JPanel panel = new JPanel(new GridBagLayout());
-		panel.setBorder(BorderFactory.createTitledBorder("Disassembly Listing"));
+		panel.setBorder(BorderFactory.createTitledBorder(Texts.ProfileDialog_DisassemblyListingGroupTitle));
 		int row = 0;
 		addLabeledField(panel, row++, DataTypes.Profile_OutputEncoding, outputEncodingField);
 		addFullWidth(panel, row++, removeUnusedLabelsCheckBox);

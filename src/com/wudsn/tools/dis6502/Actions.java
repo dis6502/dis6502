@@ -243,6 +243,12 @@ public final class Actions extends NLS {
 	public static Action DiskImageSectorsDialog_AddSector;
 	public static Action DiskImageSectorsDialog_RemoveSector;
 	public static Action DefaultFoldersDialog_Browse;
+	public static Action ProfileDialog_LoadProfile;
+	public static Action ProfileDialog_SaveProfile;
+	// DisassemblyPanel's inline find buttons: no mnemonic, like Browse... - they sit
+	// in the main window, where Alt+F/Alt+N would fight the menu bar's own mnemonics.
+	public static Action DisassemblyPanel_Find;
+	public static Action DisassemblyPanel_FindNext;
 
 	static {
 		initializeClass(Actions.class, null);

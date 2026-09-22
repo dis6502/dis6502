@@ -6,45 +6,45 @@ Every working C++ feature found in both audits
 or a recorded decision not to port it. This is what is left: verification
 and improvement, roughly in the order they are worth doing.
 
-## 1. Not yet verified on screen
+## 1. ~~Not yet verified on screen~~ - done 2026-09-22
 
-The recent features were tested by calling the application's code directly
-(reflection into the running `Dis6502` instance), because clicking on the
-shared development desktop was unreliable. Nobody has yet clicked through:
+The recent features had only been tested by calling the application's code
+directly. They have since been exercised in the real, painted windows (real
+AWT events, `Robot` screenshots, both windows kept always-on-top so nothing
+on the shared desktop could cover them):
 
-- the two new disassembly popup entries: Navigate Back to Previous Position
-  (Backspace) and the "Change type of immediate byte to" submenu with its
-  check marks;
-- a real drag from the Windows Explorer onto the window (the drop handler
-  was fed a file list directly);
-- the overwrite confirmation and an actual save through the new
-  `FileChoosers`;
-- the Default Folders dialog saving on OK, and the per-system switch of
-  default folders.
+- the disassembly popup with Navigate Back to Previous Position (disabled
+  before a navigation, enabled after, returning to the `jsr` line when
+  clicked) and the "Change type of immediate byte to" submenu with its check
+  mark on the current type;
+- a real drag and drop through the OS from a second window exporting a file
+  list, as the Explorer does: the file was opened (6 segments);
+- Save Workspace As over an existing file: the chooser, the Confirm
+  Overwrite prompt, and a real 94 KB save after Yes;
+- the Default Folders dialog: an edited folder was persisted on OK.
 
-The live checks ran the real application, so the Recent Files and Recent
-Workspaces lists contain test entries (`HelloWorld.prg`, `autorun.xex`,
-`autorun.wrk`, a junk `.dat` file) that may have pushed out real ones.
+The test entries in the Recent lists and the development-only default
+folders (`target/classes`) those runs persisted were removed afterwards;
+the settings hold nothing from the tests now.
 
-`C64.equ` was written from memory of "Mapping the Commodore 64". The parser
-and MADS accept every line, and the labels exercised in tests are right, but
-nobody has proofread all 455 labels against a reference.
+Still not proofread: `C64.equ`'s 455 labels against a reference (the parser
+and MADS accept every line, and the labels exercised in tests are right).
 
 ## 2. Localization is prepared but not finished
 
 `Texts`, `Messages`, `Actions`, `DataTypes` and the six value sets
 (`Encoding`, `FolderType`, `FileType`, `ComputerSystemType`,
-`ProcessorType`, `GraphicMode`) read their texts from properties files, but:
+`ProcessorType`, `GraphicMode`) read their texts from properties files.
 
-- about 15 hard-coded English UI strings remain, e.g. the "Find"/"Find Next"
-  buttons in `DisassemblyPanel`, "Load Profile..."/"Save Profile..." and the
-  three group titles in `ProfileDialog`, "Scope" in
-  `MemoryInspectorFindStringDialog`, "Disassembling - Please wait..." in
-  `DisassemblyProgressDialog`, the hint line in `AssembleDialog`, one label
-  in `DiskImageSectorsDialog` (find them with a grep for `new JButton("`,
-  `new JLabel("`, `createTitledBorder("`);
-- there is no translated properties file at all yet (no `*_de.properties`),
-  so the localizable structure is not yet used.
+- ~~About 15 hard-coded English UI strings remain~~ - done 2026-09-22: the
+  last ones (`DisassemblyPanel`'s Find/Find Next buttons, `ProfileDialog`'s
+  Load/Save Profile buttons and three group titles, `AssembleDialog`'s hint,
+  `DisassemblyProgressDialog`'s "Please wait", `DiskImageSectorsDialog`'s
+  heading, `MemoryInspectorFindStringDialog`'s "Scope") are `Actions` and
+  `Texts` entries now. What a grep for `"..."` in `ui/` still finds is not
+  text: a URL, `"0"`, `"-"`, a generated equate line.
+- There is no translated properties file at all yet (no `*_de.properties`),
+  so the localizable structure is not yet used. That is the remaining step.
 
 ## 3. Known limits shared with C++
 
@@ -94,8 +94,8 @@ Not port gaps - identical in C++ - but limits a user will meet:
 
 ## Suggested order
 
-1. The on-screen pass (section 1) and cleaning the Recent lists.
-2. The remaining hard-coded strings (section 2).
+1. ~~The on-screen pass (section 1) and cleaning the Recent lists.~~ Done.
+2. ~~The remaining hard-coded strings (section 2).~~ Done.
 3. `.gitattributes` (section 5).
 
 The rest is optional.

@@ -23,6 +23,7 @@ import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
 
@@ -78,7 +79,7 @@ public final class DisassemblyProgressDialog extends JDialog {
 		c.gridx = 0;
 		c.gridy = 0;
 		c.gridwidth = 2;
-		content.add(new JLabel("Disassembling - Please wait..."), c);
+		content.add(new JLabel(Texts.DisassemblyProgressDialog_PleaseWaitMessage), c);
 
 		c.gridwidth = 1;
 		c.gridy = 1;

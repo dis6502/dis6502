@@ -61,12 +61,16 @@ public final class Texts extends NLS {
 
 	/** {@link com.wudsn.tools.dis6502.ui.AssembleDialog}'s window title. */
 	public static String AssembleDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.AssembleDialog}'s result line before anything was assembled. */
+	public static String AssembleDialog_Hint;
 	/** {@link com.wudsn.tools.dis6502.ui.CommentDialog}'s window title. */
 	public static String CommentDialog_Title;
 	/** {@link com.wudsn.tools.dis6502.ui.DiskImageExecutableFileDialog}'s window title. */
 	public static String DiskImageExecutableFileDialog_Title;
 	/** {@link com.wudsn.tools.dis6502.ui.DiskImageSectorsDialog}'s window title. */
 	public static String DiskImageSectorsDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.DiskImageSectorsDialog}'s heading over the list of sectors to add. */
+	public static String DiskImageSectorsDialog_SectorsToAddLabel;
 	/** {@link com.wudsn.tools.dis6502.ui.EquateDialog}'s window title when editing ({@code editable == true}). */
 	public static String EquateDialog_EditTitle;
 	/** {@link com.wudsn.tools.dis6502.ui.EquateDialog}'s window title when read-only ({@code editable == false}). */
@@ -122,6 +126,10 @@ public final class Texts extends NLS {
 	public static String ProfileDialog_LoadFileTitle;
 	/** {@link com.wudsn.tools.dis6502.ui.ProfileDialog#performSaveProfile}'s {@code JFileChooser} title. */
 	public static String ProfileDialog_SaveFileTitle;
+	/** {@link com.wudsn.tools.dis6502.ui.ProfileDialog}'s three group titles. */
+	public static String ProfileDialog_GeneralGroupTitle;
+	public static String ProfileDialog_DirectiveSyntaxGroupTitle;
+	public static String ProfileDialog_DisassemblyListingGroupTitle;
 	/**
 	 * {@link Dis6502#openRawFile}'s {@code JFileChooser} title for
 	 * {@code add == true}; the {@code add == false} case reuses {@link
@@ -169,6 +177,8 @@ public final class Texts extends NLS {
 
 	/** {@link com.wudsn.tools.dis6502.ui.DisassemblyPanel}'s header text - moved from {@code Text.IDS_DIS_TITLE}. */
 	public static String DisassemblyPanel_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.DisassemblyProgressDialog}'s one line of text above the progress display. */
+	public static String DisassemblyProgressDialog_PleaseWaitMessage;
 
 	/** {@link com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s header text when a segment is selected - moved from {@code Text.IDS_DUMP_TITLE_SEGMENT}. */
 	public static String MemoryInspectorPanel_SegmentTitle;
@@ -196,6 +206,8 @@ public final class Texts extends NLS {
 	 * title) - moved from {@code Text.IDS_FIND_STRING_DIALOG_TITLE}.
 	 */
 	public static String MemoryInspectorFindStringDialog_NotFoundTitle;
+	/** {@link com.wudsn.tools.dis6502.ui.MemoryInspectorFindStringDialog}'s group title around the search scope options. */
+	public static String MemoryInspectorFindStringDialog_ScopeGroupTitle;
 
 	/** {@link com.wudsn.tools.dis6502.ui.LogPanel}'s header text - moved from {@code Text.IDS_LOG_TITLE}. */
 	public static String LogPanel_Title;
