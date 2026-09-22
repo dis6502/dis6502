@@ -1212,15 +1212,10 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from MemoryInspector::CopySelection (IDM_DUMP_COPY_SELECTION):
-	 * copies the memory inspector's current byte selection to the system
+	 * Copies the memory inspector's current byte selection to the system
 	 * clipboard as a plain uppercase hex string with no separators or
-	 * prefix, matching {@code DatatypeUtility::ByteArrayToHexString(...,
-	 * false)}. Unlike the C++ version, which has no portable clipboard
-	 * API and so leaves {@code UIApplication::SetClipboardText} Win32-only
-	 * (see that class's javadoc), {@link java.awt.datatransfer.Clipboard}
-	 * is a real, standard Java equivalent, used directly here rather than
-	 * through {@link UIApplication}.
+	 * prefix. Uses {@link java.awt.datatransfer.Clipboard} directly here
+	 * rather than through {@link UIApplication}.
 	 */
 	private void performCopyMemoryInspectorSelection() {
 		if (memoryInspectorState.isSelectionEmpty()) {
@@ -1236,11 +1231,8 @@ public final class Dis6502 {
 	/**
 	 * Cut: {@link #performCopyMemoryInspectorSelection} followed by {@link
 	 * #performDeleteMemoryInspectorSelection}, composed here at the call
-	 * site - there is no separate C++ {@code CutSelection} either; its own
-	 * Cut command is Copy+Delete composed the same way. See {@code
-	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s class javadoc for
-	 * why Delete/Cut/Paste Selection are a from-scratch Java design rather
-	 * than a port.
+	 * site. See {@code com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s
+	 * class javadoc for the Delete/Cut/Paste Selection design.
 	 */
 	private void performCutMemoryInspectorSelection() {
 		if (memoryInspectorState.isSelectionEmpty()) {
@@ -1254,11 +1246,8 @@ public final class Dis6502 {
 	 * Delete: removes the current byte selection from its segment via
 	 * {@link Segment#deleteRange}, shrinking it in place. If that empties
 	 * the segment entirely, it is removed from the workspace's {@link
-	 * SegmentList} via {@link SegmentList#deleteSelectedSegment()} - making
-	 * good on the "delete the whole segment if it's now empty" behavior
-	 * {@code MemoryInspector::DeleteSelection}'s own comment describes but
-	 * whose bug (never actually shrinking the buffer) always prevented from
-	 * running; see {@code MemoryInspectorPanel}'s class javadoc.
+	 * SegmentList} via {@link SegmentList#deleteSelectedSegment()}; see
+	 * {@code MemoryInspectorPanel}'s class javadoc.
 	 */
 	private void performDeleteMemoryInspectorSelection() {
 		if (memoryInspectorState.isSelectionEmpty()) {
@@ -1283,14 +1272,9 @@ public final class Dis6502 {
 	 * Paste: inserts the system clipboard's content - the same plain
 	 * uppercase hex string {@link #performCopyMemoryInspectorSelection}
 	 * produces - before the current byte selection's first byte, via {@link
-	 * Segment#insertRange}. Unlike C++'s {@code
-	 * MemoryInspector::PasteAtSelection}, whose own comment says it is
-	 * broken (the code applying its newly-built buffer back to the segment
-	 * is commented out), this actually inserts the bytes. Insert-only, not
-	 * replace-selection - matching what C++'s (broken) version intended
-	 * too - and a single command, not a "before"/"after" pair, since {@code
-	 * PasteAtSelection}'s {@code after} parameter was unused dead code even
-	 * in the C++ source; see {@code MemoryInspectorPanel}'s class javadoc.
+	 * Segment#insertRange}. Insert-only, not replace-selection, and a
+	 * single command, not a "before"/"after" pair; see {@code
+	 * MemoryInspectorPanel}'s class javadoc.
 	 */
 	private void performPasteMemoryInspectorSelection() {
 		if (memoryInspectorState.isSelectionEmpty()) {
@@ -1349,12 +1333,10 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from MainDisassembly::AddComment (IDM_DUMP_EDIT_COMMENT),
-	 * simplified to always use the memory inspector's own byte selection -
-	 * see {@link CommentDialog}'s javadoc for why the C++ version's other
-	 * trigger path (a plain disassembly-line click, snapping to the
-	 * enclosing instruction) uses the clicked line's own offset/size
-	 * directly instead - see {@link #performEditDisassemblyComment}.
+	 * Simplified to always use the memory inspector's own byte selection -
+	 * see {@link CommentDialog}'s javadoc for the other trigger path (a
+	 * right-clicked disassembly line, using the clicked line's own
+	 * offset/size directly) - see {@link #performEditDisassemblyComment}.
 	 */
 	private void performEditMemoryInspectorComment() {
 		if (memoryInspectorState.isSelectionEmpty()) {
@@ -1368,12 +1350,8 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from {@code MainDisassembly::AddComment}, triggered by {@link
-	 * DisassemblyPanel}'s right-click popup menu instead of a plain click
-	 * (see that class's javadoc for why {@code DisassemblyResult::
-	 * FindOffsetAtStartOfInstruction}'s snap-to-enclosing-instruction is not
-	 * ported): uses the right-clicked line's own segment/offset/size
-	 * directly.
+	 * Triggered by {@link DisassemblyPanel}'s right-click popup menu, using
+	 * the right-clicked line's own segment/offset/size directly.
 	 */
 	private void performEditDisassemblyComment() {
 		DisassemblyLine line = mainWindow.disassemblyPanel.getRightClickedLine();
@@ -1387,10 +1365,10 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from MainDisassembly::FindDef. {@code originLine} is the line
-	 * Navigate Back to Previous Position should return to - the right-clicked
-	 * line for the popup item, {@code null} (meaning the selected line) for
-	 * Return/double-click; see {@link DisassemblyPanel#navigateToDefinitionLine}.
+	 * {@code originLine} is the line Navigate Back to Previous Position
+	 * should return to - the right-clicked line for the popup item, {@code
+	 * null} (meaning the selected line) for Return/double-click; see {@link
+	 * DisassemblyPanel#navigateToDefinitionLine}.
 	 */
 	private void performFindDisassemblyLabelDefinition(String label, DisassemblyLine originLine) {
 		if (label.isEmpty()) {
@@ -1402,11 +1380,7 @@ public final class Dis6502 {
 		}
 	}
 
-	/**
-	 * What the disassembly popup's "Change type of immediate byte to" submenu
-	 * shows for a line - ported from the immediate-operand part of
-	 * MainDisassembly::DrawMenu.
-	 */
+	/** What the disassembly popup's "Change type of immediate byte to" submenu shows for a line. */
 	DisassemblyPanel.ImmediateType getDisassemblyImmediateType(DisassemblyLine line) {
 		int[] immediateValue = new int[1];
 		MemoryType[] immediateMemoryType = new MemoryType[1];
@@ -1419,9 +1393,9 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from MainDisassembly::SetImmediateType's dialog half - {@link
-	 * LowHighByteDialog} asks for the other half of the address for a low/
-	 * high byte; the change itself is {@link Disassembly#setImmediateType}.
+	 * {@link LowHighByteDialog} asks for the other half of the address for a
+	 * low/high byte; the change itself is {@link
+	 * Disassembly#setImmediateType}.
 	 */
 	void performSetDisassemblyImmediateType(DisassemblyLine line, MemoryType type) {
 		int unknownByte = 0;
