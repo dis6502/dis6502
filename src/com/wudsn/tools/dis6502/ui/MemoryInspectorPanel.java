@@ -47,121 +47,74 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * A read-only hex/ASCII dump of the currently selected segment, with a
  * highlighted byte-range selection.
  * <p>
- * Ported from ui/MemoryInspectorWindow.h/.cpp and the display/selection/ find
- * parts of ui/MemoryInspector.h/.cpp - {@link #segmentChanged} from
- * {@code MemoryInspector::SegmentChanged},
- * {@link #select}/{@link #clearSelection} from
- * {@code MemoryInspector::Select}/{@code
- * ClearSelection}, {@link #setDisplayAsScreenCode} from {@code
- * MemoryInspector::ToggleDisplayAsScreenCode}/{@code
- * MemoryInspectorControlImpl::SetInternal} - the ASCII column's byte-to-
- * character transform for "internal" (Atari ANTIC screen code) mode is copied
- * verbatim from {@code MemoryInspectorControlImpl.cpp}'s paint routine, the one
- * piece of that routine's rendering this class replicates.
- * {@link HexGridPanel}'s own built-in drag-select mouse handling
- * (a {@link HexGridPanel.DragSelectionListener} set up in this
- * class's constructor, calling {@link #select}) ports {@code
- * MemoryInspectorControlImpl::LButtonDown}/{@code SetEndOfSelection}, letting
- * the user click or drag in the grid to select a byte range directly, on top
- * of every other way {@link #select} is already reached (Find, Select All,
- * Select Graphics, XRef navigation, a Split at Selection result).
- * {@link #findString}/{@link #findNextString}/{@link #canFind} from
- * {@code MemoryInspector::FindString}/{@code
- * FindNextString}/{@code CanFind}, triggered from {@link #findMenuItem}/
- * {@link #findNextMenuItem}.
+ * The ASCII column's byte-to-character transform for "internal" (Atari
+ * ANTIC screen code) mode lives in {@link HexGridPanel}'s paint routine.
+ * {@link HexGridPanel}'s own built-in drag-select mouse handling (a
+ * {@link HexGridPanel.DragSelectionListener} set up in this class's
+ * constructor, calling {@link #select}) lets the user click or drag in
+ * the grid to select a byte range directly, on top of every other way
+ * {@link #select} is already reached (Find, Select All, Select Graphics,
+ * XRef navigation, a Split at Selection result). {@link
+ * #findString}/{@link #findNextString}/{@link #canFind} are triggered
+ * from {@link #findMenuItem}/{@link #findNextMenuItem}.
  * <p>
  * This panel has no toolbar of per-command buttons - almost every command is
  * reachable only from the right-click popup menu ({@link #maybeShowPopup},
- * attached to the grid), ported from ui/MemoryInspectorPopupMenu.h/.cpp's
- * {@code MEMORY_INSPECTOR_POPUP_MENU} resource and following
- * {@link SegmentListPanel}'s pattern: every item is a public {@code JMenuItem}
- * field wired directly by {@code Dis6502}, never a hidden {@code JButton} kept
- * around only to be {@code doClick()}d - this panel used to also have a toolbar
- * with a button per command, each popup item {@code
- * doClick()}ing its button, until both the redundant toolbar and that
- * indirection were removed. {@link #displayAsScreenCodeButton} is the one
- * exception - a real header button, not a popup item at all, since the C++
- * source's own {@code ID_VIEW_DISPLAYASSCREENCODE} lives in the main menu,
- * not this panel's popup; moving it here (see that field's own javadoc) is
- * this port's own UI choice, not a fidelity port, but it stays wired
- * directly by {@code Dis6502} like everything else, not a {@code
- * doClick()} proxy. {@link #splitAtSelectionMenuItem} (from
- * {@code MemoryInspector::SplitAtSelection}/ IDM_DUMP_SPLIT_AT_SELECTION) only
- * splits the segment list the same way
- * {@code com.wudsn.tools.dis6502.ui.SegmentListPanel}'s Move Up/Down/
- * Merge/Delete already do, without reinterpreting any byte's type, and
- * {@link #selectAll}/{@link #selectNextUnknownBlock}/{@link #saveSelectionNoHeaderMenuItem}/{@link #saveSelectionHeaderMenuItem}
- * (from {@code MemoryInspector::SelectAll}/{@code SelectNextUnknownBlock} and
- * {@code MainMemoryInspector::SaveWithoutHeader}/{@code SaveWithHeader}) are
- * non-mutating too - selecting, and writing out, bytes that already exist.
- * {@link #setType}/{@link #setUnknownBlockToByte} (from {@code
- * MemoryInspector::SetType}/{@code SetUnknownBlockToByte}) do mutate a
- * segment's understanding of its bytes' types, and are the first such commands
- * ported here - unlike the rest of this class, callers must re-run the
- * disassembly afterward (see their own javadoc). {@link #copySelectionMenuItem}
- * (from {@code MemoryInspector::CopySelection}) copies the selection as a plain
- * hex string, matching {@code
- * DatatypeUtility::ByteArrayToHexString(..., false)}'s format.
+ * attached to the grid), following {@link SegmentListPanel}'s pattern:
+ * every item is a public {@code JMenuItem} field wired directly by {@code
+ * Dis6502}, never a hidden {@code JButton} kept around only to be {@code
+ * doClick()}d - this panel used to also have a toolbar with a button per
+ * command, each popup item {@code doClick()}ing its button, until both
+ * the redundant toolbar and that indirection were removed. {@link
+ * #displayAsScreenCodeButton} is the one exception - a real header
+ * button, not a popup item at all (see that field's own javadoc), but it
+ * stays wired directly by {@code Dis6502} like everything else, not a
+ * {@code doClick()} proxy. {@link #splitAtSelectionMenuItem} only splits
+ * the segment list the same way {@code
+ * com.wudsn.tools.dis6502.ui.SegmentListPanel}'s Move Up/Down/Merge/Delete
+ * already do, without reinterpreting any byte's type, and {@link
+ * #selectAll}/{@link #selectNextUnknownBlock}/{@link
+ * #saveSelectionNoHeaderMenuItem}/{@link #saveSelectionHeaderMenuItem} are
+ * non-mutating too - selecting, and writing out, bytes that already
+ * exist. {@link #setType}/{@link #setUnknownBlockToByte} do mutate a
+ * segment's understanding of its bytes' types, and are the first such
+ * commands here - unlike the rest of this class, callers must re-run the
+ * disassembly afterward (see their own javadoc). {@link
+ * #copySelectionMenuItem} copies the selection as a plain hex string.
  * <p>
  * {@link #cutSelectionMenuItem}/{@link #copySelectionMenuItem}/{@link
- * #pasteSelectionMenuItem}/{@link #deleteSelectionMenuItem} are a from-scratch,
- * Java-native design, not a port: {@code MemoryInspector::DeleteSelection}
- * never actually shrinks the segment's underlying byte/type arrays (its own
- * comment admits as much), which also means its "delete the whole segment if
- * it's now empty" branch can't work, since {@code Segment::IsEmpty} checks
- * that same never-shrunk allocation; and {@code
- * MemoryInspector::PasteAtSelection} is explicitly broken in the C++ source
- * (its own comment says so, and the code that would apply the newly-built
- * buffer back to the segment is commented out). There is no working C++
- * behavior to port, so this uses real segment-buffer resizing instead -
- * {@link com.wudsn.tools.dis6502.model.Segment#deleteRange}/{@link
+ * #pasteSelectionMenuItem}/{@link #deleteSelectionMenuItem} use real
+ * segment-buffer resizing - {@link
+ * com.wudsn.tools.dis6502.model.Segment#deleteRange}/{@link
  * com.wudsn.tools.dis6502.model.Segment#insertRange}, wired from {@code
  * Dis6502#performDeleteMemoryInspectorSelection}/{@code
  * #performPasteMemoryInspectorSelection}. {@link #cutSelectionMenuItem} is
- * Copy+Delete composed at the call site, matching the C++ original's own Cut
- * (which likewise has no separate model-layer method). {@link
- * #pasteSelectionMenuItem} is a single insert-before-the-selection command,
- * not the C++ source's "before"/"after" pair - {@code
- * PasteAtSelection}'s {@code after} parameter was unused dead code even
- * there, so there was never a real "paste after" behavior to preserve.
+ * Copy+Delete composed at the call site. {@link #pasteSelectionMenuItem}
+ * is a single insert-before-the-selection command.
  * <p>
- * {@link #selectGraphicsMenuItem} (from {@code
- * MemoryInspector::ShowSelectSpritesDialog}/IDM_DUMP_SELECT_SPRITES, ported as
- * {@link SelectGraphicsDialog}/{@link GraphicPanel}/{@link GraphicMode} -
- * renamed from the C++ source's "Sprite" terminology, see {@code
- * SelectGraphicsDialog}'s own javadoc for why) is non-mutating like the
- * other Select* items - it just ends in a call to {@link #select}, {@link
- * SelectGraphicsDialog}'s own javadoc has the details.
- * {@link #editCommentMenuItem} (from {@code MemoryInspector::AddComment}/
- * IDM_DUMP_EDIT_COMMENT, ported as {@link CommentDialog}) is wired only from
- * here rather than also from a plain disassembly-line click with no byte
- * selection, the C++ version's other trigger path - see {@link CommentDialog}'s
- * javadoc. {@link #assembleMenuItem} (from {@code
- * MemoryInspector::Assemble}/IDM_DUMP_ASSEMBLE, ported as
- * {@link AssembleDialog}) is this port's one piece of direct byte-level editing
- * - not raw hex digit entry (there is no grid cell to type into), but typing
- * 6502 instructions to assemble in place, which is the C++ version's own
- * primary editing tool for binary segments; see {@link AssembleDialog}'s
- * javadoc for a dialog-closing bug found and fixed while porting it.
- * {@link #startCodeTraceMenuItem} (from {@code
- * MemoryInspector::Guess}/IDM_DUMP_START_CODE_TRACE) runs
- * {@link GuessCodeLogic}, a large enough, UI-independent enough piece of logic
- * to get its own model-layer class instead of living directly here - see that
- * class's javadoc for what it does and a stale-reference issue found (but only
- * fixed in this port, not the C++ source, which needs an interactive GUI run to
- * confirm) while porting it. The hex dump itself is
- * {@link HexGridPanel}, a custom-painted, read-only grid using the
- * real per-computer-system bitmap glyphs from {@link ComputerFont} - see that
- * class's javadoc for why a real font asset is needed at all (a plain Java font
- * cannot display ATASCII/PETSCII characters) and
- * {@link HexGridPanel}'s own javadoc for exactly which parts of
- * {@code MemoryInspectorControlImpl.cpp}'s custom control this replicates (the
- * paint routine) and which it does not (mouse-drag selection, in-place editing
- * - neither existed in this port before this rewrite either).
- * {@link #setComputerFont} must be called by {@code Dis6502} whenever the
- * workspace's computer system or double- font-height setting changes, matching
- * {@code
- * MemoryInspectorWindow}'s use of {@code WorkspaceFont::GetResizedFont}.
+ * {@link #selectGraphicsMenuItem} (ported as {@link
+ * SelectGraphicsDialog}/{@link GraphicPanel}/{@link GraphicMode} - see
+ * {@link SelectGraphicsDialog}'s own javadoc for why these are called
+ * "Graphic", not "Sprite") is non-mutating like the other Select* items -
+ * it just ends in a call to {@link #select}, {@link SelectGraphicsDialog}'s
+ * own javadoc has the details. {@link #editCommentMenuItem} (ported as
+ * {@link CommentDialog}) is wired only from here, not also from a plain
+ * disassembly-line click with no byte selection - see {@link
+ * CommentDialog}'s javadoc. {@link #assembleMenuItem} (ported as {@link
+ * AssembleDialog}) is this port's one piece of direct byte-level editing -
+ * not raw hex digit entry (there is no grid cell to type into), but typing
+ * 6502 instructions to assemble in place. {@link #startCodeTraceMenuItem}
+ * runs {@link GuessCodeLogic}, a large enough, UI-independent enough piece
+ * of logic to get its own model-layer class instead of living directly
+ * here - see that class's javadoc for what it does. The hex dump itself
+ * is {@link HexGridPanel}, a custom-painted, read-only grid using the
+ * real per-computer-system bitmap glyphs from {@link ComputerFont} - see
+ * that class's javadoc for why a real font asset is needed at all (a
+ * plain Java font cannot display ATASCII/PETSCII characters) and for
+ * exactly what it implements (the paint routine, mouse-drag selection)
+ * and what it does not (in-place editing). {@link #setComputerFont} must
+ * be called by {@code Dis6502} whenever the workspace's computer system or
+ * double-font-height setting changes.
  * <p>
  * The Change Type submenu is the one popup item that is not a single
  * {@code JMenuItem} field: with thirteen items, each already knowing exactly
@@ -169,55 +122,44 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * shared field driven by some now-deleted toolbar combo box) would be backwards
  * - instead its items report the chosen type via
  * {@link #setTypeSelectionListener}, matching {@link XRefPanel}'s {@code
- * XRefSelectionListener} pattern. The submenu's checkmarks are ported from
- * {@code TypeSubMenu::Update} - which type(s) are actually present across the
- * selection, including its LOBYTE/HIBYTE-adjacency lookback for a byte whose
- * own stored type is unknown/invalid. {@link #cutSelectionMenuItem}/{@link
+ * XRefSelectionListener} pattern. The submenu's checkmarks reflect which
+ * type(s) are actually present across the selection, including its
+ * LOBYTE/HIBYTE-adjacency lookback for a byte whose own stored type is
+ * unknown/invalid. {@link #cutSelectionMenuItem}/{@link
  * #pasteSelectionMenuItem}/{@link #deleteSelectionMenuItem} are plain
- * top-level popup items instead, not part of this submenu - see this class's
- * own note above on their from-scratch design.
+ * top-level popup items instead, not part of this submenu - see this
+ * class's own note above on their design.
  * <p>
  * {@link #editMenuItem}/{@link #enterEditMode()}/{@link #quitEditMode()} and
- * the keyboard handling wired up in the constructor port
- * {@code MemoryInspector::SetEditMode}/{@code MainController::QuitEditMode}/
- * {@code MemoryInspectorControlImpl::KeyDown}/{@code Char}/{@code Timer}/
- * {@code LButtonDblClk} - in-place hex/ASCII editing of the selected byte(s),
- * entered via F2, {@link #editMenuItem}, or a double-click, exited via Esc or
- * {@link #quitEditModeMenuItem} (shown, while editing, in a separate ad hoc
- * popup that replaces the normal one - {@code MainMemoryInspector::
- * PerformCommands}'s modal gate on every other command while editing). Unlike
- * the C++ source, the actual cursor state and navigation/writing logic - not
- * just the on/off flag - live on {@link #memoryInspectorState} ({@link
+ * the keyboard handling wired up in the constructor implement in-place
+ * hex/ASCII editing of the selected byte(s), entered via F2, {@link
+ * #editMenuItem}, or a double-click, exited via Esc or {@link
+ * #quitEditModeMenuItem} (shown, while editing, in a separate ad hoc
+ * popup that replaces the normal one). The actual cursor state and
+ * navigation/writing logic - not just the on/off flag - live on {@link
+ * #memoryInspectorState} ({@link
  * MutableMemoryInspectorState#moveEditCursor}/{@link
- * MutableMemoryInspectorState#typeEditChar}, applying {@code Char}'s {@link
+ * MutableMemoryInspectorState#typeEditChar}, applying the {@link
  * MemoryType#SBYTE} ASCII transform via {@link
- * MemoryType#toSbyteInternalCode}), not here or in {@link
- * HexGridPanel} - a deliberate departure from the C++ design (see
- * {@link MutableMemoryInspectorState}'s own javadoc) so that logic can be exercised
- * by a plain, headless unit test. This class keeps only the Swing-specific
- * glue: {@link #handleEditKeyPressed}/{@link #handleEditKeyTyped} translate
- * a raw {@link java.awt.event.KeyEvent} into a semantic call on {@link
- * #memoryInspectorState}, then tell {@link HexGridPanel} to
- * notice via {@link HexGridPanel#refreshEditCursor}/{@link
- * HexGridPanel#refreshEditMode} - that class reads the current
- * selection/edit-mode values live off {@link #memoryInspectorState} itself
- * (through {@link com.wudsn.tools.dis6502.model.MemoryInspectorState},
- * narrowing what a pure painter can do to it) rather than being handed each
- * value as it changes; this class also owns focus/mouse handling, the
- * popup-menu swap, and the blink timer. Two confirmed C++
- * quirks are deliberately fixed here rather than replicated: typing past the
- * end of the buffer bypasses {@code MainController::QuitEditMode} in C++, so
- * its disassembly refresh is skipped on that one exit path only (see the
- * TODO left in {@code MemoryInspectorControlImpl.cpp}'s {@code Char} method)
- * - {@link #quitEditMode()} is the single exit point here, so every exit
- * path refreshes uniformly; and C++ never resyncs the selection/title to the
- * cursor's final position on exit, leaving it at wherever editing started -
- * {@link #quitEditMode()} calls {@link #select} with the cursor's final
- * offset instead. A third quirk is deliberately NOT replicated: {@code
- * Char}'s printable-ASCII gate excludes {@code '~'}, {@code '{'}, {@code
- * '}'} for no evident reason (it looks like an unintentional leftover, not
- * designed behavior) - {@link MutableMemoryInspectorState#typeEditChar} accepts
- * the full printable range instead.
+ * MemoryType#toSbyteInternalCode}), not here or in {@link HexGridPanel} -
+ * see {@link MutableMemoryInspectorState}'s own javadoc - so that logic
+ * can be exercised by a plain, headless unit test. This class keeps only
+ * the Swing-specific glue: {@link #handleEditKeyPressed}/{@link
+ * #handleEditKeyTyped} translate a raw {@link java.awt.event.KeyEvent}
+ * into a semantic call on {@link #memoryInspectorState}, then tell {@link
+ * HexGridPanel} to notice via {@link
+ * HexGridPanel#refreshEditCursor}/{@link HexGridPanel#refreshEditMode} -
+ * that class reads the current selection/edit-mode values live off {@link
+ * #memoryInspectorState} itself (through {@link
+ * com.wudsn.tools.dis6502.model.MemoryInspectorState}, narrowing what a
+ * pure painter can do to it) rather than being handed each value as it
+ * changes; this class also owns focus/mouse handling, the popup-menu
+ * swap, and the blink timer. {@link #quitEditMode()} is the single exit
+ * point for leaving edit mode, so every exit path refreshes the
+ * disassembly uniformly and resyncs the selection/title to the cursor's
+ * final position, calling {@link #select} with that offset. {@link
+ * MutableMemoryInspectorState#typeEditChar} accepts the full printable
+ * ASCII range.
  *
  * @author Peter Dell
  */
