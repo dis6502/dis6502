@@ -7,7 +7,6 @@ package com.wudsn.tools.dis6502.ui;
 
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.GraphicsEnvironment;
 import java.awt.Window;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -59,7 +58,7 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
  * {@link Window}s, so they construct fine without a display. Only the
  * dialog half is skipped - not failed - when the JVM is headless: a
  * {@link JDialog} extends {@link Window}, which cannot be constructed
- * without one; see {@link #isHeadless()}.
+ * without one; see {@link UITest#isHeadless()}.
  *
  * @author Peter Dell
  */
@@ -80,7 +79,7 @@ public final class DialogTextsTest {
 			}
 		});
 
-		if (isHeadless()) {
+		if (UITest.isHeadless()) {
 			Assert.log("DialogTextsTest: dialogs skipped, no display");
 			return;
 		}
@@ -93,19 +92,6 @@ public final class DialogTextsTest {
 			}
 		});
 		Assert.log("DialogTextsTest completed");
-	}
-
-	/**
-	 * Whether a UI test that needs a real, showing top-level window must
-	 * skip itself: there is no display, so a {@link JDialog}/{@link
-	 * javax.swing.JFrame} cannot be constructed - or the build asked for it
-	 * ({@code -Ddis6502.skipUITests=true}, e.g. on a CI runner that has a
-	 * desktop but nobody to look at the windows the tests open). A plain
-	 * {@link JComponent} (a panel, a menu) needs no such check - see this
-	 * class's own javadoc.
-	 */
-	public static boolean isHeadless() {
-		return GraphicsEnvironment.isHeadless() || Boolean.getBoolean("dis6502.skipUITests");
 	}
 
 	private static void testPanelsAndMenu() throws Exception {

@@ -54,9 +54,8 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
  * color, an unreferenced equate's row the grey, and the rows around them
  * do not.</li>
  * </ul>
- * Needs a display (see {@link DialogTextsTest#isHeadless()}) - showing a
- * popup needs a showing component, and the {@code ui} package does not
- * load headless anyway.
+ * Needs a display (see {@link UITest#isHeadless()}) - showing a popup
+ * needs a showing component.
  *
  * @author Peter Dell
  */
@@ -69,7 +68,7 @@ public final class RenderingTest {
 	}
 
 	public static void testRendering() throws Exception {
-		if (DialogTextsTest.isHeadless()) {
+		if (UITest.isHeadless()) {
 			Assert.log("RenderingTest skipped: no display");
 			return;
 		}

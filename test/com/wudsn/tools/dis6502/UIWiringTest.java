@@ -39,11 +39,11 @@ import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentList;
 import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
-import com.wudsn.tools.dis6502.ui.DialogTextsTest;
 import com.wudsn.tools.dis6502.ui.DisassemblyPanel;
 import com.wudsn.tools.dis6502.ui.MainMenu;
 import com.wudsn.tools.dis6502.ui.MainWindow;
 import com.wudsn.tools.dis6502.ui.MemoryInspectorPanel;
+import com.wudsn.tools.dis6502.ui.UITest;
 
 /**
  * The third test of {@code plans/UI_SMOKE_TESTS_PROPOSAL.md}: the
@@ -61,8 +61,8 @@ import com.wudsn.tools.dis6502.ui.MemoryInspectorPanel;
  * TestRunner} sets up and removes. A dialog a scenario provokes is found
  * in {@link Window#getWindows()} and answered through its real buttons.
  * Needs a display, like every {@code ui} test - see {@link
- * DialogTextsTest#isHeadless()}; expect a few seconds, the fixtures are
- * real programs.
+ * UITest#isHeadless()}; expect a few seconds, the fixtures are real
+ * programs.
  *
  * @author Peter Dell
  */
@@ -83,7 +83,7 @@ public final class UIWiringTest {
 	}
 
 	public static void testUIWiring() throws Exception {
-		if (DialogTextsTest.isHeadless()) {
+		if (UITest.isHeadless()) {
 			Assert.log("UIWiringTest skipped: no display");
 			return;
 		}
