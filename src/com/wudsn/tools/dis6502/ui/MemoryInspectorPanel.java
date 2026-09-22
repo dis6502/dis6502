@@ -167,10 +167,7 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
-	/**
-	 * Ported from the type submenu's entries in MEMORY_INSPECTOR_POPUP_MENU, in
-	 * their .rc order.
-	 */
+	/** The type submenu's entries, in menu order. */
 	private static final MemoryType[] TYPE_SUBMENU_ORDER = { MemoryType.CODE, MemoryType.LOBYTE, MemoryType.HIBYTE,
 			MemoryType.BYTE, MemoryType.WORD, MemoryType.LABEL, MemoryType.SYMBOL, MemoryType.FIXUP, MemoryType.STRING,
 			MemoryType.SBYTE, MemoryType.DLIST, MemoryType.STORE, MemoryType.UNKNOWN };
@@ -186,17 +183,16 @@ public final class MemoryInspectorPanel extends JPanel {
 	private final HexGridPanel grid = new HexGridPanel();
 
 	/**
-	 * Toggles {@link #setDisplayAsScreenCode} - moved here from a {@code
-	 * View} main-menu checkbox item (which the C++ source's own equivalent,
-	 * {@code ID_VIEW_DISPLAYASSCREENCODE}, still is), since it only ever
-	 * affects this one panel. Built via {@link Actions#MemoryInspectorPanel_DisplayAsScreenCode}/
-	 * {@link ElementFactory#createToggleButton}, the same {@code Action}-backed
+	 * Toggles {@link #setDisplayAsScreenCode} - lives here rather than in the
+	 * main menu, since it only ever affects this one panel. Built via {@link
+	 * Actions#MemoryInspectorPanel_DisplayAsScreenCode}/{@link
+	 * ElementFactory#createToggleButton}, the same {@code Action}-backed
 	 * pattern every other control in this port uses - unlike {@link
 	 * DisassemblyPanel#findButton}/{@link DisassemblyPanel#findNextButton},
 	 * which predate that pattern and stay plain since they were never menu
-	 * items even in the C++ source. {@code Dis6502} wires this directly, the
-	 * same as every other control here - not a hidden {@code doClick()}
-	 * proxy, since this button is now this command's only home.
+	 * items. {@code Dis6502} wires this directly, the same as every other
+	 * control here - not a hidden {@code doClick()} proxy, since this button
+	 * is now this command's only home.
 	 */
 	public final JToggleButton displayAsScreenCodeButton = ElementFactory.createToggleButton(Actions.MemoryInspectorPanel_DisplayAsScreenCode,
 			true);
@@ -211,8 +207,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * type the user picked through {@link #setTypeSelectionListener} instead. Each
 	 * item is built via {@code com.wudsn.tools.base.gui.ElementFactory} from an
 	 * {@code Action} in {@code com.wudsn.tools.dis6502.Actions} - see {@code
-	 * Actions}' own javadoc for label/mnemonic sourcing, including the several
-	 * items with no mnemonic in {@code dis6502.rc} that were given one here.
+	 * Actions}' own javadoc for label/mnemonic sourcing.
 	 */
 	public final JMenuItem findMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_Find, "findMenuItem");
 	public final JMenuItem findNextMenuItem = ElementFactory.createMenuItem(Actions.MemoryInspectorPopupMenu_FindNext, "findNextMenuItem");
@@ -345,10 +340,9 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	/**
 	 * Binds F2/Esc at the window level ({@code WHEN_IN_FOCUSED_WINDOW}, not
-	 * {@code WHEN_FOCUSED}) - matching the C++ source's accelerator table, where
-	 * {@code ID_DUMP_EDIT}/{@code ID_DUMP_QUIT_EDIT} work regardless of which
-	 * child control currently has focus, as long as the window is active. The
-	 * keystrokes themselves come from {@link Actions#MemoryInspectorPopupMenu_Edit}/
+	 * {@code WHEN_FOCUSED}), so they work regardless of which child control
+	 * currently has focus, as long as the window is active. The keystrokes
+	 * themselves come from {@link Actions#MemoryInspectorPopupMenu_Edit}/
 	 * {@link Actions#MemoryInspectorPopupMenu_QuitEditMode} - see
 	 * {@link #bindPopupMenuAccelerators} for why every binding here (and there)
 	 * is guarded by {@link #isAnyPopupMenuVisible}.
@@ -359,45 +353,41 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Binds the remaining popup-menu accelerators from {@code dis6502.rc}'s
-	 * {@code ACCELERATORS} table (see POPUP_MENU_ACCELERATORS_PLAN.md) at the
-	 * window level, the same {@code WHEN_IN_FOCUSED_WINDOW} scope as
-	 * {@link #bindEditModeKeys}. Each keystroke comes from the same {@link Action}
-	 * in {@code com.wudsn.tools.dis6502.Actions} that built the corresponding
-	 * menu item - not a literal duplicated here - so {@code Actions.java} stays
-	 * the single source of truth for every item's keystroke, the same as it
+	 * Binds the remaining popup-menu accelerators (see
+	 * POPUP_MENU_ACCELERATORS_PLAN.md) at the window level, the same {@code
+	 * WHEN_IN_FOCUSED_WINDOW} scope as {@link #bindEditModeKeys}. Each
+	 * keystroke comes from the same {@link Action} in {@code
+	 * com.wudsn.tools.dis6502.Actions} that built the corresponding menu item
+	 * - not a literal duplicated here - so {@code Actions.java} stays the
+	 * single source of truth for every item's keystroke, the same as it
 	 * already is for its label/mnemonic.
 	 * <p>
 	 * Populating these {@link Action}s' accelerators also makes {@code
 	 * ElementFactory.createMenuItem} apply them to the menu item itself (nice,
 	 * free shortcut-hint text next to the label) - but an empirical smoke test
 	 * written for that plan's "Step 0" found a standalone {@code JPopupMenu}
-	 * item's accelerator this way only actually fires while that specific popup
-	 * instance is open on screen, not window-wide like the C++ accelerator
-	 * table. While {@link #popupMenu} (or {@link #editModePopupMenu}) is open,
-	 * that means both the item's own live-but-narrow accelerator and this
-	 * method's window-level binding could fire for the same keystroke - {@link
-	 * #isAnyPopupMenuVisible} guards every binding here (and in
-	 * {@link #bindEditModeKeys}) against that double-fire, deferring to the
-	 * item's own accelerator whenever a popup happens to already be showing.
-	 * Calling {@code doClick()} on the already-correctly-wired, already-visible
-	 * item is the same sanctioned exception to avoiding hidden {@code
-	 * doClick()} indirection {@link #bindEditModeKeys} relies on too (calling
-	 * {@link #enterEditMode()}/{@link #quitEditMode()} directly), not a proxy to
-	 * a hidden component.
+	 * item's accelerator this way only actually fires while that specific
+	 * popup instance is open on screen. While {@link #popupMenu} (or {@link
+	 * #editModePopupMenu}) is open, that means both the item's own
+	 * live-but-narrow accelerator and this method's window-level binding
+	 * could fire for the same keystroke - {@link #isAnyPopupMenuVisible}
+	 * guards every binding here (and in {@link #bindEditModeKeys}) against
+	 * that double-fire, deferring to the item's own accelerator whenever a
+	 * popup happens to already be showing. Calling {@code doClick()} on the
+	 * already-correctly-wired, already-visible item is the same sanctioned
+	 * exception to avoiding hidden {@code doClick()} indirection {@link
+	 * #bindEditModeKeys} relies on too (calling {@link
+	 * #enterEditMode()}/{@link #quitEditMode()} directly), not a proxy to a
+	 * hidden component.
 	 * <p>
 	 * One keystroke does not fit the "defer to the item's own live accelerator"
 	 * story above: Esc, while {@link #popupMenu}/{@link #editModePopupMenu} is
 	 * open, fires neither {@link #quitEditModeMenuItem}'s own accelerator nor
 	 * this method's window-level binding (confirmed with a dedicated smoke
 	 * test) - Swing's own menu-cancel handling (closing the open popup)
-	 * consumes Esc before either accelerator mechanism sees it, the same way
-	 * {@code TrackPopupMenu}'s internal modal loop consumes it in the C++
-	 * source ({@code ui/MemoryInspector.cpp}) before it ever reaches {@code
-	 * TranslateAccelerator}/the app's {@code ACCELERATORS} table. So pressing
+	 * consumes Esc before either accelerator mechanism sees it. So pressing
 	 * Esc while either popup happens to be open just closes that popup,
-	 * leaving edit mode active - matching the C++ original's own limitation,
-	 * not a Java-only regression; Esc still reliably exits edit mode the rest
+	 * leaving edit mode active; Esc still reliably exits edit mode the rest
 	 * of the time, i.e. whenever neither popup is currently open.
 	 */
 	private void bindPopupMenuAccelerators() {
@@ -488,10 +478,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		popupMenu.add(saveSelectionHeaderMenuItem);
 	}
 
-	/**
-	 * Ported from MemoryInspectorControlImpl::RButtonDown's notification, handled
-	 * by MainMemoryInspector to show MemoryInspectorPopupMenu.
-	 */
+	/** Shows the normal or edit-mode popup, whichever applies. */
 	private void maybeShowPopup(MouseEvent e) {
 		if (!e.isPopupTrigger() || memoryInspectorState == null || !memoryInspectorState.hasSegment()) {
 			return;
@@ -506,9 +493,9 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Ports {@code TypeSubMenu::Update}'s enabled/checked logic for the Set Type
-	 * submenu - every other popup item's enabled state is set directly in
-	 * {@link #updatePopupMenuItemsState}.
+	 * The enabled/checked logic for the Set Type submenu - every other popup
+	 * item's enabled state is set directly in {@link
+	 * #updatePopupMenuItemsState}.
 	 */
 	private void syncPopupMenuState() {
 		boolean hasSelection = memoryInspectorState != null && memoryInspectorState.hasSelection();
@@ -547,11 +534,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		}
 	}
 
-	/**
-	 * Ported from MemoryInspectorWindow's use of WorkspaceFont::GetResizedFont -
-	 * call whenever the workspace's computer system or double-height setting
-	 * changes.
-	 */
+	/** Call whenever the workspace's computer system or double-height setting changes. */
 	public void setComputerFont(ComputerFont computerFont) {
 		grid.setComputerFont(computerFont);
 		header.setComputerFont(computerFont);
@@ -596,16 +579,14 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from MemoryInspector::SegmentChanged. Some segments (an SDX
-	 * symbol-table header, or an SDX relocation block with no data of its own) have
-	 * nothing to display, matching the C++ version's {@code
-	 * hasData} check - the title is still shown for these (the segment itself is
-	 * genuinely selected, just not byte-displayable), matching
-	 * {@link #updateTitle}'s own C++ source, which only special-cases a null
-	 * segment, not this narrower {@code hasData} condition.
+	 * Some segments (an SDX symbol-table header, or an SDX relocation block
+	 * with no data of its own) have nothing to display; the title is still
+	 * shown for these (the segment itself is genuinely selected, just not
+	 * byte-displayable) - see {@link #updateTitle}, which only special-cases
+	 * a null segment, not this narrower "no data" condition.
 	 */
 	public void segmentChanged(MutableMemoryInspectorState memoryInspectorState) {
-		quitEditMode(); // Ported from MainSegment::Selected/MainXRef's and Main::ClearWorkspace's QuitEditMode() calls.
+		quitEditMode();
 		this.memoryInspectorState = memoryInspectorState;
 		Segment segment = memoryInspectorState.getSegment();
 		boolean hasData = segment != null && !segment.isHeader(FileHeader.SDX_SYM_DEFINED)
@@ -622,23 +603,15 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from {@code Main}'s {@code WM_PAINT} handler's "Print memory inspector
-	 * window title" block (C++'s {@code IDS_DUMP_TITLE_SEGMENT}/{@code
-	 * IDS_DUMP_TITLE_SELECTION}/{@code
-	 * IDS_DUMP_TITLE_SEGMENT_NO_SEGMENT_SELECTED}): the selected segment's 1-based
-	 * number, address range and size in hex and decimal - or, once a byte range
-	 * within it is marked, the same for that selection instead (absolute addresses,
-	 * {@code segment.wBegin}-relative). Unlike the C++ source, which repaints this
-	 * from scratch on every {@code WM_PAINT} using whatever the selection happens
-	 * to be at that moment, this is called explicitly wherever the segment or
-	 * selection changes ({@link #segmentChanged}, {@link #select},
-	 * {@link #clearSelection}). Built from the actual {@code
-	 * Texts.MemoryInspectorPanel_*Title} fields rather than a hand-written
-	 * {@code String.format} - switching to them fixed a real divergence
-	 * found in the process: the old "Selection" branch never included the
-	 * segment number the "Segment" branch did, unlike C++'s own {@code
-	 * IDS_DUMP_TITLE_SELECTION}'s {@code "Selection {0}: ..."}, which does
-	 * include it.
+	 * The selected segment's 1-based number, address range and size in hex
+	 * and decimal - or, once a byte range within it is marked, the same for
+	 * that selection instead (absolute addresses, {@code
+	 * segment.wBegin}-relative). Called explicitly wherever the segment or
+	 * selection changes ({@link #segmentChanged}, {@link #select}, {@link
+	 * #clearSelection}), rather than recomputed on every repaint. Built
+	 * from the {@code Texts.MemoryInspectorPanel_*Title} fields; the
+	 * "Selection" title includes the segment number, the same as the
+	 * "Segment" title does.
 	 */
 	private void updateTitle() {
 		Segment segment = memoryInspectorState == null ? null : memoryInspectorState.getSegment();
@@ -670,16 +643,15 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from MemoryInspector::ToggleDisplayAsScreenCode/
-	 * MemoryInspectorControlImpl::SetInternal. Switches the ASCII column between
-	 * plain byte values and their Atari internal (ANTIC screen code) equivalent,
-	 * re-rendering the currently displayed segment if there is one.
+	 * Switches the ASCII column between plain byte values and their Atari
+	 * internal (ANTIC screen code) equivalent, re-rendering the currently
+	 * displayed segment if there is one.
 	 */
 	public void setDisplayAsScreenCode(boolean displayAsScreenCode) {
 		grid.setDisplayAsScreenCode(displayAsScreenCode);
 	}
 
-	/** Ported from MemoryInspector::Select. */
+	/** Sets the selection to [begin, end) and refreshes the grid/title/popup state. */
 	public void select(int begin, int end) {
 		if (memoryInspectorState == null || memoryInspectorState.getSegment() == null
 				|| memoryInspectorState.getSegment().isEmpty()) {
@@ -691,7 +663,7 @@ public final class MemoryInspectorPanel extends JPanel {
 		updatePopupMenuItemsState();
 	}
 
-	/** Ported from MemoryInspector::ClearSelection. */
+	/** Clears the selection and refreshes the grid/title/popup state. */
 	public void clearSelection() {
 		if (memoryInspectorState != null) {
 			memoryInspectorState.clearSelection();
@@ -702,12 +674,10 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from MemoryInspector::SelectAll: selects the whole segment.
-	 * {@code end} is passed as the segment's size (one past the last valid offset),
-	 * matching the C++ version -
-	 * {@link #select}/{@link MutableMemoryInspectorState#setSelection} clamp it back
-	 * down to the last valid offset, the same way the C++ version's own
-	 * {@code Select}/ {@code MemoryInspectorState::SetSelection} do.
+	 * Selects the whole segment. {@code end} is passed as the segment's size
+	 * (one past the last valid offset) - {@link #select}/{@link
+	 * MutableMemoryInspectorState#setSelection} clamp it back down to the
+	 * last valid offset.
 	 */
 	public void selectAll() {
 		if (memoryInspectorState == null || memoryInspectorState.getSegment() == null
@@ -718,12 +688,12 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from MemoryInspector::SelectNextUnknownBlock: scans forward from just
-	 * after the current selection (or the segment's start, if there is none) for
-	 * the next run of bytes with an unrecognized type, across this segment and
-	 * every later one in the segment list - never wrapping back around to earlier
-	 * segments/offsets, matching the C++ version, which simply stops (with nothing
-	 * selected) once the segment list is exhausted.
+	 * Scans forward from just after the current selection (or the segment's
+	 * start, if there is none) for the next run of bytes with an
+	 * unrecognized type, across this segment and every later one in the
+	 * segment list - never wrapping back around to earlier segments/offsets;
+	 * simply stops (with nothing selected) once the segment list is
+	 * exhausted.
 	 */
 	public void selectNextUnknownBlock() {
 		if (memoryInspectorState == null || memoryInspectorState.getSegment() == null
