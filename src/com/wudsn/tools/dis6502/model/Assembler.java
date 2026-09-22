@@ -10,19 +10,11 @@ package com.wudsn.tools.dis6502.model;
  * listing line is hand-edited) back into an {@link Instruction} plus its
  * operand value.
  * <p>
- * Ported from Assembler.h / Assembler.cpp. The C++ version threads {@code
- * pos}/{@code value}/{@code error} through {@code GetExpressionValue} as
- * reference out-parameters; this uses single-element arrays instead, the
- * same technique already used elsewhere in this port for C++ out/in-out
- * parameters. Every place the C++ source truncates to its 16 bit {@code
- * word} type (via arithmetic wraparound or an explicit cast) is given an
- * explicit {@code & 0xFFFF} mask here, since a Java {@code int} would
- * otherwise not wrap the same way.
- * <p>
- * The C++ source's {@code '|'} branch of {@code GetExpressionValue} was a
- * copy-paste of the {@code '&'} branch above it and computed a bitwise AND
- * instead of an OR; this was fixed upstream (see the fix commit) and is
- * correct here from the start.
+ * Uses single-element arrays for parameters that need to be written back to
+ * the caller (position/value/error), the same technique used elsewhere in
+ * this codebase. Every place the arithmetic needs to wrap at 16 bits is
+ * given an explicit {@code & 0xFFFF} mask, since a Java {@code int} would
+ * otherwise not wrap that way.
  *
  * @author Peter Dell
  */

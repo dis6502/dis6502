@@ -164,13 +164,11 @@ public final class Segment implements Xml.Serializable {
 	/**
 	 * Whether {@link #wBegin}/{@link #wEnd} are this segment's real, fixed
 	 * memory addresses - true for everything except the SpartaDOS X
-	 * relocatable/symbol/fix-up blocks. The C++ version tested for {@link
-	 * FileHeader#ATARI_BINARY}/{@link FileHeader#SDX_FIXED_BLK} instead,
-	 * which silently excluded every segment without an Atari file header
-	 * ({@link FileHeader#RAW}: C64, Atari 5200, ROM images, raw files; {@link
-	 * FileHeader#ORIC_BINARY}) from address lookups - so code trace could
-	 * never find them and they could not be split - although their load
-	 * address is just as fixed.
+	 * relocatable/symbol/fix-up blocks. Includes {@link FileHeader#RAW} (C64,
+	 * Atari 5200, ROM images, raw files) and {@link FileHeader#ORIC_BINARY}
+	 * alongside {@link FileHeader#ATARI_BINARY}/{@link
+	 * FileHeader#SDX_FIXED_BLK}: their load address is just as fixed, so code
+	 * trace can find them and they can be split too.
 	 */
 	public boolean hasFixedAddress() {
 		return isHeader(FileHeader.RAW) || isHeader(FileHeader.ATARI_BINARY) || isHeader(FileHeader.SDX_FIXED_BLK)
@@ -256,11 +254,9 @@ public final class Segment implements Xml.Serializable {
 	 * and shrinking the segment by {@code size} - the model-layer half of the
 	 * Memory Inspector's Delete Selection command (see
 	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel's class javadoc). Follows
-	 * {@link #mergeWith}'s own allocate-a-new-block-and-copy-back shape;
-	 * unlike the C++ {@code MemoryInspector::DeleteSelection} this is based
-	 * on, this actually shrinks {@link #memoryBlock} - that method's own
-	 * comment admits it never did. Shrinking a segment to size 0 leaves
-	 * {@link #isEmpty()} true; the caller is responsible for then removing
+	 * {@link #mergeWith}'s own allocate-a-new-block-and-copy-back shape, and
+	 * actually shrinks {@link #memoryBlock}. Shrinking a segment to size 0
+	 * leaves {@link #isEmpty()} true; the caller is responsible for then removing
 	 * the now-empty segment from its {@link SegmentList} (e.g. via {@link
 	 * SegmentList#deleteSelectedSegment()}), the same as splitting/merging
 	 * leave list-membership changes to {@link SegmentList}.
@@ -299,10 +295,7 @@ public final class Segment implements Xml.Serializable {
 	 * the Memory Inspector's Paste command (see
 	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel's class javadoc).
 	 * Inserted bytes get {@link MemoryType#UNKNOWN}, matching {@link
-	 * MemoryBlock#create}'s own zero-filled type array. Unlike the C++
-	 * {@code MemoryInspector::PasteAtSelection} this is based on, this
-	 * actually applies the built buffer back to the segment - that method's
-	 * own code to do so was commented out.
+	 * MemoryBlock#create}'s own zero-filled type array.
 	 */
 	public void insertRange(int offset, byte[] data) {
 		if (offset < 0 || offset > getSize() || !canInsertRange(data.length)) {
@@ -470,9 +463,7 @@ public final class Segment implements Xml.Serializable {
 
 		title = Xml.getStringAttribute(element, "Title", title);
 
-		// Unlike the C++ version, which C-style casts an uninitialized/unvalidated
-		// word into the FileHeader enum, this falls back to RAW if the attribute is
-		// missing or does not match a known header value.
+		// Falls back to RAW if the attribute is missing or does not match a known header value.
 		int headerValue = Xml.getWordAttribute(element, "Header", wHeader.getValue());
 		FileHeader header = FileHeader.valueOf(headerValue);
 		wHeader = header != null ? header : FileHeader.RAW;

@@ -15,29 +15,12 @@ import java.util.Arrays;
  * traversal, VTOC (free-sector bitmap) allocation, and sector-chain
  * read/write.
  * <p>
- * Ported from AtariDOS.h / AtariDOS.cpp. The C++ version operates on a raw
- * {@code FILE*}, opening and closing the disk image file anew for every
- * single operation (even within a loop over several sectors); this uses
- * {@link RandomAccessFile} the same way, opened/closed per call, to match
- * that behavior exactly rather than optimize it away.
+ * Opens and closes the disk image file anew via {@link RandomAccessFile}
+ * for every single operation, even within a loop over several sectors,
+ * rather than keeping a file handle open across a whole traversal.
  * <p>
- * Design deviations:
- * <ul>
- * <li>{@code AllocBit} took its {@code byte&} parameter by reference,
- * called only as {@code AllocBit(sector[wIndex])} (a single array
- * element); Java can't reference an array element that way, so its logic
- * is inlined directly into {@link #allocSector}.</li>
- * <li>The C++ source is inconsistent about how a missing disk image file
- * is reported: {@code FindFirst} explicitly catches the open failure and
- * returns {@link AtariError#DISK_NOT_FOUND}, but {@code FindNext}/{@code
- * GetFileFromIndex}/{@code ReadFirstSector}/{@code ReadNextSector} instead
- * check the returned {@code FILE*} for null - which never actually
- * happens, since the underlying {@code FileIO::OpenFile} throws rather
- * than returning null (as {@code FindFirst}'s own catch block implies).
- * That reads as an oversight rather than an intentional difference, so
- * every method here catches the missing-file case the same way {@code
- * FindFirst} does.</li>
- * </ul>
+ * A missing disk image file is reported consistently: every method catches
+ * the open failure and returns {@link AtariError#DISK_NOT_FOUND}.
  *
  * @author Peter Dell
  */
@@ -78,7 +61,7 @@ public final class AtariDOS {
 	}
 
 	// ------------------------------------------------------------------
-	// Methods using a RandomAccessFile (matching the C++ FILE*-based methods).
+	// Methods using a RandomAccessFile.
 	// ------------------------------------------------------------------
 
 	/** BEWARE! {@code sectorNumber} starts from 0 instead of 1. */
@@ -260,8 +243,7 @@ public final class AtariDOS {
 		// Find a free sector.
 		for (int index = 10; index <= 125; index++) {
 			if (sector[index] != 0) {
-				// Find the first set bit (MSB first) and clear it - the C++ source's
-				// AllocBit, inlined here since it takes the sector byte by reference.
+				// Find the first set bit (MSB first) and clear it.
 				int bitmask = sector[index] & 0xFF;
 				int mask = 0x80;
 				int bit = 0;

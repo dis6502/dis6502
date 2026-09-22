@@ -21,28 +21,19 @@ import org.w3c.dom.Element;
  * A list of {@link Equate}s, e.g. the system equates or the user equates of
  * a workspace.
  * <p>
- * Ported from EquateList.h / EquateList.cpp. {@code Save1X} is not ported -
- * see {@link Workspace1X}'s javadoc for why writing the legacy binary
- * format has no value going forward. The modern text equates file {@code
- * Load(filePath)}/{@code Save(filePath, xasm)} are ported onto
- * {@link EquateListLogic} instead of here, since they need the
- * application-level logging/file I/O that class's {@code Application}
- * parameter provides.
- * <p>
- * The C++ source's {@code DeserializeFrom} passed the wrong element to each
- * {@code Equate::DeserializeFrom} call (the outer {@code <EquateList>}
- * element instead of the individual {@code <Equate>} child) - fixed
- * upstream and correct here from the start; see the fix commit for
- * details.
+ * {@code Save1X} is not implemented - see {@link Workspace1X}'s javadoc for
+ * why writing the legacy binary format has no value going forward. The
+ * modern text equates file load/save live on {@link EquateListLogic}
+ * instead of here, since they need the application-level logging/file I/O
+ * that class's {@code Application} parameter provides.
  *
  * @author Peter Dell
  */
 public final class EquateList implements Xml.Serializable {
 
 	// Load1X's record layout: 2 bytes little-endian address, 1 unused/padding byte
-	// (the original C++ source advances 3 bytes past a 2-byte field for reasons lost
-	// to history - verified against a real DIS6502WRK14 fixture file, see Workspace1X),
-	// 1 byte access, then a NUL-terminated ANSI label.
+	// (its reason is lost to history - verified against a real DIS6502WRK14 fixture
+	// file, see Workspace1X), 1 byte access, then a NUL-terminated ANSI label.
 	private static final int MAX_BUF_LABEL_1X = 60000;
 	private static final int LABEL_MEM_SIZE_1X = MAX_BUF_LABEL_1X + 32;
 
@@ -70,7 +61,7 @@ public final class EquateList implements Xml.Serializable {
 		listeners.clear();
 	}
 
-	/** Package-private so {@link EquateListLogic#load} can fire one notification after a bulk load, matching {@code EquateList::Load}'s single trailing {@code NotifyListeners()} call in C++. */
+	/** Package-private so {@link EquateListLogic#load} can fire one notification after a bulk load. */
 	void notifyListeners() {
 		for (EquateListChangedListener listener : listeners) {
 			listener.handleEquateListChanged(this, property);
@@ -302,10 +293,7 @@ public final class EquateList implements Xml.Serializable {
 	 * {@link #equate}, or a non-empty {@link #error} describing why the
 	 * line could not be parsed (nothing was appended in that case). The
 	 * caller - not {@link EquateList}, which has no {@code Application}
-	 * reference - is responsible for reporting a non-empty {@code error},
-	 * mirroring how C++'s {@code EquateList::AddEquate(line)} reports it
-	 * directly via {@code g_Application->SendErrorMessageWithID(
-	 * IDS_ERR_CANNOT_PARSE_EQUATE_LINE, line, errorString)}.
+	 * reference - is responsible for reporting a non-empty {@code error}.
 	 */
 	public static final class EquateResult {
 		public final Equate equate;

@@ -17,30 +17,23 @@ import com.wudsn.tools.dis6502.Messages;
  * Low-level API to read/write sectors of an Atari .atr/.xfd disk image, by
  * sector number (1-based).
  * <p>
- * Ported from DiskImage.h / DiskImage.cpp. {@link #writeAbsoluteSector} also
- * folds in {@code AtariDiskImage::WriteAbsoluteSector} (used by {@link
- * com.wudsn.tools.dis6502.ui.SegmentWriteBootDiskDialog}), the same way
- * {@link #readAbsoluteSector} already folds in {@code
- * AtariDiskImage::ReadAbsoluteSector}.
+ * {@link #writeAbsoluteSector} is also used by {@link
+ * com.wudsn.tools.dis6502.ui.SegmentWriteBootDiskDialog}, the same way
+ * {@link #readAbsoluteSector} is.
  * <p>
  * {@link #write} checks {@link ImgInfo#writeProtect} up front instead of
  * opening the file and inspecting the resulting exception for an
- * access-denied error, unlike the C++ version's {@code Write} (which opens
- * with {@code "r+b"} and maps an {@code EACCES} failure to {@code
- * ImgError.WRITE_PROTECT}) - the two ways of detecting the same condition
- * produce the same {@link ImgError}.
+ * access-denied error.
  * <p>
  * {@link #readSector} reads {@link ImgInfo#density} bytes starting at the
  * seek position computed for the sector - for sector numbers 1-3 on a
  * double-density (256 bytes/sector) disk, that position assumes the
  * standard 128-byte boot sector size, so the read spills 128 bytes into
- * the next sector's data. This matches the C++ source's {@code Read}
- * exactly (it uses {@code info.wDensity} for the actual read, not the
- * locally adjusted density {@code Seek} computes) and is harmless: {@link
- * #readAbsoluteSector} always caps the reported size at 128 for those
- * sector numbers, so the spilled-over bytes are never actually used -
- * matching {@code ImgRWPacket::cSectorData}'s fixed 256-byte capacity,
- * large enough to hold the spillover without overflowing.
+ * the next sector's data. This is harmless: {@link #readAbsoluteSector}
+ * always caps the reported size at 128 for those sector numbers, so the
+ * spilled-over bytes are never actually used - {@link
+ * ImgRWPacket#sectorData}'s fixed 256-byte capacity is large enough to
+ * hold the spillover without overflowing.
  *
  * @author Peter Dell
  */
@@ -159,14 +152,13 @@ public final class DiskImage {
 
 	/**
 	 * Writes {@code sectorData} (up to {@link ImgInfo#density} bytes, zero-padded)
-	 * to sector {@code sectorNumber} of {@code filePath}. Ported from {@code
-	 * AtariDiskImage::WriteAbsoluteSector}, merged into {@link DiskImage} the same
-	 * way {@link #readAbsoluteSector} already is - see this class's javadoc.
+	 * to sector {@code sectorNumber} of {@code filePath}, merged into {@link
+	 * DiskImage} the same way {@link #readAbsoluteSector} already is - see this
+	 * class's javadoc.
 	 * <p>
-	 * Like the C++ version, a failure to determine the disk image's info (a
-	 * missing/corrupt file) is silently ignored rather than reported back to the
-	 * caller - {@code AtariDiskImage::WriteAbsoluteSector} is {@code void} and
-	 * never surfaces {@code DiskImage::WriteSector}'s result either.
+	 * A failure to determine the disk image's info (a missing/corrupt file) is
+	 * silently ignored rather than reported back to the caller: this method
+	 * returns {@code void}.
 	 */
 	public static void writeAbsoluteSector(String filePath, int sectorNumber, byte[] sectorData) {
 		ImgInfo info = new ImgInfo();
@@ -246,13 +238,11 @@ public final class DiskImage {
 	}
 
 	/**
-	 * Logs the message for a disk image read/write error, if any. Ported from
-	 * {@code DiskImage::DisplayError}: {@link ImgError#XFD}/{@link
-	 * ImgError#ATR} log nothing (they identify a successfully recognized disk
-	 * image type, not an error), every other value logs its own {@code
-	 * Messages.E0xx} field (moved from the matching {@code IDS_ERR_IMG_*}
-	 * constant) via {@link Application#sendMessage}. Like the C++ original,
-	 * this only logs - it never shows a dialog.
+	 * Logs the message for a disk image read/write error, if any: {@link
+	 * ImgError#XFD}/{@link ImgError#ATR} log nothing (they identify a
+	 * successfully recognized disk image type, not an error), every other
+	 * value logs its own {@code Messages.E0xx} field via {@link
+	 * Application#sendMessage}. This only logs - it never shows a dialog.
 	 *
 	 * @return {@link #isError(ImgError)} for {@code error}.
 	 */
