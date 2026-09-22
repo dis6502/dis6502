@@ -1631,10 +1631,9 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from MainFile::SaveDisassemblyFiles: writes the current
-	 * disassembly listing (split into include files as {@link
-	 * Workspace#getProfile()} dictates) via the already-complete {@link
-	 * DisassemblyResultFile#saveListing}.
+	 * Writes the current disassembly listing (split into include files as
+	 * {@link Workspace#getProfile()} dictates) via the already-complete
+	 * {@link DisassemblyResultFile#saveListing}.
 	 */
 	private void performSaveDisassemblyFiles() {
 		File file = fileChoosers.chooseSaveFile(mainWindow.getFrame(), Texts.Dis6502_SaveDisassemblyFilesTitle,
@@ -1651,12 +1650,8 @@ public final class Dis6502 {
 
 	/**
 	 * Turns the memory inspector's currently-selected segment into a bootable
-	 * Atari DOS disk, via {@link SegmentWriteBootDiskDialog}. Ported from the
-	 * {@code ID_FILE_SAVE_DISK_IMAGE_BOOT_SECTORS} case in {@code
-	 * MainMenu::ProcessCommand} - including its own {@code // TODO Move to
-	 * segment context menu} comment (never acted on in the C++ source, so this
-	 * stays a File menu action here too) and its {@code $02E0} run-address scan
-	 * ({@code // TODO: This is Atari specific} in the original).
+	 * Atari DOS disk, via {@link SegmentWriteBootDiskDialog}. Stays a File
+	 * menu action rather than a segment context-menu one.
 	 */
 	private void performWriteBootDisk() {
 		Segment segment = memoryInspectorState.getSegment();
@@ -1747,13 +1742,7 @@ public final class Dis6502 {
 		}
 	}
 
-	/**
-	 * Ported from {@code MainDisassembly::FindNextString(false)}, bound in
-	 * C++ to ID_DIS_FIND_NEXT: continues the last search from {@link
-	 * #findFirstLineNumber} rather than starting over, matching the "not
-	 * found" alert {@code FindNextString} shows via {@code
-	 * FindStringDialog::ShowStringNotFoundMessage}.
-	 */
+	/** Continues the last search from {@link #findFirstLineNumber} rather than starting over. */
 	private void performFindNextInDisassembly() {
 		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
 		String findString = mainWindow.disassemblyPanel.findField.getText();
@@ -1771,16 +1760,13 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from {@code MainDisassembly::XRefSelected}, with one fix: the
-	 * C++ source's match condition is {@code (disLine->xrefLineNumber ==
-	 * xrefLineNumber) && (disLine->segmentIndex != NO_SEGMENT_INDEX)}, so
-	 * clicking the XRef entry for a label's own definition line never
-	 * navigates anywhere when that line has no segment - e.g. a system
-	 * equate's {@code equ} line (a symbolic name for a hardware register
-	 * address, not backed by any loaded segment). The segment/memory-
-	 * inspector sync genuinely needs a segment, but scrolling the
-	 * disassembly view to the line does not, so that guard is narrowed to
-	 * just the sync below, letting every XRef entry navigate.
+	 * Clicking the XRef entry for a label's own definition line should
+	 * always navigate the disassembly view to that line, even when it has
+	 * no segment - e.g. a system equate's {@code equ} line (a symbolic name
+	 * for a hardware register address, not backed by any loaded segment).
+	 * The segment/memory-inspector sync genuinely needs a segment, but
+	 * scrolling the disassembly view to the line does not, so that guard is
+	 * narrowed to just the sync below, letting every XRef entry navigate.
 	 */
 	private void performXRefSelected(int xrefLineNumber) {
 		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
@@ -1808,17 +1794,13 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from the per-line click handling in {@code
-	 * DisassemblyControlImpl::MouseMove}/{@code MainDisassembly::Proc}'s
-	 * DIS_LBUTTONDOWN and DIS_XREF cases, reached here via {@link
-	 * com.wudsn.tools.dis6502.ui.DisassemblyPanel#setLineSelectionListener}
-	 * - {@code label} is already resolved to the clicked line's referenced
-	 * label, or its defined one if it has no reference, matching DIS_XREF's
-	 * {@code label = GetLabelReference(); if empty, label =
-	 * GetLabelDefinition()}. Unlike {@link #performXRefSelected}, a line
-	 * with no byte size (a label/equate-only line) leaves the memory
-	 * inspector's selection alone rather than clearing it, matching
-	 * DIS_LBUTTONDOWN's own {@code if (pDis->size != 0)} guard exactly.
+	 * Reached via {@link
+	 * com.wudsn.tools.dis6502.ui.DisassemblyPanel#setLineSelectionListener} -
+	 * {@code label} is already resolved to the clicked line's referenced
+	 * label, or its defined one if it has no reference. Unlike {@link
+	 * #performXRefSelected}, a line with no byte size (a label/equate-only
+	 * line) leaves the memory inspector's selection alone rather than
+	 * clearing it.
 	 */
 	private void performDisassemblyLineSelected(DisassemblyLine line, String label) {
 		if (line.segmentIndex != SegmentList.NO_SEGMENT_INDEX && line.segmentIndex < workspace.getSegmentList().getCount()) {
@@ -1837,17 +1819,15 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from {@code MemoryInspector::SelectionChanged}, reached here
-	 * via {@link
+	 * Reached via {@link
 	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#setSelectionChangedListener}
 	 * after a mouse-driven memory inspector selection: not every byte
 	 * offset starts its own disassembly line (mid-instruction bytes don't),
 	 * so this walks backward from the selection's first byte, one offset
 	 * at a time, until {@link DisassemblyResult#selectLine(int, int)} finds
-	 * a line that actually starts there, then navigates to it - matching
-	 * the C++ source's own backward-counting loop exactly, ExtendSelectionTo's
-	 * highlighting the disassembly lines up to the selection's end offset
-	 * is not ported, since {@code DisassemblyGridPanel} only ever tracks a
+	 * a line that actually starts there, then navigates to it. Highlighting
+	 * every disassembly line up to the selection's end offset is not
+	 * implemented, since {@code DisassemblyGridPanel} only ever tracks a
 	 * single highlighted line, not a range (see that class's javadoc).
 	 */
 	private void performMemoryInspectorSelectionChanged() {
@@ -1868,7 +1848,7 @@ public final class Dis6502 {
 		}
 	}
 
-	/** Ported from the exit path in Main::Execute, which saves the MRU lists (already saved incrementally here, see {@link #mruController}) and any loaded {@link DefaultFolders}. */
+	/** Saves any loaded {@link DefaultFolders} before exiting (the MRU lists are already saved incrementally, see {@link #mruController}). */
 	private void performExit() {
 		if (defaultFolders != null) {
 			defaultFoldersLogic.save(defaultFolders);
@@ -1876,13 +1856,13 @@ public final class Dis6502 {
 		System.exit(0);
 	}
 
-	/** Ported from {@code AboutDialog::Show} - see {@link AboutDialog}'s own javadoc for the migrated icon/bitmap and the dropped version listbox. */
+	/** Opens {@link AboutDialog} - see that class's own javadoc for details. */
 	private void performAbout() {
 		AboutDialog dialog = new AboutDialog(mainWindow.getFrame());
 		dialog.setVisible(true);
 	}
 
-	/** Ported from Main::SetMainWindowTitle. */
+	/** Sets the main window's title (and the segment list's file name) from the current file/computer system. */
 	private void updateTitle() {
 		String computerSystemText = workspace.getComputerSystem().getType().getText();
 		String title = currentFile == null ? TextUtility.format(Texts.Dis6502_WindowTitleNoWorkspaceLoaded, computerSystemText)
