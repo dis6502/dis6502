@@ -18,13 +18,9 @@ import com.wudsn.tools.dis6502.Messages;
  * instruction-aligned text lines, plus the comment/include-statement/end-
  * directive helpers used when a listing is split across several files.
  * <p>
- * Ported from DisassemblyResultWriter.h / DisassemblyResultWriter.cpp (and
- * inlines the byte-level encoding logic of {@code OutputStream::WriteString}
- * from OutputStream.cpp). The C++ version is built on custom {@code File}/
- * {@code OutputStream} wrapper classes around a raw {@code FILE*}; this uses
- * {@code java.io.File}/{@code java.io.OutputStream} directly instead, the
- * same simplification already used elsewhere in this port for C++-specific
- * infrastructure classes Java's standard library already covers.
+ * Uses {@code java.io.File}/{@code java.io.OutputStream} directly, since
+ * Java's standard library already covers everything a custom file/stream
+ * wrapper would otherwise be needed for.
  *
  * @author Peter Dell
  */
@@ -152,8 +148,7 @@ public final class DisassemblyResultWriter implements AutoCloseable {
 			byte[] buffer = new byte[value.length()];
 			for (int i = 0; i < value.length(); i++) {
 				char c = value.charAt(i);
-				// 255, not the C++ version's 2555 (a typo there): anything above does not fit into the
-				// one byte an ATASCII character is, and was silently truncated to some other character.
+				// Anything above 255 does not fit into the one byte an ATASCII character is.
 				if (c <= 255) {
 					buffer[i] = (byte) c;
 				} else {

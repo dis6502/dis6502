@@ -13,15 +13,15 @@ import com.wudsn.tools.dis6502.ApplicationSettingsSection;
 /**
  * Reads the pre-3.0, pre-XML binary profile format ({@code
  * DIS6502PRF10}/{@code DIS6502PRF13}/{@code DIS6502PRF16}/{@code
- * DIS6502PRF17}). Ported from Profile1X.h / Profile1X.cpp.
+ * DIS6502PRF17}).
  * <p>
  * The four versions are strict field-appending supersets of each other
  * (each later version's struct starts with every field of the previous
- * one), so - like the C++ version - this always parses into a {@code
- * PROFILE17}-shaped 408 byte buffer: copying however many payload bytes a
- * given file actually has (12 to 408) into a zero-filled buffer naturally
- * leaves whatever trailing fields an older/shorter version doesn't have at
- * 0/false, without needing a separate code path per version.
+ * one), so this always parses into a {@code PROFILE17}-shaped 408 byte
+ * buffer: copying however many payload bytes a given file actually has
+ * (12 to 408) into a zero-filled buffer naturally leaves whatever trailing
+ * fields an older/shorter version doesn't have at 0/false, without needing
+ * a separate code path per version.
  * <p>
  * The exact byte layout was verified against a real {@code
  * DIS6502PRF17} fixture ({@code profiles/PRF17/mads.prf}) - twelve
@@ -29,20 +29,20 @@ import com.wudsn.tools.dis6502.ApplicationSettingsSection;
  * matched the plain-text {@code profiles/mads.prf} profile's known values
  * exactly, at the offsets this analysis predicted.
  * <p>
- * Found and fixed three bugs in the C++ source while porting it - see the
- * fix commit for details - all wrong from the start here instead:
+ * A few fields need care to get right:
  * <ul>
- * <li>the byte-copy loop's bound was the whole file's length (magic
- * included) rather than the payload length, so loading any real file
- * always threw partway through, past the point the copy had actually
- * finished;</li>
- * <li>{@code hexNotationPrefix} was never copied from the struct at all,
- * so a loaded profile always kept whatever hex prefix was already set;</li>
- * <li>{@code directiveBYTENumberOfBytesPerLine} was set from the
- * unrelated {@code DisplayOpcodes} setting's value instead of its own
- * {@code NbBytesPerLine} lookup (its two siblings, {@code
- * NbCharPerString}/{@code NbWordsPerLine}, do look up their own
- * settings).</li>
+ * <li>the byte-copy above only ever copies the payload length (the
+ * buffer's length minus the 12 byte magic), not the whole file's length -
+ * copying the whole file's length would run past where the payload
+ * actually ends for every real file;</li>
+ * <li>{@code hexNotationPrefix} is read from its own struct offset,
+ * rather than left at whatever value the profile already had;</li>
+ * <li>{@code directiveBYTENumberOfBytesPerLine} comes from its own
+ * {@code NbBytesPerLine} setting lookup, the same way its siblings
+ * {@code directiveBYTENumberOfCharactersPerString}/{@code
+ * directiveWORDNumberOfWordsPerLine} look up {@code NbCharPerString}/
+ * {@code NbWordsPerLine} - not from the unrelated {@code DisplayOpcodes}
+ * setting.</li>
  * </ul>
  *
  * @author Peter Dell

@@ -46,7 +46,8 @@ public final class Memory {
 	/**
 	 * Combines a low and a high byte into an address, assuming little endian
 	 * byte order. Identical to {@link #toWord(int, int)}; kept as a separate
-	 * method to mirror the C++ API.
+	 * method since a word and an address are conceptually different at call
+	 * sites even though the arithmetic is the same.
 	 */
 	public static int toAddress(int low, int high) {
 		return toWord(low, high);

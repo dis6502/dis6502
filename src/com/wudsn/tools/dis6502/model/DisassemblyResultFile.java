@@ -18,17 +18,14 @@ import com.wudsn.tools.dis6502.Messages;
  * equates in one include file, all include files inlined into the main
  * file's directives, or one include file per chunk of code.
  * <p>
- * Ported from DisassemblyResultFile.h / DisassemblyResultFile.cpp. The
- * C++ version logs each opened file through the global {@code Application}
- * object in {@code OpenWriter} ({@code IDS_LOG_SAVE_DISASSEMBLY}, now
- * {@link Messages#I024}); {@link #openWriter} stays the real method - not
- * inlined into {@code DisassemblyResultWriter} directly - matching exactly
- * which C++ call sites go through {@code OpenWriter} (the main file and
- * the single-include-file case) and which open their include file
- * directly instead, with no log line ({@link
- * #saveListingWithIncludesInMainFile}/{@link
- * #saveListingWithIncludeInEachFile}'s per-chunk include files) - see
- * {@link DisassemblyProgressMonitor} for logging that is still deferred.
+ * {@link #openWriter} logs each opened file via {@link Messages#I024}
+ * before opening it, and stays a real method rather than being inlined
+ * into {@link DisassemblyResultWriter} directly: only the main file and
+ * the single-include-file case go through it - the per-chunk include files
+ * opened by {@link #saveListingWithIncludesInMainFile}/{@link
+ * #saveListingWithIncludeInEachFile} are opened directly instead, with no
+ * log line - see {@link DisassemblyProgressMonitor} for logging that is
+ * still deferred.
  *
  * @author Peter Dell
  */
@@ -198,8 +195,7 @@ public final class DisassemblyResultFile {
 
 		DisassemblyResultWriter mainWriter = new DisassemblyResultWriter(profile);
 		openWriter(mainWriter, mainFile);
-		// Unlike the C++ source's catch-close-rethrow, a try/finally closes mainWriter
-		// on every path (success or exception) without needing to catch and rethrow.
+		// A try/finally closes mainWriter on every path (success or exception).
 		try {
 			String atariFileName = mainFile.getName();
 			saveListing(mainWriter, atariFileName);

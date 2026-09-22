@@ -27,26 +27,17 @@ import com.wudsn.tools.base.common.HexUtility;
 import com.wudsn.tools.dis6502.Messages;
 
 /**
- * XML serialization framework: attribute get/set helpers matching the C++
- * format (hexadecimal with a "0x" prefix for byte/word/size values, decimal
- * for plain ints, UTF-8 text for strings, {@code "true"}/{@code "false"}
- * for booleans), plus top-level load/save.
- * <p>
- * Ported from XML.h / XML.cpp. The C++ version wraps tinyxml2 with a set of
- * preprocessor macros ({@code GetXxxAttribute}/{@code SetXxxAttribute})
- * that read the enclosing method's {@code element} variable implicitly;
- * Java has no macros, so these become ordinary static methods taking the
- * element explicitly instead. Uses the JDK's built-in {@code org.w3c.dom}
- * API in place of tinyxml2, since it already covers everything needed with
- * no extra dependency.
+ * XML serialization framework: attribute get/set helpers for the format
+ * existing saved workspace/profile files already use (hexadecimal with a
+ * "0x" prefix for byte/word/size values, decimal for plain ints, UTF-8 text
+ * for strings, {@code "true"}/{@code "false"} for booleans), plus top-level
+ * load/save. Uses the JDK's built-in {@code org.w3c.dom} API.
  * <p>
  * Every {@code getXxxAttribute} method takes the field's current value as
  * its {@code defaultValue} and returns that unchanged if the attribute is
- * missing or malformed - the same "leave the field as it was" behavior the
- * C++ macros have (since they simply skip the assignment when {@code
- * element.Attribute(...)} returns {@code null} or fails to parse).
- * Callers are expected to write {@code field = Xml.getXxxAttribute(element,
- * "Name", field);}, matching {@code GetXxxAttribute(Name, field);}.
+ * missing or malformed, so a caller writes {@code field =
+ * Xml.getXxxAttribute(element, "Name", field);} - the field is only ever
+ * updated by a present, well-formed attribute.
  *
  * @author Peter Dell
  */
@@ -55,7 +46,7 @@ public final class Xml {
 	private Xml() {
 	}
 
-	/** Ported from {@code XML::Serializable}. */
+	/** Implemented by any model type with XML persistence. */
 	public interface Serializable {
 		void serializeTo(Element element);
 
@@ -68,7 +59,7 @@ public final class Xml {
 		return child;
 	}
 
-	/** The first child that is itself an element (skipping text/comment nodes), or {@code null}. Matches tinyxml2's {@code FirstChildElement()}. */
+	/** The first child that is itself an element (skipping text/comment nodes), or {@code null}. */
 	public static Element getFirstChildElement(Element element) {
 		org.w3c.dom.Node node = element.getFirstChild();
 		while (node != null && node.getNodeType() != org.w3c.dom.Node.ELEMENT_NODE) {
@@ -77,7 +68,7 @@ public final class Xml {
 		return (Element) node;
 	}
 
-	/** The first child with the given tag name that is itself an element, or {@code null}. Matches tinyxml2's {@code FirstChildElement(name)}. */
+	/** The first child with the given tag name that is itself an element, or {@code null}. */
 	public static Element getFirstChildElement(Element element, String tagName) {
 		Element child = getFirstChildElement(element);
 		while (child != null && !child.getTagName().equals(tagName)) {
@@ -86,7 +77,7 @@ public final class Xml {
 		return child;
 	}
 
-	/** The next sibling that is itself an element (skipping text/comment nodes), or {@code null}. Matches tinyxml2's {@code NextSiblingElement()}. */
+	/** The next sibling that is itself an element (skipping text/comment nodes), or {@code null}. */
 	public static Element getNextSiblingElement(Element element) {
 		org.w3c.dom.Node node = element.getNextSibling();
 		while (node != null && node.getNodeType() != org.w3c.dom.Node.ELEMENT_NODE) {
@@ -95,7 +86,7 @@ public final class Xml {
 		return (Element) node;
 	}
 
-	/** The next sibling with the given tag name that is itself an element, or {@code null}. Matches tinyxml2's {@code NextSiblingElement(name)}. */
+	/** The next sibling with the given tag name that is itself an element, or {@code null}. */
 	public static Element getNextSiblingElement(Element element, String tagName) {
 		Element sibling = getNextSiblingElement(element);
 		while (sibling != null && !sibling.getTagName().equals(tagName)) {
@@ -291,7 +282,7 @@ public final class Xml {
 		}
 	}
 
-	/** Parses a decimal or "0x"-prefixed hexadecimal number, matching {@code DatatypeUtility::UnsignedLongFromString}. */
+	/** Parses a decimal or "0x"-prefixed hexadecimal number. */
 	private static long parseUnsigned(String value) {
 		if (value.startsWith("0x") || value.startsWith("0X")) {
 			return Long.parseLong(value.substring(2), 16);

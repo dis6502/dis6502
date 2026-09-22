@@ -9,14 +9,8 @@ package com.wudsn.tools.dis6502.model;
  * Bit flags describing how a label is accessed. Values are combined with
  * bitwise OR (e.g. {@link #READ_WRITE} is {@link #READ}|{@link #WRITE}), so
  * this is a plain {@code int}-based flags class rather than a Java
- * {@code enum} - a discrete enum cannot represent the OR'd combinations the
- * original C++ code stores back into a single {@code LabelAccess} value (see
- * {@code Equate::AddLabelReference} in the C++ source).
- * <p>
- * Ported from LabelAccess.h. {@code LabelAccessInfo}/{@code
- * LabelAccessFactory} (the key/text lookup and combo-box index helper) have
- * no counterpart beyond {@link #getKey}/{@link #fromKey}/{@link
- * #getQualifier} - the equate dialogs do not need more.
+ * {@code enum} - a discrete enum cannot represent an OR'd combination
+ * stored back into a single value.
  *
  * @author Peter Dell
  */

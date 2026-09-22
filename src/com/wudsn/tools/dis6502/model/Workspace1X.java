@@ -12,33 +12,25 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Reads the pre-3.0, pre-XML binary workspace format ({@code
- * DIS6502WRK14}). Ported from Workspace1X.h / Workspace1X.cpp, {@code
- * Load14} only:
+ * DIS6502WRK14}), {@code Load14} only:
  * <ul>
  * <li>{@code Load10} ({@code DIS6502WRK10}, an even older format) is not
- * ported. Unlike {@code Load14}, no real {@code WRK10} fixture file could
- * be found to validate a port against, and the C++ source's own {@code
- * Load10} carries two "TODO" comments from the original author expressing
- * doubt about its correctness (a "skip data" loop whose bound is
- * {@code short}-typed and always negative, making the loop never execute,
- * and a call to {@code Segment::Load14} with a comment asking "Should this
- * be Load10??"). Porting a format that even its own author was unsure was
- * ever correct, with no data to check the port against, isn't a case
- * where "port the exact behavior" is well-defined.</li>
- * <li>{@code Save14} (writing this legacy format) is not ported - nothing
- * needs to write it going forward; {@link WorkspaceLogic#save} always
- * saves the modern XML format.</li>
- * <li>The legacy {@code binPath}/{@code diskPath} fields (a "to be part of
- * workspace" pair of file paths the C++ source itself keeps as file-scope
- * globals rather than real {@code Workspace} fields) are read past but not
- * stored anywhere - nothing in the ported {@link Workspace} model has a
- * place for them, and nothing else needs them.</li>
+ * implemented - no real {@code WRK10} fixture file could be found to
+ * validate a load against, and there is reason to doubt the format was
+ * ever fully correct to begin with, so there is no well-defined "correct"
+ * behavior to implement.</li>
+ * <li>{@code Save14} (writing this legacy format) is not implemented -
+ * nothing needs to write it going forward; {@link WorkspaceLogic#save}
+ * always saves the modern XML format.</li>
+ * <li>The legacy {@code binPath}/{@code diskPath} fields (a pair of file
+ * paths not otherwise tied to a workspace) are read past but not stored
+ * anywhere - nothing in {@link Workspace} has a place for them, and
+ * nothing else needs them.</li>
  * </ul>
- * The exact byte layout below (unlike a typical struct-to-record port
- * elsewhere in this codebase) was verified against a real {@code
+ * The exact byte layout below was verified against a real {@code
  * DIS6502WRK14} fixture file byte-for-byte, including a full walk of its
  * segment header, equate, and segment data sections landing exactly on
- * the file's end - see the porting session for details.
+ * the file's end.
  *
  * @author Peter Dell
  */

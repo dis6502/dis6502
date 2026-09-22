@@ -8,12 +8,11 @@ package com.wudsn.tools.dis6502.model;
 /**
  * Pass 1 of the disassembly: attaches SDX label fix-ups to each segment.
  * <p>
- * Ported from Pass1.h / Pass1.cpp. The C++ switch over the fix-up marker
- * byte is translated to a chain of {@code if}s instead, since a data byte
- * that is not one of the four markers does not correspond to any
- * {@link FixupType} constant and cannot be switched on directly; the
- * {@code SET_BLOCK_ADDR} branch intentionally falls through into the
- * shared "apply data byte" step below it, exactly like the C++ source.
+ * The fix-up marker byte is dispatched via a chain of {@code if}s rather
+ * than a {@code switch}, since a data byte that is not one of the four
+ * markers does not correspond to any {@link FixupType} constant and cannot
+ * be switched on directly; the {@code SET_BLOCK_ADDR} branch intentionally
+ * falls through into the shared "apply data byte" step below it.
  *
  * @author Peter Dell
  */
@@ -65,7 +64,7 @@ public final class Pass1 {
 						? segmentList.getSegment(blockSegmentIndex)
 						: null;
 				data = 0;
-				// Falls through intentionally, matching the C++ switch fall-through.
+				// Falls through intentionally into the shared "apply data byte" step below.
 			}
 
 			startAddr += data;

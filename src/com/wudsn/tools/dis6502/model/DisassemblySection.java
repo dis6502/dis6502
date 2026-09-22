@@ -89,9 +89,7 @@ public final class DisassemblySection {
 	/**
 	 * Appends a new line: copies {@code templateLine}'s segment/offset/size/
 	 * address/xrefLineNumber/selected/referenced fields and sets its text to
-	 * {@code text}. Replaces the C++ version's buffer allocation dance
-	 * ({@code AllocBuffer}/{@code FindLastBuffer}/{@code CanAddLine}/{@code
-	 * DIS_BUFFER::AddLine}).
+	 * {@code text}.
 	 */
 	public DisassemblyLine addLine(DisassemblyLine templateLine, String text) {
 		DisassemblyLine line = new DisassemblyLine(this);

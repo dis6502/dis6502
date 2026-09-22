@@ -22,22 +22,14 @@ import com.wudsn.tools.dis6502.Messages;
  * Loads and saves the modern text equates file format for an
  * {@link EquateList}.
  * <p>
- * Ported from EquateListLogic.h / EquateListLogic.cpp, which is itself a
- * thin wrapper delegating to {@code EquateList::Load}/{@code
- * EquateList::Save}. Those methods were not ported onto {@link EquateList}
- * itself - see its javadoc, they need application-level logging/file I/O -
- * so this class implements the file I/O directly, taking the
- * {@link Application} the C++ version reached through the {@code
- * g_Application} global.
+ * This is not implemented on {@link EquateList} itself - see its javadoc -
+ * since it needs an {@link Application} for logging and does the file I/O
+ * directly.
  * <p>
- * Found and fixed a bug while porting {@link #save}: the C++ version's
- * non-XASM branch wrote each equate's {@code ToString()} one after another
- * with no separator, so every equate ended up concatenated onto a single
- * line instead of one per line - reloading such a file would then fail to
- * parse anything past the first equate, since {@link #load} (like the
- * C++ version's line reader) splits strictly on newlines. Fixed upstream
- * (see that commit) and correct here from the start: each line is written
- * with a trailing {@code "\n"}.
+ * {@link #save}'s non-XASM branch writes each equate's {@code toString()}
+ * followed by a trailing {@code "\n"}, one per line: {@link #load} splits
+ * strictly on newlines, so a file without that separator would fail to
+ * parse anything past its first equate on reload.
  *
  * @author Peter Dell
  */

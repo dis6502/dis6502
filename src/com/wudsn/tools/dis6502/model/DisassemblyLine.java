@@ -10,16 +10,10 @@ package com.wudsn.tools.dis6502.model;
  * instruction (or equate) it was generated from, its rendered text, and UI
  * state (selected/referenced) plus XRef search-window bookkeeping.
  * <p>
- * Ported from DisassemblyLine.h / DisassemblyLine.cpp (the {@code DIS_LINE}
- * class). The C++ version stores its text as a wide-char string packed
- * directly after the struct in a hand-rolled {@code DIS_BUFFER} byte buffer,
- * to keep per-line memory allocation cheap; Java has no equivalent concern,
- * so this simply holds the text as a plain {@link String} field, and {@link
- * DisassemblySection} holds a plain {@code List<DisassemblyLine>} instead of
- * a list of fixed-size buffers. {@code DisassemblyBuffer} ({@code
- * DIS_BUFFER}) is not ported for the same reason, and neither is {@code
- * GetNext}/{@code GetConstNext} (buffer traversal has no Java equivalent -
- * see {@link DisassemblyResult.LineIterator}).
+ * Holds its text as a plain {@link String} field, and {@link
+ * DisassemblySection} holds a plain {@code List<DisassemblyLine>} of them -
+ * see {@link DisassemblyResult.LineIterator} for how a line's position
+ * within that structure is walked.
  *
  * @author Peter Dell
  */
@@ -36,10 +30,9 @@ public final class DisassemblyLine {
 	public int address; // Absolute address to display as comment (in addition to the label).
 	/**
 	 * {@link #systemAddress} of every line that is not a system equate's -
-	 * such a line is never omitted as "unreferenced". Not 0, which the C++
-	 * version uses: a system can have a label at address {@code $0000} (the
-	 * C64's 6510 port), and that line was then always written, referenced or
-	 * not.
+	 * such a line is never omitted as "unreferenced". Not 0: a system can
+	 * have a label at address {@code $0000} (the C64's 6510 port), and that
+	 * line must then always be written, referenced or not.
 	 */
 	public static final int NO_SYSTEM_ADDRESS = -1;
 

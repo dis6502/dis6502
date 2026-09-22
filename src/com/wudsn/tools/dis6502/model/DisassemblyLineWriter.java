@@ -12,19 +12,9 @@ import com.wudsn.tools.base.common.HexUtility;
  * numbers, bytes, addresses, comments, instructions), formatted according to
  * a {@link Profile}.
  * <p>
- * Ported from DisassemblyLineWriter.h / DisassemblyLineWriter.cpp. The C++
- * version writes into a fixed-size {@code wchar_t[]} buffer sized up front
- * (mirroring the original application's manual memory management) and
- * validates that every character is printable ASCII (32-127); this uses a
- * plain, unbounded {@link StringBuilder} instead, so the constructor's
- * buffer-size parameter and the character-range check have no Java
- * equivalent. The C++ {@code CString}/{@code String} overload pair (raw
- * {@code wchar_t*} vs. {@code wstring}) collapses into a single
- * {@link #string(String)}. {@code Byte} is renamed to {@link
- * #byteValue(int)} since {@code byte} is a reserved word in Java; it is
- * kept as a separate method from {@link #byteNumber(int)} even though both
- * currently have identical bodies, matching the (seemingly duplicated) C++
- * source exactly.
+ * Uses a plain, unbounded {@link StringBuilder}. {@link #byteValue(int)} is
+ * kept as a separate method from {@link #byteNumber(int)} for semantic
+ * clarity at call sites, even though both currently have identical bodies.
  *
  * @author Peter Dell
  */

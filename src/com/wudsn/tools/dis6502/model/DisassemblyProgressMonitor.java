@@ -11,19 +11,14 @@ import com.wudsn.tools.dis6502.Messages;
 /**
  * Reports progress of a {@link Disassembly} run and allows cancelling it.
  * <p>
- * Ported from DisassemblyProgressMonitor.h / DisassemblyProgressMonitor.cpp.
- * {@code SetPass}/{@code SetSegmentNumber}/{@code SendInfo} log through the
- * global {@code Application} object there; {@link #setPass}/{@link
- * #setSegmentNumber}/{@link #sendInfo} do the equivalent here via {@link
- * Application#sendMessage}. {@link
+ * {@link #setPass}/{@link #setSegmentNumber}/{@link #sendInfo} log through
+ * {@link Application#sendMessage}. {@link
  * com.wudsn.tools.dis6502.ui.DisassemblyProgressDialog}'s own {@code
  * Monitor} subclass - the only one actually used by the running
  * application - overrides {@link #setPass}/{@link #setSegmentNumber} to
- * update its own UI labels instead of logging, exactly like C++'s {@code
- * DisassemblyProgressDialog::SetPass}/{@code SetSegmentNumber} override the
- * base class without calling it: this class's own logging only actually
- * fires for a plain, undecorated monitor (matching C++, where only {@code
- * MainTest.cpp}'s test harness uses the base class directly).
+ * update its own UI labels instead of logging, without calling the base
+ * class: this class's own logging only actually fires for a plain,
+ * undecorated monitor, such as in a test harness.
  *
  * @author Peter Dell
  */

@@ -17,12 +17,9 @@ import org.w3c.dom.Element;
  * A block of memory: the raw byte content plus, in parallel, a
  * {@link MemoryType} for every byte.
  * <p>
- * Ported from MemoryBlock.h / MemoryBlock.cpp. Unlike the C++ version, this
- * exposes its content directly as plain {@code byte[]} arrays instead of
- * through a {@code ByteSequence}/{@code ByteArray} abstraction - Java's
- * {@code byte[]} together with {@code System.arraycopy}/{@code
- * java.util.Arrays} already covers everything that abstraction existed for
- * in C++.
+ * Exposes its content directly as plain {@code byte[]} arrays; {@code
+ * System.arraycopy}/{@code java.util.Arrays} cover everything needed to
+ * work with them.
  *
  * @author Peter Dell
  */
@@ -83,19 +80,16 @@ public final class MemoryBlock implements Xml.Serializable {
 	}
 
 	/**
-	 * Decodes the type byte at {@code offset} as a {@link MemoryType}. Unlike
-	 * the C++ version's {@code (MemoryType)type.at(offset)} - an unchecked
-	 * C-style cast that silently tolerates a byte value outside the enum's
-	 * defined constants, since it just never matches any named case in a
-	 * later comparison - {@link MemoryType#VALUES}{@code [byte]} would throw
-	 * for the same out-of-range byte. This returns {@link MemoryType#UNKNOWN}
-	 * instead, which is observably identical: {@code UNKNOWN} likewise never
-	 * matches any of the specific constants callers compare against. This
-	 * matters in practice: the byte immediately after a {@link
-	 * MemoryType#LOBYTE}/{@link MemoryType#HIBYTE} byte has its type slot
-	 * repurposed to hold the missing address byte's raw value (see {@link
-	 * MemoryType}'s javadoc), not a real {@code MemoryType} ordinal, and nothing
-	 * skips decoding it before the disassembler moves on to read it as data.
+	 * Decodes the type byte at {@code offset} as a {@link MemoryType}, treating
+	 * an out-of-range byte value as {@link MemoryType#UNKNOWN} rather than
+	 * throwing (as {@link MemoryType#VALUES}{@code [byte]} would) - observably
+	 * identical, since {@code UNKNOWN} likewise never matches any of the
+	 * specific constants callers compare against. This matters in practice:
+	 * the byte immediately after a {@link MemoryType#LOBYTE}/{@link
+	 * MemoryType#HIBYTE} byte has its type slot repurposed to hold the
+	 * missing address byte's raw value (see {@link MemoryType}'s javadoc),
+	 * not a real {@code MemoryType} ordinal, and nothing skips decoding it
+	 * before the disassembler moves on to read it as data.
 	 */
 	public MemoryType getTypeAt(int offset) {
 		int value = type[offset] & 0xFF;

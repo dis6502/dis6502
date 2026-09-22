@@ -19,17 +19,15 @@ import com.wudsn.tools.dis6502.ValueSets;
  * The kind of file a {@link ComputerSystem} can read, write, or guess from
  * its content - and what a file chooser needs to know about it.
  * <p>
- * Ported from FileType.h/FileType.cpp as a WUDSN Base {@link ValueSet}
- * rather than a Java {@code enum} - like {@link Encoding}/{@link
- * FolderType}, this is the C++ version's {@code FileType} and {@code
- * FileTypeInfo}/{@code FileTypeFactory} in one. {@link #getId()} is the key
- * {@link MRUList}'s persistence uses; {@link #getText()} the localizable
+ * A WUDSN Base {@link ValueSet} rather than a Java {@code enum} - like
+ * {@link Encoding}/{@link FolderType}: {@link #getId()} is the key {@link
+ * MRUList}'s persistence uses; {@link #getText()} is the localizable
  * display text from {@code ValueSets.properties}; the default extension,
  * filter extensions and folder type are additional attributes of each
- * value, the way a value set is meant to carry them. The C++ {@code
- * FileTypeInfo}'s separate filter text ("Disk Image Files") needs no entry
- * of its own: for every type that has a filter, it is the text of its
- * {@link FolderType} - see {@link #getFilterText()}.
+ * value, the way a value set is meant to carry them. A separate filter
+ * text ("Disk Image Files") needs no entry of its own: for every type that
+ * has a filter, it is the text of its {@link FolderType} - see
+ * {@link #getFilterText()}.
  *
  * @author Peter Dell
  */
@@ -124,8 +122,8 @@ public final class FileType extends ValueSet {
 	/**
 	 * The file extensions (lower case, with leading dot) a file chooser
 	 * filters for. Empty if any file can be of this type - a raw file, or
-	 * {@link #ANY_FILE}. Compared to the C++ version, executable files also cover
-	 * {@code .prg} (C64) and {@code .tap} (Oric): its list was Atari-only.
+	 * {@link #ANY_FILE}. Executable files cover {@code .prg} (C64) and
+	 * {@code .tap} (Oric) in addition to the Atari extensions.
 	 */
 	public List<String> getFilterExtensions() {
 		return filterExtensions;

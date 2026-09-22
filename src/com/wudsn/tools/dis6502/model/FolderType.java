@@ -17,13 +17,10 @@ import com.wudsn.tools.dis6502.ValueSets;
 /**
  * The kind of folder a default-folders setting is remembered for.
  * <p>
- * Ported from FolderType.h / FolderType.cpp as a WUDSN Base {@link ValueSet}
- * rather than a Java {@code enum} - like {@link Encoding}, this is the C++
- * version's {@code FolderType} and {@code FolderTypeInfo}/{@code
- * FolderTypeFactory} in one: {@link #getId()} is the key the settings are
- * stored under - the same keys as the C++ version's, and each constant is
- * named like its key - and {@link #getText()} the localizable display text
- * from {@code ValueSets.properties}.
+ * A WUDSN Base {@link ValueSet} rather than a Java {@code enum} - like
+ * {@link Encoding}: {@link #getId()} is the key the settings are stored
+ * under, and each constant is named like its key; {@link #getText()} is the
+ * localizable display text from {@code ValueSets.properties}.
  *
  * @author Peter Dell
  */

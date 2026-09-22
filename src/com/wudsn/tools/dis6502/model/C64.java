@@ -16,18 +16,14 @@ import com.wudsn.tools.dis6502.Messages;
 
 /**
  * The Commodore 64 computer system.
- * <p>
- * Ported from systems/c64/C64.h / C64.cpp, where C64 support is only a
- * stub; three parts of it are real here instead:
  * <ul>
  * <li>{@link #VECTOR_ADDRESSES}/{@link #BASE_ADDRESSES} hold the C64's
- * actual pointer locations (the C++ version has a single {@code 0x0200
- * DUMMY EXAMPLE} entry in each), so code trace recognizes {@code LDA
- * #<irq / STA CINV / LDA #>irq / STA CINV+1} and follows it. All names are
- * the ones in {@code systems/C64.equ}.</li>
+ * actual pointer locations, so code trace recognizes {@code LDA #<irq /
+ * STA CINV / LDA #>irq / STA CINV+1} and follows it. All names are the
+ * ones in {@code systems/C64.equ}.</li>
  * <li>{@link #readExecutableFile} marks the loaded segment as binary, so a
- * {@code .prg} is actually disassembled (the C++ version leaves it a raw
- * segment until the user changes that in the segment properties).</li>
+ * {@code .prg} is actually disassembled, rather than left as a raw segment
+ * until the user changes that in the segment properties.</li>
  * <li>{@link #guessFileType} recognizes a {@code .prg}, so one can be
  * dropped on the window or passed on the command line.</li>
  * </ul>
@@ -84,9 +80,8 @@ public final class C64 extends ComputerSystem {
 	@Override
 	public FileType guessFileType(long fileSize, byte[] content) {
 		// A .prg has no magic bytes, just a 2 byte load address - so anything that would
-		// load above the zero page/stack and still fit into memory counts as one (the C++
-		// version recognizes nothing here). Everything else is left for the caller to
-		// offer as a raw file.
+		// load above the zero page/stack and still fit into memory counts as one.
+		// Everything else is left for the caller to offer as a raw file.
 		int address = (content[0] & 0xFF) | ((content[1] & 0xFF) << 8);
 		long size = fileSize - PRG_HEADER_SIZE;
 		if (address >= 0x0200 && size > 0 && address + size <= 0x10000L) {
