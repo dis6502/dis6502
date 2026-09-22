@@ -96,84 +96,68 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * {@code Application} singleton, then build the UI on the Swing event
  * dispatch thread.
  * <p>
- * Ported from ui/Main.h / Main.cpp / ui/MainController.h / MainController.cpp
- * / ui/MainFile.cpp / ui/MainMenu.cpp: the
- * main window shell (see {@link MainWindow}) plus workspace New (see {@link
- * #performNewWorkspace}/{@link WorkspaceDialog})/Open/Save/Save As/Save
- * Disassembly Files (see {@link #performSaveDisassemblyFiles})/Write Boot
- * Disk (see {@link #performWriteBootDisk}/{@link SegmentWriteBootDiskDialog})/
- * Exit, opening/adding an executable, ROM image, cassette image, raw, disk image
- * executable, disk image boot sectors, or disk image sectors file (see
- * {@link RawFileDialog}/{@link DiskImageExecutableFileDialog}/{@link
- * #openDiskImageBootSectors}/{@link DiskImageSectorsDialog}),
- * loading/saving/clearing/exporting/editing equates and defining a user
- * equate address range (see {@link EquateDialog}/{@link
- * EquateRangeDialog}), the View menu's Display as Screen Code/No
- * Disassembly/Double Font Height toggles and Default Folders/Profile
- * dialogs (see {@link DefaultFoldersDialog}/{@link ProfileDialog}), and
- * Help &gt; About. Every way of opening a file - menu, Recent Files/
- * Workspaces, the command line (see {@link CommandLineArguments}), drag and
- * drop - goes through {@link #openFile}; every file chooser through {@link
- * FileChoosers}.
- * {@link #confirmClearWorkspace} mirrors {@code Main::PromptToClearWorkspace};
- * {@link #updateDisassembly} mirrors {@code Main::UpdateDisassembly},
- * called explicitly after each action instead of through the reactive
- * {@code Main::HandleWorkspaceChanged} dispatcher, which is not ported.
- * {@link #performFindInDisassembly}/{@link #performFindNextInDisassembly}/
- * {@link #performXRefSelected} wire the disassembly search field/buttons
- * to {@link XRefPanel}, ported from MainDisassembly::Find/FindNextString/
- * RefreshXRef/XRefSelected, and (via {@link
- * #updateMemoryInspectorSegment}) keep {@link
- * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s hex dump in sync with
- * the selected segment - see that class's javadoc for what its
- * drastically-simplified first pass does and doesn't cover. The segment
- * list's popup menu commands (Move Up/Down, Merge, Delete, Save Segment/
- * Save All Segments, Properties...) are wired here too, from {@code
- * com.wudsn.tools.dis6502.ui.SegmentListPanel}'s exposed menu items -
- * ported from ui/MainSegment.cpp - and {@link
- * #performShowSegmentProperties} uses {@link SegmentPropertiesDialog}.
+ * The main window shell (see {@link MainWindow}) plus workspace New (see
+ * {@link #performNewWorkspace}/{@link WorkspaceDialog})/Open/Save/Save
+ * As/Save Disassembly Files (see {@link #performSaveDisassemblyFiles})/
+ * Write Boot Disk (see {@link #performWriteBootDisk}/{@link
+ * SegmentWriteBootDiskDialog})/Exit, opening/adding an executable, ROM
+ * image, cassette image, raw, disk image executable, disk image boot
+ * sectors, or disk image sectors file (see {@link RawFileDialog}/{@link
+ * DiskImageExecutableFileDialog}/{@link #openDiskImageBootSectors}/{@link
+ * DiskImageSectorsDialog}), loading/saving/clearing/exporting/editing
+ * equates and defining a user equate address range (see {@link
+ * EquateDialog}/{@link EquateRangeDialog}), the View menu's Display as
+ * Screen Code/No Disassembly/Double Font Height toggles and Default
+ * Folders/Profile dialogs (see {@link DefaultFoldersDialog}/{@link
+ * ProfileDialog}), and Help &gt; About. Every way of opening a file -
+ * menu, Recent Files/Workspaces, the command line (see {@link
+ * CommandLineArguments}), drag and drop - goes through {@link
+ * #openFile}; every file chooser through {@link FileChoosers}. {@link
+ * #updateDisassembly} is called explicitly after every action that could
+ * affect it, rather than through a reactive change-dispatcher. {@link
+ * #performFindInDisassembly}/{@link #performFindNextInDisassembly}/{@link
+ * #performXRefSelected} wire the disassembly search field/buttons to
+ * {@link XRefPanel}, and (via {@link #updateMemoryInspectorSegment}) keep
+ * {@link com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s hex dump in
+ * sync with the selected segment - see that class's javadoc for what it
+ * does and doesn't cover. The segment list's popup menu commands (Move
+ * Up/Down, Merge, Delete, Save Segment/Save All Segments, Properties...)
+ * are wired here too, from {@code
+ * com.wudsn.tools.dis6502.ui.SegmentListPanel}'s exposed menu items, and
+ * {@link #performShowSegmentProperties} uses {@link
+ * SegmentPropertiesDialog}.
+ * <p>
  * Every {@code com.wudsn.tools.dis6502.ui.MemoryInspectorPanel} command is
  * likewise wired here from a public popup menu item field, since that
- * panel has no toolbar of its own - see its class javadoc for why.
- * {@link #performShowMemoryInspectorFindDialog}/{@link
+ * panel has no toolbar of its own - see its class javadoc for why. {@link
+ * #performShowMemoryInspectorFindDialog}/{@link
  * #performMemoryInspectorFindNext} wire its Find/Find Next items to
- * {@link MemoryInspectorFindStringDialog}, ported from the popup menu's
- * IDM_DUMP_FIND/IDM_DUMP_FIND_NEXT commands, and {@link
- * #performSplitAtSelection} wires its Split at Selection item, ported
- * from IDM_DUMP_SPLIT_AT_SELECTION/{@code MemoryInspector::SplitAtSelection}.
- * {@link #performSaveMemoryInspectorSelection} wires the Save Selection
- * items, ported from IDM_DUMP_SAVE_NO_HEADER/IDM_DUMP_SAVE_HEADER/{@code
- * MainMemoryInspector::SaveWithoutHeader}/{@code SaveWithHeader}; the
- * Select All/Select Next Unknown Block items just call {@code
+ * {@link MemoryInspectorFindStringDialog}, and {@link
+ * #performSplitAtSelection} wires its Split at Selection item. {@link
+ * #performSaveMemoryInspectorSelection} wires the Save Selection items;
+ * the Select All/Select Next Unknown Block items just call {@code
  * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#selectAll}/{@code
  * #selectNextUnknownBlock} directly. {@link #performSetMemoryInspectorType}/
  * {@link #performSetMemoryInspectorLoHiType}/{@link
  * #performSetUnknownBlockToByte} wire the Change Type submenu (via {@code
  * setTypeSelectionListener}, since each of its items already knows its
- * own type - see that panel's javadoc) and Set Unknown Block to Byte
- * item, ported from the type submenu's IDM_DUMP_SET_TYPE_&#42;/{@code
- * MemoryInspector::SetType} and IDM_DUMP_SET_UNKNOWN_BLOCK_TO_BYTE/{@code
- * SetUnknownBlockToByte} - the first commands ported here that mutate a
- * segment's byte types, calling {@link #updateDisassembly} afterward to
- * reflect the change, the same way editing equates already does. {@link
- * #performCopyMemoryInspectorSelection} wires the Copy item, ported from
- * IDM_DUMP_COPY_SELECTION/{@code MemoryInspector::CopySelection} - see
- * that method's own javadoc for why Delete/Cut/Paste Selection are not
- * ported. {@link #performEditMemoryInspectorComment} wires the Add/Edit
- * comment... item, ported from
- * IDM_DUMP_EDIT_COMMENT/{@code MainDisassembly::AddComment} via the new
- * {@link CommentDialog}. {@link #performShowAssembleDialog} wires the
- * Assemble at selection... item, ported from
- * IDM_DUMP_ASSEMBLE/{@code MainMemoryInspector::PerformCommands} via the
- * new {@link AssembleDialog}. {@link #performGuessCode} wires the Start
- * code trace at selection item, ported from
- * IDM_DUMP_START_CODE_TRACE/{@code MemoryInspector::Guess} via the new
- * {@code com.wudsn.tools.dis6502.model.GuessCodeLogic}.
- * {@link #performShowSelectGraphicsDialog} wires the Select Graphics...
- * item, ported from
- * IDM_DUMP_SELECT_SPRITES/{@code MemoryInspector::ShowSelectSpritesDialog}
- * via the new {@link SelectGraphicsDialog} - renamed from the C++
- * source's "Sprite" terminology, see that class's own javadoc for why.
+ * own type - see that panel's javadoc) and Set Unknown Block to Byte item
+ * - the first commands here that mutate a segment's byte types, calling
+ * {@link #updateDisassembly} afterward to reflect the change, the same
+ * way editing equates already does. {@link
+ * #performCopyMemoryInspectorSelection} wires the Copy item; {@link
+ * #performCutMemoryInspectorSelection}/{@link
+ * #performPasteMemoryInspectorSelection}/{@link
+ * #performDeleteMemoryInspectorSelection} wire Cut/Paste/Delete - see
+ * {@code MemoryInspectorPanel}'s class javadoc for their design. {@link
+ * #performEditMemoryInspectorComment} wires the Add/Edit comment... item
+ * via {@link CommentDialog}. {@link #performShowAssembleDialog} wires the
+ * Assemble at selection... item via {@link AssembleDialog}. {@link
+ * #performGuessCode} wires the Start code trace at selection item via
+ * {@code com.wudsn.tools.dis6502.model.GuessCodeLogic}. {@link
+ * #performShowSelectGraphicsDialog} wires the Select Graphics... item via
+ * {@link SelectGraphicsDialog} - see that class's own javadoc for why
+ * these are called "Graphic", not "Sprite".
  *
  * @author Peter Dell
  */
@@ -216,11 +200,10 @@ public final class Dis6502 {
 
 	/**
 	 * Switches from Swing's default cross-platform "Metal" look and feel to
-	 * the host OS's native one (Windows, in the C++ version's case, which
-	 * always used real Win32 controls) - failures are swallowed and left at
-	 * the cross-platform default, matching {@link
-	 * javax.swing.UIManager}'s own documented fallback behavior for a
-	 * look and feel that cannot be instantiated on the current platform.
+	 * the host OS's native one - failures are swallowed and left at the
+	 * cross-platform default, matching {@link javax.swing.UIManager}'s own
+	 * documented fallback behavior for a look and feel that cannot be
+	 * instantiated on the current platform.
 	 */
 	private static void setNativeLookAndFeel() {
 		try {
@@ -391,7 +374,7 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.quitEditModeMenuItem.addActionListener(e -> mainWindow.memoryInspectorPanel.quitEditMode());
 		mainWindow.memoryInspectorPanel.setEditModeExitedListener(this::performMemoryInspectorEditModeExited);
 		mainWindow.memoryInspectorPanel.setEditModeEnteredListener(this::updateFileMenuState);
-		// The safety net WM_INITMENU is in the C++ version: whatever changed since, the File menu is right when it opens.
+		// Safety net: refreshes the File menu right before it opens, catching anything that changed since the last explicit update.
 		mainWindow.mainMenu.fileMenu.addMenuListener(new MenuListener() {
 			@Override
 			public void menuSelected(MenuEvent e) {
@@ -427,8 +410,7 @@ public final class Dis6502 {
 	/**
 	 * Files dropped anywhere on the main window: the first one is opened,
 	 * any further ones are added to it, each with its type guessed by {@link
-	 * #openFile}. The C++ version ({@code MainSegment::DropFilesProc}) only
-	 * accepts a drop on the segment list, and only of exactly one file.
+	 * #openFile}.
 	 */
 	private final class FileDropHandler extends TransferHandler {
 
