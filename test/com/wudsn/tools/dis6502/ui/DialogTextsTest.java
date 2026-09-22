@@ -46,9 +46,12 @@ import com.wudsn.tools.dis6502.model.ProfileLogic;
  * constructor throws. The drop-downs built from a {@link ValueSet} must
  * list the expected values in the expected order and round-trip a value.
  * <p>
- * Panels and the menu bar are plain components and are checked headless;
- * a {@link JDialog} cannot be constructed without a display, so the
- * dialogs are skipped - not failed - when the JVM is headless.
+ * Skipped - not failed - when the JVM is headless: not only can a {@link
+ * JDialog} not be constructed without a display, the WUDSN Base {@code
+ * Actions} repository cannot even load there ({@code KeyStroke.M1} asks
+ * the toolkit for the menu shortcut mask), so no class of the {@code ui}
+ * package can. Every UI test of {@code plans/UI_SMOKE_TESTS_PROPOSAL.md}
+ * therefore needs a display; see {@link #isHeadless()}.
  *
  * @author Peter Dell
  */
@@ -61,20 +64,25 @@ public final class DialogTextsTest {
 	}
 
 	public static void testDialogTexts() throws Exception {
+		if (isHeadless()) {
+			Assert.log("DialogTextsTest skipped: no display");
+			return;
+		}
 		SwingUtilities.invokeAndWait(() -> {
 			try {
 				testPanelsAndMenu();
-				if (GraphicsEnvironment.isHeadless()) {
-					Assert.log("DialogTextsTest: headless, the dialogs are skipped");
-				} else {
-					testDialogs();
-					testValueSetFields();
-				}
+				testDialogs();
+				testValueSetFields();
 			} catch (Exception ex) {
 				throw new RuntimeException(ex);
 			}
 		});
 		Assert.log("DialogTextsTest completed");
+	}
+
+	/** Whether the UI tests must skip themselves: there is no display, so nothing of the {@code ui} package can be used. */
+	public static boolean isHeadless() {
+		return GraphicsEnvironment.isHeadless();
 	}
 
 	private static void testPanelsAndMenu() throws Exception {
