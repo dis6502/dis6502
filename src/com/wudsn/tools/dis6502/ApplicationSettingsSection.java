@@ -10,16 +10,10 @@ import java.util.prefs.Preferences;
 /**
  * One named section of persistent application settings (key/value pairs).
  * <p>
- * Ported from ApplicationSettingsSection.h / ApplicationSettingsSection.cpp.
- * The C++ version reads/writes a named section of a Windows INI-style file
- * via {@code GetPrivateProfileString}/{@code WritePrivateProfileString}
- * (a no-op reading the default on non-Windows platforms). This uses {@code
- * java.util.prefs.Preferences} instead - the JDK-built-in, cross-platform
- * equivalent of "small named sections of persistent key/value settings" -
- * with one {@code Preferences} node per section name, created by {@link
- * Application#getSettingsSection}. Unlike the C++ version's out-parameter
- * {@code GetString}/{@code GetUnsignedInt}, the getters here return the
- * value directly.
+ * Backed by {@code java.util.prefs.Preferences} - the JDK-built-in,
+ * cross-platform mechanism for small named sections of persistent
+ * key/value settings - with one {@code Preferences} node per section
+ * name, created by {@link Application#getSettingsSection}.
  *
  * @author Peter Dell
  */

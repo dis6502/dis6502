@@ -15,16 +15,13 @@ import com.wudsn.tools.dis6502.model.ComputerSystemType;
  * file to open, which is what makes "Open with", a file type association,
  * or a per-system desktop shortcut work.
  * <p>
- * Same syntax as the C++ version's {@code Main::InitApplication}, with two
- * differences. A leading {@code -} is accepted in place of {@code /}, and
- * the first argument only counts as a system ID if it actually names one
+ * A leading {@code -} is accepted in place of {@code /}, and the first
+ * argument only counts as a system ID if it actually names one
  * (case-insensitively) - elsewhere than on Windows an absolute file path
  * starts with {@code /} too, and {@code /home/me/game.xex} must stay a
- * file. And since Java already delivers the arguments split, a file path
- * needs no re-joining - though an unquoted path containing blanks, which
- * arrives as several arguments, is still put back together, as the C++
- * version does. The C++ version's {@code /TEST:} and {@code /DEBUG}
- * options have no counterpart - see {@code TestRunner}.
+ * file. An unquoted path containing blanks, which arrives as several
+ * arguments, is put back together. There is no {@code /TEST:}/{@code
+ * /DEBUG} option support - see {@code TestRunner}.
  *
  * @author Peter Dell
  */

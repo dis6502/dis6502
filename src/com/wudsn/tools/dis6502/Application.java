@@ -18,35 +18,24 @@ import com.wudsn.tools.base.repository.Message;
 
 /**
  * Minimal application-wide message handling plus settings/module-path
- * access, ported from Application.h / Application.cpp.
+ * access.
  * <p>
- * The C++ version is an abstract base class: {@code GetModuleFilePath}/
- * {@code GetSettingsSection} are pure virtual (implemented by the concrete
- * application class in {@code ui/}), and message methods
- * take a {@code Text::TextID} that gets resolved through {@code
- * Application::GetText}/{@code Text::Get} at call time - the base class's
- * own {@code GetText} is itself just a stub returning the numeric ID as a
- * string, with the real resource-table lookup only present in the concrete
- * subclass. Since {@link Texts}' fields already hold their resolved text
- * once the class is loaded (see its javadoc), that whole indirection is
- * unnecessary here: methods take the already-resolved {@code String} (e.g.
- * {@link Texts#LogPanel_Title}) directly, so {@code SendXxxMessageWithID}
- * becomes {@code sendXxxMessage} - or, for a {@link Messages} field, {@link
- * #sendMessage}. Message sending is also not a singleton
- * accessed through a {@code g_Application} global here - callers that need
+ * Message methods take the already-resolved {@code String} directly (e.g.
+ * {@link Texts#LogPanel_Title}) since {@link Texts}' fields already hold
+ * their resolved text once the class is loaded (see its javadoc) - or,
+ * for a {@link Messages} field, {@link #sendMessage}. Message sending is
+ * also not a singleton accessed through a global here - callers that need
  * it (like {@link com.wudsn.tools.dis6502.model.WorkspaceLogic}) take an
  * {@code Application} instance through their constructor instead.
  * <p>
- * This is concrete, not abstract, unlike the C++ version: a plain instance
- * is all the model classes and the unit tests need, and {@code
- * com.wudsn.tools.dis6502.ui.UIApplication} only adds routing the messages
- * to the log panel on top. {@link #getSettingsSection} is
- * backed by {@link Preferences} rather than a Windows INI file (see
- * {@link ApplicationSettingsSection}'s javadoc), and {@link
- * #getModuleFilePath} resolves relative to the directory containing this
- * class's own jar/classes (the closest cross-platform equivalent of "the
- * running executable's own folder") instead of using the Win32 module
- * handle APIs.
+ * This class is concrete: a plain instance is all the model classes and
+ * the unit tests need, and {@code com.wudsn.tools.dis6502.ui.UIApplication}
+ * only adds routing the messages to the log panel on top. {@link
+ * #getSettingsSection} is backed by {@link Preferences} rather than a
+ * Windows INI file (see {@link ApplicationSettingsSection}'s javadoc), and
+ * {@link #getModuleFilePath} resolves relative to the directory containing
+ * this class's own jar/classes (the closest cross-platform equivalent of
+ * "the running executable's own folder").
  *
  * @author Peter Dell
  */
