@@ -15,54 +15,33 @@ import com.wudsn.tools.base.common.HexUtility;
  * label reservation, relative-label generation, listing generation,
  * non-code segments, cleanup).
  * <p>
- * Ported from Disassembly.h / Disassembly.cpp. {@code SetPass}, {@code
- * StartDisassembly}, and {@code DisassembleInternal} (the pass-by-pass
- * orchestration calling into {@code DisassemblyProgressMonitor}) are not
- * ported yet, since the progress monitor's own orchestration hook is
- * deferred (see {@link DisassemblyProgressMonitor}); call the passes
- * directly instead for now. {@code DebugSection} (a pure diagnostic dump to
- * the C++ {@code Debug} logger) is not ported.
- * <p>
- * Design deviations:
+ * The pass-by-pass orchestration that would drive {@link
+ * DisassemblyProgressMonitor} is not implemented yet, since the progress
+ * monitor's own orchestration hook is deferred (see {@link
+ * DisassemblyProgressMonitor}); call the passes directly instead for now.
+ * A pure diagnostic dump of section state is not implemented either.
  * <ul>
- * <li>The C++ source uses preprocessor macros ({@code DIS_GET_NEXT_BYTE},
- * {@code DIS_GET_BYTE_IN_PASS_2}, {@code DIS_GET_WORD_IN_PASS_2}, {@code
- * DIS_GET_BYTE_IN_PASS_4}, {@code DIS_GET_WORD_IN_PASS_4}) whose {@code
- * break}/{@code return} statements unwind out of the current instruction's
- * processing (to the next loop iteration) or out of the whole pass (on
- * cancellation), by relying on exactly where they are textually inlined
- * relative to enclosing {@code switch} statements. Java has no equivalent
- * macro-based control-flow trick, so this uses two lightweight,
- * stack-trace-free exceptions instead - {@link AbortInstructionException}
- * (segment boundary crossed mid-instruction: caught by the pass's loop,
- * which moves on to the next iteration) and {@link
- * DisassemblyCancelledException} (caught by the pass method itself, which
- * returns immediately) - thrown by {@link #nextByteInPass23()}/{@link
- * #nextByteInPass4}/{@link #getNextByte()} at exactly the points the C++
- * macros would have exited.</li>
- * <li>{@code segmentIndex}/{@code pc} are C++ locals threaded through
- * {@code DisInit}/{@code DisGetNextByte} by reference; since Java has no
- * reference parameters, and every call site within one pass needs to see
- * the same up-to-date position, they are instance fields here instead
- * (reset by {@link #disInit()} at the start of each pass, same as the C++
- * locals were re-initialized by each pass's own {@code DisInit} call).
- * {@code cDisByteType} is likewise promoted to the {@link #byteType}
- * field.</li>
+ * <li>Two lightweight, stack-trace-free exceptions drive control flow
+ * within a pass: {@link AbortInstructionException} (segment boundary
+ * crossed mid-instruction: caught by the pass's loop, which moves on to
+ * the next iteration) and {@link DisassemblyCancelledException} (caught by
+ * the pass method itself, which returns immediately) - thrown by {@link
+ * #nextByteInPass23()}/{@link #nextByteInPass4}/{@link #getNextByte()} at
+ * the points a segment boundary or a cancellation is discovered.</li>
+ * <li>{@code segmentIndex}/{@code pc} are instance fields, reset by {@link
+ * #disInit()} at the start of each pass: every call site within one pass
+ * needs to see the same up-to-date position, and there are no reference
+ * parameters to thread them through as plain locals instead. {@code
+ * byteType} is likewise a field for the same reason.</li>
  * <li>Pass 4's {@code ReservedNop2Byte}/{@code ReservedNop3Byte} cases
- * display the just-read operand byte(s) correctly here. The original C++
- * source had a variable mix-up bug there (passing the byte-sized {@code
- * cLow} as {@code DIS_GET_WORD_IN_PASS_4}'s word out-parameter truncated
- * the read bytes away, so the code went on to display a stale, unrelated
- * {@code wAddr} left over from a previous switch case/iteration); that bug
- * has since been fixed upstream in Disassembly.cpp, and this port already
- * matched the corrected behavior.</li>
+ * display the just-read operand byte(s) correctly.</li>
  * </ul>
  *
  * @author Peter Dell
  */
 public final class Disassembly {
 
-	/** Matches the C++ {@code dis_k::NO_DUMP} constant. */
+	/** Sentinel for an address/value not yet known. */
 	private static final int NO_DUMP = 0xFFFF;
 
 	/** Thrown to unwind to the next pass iteration when a segment boundary is crossed mid-instruction. */
@@ -101,7 +80,7 @@ public final class Disassembly {
 	private int markNextSegmentIndex;
 	private int markSegmentIndex;
 	private int markOffset;
-	int markSize; // Package-private: DisassemblyWriter is the C++ friend equivalent.
+	int markSize; // Package-private: read directly by DisassemblyWriter.
 
 	final DisassemblyLineWriter lineWriter = new DisassemblyLineWriter(); // Package-private: see markSize.
 
@@ -170,19 +149,16 @@ public final class Disassembly {
 	/**
 	 * Changes how the operand of the {@code Immediate}-mode instruction at
 	 * {@code offset} is shown - the counterpart of {@link
-	 * #isInstructionWithImmediate}, which reports it. Ported from
-	 * MainDisassembly::SetImmediateType, minus the dialog: for {@link
+	 * #isInstructionWithImmediate}, which reports it. For {@link
 	 * MemoryType#LOBYTE}/{@link MemoryType#HIBYTE} the caller has already
 	 * asked the user for {@code unknownByte}, the other half of the address
 	 * (ignored for every other type).
 	 * <p>
-	 * Fixes a slip in the C++ version while at it: changing an instruction
-	 * that currently is LOBYTE/HIBYTE into a char constant must take that
-	 * marker off the opcode again. The C++ condition tests the new type
-	 * where it means the current one, so it only does that for LOBYTE (and
-	 * leaves the opcode UNKNOWN rather than CODE) - a HIBYTE instruction
-	 * stays HIBYTE, with an operand whose type slot now says STRING instead
-	 * of holding the other address half.
+	 * Changing an instruction whose opcode is currently {@link
+	 * MemoryType#LOBYTE}/{@link MemoryType#HIBYTE} into a char constant
+	 * clears that marker back to {@link MemoryType#CODE}: the operand
+	 * becomes a standalone string, no longer part of an address-building
+	 * LOBYTE/HIBYTE pair.
 	 *
 	 * @return whether anything was changed: {@code false} if there is no
 	 *         immediate-mode instruction at that offset, or {@code type} is
@@ -407,8 +383,7 @@ public final class Disassembly {
 	/**
 	 * Appends one line to {@code section}, then advances {@link
 	 * #markSegmentIndex}/{@link #markOffset} to track the next line's
-	 * position - replaces the C++ version's {@code DIS_BUFFER}-based
-	 * {@code AddLineInBuffer} (see {@link DisassemblySection}).
+	 * position (see {@link DisassemblySection}).
 	 */
 	private void addLineInSection(DisassemblyLine templateLine, String text, DisassemblySection section) {
 		section.addLine(templateLine, text);
@@ -448,7 +423,7 @@ public final class Disassembly {
 		addLine(profile.commentPrefix, disassemblySectionType);
 	}
 
-	void addLine(String text) { // Package-private: DisassemblyWriter is the C++ friend equivalent.
+	void addLine(String text) { // Package-private: see markSize.
 		addLine(text, DisassemblySectionType.CODE_LINES);
 	}
 
@@ -509,7 +484,7 @@ public final class Disassembly {
 		addLineInSection(templateLine, text, section);
 	}
 
-	void addLineWriter() { // Package-private: DisassemblyWriter is the C++ friend equivalent.
+	void addLineWriter() { // Package-private: see markSize.
 		addLineWriter(DisassemblySectionType.CODE_LINES);
 	}
 
@@ -690,8 +665,7 @@ public final class Disassembly {
 			try {
 				pass2Step(segmentList);
 			} catch (AbortInstructionException e) {
-				// Segment boundary crossed mid-instruction: move on to the next iteration,
-				// matching the C++ macro's break out to the end of the while loop body.
+				// Segment boundary crossed mid-instruction: move on to the next iteration.
 			} catch (DisassemblyCancelledException e) {
 				return;
 			}
@@ -827,8 +801,7 @@ public final class Disassembly {
 			// Other modes with a parameter that is not an address.
 			case Immediate:
 				// byteType is read again after nextByteInPass23() below, which overwrites it with
-				// the operand byte's own type - matches the C++ source's reuse of cDisByteType
-				// (also overwritten by its DIS_GET_NEXT_BYTE call) exactly, quirky as that is.
+				// the operand byte's own type - quirky as that is.
 				if (byteType == MemoryType.LOBYTE) {
 					int cLow = nextByteInPass23();
 					int address = Memory.toAddress(cLow, byteType.ordinal());
@@ -1148,7 +1121,7 @@ public final class Disassembly {
 		getNextByte();
 		int by = lastByte;
 		// Uses the *current* (possibly already-advanced) segmentIndex's wBegin, not oldSegmentIndex's -
-		// matches the C++ source exactly, quirky as that looks. TODO: Why was this getOpcodeLength(by)?
+		// quirky as that looks. TODO: Why was this getOpcodeLength(by)?
 		generateUserComment(oldSegmentIndex, oldPC - segmentList.getSegment(segmentIndex).wBegin, 1);
 
 		if (byteType != MemoryType.DLIST) {
@@ -1339,7 +1312,7 @@ public final class Disassembly {
 
 			case Immediate: {
 				// byteType is re-read after nextByteInPass4() below, which overwrites it with the
-				// operand byte's own type - matches the C++ source's reuse of cDisByteType exactly.
+				// operand byte's own type.
 				if (byteType == MemoryType.LOBYTE) {
 					int cLow = nextByteInPass4(disassemblyWriter, by);
 					int address = Memory.toAddress(cLow, byteType.ordinal());
@@ -1392,8 +1365,7 @@ public final class Disassembly {
 
 				if (address < 0x100 && profile.showZPAbsoluteAsByte && by != 0x20 /* JSR */ && by != 0x4C /* JMP */) {
 					disassemblyWriter.flushBytes();
-					// byteValue, as in the two indexed-mode branches below - the C++ version wrote
-					// these three bytes with Number (four hex digits: ".byte $00AD,...").
+					// byteValue, as in the two indexed-mode branches below.
 					lineWriter.string(profile.directiveBYTE).space().byteValue(by)
 							.string(profile.directiveBYTESeparator).byteValue(address & 0xFF)
 							.string(profile.directiveBYTESeparator).byteValue((address >> 8) & 0xFF);
