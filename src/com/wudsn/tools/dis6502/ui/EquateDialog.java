@@ -31,32 +31,15 @@ import com.wudsn.tools.dis6502.model.WorkspaceProperty;
  * A dialog for viewing or editing an {@link EquateList}'s lines as plain
  * text.
  * <p>
- * Ported from ui/EquateDialog.h / EquateDialog.cpp, with three deviations:
- * <ul>
- * <li>The C++ source's {@code IDC_ADD_EQUATE} handler body is entirely
- * commented out (it calls {@code EquateList::AddEquate} expecting an
- * {@code int} index back, but that method now returns an {@code Equate*},
- * so the code as written would not even compile) - "Add/Modify" is
- * currently a silent no-op there. Reimplemented here using the parsing
- * half that is still real: {@link Equate#readFrom} via a scratch,
- * throwaway {@link EquateList} (since {@link Equate} itself can only be
- * constructed by {@link EquateList}, its C++ {@code friend class}), kept
- * separate from the real {@code equateList} until {@link #show} returns,
- * matching what {@code OnOK} already does (discard everything unless the
- * user clicks OK).</li>
- * <li>{@link #performAdd} actually implements the "Modify" half of that same
- * button's name: with exactly one line selected, committing replaces it in
- * place instead of appending a duplicate. Neither this dialog nor its C++
- * original ever did that - not even the commented-out {@code
- * IDC_ADD_EQUATE} body above, which only ever appended regardless of
- * selection - so editing an existing line's text and committing it used to
- * just add a second, stale copy alongside the original.</li>
- * <li>The C++ source's {@code editable} field is stored but never actually
- * read anywhere else in the file, so "Display System Equates" (called with
- * {@code editable=false}) would open the exact same fully-editable dialog
- * as "Edit User Equates" does. This port actually disables editing when
- * {@code editable} is {@code false}.</li>
- * </ul>
+ * "Add/Modify" parses input via {@link Equate#readFrom} through a scratch,
+ * throwaway {@link EquateList} (since {@link Equate} can only be constructed
+ * by {@link EquateList}), kept separate from the real {@code equateList}
+ * until {@link #show} returns - so every edit is discarded unless the user
+ * clicks OK. With exactly one line selected, committing replaces it in place
+ * instead of appending a duplicate; that is the "Modify" half of the
+ * button's name. "Display System Equates" (called with {@code
+ * editable=false}) disables editing entirely rather than opening the same
+ * editable dialog "Edit User Equates" does.
  *
  * @author Peter Dell
  */
@@ -150,18 +133,9 @@ public final class EquateDialog extends JDialog {
 	}
 
 	/**
-	 * Ported from EquateDialog::ProcessCommand's {@code IDC_ADD_EQUATE} case
-	 * - see the class javadoc for why this is a real implementation instead
-	 * of the C++ source's commented-out one. The "Modify" half of the
-	 * button's own name is a further departure: neither this dialog nor its
-	 * C++ original ever actually replaced the selected line in place - even
-	 * the commented-out {@code IDC_ADD_EQUATE} body only ever appended,
-	 * regardless of selection, so editing an existing line's text and
-	 * committing it just added a duplicate rather than replacing the
-	 * original. Now, with exactly one line selected, committing replaces
-	 * that line instead of appending a new one; with none (or more than
-	 * one, which has no well-defined single target to replace) selected, it
-	 * still appends, exactly as before.
+	 * With exactly one line selected, committing replaces that line instead
+	 * of appending a new one; with none (or more than one, which has no
+	 * well-defined single target to replace) selected, it appends.
 	 */
 	private void performAdd() {
 		if (!editable) {
@@ -175,7 +149,7 @@ public final class EquateDialog extends JDialog {
 		EquateList scratch = new EquateList(WorkspaceProperty.USER_EQUATES);
 		Equate equate = scratch.addEquate(text).equate;
 		if (equate == null) {
-			return; // TODO: ERROR HANDLING - matches the C++ source's own unresolved TODO.
+			return; // TODO Error handling: report why the equate failed to parse.
 		}
 		int[] selectedIndices = equateJList.getSelectedIndices();
 		int newIndex;
@@ -191,7 +165,7 @@ public final class EquateDialog extends JDialog {
 		deleteButton.setEnabled(true);
 	}
 
-	/** Ported from EquateDialog::ProcessCommand's {@code IDC_DELETE_EQUATE} case. */
+	/** Removes the currently selected lines from the list. */
 	private void performDelete() {
 		if (!editable) {
 			return;
@@ -206,11 +180,10 @@ public final class EquateDialog extends JDialog {
 	}
 
 	/**
-	 * Ported from EquateDialog::Show/InitDialog/FillListbox/OnOK, folded into
-	 * one blocking call as is idiomatic for a Swing modal {@link JDialog}.
-	 * Returns {@code true}, and replaces {@code equateList}'s entire content
-	 * with the dialog's edited lines (matching {@code OnOK}), only if the
-	 * user clicked OK on an editable dialog.
+	 * Opens the dialog as one blocking call, idiomatic for a Swing modal
+	 * {@link JDialog}. Returns {@code true}, and replaces {@code equateList}'s
+	 * entire content with the dialog's edited lines, only if the user clicked
+	 * OK on an editable dialog.
 	 */
 	public boolean show(EquateList equateList, boolean editable, String address) {
 		this.editable = editable;

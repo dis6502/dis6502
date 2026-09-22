@@ -17,33 +17,25 @@ import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.Messages;
 
 /**
- * Loads and saves a {@link Workspace}, and adds files to it. Ported from
- * WorkspaceLogic.h / WorkspaceLogic.cpp, scoped down to what needs only
- * already-ported pieces:
+ * Loads and saves a {@link Workspace}, and adds files to it.
  * <ul>
- * <li>{@link #load} peeks at the file's 12 byte magic like the C++
- * version, but only dispatches to the modern XML loader or {@link
- * Workspace1X#load14} - {@code Workspace1X.Load10}/{@code Save14} are not
- * ported (see {@link Workspace1X}'s javadoc for why), so a {@code
- * DIS6502WRK10} file, like any other unrecognized magic, falls through to
- * the XML loader, fails to parse, and is reported as "not a valid
- * workspace" - the same user-visible outcome the C++ version's dedicated
- * magic check produces for a file it can't handle at all.</li>
- * <li>{@link #save} only writes the modern XML format ({@code
- * Workspace::Format::WORKSPACE36} in C++); there is no {@code
- * Workspace::Format} parameter, since nothing needs to write the legacy
- * format going forward.</li>
- * <li>{@link #loadSystemEquates} reads the computer system's {@code .equ}
- * file from the classpath instead of from an application install folder -
- * see {@link ComputerSystem#openResourceByExtension}.</li>
+ * <li>{@link #load} peeks at the file's 12 byte magic, but only dispatches to
+ * the modern XML loader or {@link Workspace1X#load14} - {@code
+ * Workspace1X.Load10}/{@code Save14} are not implemented (see
+ * {@link Workspace1X}'s javadoc for why), so a {@code
+ * DIS6502WRK10} file, like any other unrecognized magic, falls through to the
+ * XML loader, fails to parse, and is reported as "not a valid workspace".</li>
+ * <li>{@link #save} only writes the modern XML format; there is no format
+ * parameter, since nothing needs to write a legacy format going forward.</li>
+ * <li>{@link #loadSystemEquates} reads the computer system's {@code .equ} file
+ * from the classpath instead of from an application install folder - see
+ * {@link ComputerSystem#openResourceByExtension}.</li>
  * </ul>
- * Found and fixed a bug while porting {@link #load}: the C++ version's
- * error path calls {@code Workspace::Init} without first matching the
- * earlier {@code Workspace::BeginUpdate} with an {@code EndUpdate}, so a
- * failed load permanently leaves the workspace's update counter one too
- * high (event flushing silently stops working until some unrelated,
- * later, over-matched {@code EndUpdate} call happens to rebalance it) -
- * fixed upstream (see that commit) and correct here from the start.
+ * {@link #load}'s error path keeps {@link Workspace#beginUpdate}/{@link
+ * Workspace#endUpdate} balanced even when loading fails, calling {@code
+ * endUpdate} before {@code init()} on that branch: an unbalanced counter
+ * would silently break event flushing until some unrelated, later,
+ * over-matched {@code endUpdate} call happened to rebalance it.
  *
  * @author Peter Dell
  */
@@ -56,17 +48,15 @@ public final class WorkspaceLogic {
 	}
 
 	/**
-	 * Replaces the workspace's system equates with the ones shipped for its
-	 * current computer system (the hardware/OS labels that make a
-	 * disassembly read {@code STA COLBK} instead of {@code STA $D01A}). A
-	 * system without an equates file (the unknown system) simply ends up
-	 * with an empty list. {@code C64.equ} is not the C++ version's file:
-	 * that one turned out to be a stale copy of {@code Atari800.equ} (a
-	 * mislabeled asset, just like its {@code C64.fon} - see {@code
-	 * ComputerFont}), which would label the VIC-II's {@code $D01A} as Atari's
-	 * {@code COLBK}. It was written from scratch for this port instead, with
-	 * the KERNAL/BASIC source label names as published in "Mapping the
-	 * Commodore 64".
+	 * Replaces the workspace's system equates with the ones shipped for its current
+	 * computer system (the hardware/OS labels that make a disassembly read
+	 * {@code STA COLBK} instead of {@code STA $D01A}). A system without an equates
+	 * file (the unknown system) simply ends up with an empty list. {@code C64.equ}'s
+	 * KERNAL/BASIC source label names were taken from "Mapping the Commodore 64"
+	 * rather than from any existing template, since a mislabeled Atari800
+	 * template would have labeled the VIC-II's {@code $D01A} as Atari's
+	 * {@code COLBK} - see {@code ComputerFont} for the same mislabeling on
+	 * {@code C64.fon}.
 	 */
 	public void loadSystemEquates(Workspace workspace) {
 		ComputerSystem computerSystem = workspace.getComputerSystem();
@@ -80,7 +70,10 @@ public final class WorkspaceLogic {
 				computerSystem.getResourceNameByExtension(".equ"));
 	}
 
-	/** Loads a workspace from disk. Returns {@code false}, and logs, instead of throwing. */
+	/**
+	 * Loads a workspace from disk. Returns {@code false}, and logs, instead of
+	 * throwing.
+	 */
 	public boolean load(Workspace workspace, String filePath) {
 		workspace.init();
 
@@ -115,13 +108,17 @@ public final class WorkspaceLogic {
 		return false;
 	}
 
-	/** Reads the file's first {@link Workspace1X#MAGIC_SIZE} bytes as ASCII, or {@code ""} if the file is shorter. */
+	/**
+	 * Reads the file's first {@link Workspace1X#MAGIC_SIZE} bytes as ASCII, or
+	 * {@code ""} if the file is shorter.
+	 */
 	private static String readMagic(File file) throws IOException {
 		byte[] magic = new byte[Workspace1X.MAGIC_SIZE];
 		try (InputStream inputStream = new FileInputStream(file)) {
 			int totalRead = 0;
 			int read;
-			while (totalRead < magic.length && (read = inputStream.read(magic, totalRead, magic.length - totalRead)) >= 0) {
+			while (totalRead < magic.length
+					&& (read = inputStream.read(magic, totalRead, magic.length - totalRead)) >= 0) {
 				totalRead += read;
 			}
 			if (totalRead < magic.length) {
@@ -131,7 +128,10 @@ public final class WorkspaceLogic {
 		return new String(magic, StandardCharsets.US_ASCII);
 	}
 
-	/** Saves a workspace to disk. Returns {@code false}, and logs, instead of throwing. */
+	/**
+	 * Saves a workspace to disk. Returns {@code false}, and logs, instead of
+	 * throwing.
+	 */
 	public boolean save(Workspace workspace, String filePath) {
 		application.sendMessage(Messages.I014, filePath);
 		workspace.setFilePath(filePath);
@@ -190,25 +190,21 @@ public final class WorkspaceLogic {
 	}
 
 	/**
-	 * Builds and inserts a single segment from a disk image's Atari DOS
-	 * boot sectors: {@code firstSectorData} holds sector 1's already-read
-	 * content in its first 128 bytes (byte 1 is the total boot sector
-	 * count, bytes 2-3 the little-endian load address) - it may be longer,
-	 * e.g. an {@link ImgRWPacket#sectorData}'s fixed 256-byte buffer, since
-	 * only the first 128 bytes are ever read from it, matching boot sectors
-	 * always being 128 bytes regardless of the disk's overall sector size.
-	 * Any further sectors the chain needs are read directly via {@link
-	 * DiskImage#readSector}.
+	 * Builds and inserts a single segment from a disk image's Atari DOS boot
+	 * sectors: {@code firstSectorData} holds sector 1's already-read content in its
+	 * first 128 bytes (byte 1 is the total boot sector count, bytes 2-3 the
+	 * little-endian load address) - it may be longer, e.g. an
+	 * {@link ImgRWPacket#sectorData}'s fixed 256-byte buffer, since only the first
+	 * 128 bytes are ever read from it, matching boot sectors always being 128 bytes
+	 * regardless of the disk's overall sector size. Any further sectors the chain
+	 * needs are read directly via {@link DiskImage#readSector}.
 	 * <p>
-	 * Ported from MainFile::AddDiskImageBootSectorsSegment (marked "TODO:
-	 * Move to ComputerSystem" in the C++ source) plus the segment-insertion
-	 * part of MainFile::OpenDiskImageBootSectors - folded together here the
-	 * same way {@link #addRawSegment} folds {@code
-	 * WorkspaceLogic::AddRawSegment}'s inserter lifecycle. The chunk sizes
-	 * this walks (122 bytes for the payload already in sector 1, 128 for
-	 * every following sector) always divide {@code sectorCount * 128 - 6}
-	 * evenly down to exactly 0, so - unlike a general copy loop - no bounds
-	 * clamping is needed on the per-sector writes.
+	 * Combines building the segment and reading its remaining sectors in one
+	 * place, the same way {@link #addRawSegment} folds its inserter's whole
+	 * lifecycle into a single method. The chunk sizes this walks (122 bytes for
+	 * the payload already in sector 1, 128 for every following sector) always
+	 * divide {@code sectorCount * 128 - 6} evenly down to exactly 0, so no
+	 * bounds clamping is needed on the per-sector writes.
 	 */
 	public void addDiskImageBootSectorsSegment(Workspace workspace, String diskImageFilePath, byte[] firstSectorData) {
 		SegmentListInserter segmentListInserter = workspace.getSegmentList().createInserter();
