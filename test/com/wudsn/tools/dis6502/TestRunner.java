@@ -31,6 +31,7 @@ import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogicTest;
 import com.wudsn.tools.dis6502.ui.DialogTextsTest;
 import com.wudsn.tools.dis6502.ui.FileChoosersTest;
+import com.wudsn.tools.dis6502.ui.RenderingTest;
 import com.wudsn.tools.dis6502.ui.ValueSetsTest;
 
 /**
@@ -149,6 +150,7 @@ public final class TestRunner {
 		runTest("ProfileNotationTest", ProfileNotationTest::testProfileNotation);
 		runTest("ReassemblyRoundTripTest", ReassemblyRoundTripTest::testReassemblyRoundTrip);
 		runTest("DialogTextsTest", DialogTextsTest::testDialogTexts);
+		runTest("RenderingTest", RenderingTest::testRendering);
 		runTest("UIWiringTest", UIWiringTest::testUIWiring);
 
 		if (failedCount == 0) {

@@ -307,6 +307,15 @@ public final class DisassemblyPanel extends JPanel {
 		return popupMenu.isVisible();
 	}
 
+	// Package-private, for RenderingTest: the popup as built by the last right-click, and the grid it was clicked on.
+	JPopupMenu getPopupMenu() {
+		return popupMenu;
+	}
+
+	DisassemblyGridPanel getGrid() {
+		return grid;
+	}
+
 	private int popupAcceleratorCounter;
 
 	private void bindAccelerator(Action action, Runnable command) {
