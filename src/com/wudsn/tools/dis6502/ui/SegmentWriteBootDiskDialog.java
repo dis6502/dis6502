@@ -29,12 +29,12 @@ import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Texts;
-import com.wudsn.tools.dis6502.model.AtariDOS;
-import com.wudsn.tools.dis6502.model.AtariDisk;
-import com.wudsn.tools.dis6502.model.AtariError;
-import com.wudsn.tools.dis6502.model.AtariFile;
-import com.wudsn.tools.dis6502.model.DiskImage;
 import com.wudsn.tools.dis6502.model.Segment;
+import com.wudsn.tools.dis6502.model.system.atari800.AtariDOS;
+import com.wudsn.tools.dis6502.model.system.atari800.AtariDisk;
+import com.wudsn.tools.dis6502.model.system.atari800.AtariError;
+import com.wudsn.tools.dis6502.model.system.atari800.AtariFile;
+import com.wudsn.tools.dis6502.model.system.atari800.DiskImage;
 
 /**
  * Turns a segment into a bootable Atari DOS disk: overwrites an existing

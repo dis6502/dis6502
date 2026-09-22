@@ -48,5 +48,10 @@ be rediscovered:
   removing "Ported from"/C++-comparison framing from code comments now that
   the port is the final codebase, while preserving the design rationale
   some of those comments carry (status: done).
+- [`plans/SYSTEM_SUBPACKAGES_PLAN.md`](plans/SYSTEM_SUBPACKAGES_PLAN.md) -
+  splitting `model`'s per-computer-system classes (`Atari800`, `C64`,
+  `Oric`, `Atari5200`, `Unknown`, plus Atari800's disk-image support) into
+  subpackages mirroring the C++ source's `systems/<name>/` folders
+  (status: done).
 
 New planning/guidance documents for future work should also go in `plans/`.

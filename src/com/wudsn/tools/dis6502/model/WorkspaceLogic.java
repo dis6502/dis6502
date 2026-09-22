@@ -15,6 +15,9 @@ import java.nio.charset.StandardCharsets;
 
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.Messages;
+import com.wudsn.tools.dis6502.model.system.ComputerSystem;
+import com.wudsn.tools.dis6502.model.system.atari800.DiskImage;
+import com.wudsn.tools.dis6502.model.system.atari800.ImgRWPacket;
 
 /**
  * Loads and saves a {@link Workspace}, and adds files to it.

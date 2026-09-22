@@ -25,9 +25,9 @@ import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Texts;
-import com.wudsn.tools.dis6502.model.AtariDisk;
-import com.wudsn.tools.dis6502.model.AtariError;
-import com.wudsn.tools.dis6502.model.AtariFile;
+import com.wudsn.tools.dis6502.model.system.atari800.AtariDisk;
+import com.wudsn.tools.dis6502.model.system.atari800.AtariError;
+import com.wudsn.tools.dis6502.model.system.atari800.AtariFile;
 
 /**
  * A dialog for picking one executable file from an Atari DOS 2.x disk

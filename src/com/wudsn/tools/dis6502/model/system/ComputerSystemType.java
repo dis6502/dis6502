@@ -3,7 +3,7 @@
  *
  * This file is part of dis6502.
  */
-package com.wudsn.tools.dis6502.model;
+package com.wudsn.tools.dis6502.model.system;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,6 +13,7 @@ import java.util.Map;
 
 import com.wudsn.tools.base.repository.ValueSet;
 import com.wudsn.tools.dis6502.ValueSets;
+import com.wudsn.tools.dis6502.model.FileType;
 
 /**
  * The computer systems a workspace can be for.

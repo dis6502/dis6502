@@ -5,6 +5,9 @@
  */
 package com.wudsn.tools.dis6502.model;
 
+import com.wudsn.tools.dis6502.model.system.ComputerSystemFactory;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
+
 /**
  * Covers {@link Disassembly#setImmediateType} and its counterpart {@link
  * Disassembly#isInstructionWithImmediate}.

@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.wudsn.tools.dis6502.Messages;
-import com.wudsn.tools.dis6502.model.ComputerSystemType;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * A computer system's real, authentic character set - Atari ATASCII (via

@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 import com.wudsn.tools.dis6502.Application;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemFactory;
 
 /**
  * For each of four real fixture programs, disassembles it, feeds the

@@ -3,7 +3,7 @@
  *
  * This file is part of dis6502.
  */
-package com.wudsn.tools.dis6502.model;
+package com.wudsn.tools.dis6502.model.system.oric;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +11,13 @@ import java.util.List;
 import java.util.Set;
 
 import com.wudsn.tools.dis6502.Messages;
+import com.wudsn.tools.dis6502.model.FileHeader;
+import com.wudsn.tools.dis6502.model.FileType;
+import com.wudsn.tools.dis6502.model.Memory;
+import com.wudsn.tools.dis6502.model.Segment;
+import com.wudsn.tools.dis6502.model.SegmentListInserter;
+import com.wudsn.tools.dis6502.model.system.ComputerSystem;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * The Oric computer system.

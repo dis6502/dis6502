@@ -3,11 +3,21 @@
  *
  * This file is part of dis6502.
  */
-package com.wudsn.tools.dis6502.model;
+package com.wudsn.tools.dis6502.model.system;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+
+import com.wudsn.tools.dis6502.model.Assert;
+import com.wudsn.tools.dis6502.model.FileType;
+import com.wudsn.tools.dis6502.model.GuessCodeLogic;
+import com.wudsn.tools.dis6502.model.MemoryType;
+import com.wudsn.tools.dis6502.model.Segment;
+import com.wudsn.tools.dis6502.model.Workspace;
+import com.wudsn.tools.dis6502.model.WorkspaceLogic;
+import com.wudsn.tools.dis6502.model.system.atari800.Atari800Test;
+import com.wudsn.tools.dis6502.model.system.c64.C64;
 
 /**
  * Disk-image reading is not covered here - see {@link Atari800Test}'s

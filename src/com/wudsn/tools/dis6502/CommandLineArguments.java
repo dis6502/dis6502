@@ -7,7 +7,7 @@ package com.wudsn.tools.dis6502;
 
 import java.io.File;
 
-import com.wudsn.tools.dis6502.model.ComputerSystemType;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * The parsed command line: {@code [/SYSTEMID] [file]}, e.g. {@code /C64

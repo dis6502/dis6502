@@ -8,6 +8,7 @@ package com.wudsn.tools.dis6502.model;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState.EditCharResult;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState.EditCursorMovement;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState.EditPane;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemFactory;
 
 /**
  * Headless coverage for {@link MutableMemoryInspectorState}'s edit-mode cursor

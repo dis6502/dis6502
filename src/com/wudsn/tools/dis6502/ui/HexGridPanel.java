@@ -22,10 +22,10 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import com.wudsn.tools.dis6502.model.ByteRangeSelection;
-import com.wudsn.tools.dis6502.model.ComputerSystemType;
-import com.wudsn.tools.dis6502.model.MemoryInspectorState;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState.EditPane;
+import com.wudsn.tools.dis6502.model.MemoryInspectorState;
 import com.wudsn.tools.dis6502.model.MemoryType;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * A read-only, custom-painted hex/ASCII dump of a {@link #setByteSource}'s

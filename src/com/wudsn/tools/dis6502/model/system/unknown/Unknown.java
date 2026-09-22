@@ -3,9 +3,13 @@
  *
  * This file is part of dis6502.
  */
-package com.wudsn.tools.dis6502.model;
+package com.wudsn.tools.dis6502.model.system.unknown;
 
 import java.util.List;
+
+import com.wudsn.tools.dis6502.model.FileType;
+import com.wudsn.tools.dis6502.model.system.ComputerSystem;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * Fallback computer system for a workspace with no specific target system.

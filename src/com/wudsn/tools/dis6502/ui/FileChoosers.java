@@ -20,8 +20,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.DefaultFolders;
-import com.wudsn.tools.dis6502.model.ComputerSystem;
 import com.wudsn.tools.dis6502.model.FileType;
+import com.wudsn.tools.dis6502.model.system.ComputerSystem;
 
 /**
  * Every "open"/"save" file chooser of the application, so they all behave

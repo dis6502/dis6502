@@ -8,6 +8,8 @@ package com.wudsn.tools.dis6502.model;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
+
 /**
  * The remembered default folder path for each {@link FolderType}, for one
  * {@link ComputerSystemType}.

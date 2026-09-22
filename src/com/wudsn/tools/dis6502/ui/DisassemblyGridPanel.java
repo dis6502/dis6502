@@ -18,9 +18,9 @@ import javax.swing.JPanel;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 
-import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblySectionType;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * A read-only, custom-painted list of disassembly listing lines, drawn with

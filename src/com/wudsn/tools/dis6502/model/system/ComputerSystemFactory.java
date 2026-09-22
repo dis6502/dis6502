@@ -3,7 +3,13 @@
  *
  * This file is part of dis6502.
  */
-package com.wudsn.tools.dis6502.model;
+package com.wudsn.tools.dis6502.model.system;
+
+import com.wudsn.tools.dis6502.model.system.atari5200.Atari5200;
+import com.wudsn.tools.dis6502.model.system.atari800.Atari800;
+import com.wudsn.tools.dis6502.model.system.c64.C64;
+import com.wudsn.tools.dis6502.model.system.oric.Oric;
+import com.wudsn.tools.dis6502.model.system.unknown.Unknown;
 
 /**
  * Creates and holds the singleton {@link ComputerSystem} instance for each

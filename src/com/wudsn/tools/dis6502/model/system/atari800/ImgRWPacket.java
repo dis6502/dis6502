@@ -3,7 +3,7 @@
  *
  * This file is part of dis6502.
  */
-package com.wudsn.tools.dis6502.model;
+package com.wudsn.tools.dis6502.model.system.atari800;
 
 /**
  * A request/result packet for reading one sector from a disk image via

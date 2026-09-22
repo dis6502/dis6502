@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import com.wudsn.tools.dis6502.Application;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemFactory;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * Each of the four notation settings of a {@link Profile}, in 16

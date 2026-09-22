@@ -5,6 +5,8 @@
  */
 package com.wudsn.tools.dis6502.model;
 
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
+
 /**
  * Covers {@link FolderType} as a WUDSN Base value set: its texts come
  * from {@code ValueSets.properties}, its keys stay what the settings

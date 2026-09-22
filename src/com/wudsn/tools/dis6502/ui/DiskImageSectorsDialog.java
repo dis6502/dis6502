@@ -33,10 +33,10 @@ import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Texts;
-import com.wudsn.tools.dis6502.model.DiskImage;
-import com.wudsn.tools.dis6502.model.ImgInfo;
-import com.wudsn.tools.dis6502.model.ImgRWPacket;
 import com.wudsn.tools.dis6502.model.MutableByteRangeSelection;
+import com.wudsn.tools.dis6502.model.system.atari800.DiskImage;
+import com.wudsn.tools.dis6502.model.system.atari800.ImgInfo;
+import com.wudsn.tools.dis6502.model.system.atari800.ImgRWPacket;
 
 /**
  * A dialog for picking one or more byte ranges, from any sector of a disk

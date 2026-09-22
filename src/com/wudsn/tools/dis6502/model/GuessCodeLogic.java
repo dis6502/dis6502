@@ -5,6 +5,8 @@
  */
 package com.wudsn.tools.dis6502.model;
 
+import com.wudsn.tools.dis6502.model.system.ComputerSystem;
+
 /**
  * Follows the flow of a program from a starting address to guess which
  * bytes are code versus data, marking their {@link MemoryType} as it

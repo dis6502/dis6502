@@ -3,12 +3,14 @@
  *
  * This file is part of dis6502.
  */
-package com.wudsn.tools.dis6502.model;
+package com.wudsn.tools.dis6502.model.system.atari800;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
+
+import com.wudsn.tools.dis6502.model.FileAttribute;
 
 /**
  * A DOS 2.x file system driver for Atari disk images (.atr/.xfd): directory

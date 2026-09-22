@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.ApplicationSettingsSection;
 import com.wudsn.tools.dis6502.Messages;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * Loads and saves a {@link Profile}, trying the legacy binary format

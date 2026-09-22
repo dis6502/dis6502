@@ -29,10 +29,10 @@ import com.wudsn.tools.base.gui.ValueSetField;
 import com.wudsn.tools.base.repository.ValueSet;
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.model.Assert;
-import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.Encoding;
 import com.wudsn.tools.dis6502.model.ProcessorType;
 import com.wudsn.tools.dis6502.model.ProfileLogic;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * The second test of {@code

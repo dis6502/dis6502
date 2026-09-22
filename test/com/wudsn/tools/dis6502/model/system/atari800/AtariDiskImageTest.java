@@ -3,12 +3,14 @@
  *
  * This file is part of dis6502.
  */
-package com.wudsn.tools.dis6502.model;
+package com.wudsn.tools.dis6502.model.system.atari800;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+
+import com.wudsn.tools.dis6502.model.Assert;
 
 /**
  * {@link #testAtariDiskImage} exercises real {@code .atr} test disk

@@ -26,8 +26,6 @@ import javax.swing.SwingUtilities;
 
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.model.Assert;
-import com.wudsn.tools.dis6502.model.ComputerSystemFactory;
-import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
@@ -38,6 +36,8 @@ import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.MutableByteRangeSelection;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.Workspace;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemFactory;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * The fourth test of {@code plans/UI_SMOKE_TESTS_PROPOSAL.md}: what the

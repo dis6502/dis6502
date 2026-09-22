@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.IOException;
 
 import com.wudsn.tools.dis6502.Application;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemFactory;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * Covers {@link WorkspaceLogic}.

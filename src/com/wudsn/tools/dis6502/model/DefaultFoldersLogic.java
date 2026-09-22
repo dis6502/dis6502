@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.ApplicationSettingsSection;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * Creates, loads, and saves a {@link DefaultFolders} instance.

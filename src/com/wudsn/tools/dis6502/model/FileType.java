@@ -14,6 +14,7 @@ import java.util.Map;
 
 import com.wudsn.tools.base.repository.ValueSet;
 import com.wudsn.tools.dis6502.ValueSets;
+import com.wudsn.tools.dis6502.model.system.ComputerSystem;
 
 /**
  * The kind of file a {@link ComputerSystem} can read, write, or guess from

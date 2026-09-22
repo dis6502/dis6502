@@ -3,7 +3,7 @@
  *
  * This file is part of dis6502.
  */
-package com.wudsn.tools.dis6502.model;
+package com.wudsn.tools.dis6502.model.system;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
@@ -15,15 +15,21 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.wudsn.tools.dis6502.model.FileType;
+import com.wudsn.tools.dis6502.model.Memory;
+import com.wudsn.tools.dis6502.model.SegmentList;
+import com.wudsn.tools.dis6502.model.SegmentListInserter;
+
 /**
  * A target computer system (Atari 800, Atari 5200, C64, Oric, or an unknown
  * system): its base/vector address knowledge, and how to read/write its
  * native file formats into/from a {@link SegmentList}.
  * <p>
  * {@link #openResourceByExtension} reads a per-system resource file
- * ({@code systems/<fileName><extension>} next to this class) from the
- * classpath, since a Java application has no install folder to rely on and
- * the resource travels inside the jar this way. {@link #guessFileType(File)}
+ * ({@code <fileName><extension>}, next to the concrete subclass, e.g.
+ * {@code Atari800.equ} next to {@code Atari800.class}) from the classpath,
+ * since a Java application has no install folder to rely on and the
+ * resource travels inside the jar this way. {@link #guessFileType(File)}
  * reads only the file's 4-byte header directly, not the whole file.
  *
  * @author Peter Dell
@@ -85,9 +91,9 @@ public abstract class ComputerSystem {
 		return guessFileType(fileSize, header);
 	}
 
-	/** The classpath name of this system's resource file with the given extension (e.g. {@code ".equ"}), relative to this class. */
+	/** The classpath name of this system's resource file with the given extension (e.g. {@code ".equ"}), relative to the concrete subclass. */
 	public String getResourceNameByExtension(String extension) {
-		return "systems/" + computerSystemType.getFileName() + extension;
+		return computerSystemType.getFileName() + extension;
 	}
 
 	/**
@@ -96,7 +102,7 @@ public abstract class ComputerSystem {
 	 * system equates).
 	 */
 	public InputStream openResourceByExtension(String extension) {
-		return ComputerSystem.class.getResourceAsStream(getResourceNameByExtension(extension));
+		return getClass().getResourceAsStream(getResourceNameByExtension(extension));
 	}
 
 	/** Guesses the file type from the file's size and its first 4 bytes of content. */

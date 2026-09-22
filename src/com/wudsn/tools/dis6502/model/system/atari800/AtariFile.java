@@ -3,9 +3,13 @@
  *
  * This file is part of dis6502.
  */
-package com.wudsn.tools.dis6502.model;
+package com.wudsn.tools.dis6502.model.system.atari800;
 
 import java.util.Arrays;
+
+import com.wudsn.tools.dis6502.model.FileAttribute;
+import com.wudsn.tools.dis6502.model.SegmentList;
+import com.wudsn.tools.dis6502.model.SegmentListInserter;
 
 /**
  * A DOS 2.x directory entry, plus the transient sector-chain-walking state

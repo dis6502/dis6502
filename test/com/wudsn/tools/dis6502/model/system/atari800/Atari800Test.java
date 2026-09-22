@@ -3,7 +3,7 @@
  *
  * This file is part of dis6502.
  */
-package com.wudsn.tools.dis6502.model;
+package com.wudsn.tools.dis6502.model.system.atari800;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,6 +12,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+
+import com.wudsn.tools.dis6502.model.Assert;
+import com.wudsn.tools.dis6502.model.FileType;
+import com.wudsn.tools.dis6502.model.Segment;
+import com.wudsn.tools.dis6502.model.SegmentList;
+import com.wudsn.tools.dis6502.model.SegmentListInserter;
+import com.wudsn.tools.dis6502.model.Xml;
+import com.wudsn.tools.dis6502.model.system.ComputerSystem;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemTest;
 
 /**
  * {@link #assertSegmentListEquals} is generic, despite the name, and used

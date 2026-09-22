@@ -31,11 +31,11 @@ import com.wudsn.tools.base.repository.DataType;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Texts;
-import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.Encoding;
 import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.Profile;
 import com.wudsn.tools.dis6502.model.ProfileLogic;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * A dialog for editing a {@link Profile}'s disassembly output syntax and

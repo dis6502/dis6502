@@ -20,8 +20,8 @@ import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.base.gui.ValueSetField;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Texts;
-import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.Workspace;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * A dialog for choosing the computer system a new workspace targets.

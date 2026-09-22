@@ -12,6 +12,9 @@ import java.util.Objects;
 import org.w3c.dom.Element;
 
 import com.wudsn.tools.base.common.Log;
+import com.wudsn.tools.dis6502.model.system.ComputerSystem;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemFactory;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * A workspace: the currently loaded disassembly project.

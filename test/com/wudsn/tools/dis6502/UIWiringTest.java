@@ -30,7 +30,6 @@ import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 
 import com.wudsn.tools.dis6502.model.Assert;
-import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblyResult;
 import com.wudsn.tools.dis6502.model.DisassemblySectionType;
@@ -39,6 +38,7 @@ import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentList;
 import com.wudsn.tools.dis6502.model.Workspace;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 import com.wudsn.tools.dis6502.ui.DialogTextsTest;
 import com.wudsn.tools.dis6502.ui.DisassemblyPanel;
 import com.wudsn.tools.dis6502.ui.MainMenu;

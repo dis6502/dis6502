@@ -7,9 +7,9 @@ package com.wudsn.tools.dis6502.ui;
 
 import com.wudsn.tools.base.repository.ValueSet;
 import com.wudsn.tools.dis6502.model.Assert;
-import com.wudsn.tools.dis6502.model.AtariError;
-import com.wudsn.tools.dis6502.model.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.ProcessorType;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
+import com.wudsn.tools.dis6502.model.system.atari800.AtariError;
 
 /**
  * Covers the value sets {@link ComputerSystemType}, {@link ProcessorType}
