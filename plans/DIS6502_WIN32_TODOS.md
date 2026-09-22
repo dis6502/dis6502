@@ -5,8 +5,6 @@ Features
   Support form Atari 400/800/XL/XE ROM image files of type "*.car" with "CART" header
   Support for Atari 5200 ROM image files of size 4k, 8k, 16k, 32k. No ".car" or 40k or more support yet.
 
-Progress
-2022-03-11 2951 Warnings, 82 Infos
 
 Known Issues in DIS6502 BETA
 ============================
@@ -26,7 +24,6 @@ Open Bugs:
   I really like the feature of graying out of unused equates.  It does seem to do it with most equates on the binary file I'm testing with, but all the IO EQUATES and the DISPLAY LIST EQUATES are still showing although they are not referenced in the binary file.  Is this by design or possibly a bug?
 
 Open Feature Requests:
-- Change "Open" behaviour to "Clear workspace/add" and have separate "Add..." menu
 - the only basic improvement I can see that was missed is "CBYTE" handling. 
   by: https://atariage.com/forums/profile/17384-kenames99/
   at: https://atariage.com/forums/topic/286803-dis6502-the-interactive-6502-disassembler/page/3/?tab=comments#comment-4539232
@@ -36,9 +33,6 @@ Open Feature Requests:
 - Explicit comment feature (implemented, to be tested)
 - Have separate profile settings for WORDNumberOfEquatesPerLine
   See this->wDirectiveWORDNumberOfWordsPerLine = 1; // Because WORDs often mean labels and lables now have "S01L0000" format
-
-Long Term Goals
-- have selection size as ULONG, not WORD
 
 
 Change list for working version of DIS6502
@@ -58,10 +52,6 @@ Könnte man an- und abschaltbar machen wie die "illegal instructions".
 
 TODO:
 Add own type "Label-1 (Return Address)"
-
-TODO:
-Remove "virtual" from all destructors, "virtual ~"
-https://docs.microsoft.com/en-us/cpp/code-quality/c26443?f1url=https%3A%2F%2Fmsdn.microsoft.com%2Fquery%2Fdev16.query%3FappId%3DDev16IDEF1%26l%3DEN-US%26k%3Dk(C26443)%26rd%3Dtrue&view=vs-2019
 
 TODO:
 Disassemble again when segment label prefix is changed
