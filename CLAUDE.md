@@ -37,11 +37,16 @@ be rediscovered:
   entry-point-driven audit of C++ features missing in the port; every gap
   in it is closed (status: done).
 - [`plans/FURTHER_IMPROVEMENTS.md`](plans/FURTHER_IMPROVEMENTS.md) - what is
-  left now that porting is over: unverified-on-screen items, remaining
-  hard-coded UI strings, known limits, test coverage gaps, housekeeping.
+  left now that porting is over: localization, known limits, test coverage
+  gaps, housekeeping, possible improvements. Completed items are removed
+  from it, not struck through.
 - [`plans/UI_SMOKE_TESTS_PROPOSAL.md`](plans/UI_SMOKE_TESTS_PROPOSAL.md) -
-  which of the throw-away UI smoke programs should become repository tests,
-  and what (settings isolation, test access to `Dis6502`) that needs
-  (status: proposal).
+  which of the throw-away UI smoke programs became repository tests, and
+  what that needed (settings isolation, test access to `Dis6502`)
+  (status: done).
+- [`plans/REMOVE_CPP_PROVENANCE_PLAN.md`](plans/REMOVE_CPP_PROVENANCE_PLAN.md) -
+  removing "Ported from"/C++-comparison framing from code comments now that
+  the port is the final codebase, while preserving the design rationale
+  some of those comments carry (status: proposal).
 
 New planning/guidance documents for future work should also go in `plans/`.
