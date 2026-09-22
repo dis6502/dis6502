@@ -61,7 +61,7 @@ be rediscovered:
 - [`plans/TESTRUNNER_NAME_REFLECTION_PROPOSAL.md`](plans/TESTRUNNER_NAME_REFLECTION_PROPOSAL.md) -
   whether `TestRunner`'s `runTest("ValueSetsTest", ValueSetsTest::testValueSets)`
   pattern can drop the redundant string via reflection; options considered
-  and a `SerializedLambda` proof-of-concept, no option chosen yet
-  (status: proposal).
+  and a `SerializedLambda` proof-of-concept, decided against changing it
+  (status: decided, kept as-is).
 
 New planning/guidance documents for future work should also go in `plans/`.

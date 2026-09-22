@@ -1,6 +1,9 @@
 # Plan: can TestRunner's runTest(name, testCase) drop the redundant string?
 
-Status: proposal, 2026-09-23. Nothing below is implemented.
+**Status: decided, 2026-09-23 - Option 1 (leave as-is).** `TestRunner`
+keeps `runTest("ClassName", ClassName::testMethod)` exactly as it is; no
+code change. Kept as a record of the options considered, should the
+tradeoffs ever need revisiting.
 
 ## The pattern in question
 
