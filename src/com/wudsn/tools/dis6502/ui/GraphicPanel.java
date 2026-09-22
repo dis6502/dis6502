@@ -23,32 +23,20 @@ import javax.swing.JPanel;
  * graphic/character set/font starts and ends by eye - a byte range is
  * selected by clicking or dragging down through the row it ends at.
  * <p>
- * Ported from ui/SpriteControlImpl.h/.cpp's pixel-decoding and mouse-
- * selection logic ({@code PaintAll}/{@code LButtonDown}/{@code
- * MouseMove}/{@code LButtonUp}), simplified considerably: the C++ version
- * writes palette-indexed bytes directly into a Win32 DIB via 8 near-
- * identical per-mode {@code switch} cases (one call to one of two
- * bit-extraction macros, {@code SPRITE_GET_PIXEL_1}/{@code _2}, each);
- * this uses one generic loop parameterized by {@link
- * GraphicMode#bitsPerPixel}, painting directly into a {@link
- * BufferedImage} with real RGB colors instead of a mapped system
- * palette. The vertical scroll position ({@code wIndex}, the C++
- * control's own {@code WM_VSCROLL} handling) and the bytes-per-line
- * choice ({@code wNbBytes}, its {@code WM_HSCROLL} handling) are not
- * handled by this class at all - unlike the C++ control, which owns both
- * scrollbars itself, those are external {@link javax.swing.JScrollBar}/
- * {@link javax.swing.JSpinner} controls in {@link SelectGraphicsDialog},
- * which push their values in via {@link #setIndex}/{@link
- * #setNumberOfBytesPerLine} - the same "plain Swing controls instead of
- * a custom-painted control owning its own scrollbars" substitution this
- * port already uses elsewhere (e.g. {@link DiskImageSectorsDialog}).
+ * Uses one generic loop parameterized by {@link GraphicMode#bitsPerPixel},
+ * painting directly into a {@link BufferedImage} with real RGB colors. The
+ * vertical scroll position and the bytes-per-line choice are not handled
+ * by this class at all: those are external {@link
+ * javax.swing.JScrollBar}/{@link javax.swing.JSpinner} controls in {@link
+ * SelectGraphicsDialog}, which push their values in via {@link
+ * #setIndex}/{@link #setNumberOfBytesPerLine} - the same "plain Swing
+ * controls instead of a custom-painted control owning its own scrollbars"
+ * pattern this port already uses elsewhere (e.g. {@link
+ * DiskImageSectorsDialog}).
  * <p>
- * The fixed 320x192 logical image this renders is the same size the
- * C++ control uses for every mode (each mode's full width/height in its
- * own pixels always maps to exactly 320x192 real pixels) - scaled up by
- * {@link #ZOOM} for on-screen display, since the C++ source's own
- * comment ({@code "TODO: Test this, the actual dialog is too small!"})
- * already flags that size as cramped.
+ * The fixed 320x192 logical image this renders (each mode's full
+ * width/height in its own pixels always maps to exactly 320x192 real
+ * pixels) is scaled up by {@link #ZOOM} for on-screen legibility.
  *
  * @author Peter Dell
  */
@@ -60,7 +48,7 @@ public final class GraphicPanel extends JPanel {
 	private static final int IMAGE_HEIGHT = 192;
 	private static final int ZOOM = 2;
 
-	/** Matches dwSpriteColor[] in SpriteControlImpl.cpp: black, red, blue, white. */
+	/** The 4-color ANTIC palette: black, red, blue, white. */
 	private static final Color[] PALETTE = { Color.BLACK, Color.RED, Color.BLUE, Color.WHITE };
 
 	/** Matches SPRITE_NO_SELECTION. */
@@ -116,7 +104,7 @@ public final class GraphicPanel extends JPanel {
 		return mode;
 	}
 
-	/** Ported from SpriteControlImpl::SetMode, minus the wNbBytes clamping - see SelectGraphicsDialog's own use of this. */
+	/** See {@link SelectGraphicsDialog}'s own use of this - it clamps the bytes-per-line value for the new mode itself. */
 	public void setMode(GraphicMode mode) {
 		this.mode = mode;
 		render();
@@ -149,11 +137,7 @@ public final class GraphicPanel extends JPanel {
 		render();
 	}
 
-	/**
-	 * Ported from SpriteControlImpl::LButtonDown/MouseMove/LButtonUp (all
-	 * three do the same thing): selects from {@link #index} down through
-	 * the row the given screen Y coordinate falls in.
-	 */
+	/** Selects from {@link #index} down through the row the given screen Y coordinate falls in. */
 	private void selectAtY(int screenY) {
 		int row = screenY / (mode.pixelHeight * ZOOM);
 		int newEnd = index + (row * numberOfBytesPerLine) - 1;
@@ -164,7 +148,7 @@ public final class GraphicPanel extends JPanel {
 		}
 	}
 
-	/** Ported from SpriteControlImpl::PaintAll. */
+	/** Rebuilds {@link #image} from {@link #buffer} at the current mode/index/bytes-per-line/selection. */
 	private void render() {
 		Graphics2D g = image.createGraphics();
 		try {

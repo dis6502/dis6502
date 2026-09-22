@@ -42,43 +42,24 @@ import com.wudsn.tools.dis6502.model.MutableByteRangeSelection;
  * A dialog for picking one or more byte ranges, from any sector of a disk
  * image, to import as segments at chosen addresses.
  * <p>
- * Ported from ui/DiskImageSectorsDialog.h / .cpp and ui/
- * DiskImageSectorsController.h / .cpp, folded into a single class the same
- * way {@link ProfileDialog} folds {@code ProfilesController} - the
- * controller's non-UI state ({@link ImgRWPacket}, the current sector
- * number/size, the picked items) has no reason to be a separate object
- * here. The sector's bytes are shown via the same {@link
+ * A single class: its non-UI state ({@link ImgRWPacket}, the current
+ * sector number/size, the picked items) has no reason to be a separate
+ * object here. The sector's bytes are shown via the same {@link
  * HexGridPanel} the main Memory Inspector uses (fed by a {@link
  * DiskSectorByteSource} rather than a {@code Segment}, and its own
- * independent {@link MutableByteRangeSelection} rather than the workspace's),
- * with the same drag-to-select behavior as the C++ version's {@code
- * MemoryInspectorControl}-backed hex dump; unlike that C++ control, which
- * notifies its owner via a {@code SELECTION_CHANGED WM_COMMAND}, {@link
- * #performAddSector} simply reads the current selection synchronously,
- * defaulting to the whole sector if nothing was dragged - matching {@code
- * MemoryInspectorControl::GetSelection(..., bDefaultAll=true)}, which is
- * exactly how the C++ dialog itself consumes the selection too (it never
- * listens for that notification either). Sector navigation, a native
- * scrollbar in C++ ({@code
- * DiskImageSectorsController::ComputeScrolledSectorNumber} translating
- * {@code WM_HSCROLL} actions), remains a plain {@link JSpinner} here -
- * matching the pattern already used for {@link RawFileDialog}.
+ * independent {@link MutableByteRangeSelection} rather than the
+ * workspace's). {@link #performAddSector} reads the current selection
+ * synchronously, defaulting to the whole sector if nothing was dragged.
+ * Sector navigation is a plain {@link JSpinner} - matching the pattern
+ * already used for {@link RawFileDialog}.
  * <p>
- * Found while porting the code that consumes {@link #getItems}
- * ({@code MainFile::OpenDiskImageSectors}): it builds a {@code ByteArray}
- * sized to an item's selected byte count from the freshly re-read sector
- * data using a "takes ownership of this pointer" constructor - but that
- * pointer belongs to the dialog's own reused sector buffer, not a
- * transferable allocation - and then reads {@code item->wBegin} bytes
- * *past* that undersized array. This reads like a real bug (a working
- * "select the whole sector" case never being off-by-more-than-the-array,
- * since {@code wBegin} is usually 0 then, likely kept it from surfacing),
- * but confirming and fixing it needs an interactive GUI run this
- * environment cannot do, so the C++ source is unchanged; this Java port
- * implements the evidently-intended behavior directly: {@link #readSector}
- * returns the sector's full data, and the caller (see {@code
- * Dis6502.openDiskImageSectors}) copies {@code item.size} bytes
- * starting at {@code item.begin} out of that.
+ * {@link #readSector} returns a sector's full data; the caller (see
+ * {@code Dis6502.openDiskImageSectors}) copies {@code item.size} bytes
+ * starting at {@code item.begin} out of that, rather than {@link
+ * #readSector} itself returning an already-sliced, item-sized buffer -
+ * the dialog's own sector buffer is reused across reads, not a
+ * transferable per-item allocation, so slicing has to happen on a
+ * caller-owned copy instead.
  *
  * @author Peter Dell
  */
@@ -218,7 +199,7 @@ public final class DiskImageSectorsDialog extends JDialog {
 		addSectorButton.setEnabled(tryParseAddress(addressField.getText(), ignored));
 	}
 
-	/** Ported from DiskImageSectorsController::TryParseAddress. */
+	/** Parses a plain hexadecimal address into {@code address[0]}; returns whether it succeeded. */
 	private static boolean tryParseAddress(String text, int[] address) {
 		String trimmed = text.trim();
 		if (trimmed.isEmpty()) {
@@ -232,15 +213,14 @@ public final class DiskImageSectorsDialog extends JDialog {
 		}
 	}
 
-	/** Ported from DiskImageSectorsDialog::ProcessCommand's IDC_DISK_IMAGE_SECTORS_ADD_SECTOR case. */
+	/** Adds the current selection (or the whole sector, if nothing is selected) as a new item, and advances to the next sector. */
 	private void performAddSector() {
 		int[] address = new int[1];
 		if (!tryParseAddress(addressField.getText(), address)) {
 			return;
 		}
 
-		// Matches MemoryInspectorControl::GetSelection(..., bDefaultAll=true): the
-		// whole current sector if nothing was dragged - begin/end are already
+		// The whole current sector if nothing was dragged - begin/end are already
 		// swapped/clamped by MutableByteRangeSelection.setSelection at drag time.
 		int begin = 0;
 		int end = Math.max(currentSectorSize - 1, 0);
@@ -260,7 +240,7 @@ public final class DiskImageSectorsDialog extends JDialog {
 		}
 	}
 
-	/** Ported from DiskImageSectorsDialog::ProcessCommand's IDC_DISK_IMAGE_SECTORS_REMOVE_SECTOR case. */
+	/** Removes the selected items from the list. */
 	private void performRemoveSector() {
 		int[] selectedIndices = itemsList.getSelectedIndices();
 		for (int i = selectedIndices.length - 1; i >= 0; i--) {
@@ -270,7 +250,7 @@ public final class DiskImageSectorsDialog extends JDialog {
 		okButton.setEnabled(!itemsListModel.isEmpty());
 	}
 
-	/** Ported from DiskImageSectorsDialog::ReadAndDisplaySector. */
+	/** Reads and displays sector {@code sectorNumber}, clearing any selection. */
 	private void loadAndDisplaySector(int sectorNumber) {
 		currentSectorNumber = sectorNumber;
 		int[] size = new int[1];
@@ -283,11 +263,10 @@ public final class DiskImageSectorsDialog extends JDialog {
 	}
 
 	/**
-	 * Reads a sector's full data. Ported from {@code
-	 * DiskImageSectorsDialog::ReadSector} - used by the caller to re-read
-	 * each picked {@link Item}'s sector when building segments from {@link
-	 * #getItems}, since only the selected sub-range, not the whole sector,
-	 * is kept in each item.
+	 * Reads a sector's full data - used by the caller to re-read each picked
+	 * {@link Item}'s sector when building segments from {@link #getItems},
+	 * since only the selected sub-range, not the whole sector, is kept in
+	 * each item.
 	 */
 	public byte[] readSector(int sectorNumber, int[] sizeOut) {
 		DiskImage.readAbsoluteSector(sector, sectorNumber, sizeOut);
@@ -303,14 +282,12 @@ public final class DiskImageSectorsDialog extends JDialog {
 	}
 
 	/**
-	 * Ported from DiskImageSectorsDialog::Show/InitDialog, folded into one
-	 * blocking call as is idiomatic for a Swing modal {@link JDialog}.
-	 * {@code diskInfo} must already be a successfully recognized disk image
-	 * (checked by the caller via {@link DiskImage#getInfo}/{@link
-	 * DiskImage#isError} before showing this dialog, matching {@code
-	 * MainFile::OpenDiskImageSectors}). Returns {@code true} if the user
-	 * added at least one sector range and clicked OK; {@link #getItems}
-	 * then gives the picked ranges.
+	 * Opens the dialog as one blocking call, idiomatic for a Swing modal
+	 * {@link JDialog}. {@code diskInfo} must already be a successfully
+	 * recognized disk image (checked by the caller via {@link
+	 * DiskImage#getInfo}/{@link DiskImage#isError} before showing this
+	 * dialog). Returns {@code true} if the user added at least one sector
+	 * range and clicked OK; {@link #getItems} then gives the picked ranges.
 	 */
 	public boolean show(String diskImageFilePath, ImgInfo diskInfo) {
 		diskImageFilePathField.setText(diskImageFilePath);
@@ -348,7 +325,6 @@ public final class DiskImageSectorsDialog extends JDialog {
 			this.size = size;
 		}
 
-		/** Ported from DiskImageSectorsController::FormatItemLine. */
 		@Override
 		public String toString() {
 			return String.format("%6d %04X %02X    %04X", sectorNumber, address, begin, size);
