@@ -42,22 +42,18 @@ import com.wudsn.tools.dis6502.model.Segment;
  * segment's bytes, preceded by a 6-byte boot header (sector count, load
  * address, init address).
  * <p>
- * Ported from ui/SegmentWriteBootDiskDialog.h/.cpp, folded into one
- * {@link #show} call as is idiomatic for a Swing modal {@link JDialog}, the
- * same way {@link CommentDialog}/{@link AssembleDialog} etc. fold their
- * C++ controller class in. {@code WriteBootDisk} (marked {@code // TODO:
- * Move to logic} in the C++ source) stays here rather than moving to the
- * model layer, matching that source's own current structure. Like {@link
- * AssembleDialog}, {@link #performOK} only closes the dialog once a target
- * file has actually been written or a real error occurred - cancelling the
- * save-file chooser leaves the dialog open, matching {@code OnOK}'s own
- * "no file chosen -&gt; stay open, don't call EndDialogBox" behavior.
+ * Folded into one {@link #show} call, as is idiomatic for a Swing modal
+ * {@link JDialog}, the same way {@link CommentDialog}/{@link
+ * AssembleDialog} etc. do. {@code writeBootDisk} stays here rather than
+ * moving to the model layer. Like {@link AssembleDialog}, {@link
+ * #performOK} only closes the dialog once a target file has actually been
+ * written or a real error occurred - cancelling the save-file chooser
+ * leaves the dialog open.
  * <p>
- * TODO: {@link DiskImage#writeAbsoluteSector} never reports a write failure
- * (e.g. a write-protected target disk image) back to {@link #writeBootDisk},
- * matching the C++ source's own {@code WriteAbsoluteSector} - see the TODO
- * comment at its call site in the original {@code SegmentWriteBootDiskDialog.cpp}.
- * This dialog can therefore report success while having written nothing.
+ * TODO: {@link DiskImage#writeAbsoluteSector} never reports a write
+ * failure (e.g. a write-protected target disk image) back to {@link
+ * #writeBootDisk}. This dialog can therefore report success while having
+ * written nothing.
  *
  * @author Peter Dell
  */
@@ -108,7 +104,6 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 		getContentPane().add(panel, BorderLayout.CENTER);
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
-		// Ported from ProcessCommand's IDC_BOOTLOADADDR/IDC_BOOTINITADDR EN_CHANGE case.
 		DocumentListener updateOKEnabled = new DocumentListener() {
 			@Override
 			public void insertUpdate(DocumentEvent e) {
@@ -136,7 +131,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 		setLocationRelativeTo(owner);
 	}
 
-	/** Ported from SegmentWriteBootDiskDialog::OnOK. */
+	/** Prompts for a target file and writes the boot disk to it. */
 	private void performOK() {
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle(Texts.SegmentWriteBootDiskDialog_Title);
@@ -153,7 +148,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 		}
 	}
 
-	/** Ported from SegmentWriteBootDiskDialog::WriteBootDisk. */
+	/** Writes the boot header plus the segment's data across {@code filePath}'s first sectors. */
 	private void writeBootDisk(String filePath) throws IOException {
 		AtariFile info = new AtariFile();
 		AtariDisk atariDisk = AtariDOS.openAtariDisk(filePath);
@@ -195,22 +190,16 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 		}
 
 		case DISK_NOT_FOUND:
-			// Ported from FileIO::FormatError(IDS_ERR_READING_FILE, filePath): that
-			// text (Messages.E007, "Error: {0}") has one placeholder, filled with
-			// filePath.
+			// Messages.E007 ("Error: {0}") has one placeholder, filled with filePath.
 			throw new IOException(Messages.E007.format(filePath));
 
 		default:
-			// Ported from FileIO::FormatError(IDS_ERR_READING_ATR, filePath):
-			// unlike the DISK_NOT_FOUND case above, that text (Messages.E036) has
-			// no placeholder, so filePath is dropped - matching C++'s actual
-			// formatted output exactly, even though it silently ignores the
-			// filePath argument FormatError always passes.
+			// Messages.E036 has no placeholder, so filePath is silently dropped here.
 			throw new IOException(Messages.E036.format());
 		}
 	}
 
-	/** Ported from SegmentWriteBootDiskDialog::Show/InitDialog. */
+	/** Opens the dialog with the segment's load address pre-filled. */
 	public void show(Segment segment, boolean withInitAddress, int initAddress) {
 		this.segment = segment;
 		loadAddressField.setText(String.format("%04X", segment.wBegin));

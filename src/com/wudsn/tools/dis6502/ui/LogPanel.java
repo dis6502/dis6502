@@ -25,46 +25,32 @@ import com.wudsn.tools.dis6502.Texts;
  * A scrolling, read-only log of application messages, with error lines
  * shown in a distinct color for at-a-glance scanning.
  * <p>
- * Ported from ui/LogListWindow.h / LogListWindow.cpp, but not its
- * mechanism or exact appearance - see the class's own note in {@code
- * plans/MEMORY.md} on why: C++'s {@code LogListWindow} is a plain,
- * single-column, uncolored {@code ListBox} with no owner-draw painting at
- * all (despite its "list view" name suggesting otherwise), and {@code
- * LogListWindow::AddText} - the only method that would ever put text into
- * it - is never actually called anywhere in the C++ codebase, so this
- * window is effectively dead code there. There is no C++ behavior to
- * match here; this class is the Java port's own design, chosen to close a
- * genuine usability gap - color-coding error lines makes them easy to spot
- * among routine info messages, which the current text-only log doesn't
- * support at all. A {@link JTextPane} with per-insert {@link
- * SimpleAttributeSet} styling was used instead of a colored {@link
- * javax.swing.JList} (the pattern {@link XRefPanel}/{@link
- * SegmentListPanel} use) specifically to keep plain-text selection/copy
- * working - a list of styled cells doesn't support that the same way a
- * text component does, and being able to select and copy a log line
- * (e.g. into a bug report) is worth keeping.
+ * Color-coding error lines makes them easy to spot among routine info
+ * messages, which a plain text-only log doesn't support. A {@link
+ * JTextPane} with per-insert {@link SimpleAttributeSet} styling is used
+ * instead of a colored {@link javax.swing.JList} (the pattern {@link
+ * XRefPanel}/{@link SegmentListPanel} use) specifically to keep plain-text
+ * selection/copy working - a list of styled cells doesn't support that the
+ * same way a text component does, and being able to select and copy a log
+ * line (e.g. into a bug report) is worth keeping.
  * <p>
  * {@link #header}, the lavender {@code RGB(192,192,255)} title bar above
- * it, is ported separately from {@code Main::PaintMainWindow}'s own
- * title-bar painting - see {@link PartHeaderPanel}'s javadoc.
+ * it - see {@link PartHeaderPanel}'s javadoc.
  * <p>
- * {@link #setComputerFont} is ported from {@code PartWindow::ApplyLayout}'s
- * blanket {@code SetFont(...)} call - {@code LogListWindow} is a plain
- * native {@code ListBox} in C++, getting this automatically via {@code
- * WM_SETFONT}, matching {@link SegmentListPanel}'s own {@code
- * setComputerFont}: log messages are already-formatted text, not raw byte
- * values, so {@link ComputerFont#getAwtFont} needs no byte-index shift.
+ * Log messages are already-formatted text, not raw byte values, so {@link
+ * #setComputerFont}'s {@link ComputerFont#getAwtFont} needs no byte-index
+ * shift, matching {@link SegmentListPanel}'s own {@code setComputerFont}.
  * Falls back to a plain monospace font until the first call, the same
- * placeholder every {@code ComputerFont}-driven panel used before
- * {@code Dis6502} wired up real fonts. The {@code
+ * placeholder every {@code ComputerFont}-driven panel uses before {@code
+ * Dis6502} wires up real fonts. The {@code
  * RenderingHints.KEY_TEXT_ANTIALIASING} client property forces the same
  * antialiasing-off rendering {@link ComputerFont#drawText} uses explicitly
- * elsewhere - without it, real on-screen Windows ClearType antialiasing
- * blurs this pixel-art font illegible (see {@link SegmentListPanel}'s class
- * comment); {@link JTextPane}, like {@code JTextArea}, paints its own text
- * directly rather than delegating to a per-cell renderer component, so this
- * client property - which Swing's text painting reads from the component
- * itself - is enough on its own.
+ * elsewhere - without it, on-screen antialiasing blurs this pixel-art font
+ * illegible (see {@link SegmentListPanel}'s class comment); {@link
+ * JTextPane}, like {@code JTextArea}, paints its own text directly rather
+ * than delegating to a per-cell renderer component, so this client
+ * property - which Swing's text painting reads from the component itself -
+ * is enough on its own.
  *
  * @author Peter Dell
  */
@@ -94,7 +80,7 @@ public final class LogPanel extends JPanel {
 		add(scrollPane, BorderLayout.CENTER);
 	}
 
-	/** Ported from PartWindow::ApplyLayout's SetFont(partLayout->GetLayout()->GetFont()) - call whenever the workspace's computer system or double-height setting changes. */
+	/** Call whenever the workspace's computer system or double-height setting changes. */
 	public void setComputerFont(ComputerFont computerFont) {
 		textPane.setFont(computerFont.getAwtFont());
 		header.setComputerFont(computerFont);
