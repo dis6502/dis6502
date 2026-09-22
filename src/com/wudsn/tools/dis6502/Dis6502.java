@@ -702,8 +702,7 @@ public final class Dis6502 {
 	 * The file types {@link ComputerSystem#readFile} handles without a
 	 * dedicated selection dialog of its own - {@link
 	 * FileType#EXECUTABLE_FILE}, {@link FileType#ROM_IMAGE_FILE}, {@link
-	 * FileType#CASSETTE_IMAGE_FILE}. Ported from MainFile::OpenExecutableFile/
-	 * OpenRomImageFile/OpenCassetteImageFile.
+	 * FileType#CASSETTE_IMAGE_FILE}.
 	 */
 	private boolean openReadableFile(File file, FileType fileType, boolean add) {
 		application.sendMessage(getFileTypeOpenMessage(fileType), file.getPath());
@@ -721,10 +720,10 @@ public final class Dis6502 {
 
 	/**
 	 * A raw (headerless) file, via {@link RawFileDialog} for picking the
-	 * byte range and load address. Ported from MainFile::OpenRawFile: unlike
-	 * {@link #openReadableFile}, which routes through {@code
-	 * WorkspaceLogic.addFile}/{@code ComputerSystem.readFile}, this calls
-	 * {@code WorkspaceLogic.addRawSegment} directly, since a raw file has no
+	 * byte range and load address. Unlike {@link #openReadableFile}, which
+	 * routes through {@code WorkspaceLogic.addFile}/{@code
+	 * ComputerSystem.readFile}, this calls {@code
+	 * WorkspaceLogic.addRawSegment} directly, since a raw file has no
 	 * format for a {@link ComputerSystem} to parse.
 	 */
 	private boolean openRawFile(File file, boolean add) {
@@ -750,16 +749,12 @@ public final class Dis6502 {
 
 	/**
 	 * An executable file picked from within an Atari DOS 2.x disk image, via
-	 * {@link DiskImageExecutableFileDialog}. Ported from
-	 * MainFile::OpenDiskImageExecutableFile: the picked file's bytes are
-	 * read directly through the already-ported {@link
-	 * AtariDisk#readFile(String)} and fed to {@code WorkspaceLogic.addFile}
-	 * the same way {@link #openReadableFile} feeds it a real file's {@link
-	 * InputStream} - unlike the C++ version, which needs its own {@code
-	 * DiskImageFileInputStream} wrapper to stream a disk image file's
-	 * sectors on demand, {@link AtariDisk#readFile(String)} already returns
-	 * the whole file as a {@code byte[]}, so a plain {@link
-	 * ByteArrayInputStream} is enough.
+	 * {@link DiskImageExecutableFileDialog}. The picked file's bytes are
+	 * read directly through {@link AtariDisk#readFile(String)} and fed to
+	 * {@code WorkspaceLogic.addFile} the same way {@link #openReadableFile}
+	 * feeds it a real file's {@link InputStream} - {@link
+	 * AtariDisk#readFile(String)} returns the whole file as a {@code
+	 * byte[]}, so a plain {@link ByteArrayInputStream} is enough.
 	 */
 	private boolean openDiskImageExecutableFile(File file, boolean add) {
 		AtariDisk atariDisk = new AtariDisk(file.getPath());
@@ -771,13 +766,10 @@ public final class Dis6502 {
 			application.sendErrorMessage(ex);
 			return false;
 		}
-		// Ported from MainFile::OpenDiskImageExecutableFile's switch, log-only
-		// like the C++ original (no dialog). The DISK_NOT_FOUND case there logs
-		// IDS_FILE_IO_EX_OPENING_FILE_FOR_READ_ACCESS with the OS-level error
-		// code/message from FileIO::GetError() - AtariDisk#findFirst doesn't
-		// surface those details (it only distinguishes DISK_NOT_FOUND via a
-		// caught FileNotFoundException, see AtariDOS's own class javadoc), so
-		// this case keeps its own generic message instead.
+		// Log-only (no dialog). AtariDisk#findFirst doesn't surface OS-level
+		// error code/message details (it only distinguishes DISK_NOT_FOUND via
+		// a caught FileNotFoundException, see AtariDOS's own class javadoc),
+		// so the DISK_NOT_FOUND case keeps its own generic message instead.
 		switch (error) {
 		case OK:
 			break;
@@ -837,10 +829,9 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * A disk image's Atari DOS boot sectors as a single segment. Ported from
-	 * MainFile::OpenDiskImageBootSectors; the actual segment construction
-	 * (including reading any boot sectors beyond the first) is {@link
-	 * WorkspaceLogic#addDiskImageBootSectorsSegment}.
+	 * A disk image's Atari DOS boot sectors as a single segment. The actual
+	 * segment construction (including reading any boot sectors beyond the
+	 * first) is {@link WorkspaceLogic#addDiskImageBootSectorsSegment}.
 	 */
 	private boolean openDiskImageBootSectors(File file, boolean add) {
 		application.sendMessage(Messages.I018, file.getPath());
@@ -856,10 +847,8 @@ public final class Dis6502 {
 		sector.sectorNumber = 1;
 		sector.sectorSize = 128; // Atari boot sectors are always 128 bytes long.
 		DiskImage.readSector(sector);
-		// Ported from MainFile::OpenDiskImageBootSectors: the C++ source checks
-		// Info.nResult again here instead of sector.nResult - a real bug (it
-		// keeps checking the disk-image-level result from GetInfo() instead of
-		// the sector read that just happened), not reproduced here.
+		// Checks sector.result (the sector read that just happened), not
+		// info.result (the disk-image-level result from getInfo()) again.
 		if (DiskImage.displayError(application, sector.result)) {
 			return false;
 		}
@@ -876,13 +865,9 @@ public final class Dis6502 {
 
 	/**
 	 * One or more disk image sectors (or byte ranges within them) as
-	 * segments, via {@link DiskImageSectorsDialog}. Ported from
-	 * MainFile::OpenDiskImageSectors, kept inline here rather than folded
-	 * into {@link WorkspaceLogic} (unlike {@link
-	 * #openDiskImageBootSectors}'s segment building) since the C++ source
-	 * itself keeps this loop in {@code MainFile}, not in a separate method -
-	 * see {@link DiskImageSectorsDialog}'s javadoc for the bug found (but not
-	 * fixed in C++) while porting this loop's body.
+	 * segments, via {@link DiskImageSectorsDialog} - see that class's
+	 * javadoc for why {@link DiskImageSectorsDialog#readSector} returns full
+	 * sector data rather than an already-sliced buffer.
 	 */
 	private boolean openDiskImageSectors(File file, boolean add) {
 		ImgInfo info = new ImgInfo();
@@ -926,7 +911,7 @@ public final class Dis6502 {
 		return true;
 	}
 
-	/** The per-{@link FileType}/add-or-open dialog title. The C++ version composes it from the file type's text instead ("Open " + text); these are separate, fully worded texts, which translate better. */
+	/** The per-{@link FileType}/add-or-open dialog title - separate, fully worded texts rather than a composed "Open " + text, which translate better. */
 	private static String getFileTypeOpenTitle(FileType fileType, boolean add) {
 		if (fileType == FileType.ANY_FILE) {
 			return add ? Texts.Dis6502_AddAnyFileTitle : Texts.Dis6502_OpenAnyFileTitle;
