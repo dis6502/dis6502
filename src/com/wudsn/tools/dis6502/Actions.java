@@ -22,29 +22,22 @@ import com.wudsn.tools.base.repository.NLS;
  * {@code _<SubMenu>} segment), matching the convention every other WUDSN
  * Swing tool's own {@code Actions} class already uses (e.g. {@code
  * com.wudsn.tools.thecartstudio.Actions}). Extends {@code
- * com.wudsn.tools.base.repository.NLS}, the same base {@link Text}/{@link
- * Texts} use, rather than the plain-{@code String}-only {@code
+ * com.wudsn.tools.base.repository.NLS}, the same base {@link Texts} uses,
+ * rather than the plain-{@code String}-only {@code
  * org.eclipse.osgi.util.NLS}, since only this richer base class supports
  * {@link Action}-typed fields.
  * <p>
- * Label text and mnemonic placement are copied verbatim from {@code
- * dis6502.rc}'s {@code MAIN_MENU} resource (dropping each item's
- * {@code \tAccelerator} hint suffix - the accelerator itself becomes a
- * {@link KeyStroke} on the {@link Action} instead), except {@link
- * #MainMenu_File_WriteBootDisk}, which keeps this port's existing, more
- * concise Java wording ("Write Boot Disk..." vs. the C++ source's "Save
- * Disk Image Boot Sectors...") rather than reverting a previous, deliberate
- * choice - only a mnemonic ({@code &amp;W}, unused elsewhere in the File
- * menu) was added, since {@link com.wudsn.tools.base.gui.ElementFactory}
- * requires one. Only the fields whose C++ menu item actually has an
- * accelerator are pre-initialized with one here ({@code new Action(keyCode,
- * modifiers)}); every other field is populated with text only. {@link
- * #MainMenu_File_AddExecutableFile}'s accelerator matches this port's
- * existing behavior (Ctrl+Insert, no Shift) and the {@code .rc} menu item's
- * own hint text, not its {@code ACCELERATORS} table entry (which has an
- * extra, seemingly stale Shift modifier) - not changed here, since this
- * class only carries the pattern forward, it does not re-decide existing
- * accelerator choices.
+ * {@link #MainMenu_File_WriteBootDisk} keeps this port's existing, more
+ * concise wording ("Write Boot Disk...") - a previous, deliberate choice,
+ * not reverted here; only a mnemonic ({@code &amp;W}, unused elsewhere in
+ * the File menu) was added, since {@link
+ * com.wudsn.tools.base.gui.ElementFactory} requires one. Only fields with
+ * a real accelerator are pre-initialized with one here ({@code new
+ * Action(keyCode, modifiers)}); every other field is populated with text
+ * only. {@link #MainMenu_File_AddExecutableFile}'s accelerator matches
+ * this port's existing behavior (Ctrl+Insert, no Shift) - not changed
+ * here, since this class only carries the pattern forward, it does not
+ * re-decide existing accelerator choices.
  * <p>
  * The top-level "File" and "Help" menus reuse {@code
  * com.wudsn.tools.base.Actions}' own {@code MainMenu_File}/{@code
@@ -58,14 +51,12 @@ import com.wudsn.tools.base.repository.NLS;
  * com.wudsn.tools.dis6502.ui.SegmentListPanel}/{@link
  * com.wudsn.tools.dis6502.ui.DisassemblyPanel}/{@link
  * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s right-click popup
- * menus, sourced from {@code dis6502.rc}'s {@code SEGMENT_LIST_POPUP_MENU}/
- * {@code DISASSEMBLY_POPUP_MENU}/{@code MEMORY_INSPECTOR_POPUP_MENU}/{@code
- * MEMORY_INSPECTOR_QUIT_EDIT_POPUP_MENU}, including every keystroke the
- * C++ source's {@code ACCELERATORS} table defines for a popup item
- * (see POPUP_MENU_ACCELERATORS_PLAN.md for how each one was verified,
- * including a found C++ bug at {@link #MemoryInspectorPopupMenu_ChangeType_Dlist}).
- * Populating these fields' accelerators is what makes them the single
- * source of truth for the corresponding keystroke - {@link
+ * menus, including every keystroke each popup item needs (see
+ * POPUP_MENU_ACCELERATORS_PLAN.md for how each one was verified,
+ * including a bug found at {@link
+ * #MemoryInspectorPopupMenu_ChangeType_Dlist}). Populating these fields'
+ * accelerators is what makes them the single source of truth for the
+ * corresponding keystroke - {@link
  * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}/{@link
  * com.wudsn.tools.dis6502.ui.DisassemblyPanel}'s window-level {@code
  * InputMap}/{@code ActionMap} bindings read {@code getAccelerator()} off
@@ -79,30 +70,29 @@ import com.wudsn.tools.base.repository.NLS;
  * their own javadoc) rather than this class leaving the accelerator unset,
  * since the field is still useful as the single source of truth and for
  * the decorative shortcut-hint text {@code createMenuItem} appends to the
- * label. Several C++ menu items - {@code DisassemblyPopupMenu}'s
- * six {@code {0}}-templated label/reference items plus {@code
+ * label. Several popup items - {@code DisassemblyPopupMenu}'s six
+ * {@code {0}}-templated label/reference items plus {@code
  * DisassemblyPopupMenu_EditComment}, and roughly half of {@code
  * MemoryInspectorPopupMenu}'s items ({@link
  * #MemoryInspectorPopupMenu_StartCodeTrace}, {@link
  * #MemoryInspectorPopupMenu_ChangeType}, and others) - have no {@code
- * &amp;} mnemonic at all in {@code dis6502.rc}; unlike the main menu (where
- * every added mnemonic already existed in the C++ source), these fields'
- * mnemonics were newly chosen here, picking an unused letter within each
- * popup - see each panel's own javadoc/source for exactly which items this
- * applies to. The six {@code {0}}-templated {@code DisassemblyPopupMenu}
- * fields keep their {@code {0}} placeholder in {@code .label} - {@code
- * DisassemblyPanel} formats it with the actual label name via {@code
- * com.wudsn.tools.base.common.TextUtility#format} each time the popup is
- * shown, then re-derives the mnemonic from the formatted text, since
- * {@link com.wudsn.tools.base.gui.ElementFactory} has no method for
- * applying an already-built {@link Action}'s mnemonic to text that isn't
- * the action's own literal label. {@link #MemoryInspectorPopupMenu_CutSelection}/
- * {@link #MemoryInspectorPopupMenu_PasteSelection}/{@link
- * #MemoryInspectorPopupMenu_DeleteSelection} have no {@code dis6502.rc}
- * counterpart at all - there is no working C++ Delete/Cut/Paste Selection
- * to port (see gap #3's history in {@code plans/REMAINING_GAPS_OVERVIEW.md}) -
- * so their Ctrl+X/Ctrl+V/Delete accelerators are this port's own choice,
- * following standard editor convention rather than any C++ source.
+ * &amp;} mnemonic; these fields' mnemonics were chosen here, picking an
+ * unused letter within each popup - see each panel's own javadoc/source
+ * for exactly which items this applies to. The six {@code {0}}-templated
+ * {@code DisassemblyPopupMenu} fields keep their {@code {0}} placeholder
+ * in {@code .label} - {@code DisassemblyPanel} formats it with the actual
+ * label name via {@code com.wudsn.tools.base.common.TextUtility#format}
+ * each time the popup is shown, then re-derives the mnemonic from the
+ * formatted text, since {@link com.wudsn.tools.base.gui.ElementFactory}
+ * has no method for applying an already-built {@link Action}'s mnemonic
+ * to text that isn't the action's own literal label. {@link
+ * #MemoryInspectorPopupMenu_CutSelection}/{@link
+ * #MemoryInspectorPopupMenu_PasteSelection}/{@link
+ * #MemoryInspectorPopupMenu_DeleteSelection} have no popup-menu-resource
+ * counterpart at all (see gap #3's history in {@code
+ * plans/REMAINING_GAPS_OVERVIEW.md}) - so their Ctrl+X/Ctrl+V/Delete
+ * accelerators are this port's own choice, following standard editor
+ * convention.
  *
  * @author Peter Dell
  */
@@ -232,12 +222,10 @@ public final class Actions extends NLS {
 
 	// Actions: Dialog command buttons that are not part of the shared
 	// ButtonBar_OK/ButtonBar_Cancel pattern (com.wudsn.tools.base.Actions).
-	// AssembleDialog's two labels are copied verbatim from the C++ ASSEMBLEBOX
-	// resource (see that class's own javadoc). DefaultFoldersDialog_Browse has
-	// no '&' mnemonic at all: the same Action is reused for one button per
-	// FolderType row (built via ElementFactory.createButton(action, false)),
-	// and every row is visible simultaneously, so a shared mnemonic would
-	// collide with itself across rows.
+	// DefaultFoldersDialog_Browse has no '&' mnemonic at all: the same Action
+	// is reused for one button per FolderType row (built via
+	// ElementFactory.createButton(action, false)), and every row is visible
+	// simultaneously, so a shared mnemonic would collide with itself across rows.
 	public static Action AssembleDialog_Assemble;
 	public static Action AssembleDialog_Close;
 	public static Action EquateDialog_AddModify;
