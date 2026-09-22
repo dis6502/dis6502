@@ -13,11 +13,10 @@ import java.util.List;
 import com.wudsn.tools.dis6502.Application;
 
 /**
- * A new test (not a port of an existing C++ test file) for
- * {@link EquateListLogic}, exercising it against the real
- * {@code systems/atari800/Atari800.equ} fixture and a save/reload
- * round-trip - including the newline-separator bug found and fixed while
- * porting {@link EquateListLogic#save} (see its javadoc).
+ * Exercises {@link EquateListLogic} against the real {@code
+ * systems/atari800/Atari800.equ} fixture and a save/reload round-trip -
+ * including the newline-separator bug found and fixed in {@link
+ * EquateListLogic#save} (see its javadoc).
  *
  * @author Peter Dell
  */
@@ -87,10 +86,9 @@ public final class EquateListLogicTest {
 	/**
 	 * Verifies the XASM 3.0.0 label table format's header and one formatted
 	 * line. Every equate list entry is written, including the non-label
-	 * (comment/empty) ones the fixture also has - matching the C++
-	 * version's {@code Save}, which likewise iterates the whole list rather
-	 * than filtering by {@link EquateType#LABEL} - so the expected line is
-	 * located by content rather than by a fixed line number.
+	 * (comment/empty) ones the fixture also has, rather than filtering by
+	 * {@link EquateType#LABEL} - so the expected line is located by content
+	 * rather than by a fixed line number.
 	 */
 	private static void testSaveXasm(EquateListLogic equateListLogic, EquateList equateList) throws IOException {
 		File tempFile = File.createTempFile("EquateListLogicTest", ".xasm");

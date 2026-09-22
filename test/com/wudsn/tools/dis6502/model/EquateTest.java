@@ -6,8 +6,7 @@
 package com.wudsn.tools.dis6502.model;
 
 /**
- * Ported from EquateTest.h / EquateTest.cpp. {@code TestFiles} is not
- * ported - the C++ version's body is entirely commented out.
+ * Covers {@link Equate} line parsing.
  *
  * @author Peter Dell
  */

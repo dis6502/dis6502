@@ -10,9 +10,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 /**
- * Ported from systems/ComputerSystemTest.h / ComputerSystemTest.cpp. {@code
- * TestReadDiskImageFile} is not ported - see {@link Atari800Test}'s javadoc
- * for why the disk-image subsystem it exercises is out of scope.
+ * Disk-image reading is not covered here - see {@link Atari800Test}'s
+ * javadoc for why that subsystem is out of scope.
  *
  * @author Peter Dell
  */
@@ -39,11 +38,11 @@ public final class ComputerSystemTest {
 		testC64CodeTraceFollowsVector(computerSystem);
 	}
 
-	/** New (not ported): the C64's real pointer locations - see {@link C64}'s javadoc. */
+	/** The C64's real pointer locations - see {@link C64}'s javadoc. */
 	private static void testC64Addresses(ComputerSystem computerSystem) {
 		Assert.boolEquals(computerSystem.isVectorAddress(0x0314), true); // CINV
 		Assert.boolEquals(computerSystem.isVectorAddress(0xFFFE), true); // IRQVEC
-		Assert.boolEquals(computerSystem.isVectorAddress(0x0200), false); // The C++ version's dummy entry.
+		Assert.boolEquals(computerSystem.isVectorAddress(0x0200), false);
 		Assert.boolEquals(computerSystem.isBaseAddress(0x0314), true);
 		Assert.boolEquals(computerSystem.isBaseAddress(0x0281), true); // MEMSTR: a pointer, but to data.
 		Assert.boolEquals(computerSystem.isVectorAddress(0x0281), false);
