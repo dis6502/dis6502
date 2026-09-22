@@ -11,10 +11,6 @@ import java.util.Map;
 /**
  * The remembered default folder path for each {@link FolderType}, for one
  * {@link ComputerSystemType}.
- * <p>
- * Ported from DefaultFolders.h / DefaultFolders.cpp. {@code
- * CopyFolderPath} (copying into a fixed-size Win32 buffer) is not ported -
- * {@link #getFolderPath} already returns the path directly.
  *
  * @author Peter Dell
  */

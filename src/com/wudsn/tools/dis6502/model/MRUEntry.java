@@ -8,12 +8,6 @@ package com.wudsn.tools.dis6502.model;
 /**
  * One "most recently used" file entry: its path plus the {@link FileType}
  * it was opened as.
- * <p>
- * Ported from MRUEntry.h / MRUEntry.cpp. The C++ version's {@code Create}
- * factory method (returning a raw, list-managed pointer) has no Java
- * equivalent need - a plain constructor is enough, since the JVM garbage
- * collector owns lifetime instead of {@link MRUList} explicitly deleting
- * entries.
  *
  * @author Peter Dell
  */

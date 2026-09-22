@@ -68,10 +68,9 @@ public interface MemoryInspectorState {
 
 	/**
 	 * Which part of an edited byte's cell the Memory Inspector's edit-mode
-	 * cursor is on - matches the C++ source's {@code wEditedPart} (0/1/2). Used
-	 * by {@link MutableMemoryInspectorState}'s edit-mode state/methods and by
-	 * {@link com.wudsn.tools.dis6502.ui.HexGridPanel}'s cursor
-	 * painting.
+	 * cursor is on. Used by {@link MutableMemoryInspectorState}'s edit-mode
+	 * state/methods and by {@link
+	 * com.wudsn.tools.dis6502.ui.HexGridPanel}'s cursor painting.
 	 */
 	enum EditPane {
 
@@ -117,10 +116,7 @@ public interface MemoryInspectorState {
 
 		/**
 		 * The character was written at the segment's last byte - there is nowhere
-		 * further to advance to, matching {@code MemoryInspectorControlImpl::Char}'s
-		 * own end-of-buffer branch. The caller is expected to exit edit mode; see
-		 * {@code com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s class javadoc
-		 * for the C++ bug this port fixes on this exact path.
+		 * further to advance to. The caller is expected to exit edit mode.
 		 */
 		HANDLED_AT_BUFFER_END
 	}

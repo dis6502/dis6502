@@ -13,13 +13,13 @@ import com.wudsn.tools.base.common.HexUtility;
  * One entry read from (or to be written to) an equates file: an empty line,
  * a comment line, or a label definition line ("LABEL = $1234 ; comment").
  * <p>
- * Ported from Equate.h / Equate.cpp. Reading the workspace-version-1X
- * binary format is {@link EquateList#load1X}'s job; writing it ({@code
- * Save1X}) is not ported - see {@link Workspace1X}.
+ * Reading the workspace-version-1X binary format is {@link
+ * EquateList#load1X}'s job; there is no code to write it - see {@link
+ * Workspace1X}.
  * <p>
  * Only {@link EquateList} and this class's own {@link #readFrom} may create
- * and initialize instances (it was a C++ {@code friend class}); the
- * constructor and {@link #init} are package-private for the same reason.
+ * and initialize instances; the constructor and {@link #init} are
+ * package-private for that.
  *
  * @author Peter Dell
  */

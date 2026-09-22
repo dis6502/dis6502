@@ -17,14 +17,13 @@ import com.wudsn.tools.dis6502.ValueSets;
 /**
  * The computer systems a workspace can be for.
  * <p>
- * Ported from ComputerSystemType.h as a WUDSN Base {@link ValueSet} rather
- * than a Java {@code enum} - like {@link FileType}, this is the C++
- * version's {@code ComputerSystemType} and {@code ComputerSystemTypeInfo} in
- * one. {@link #getId()} is the technical name: what a workspace file
- * contains, what the settings of a system are stored under, and what the
- * command line accepts ({@code /C64}). {@link #getText()} is the localizable
- * display text from {@code ValueSets.properties}; {@link #getFileName()} the
- * base name of the system's resource files ({@code Atari800.equ}).
+ * A WUDSN Base {@link ValueSet} rather than a Java {@code enum} - like
+ * {@link FileType}. {@link #getId()} is the technical name: what a
+ * workspace file contains, what the settings of a system are stored under,
+ * and what the command line accepts ({@code /C64}). {@link #getText()} is
+ * the localizable display text from {@code ValueSets.properties}; {@link
+ * #getFileName()} the base name of the system's resource files ({@code
+ * Atari800.equ}).
  *
  * @author Peter Dell
  */

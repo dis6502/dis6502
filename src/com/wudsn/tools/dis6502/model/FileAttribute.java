@@ -8,9 +8,8 @@ package com.wudsn.tools.dis6502.model;
 /**
  * DOS 2.x directory entry file attribute bits.
  * <p>
- * Ported from AtariDOS.h ({@code AtariDOS::FileAttribute}). A plain
- * {@code int}-based flags class rather than a Java {@code enum}, since
- * values are combined with bitwise OR - the same reasoning as {@link
+ * A plain {@code int}-based flags class rather than a Java {@code enum},
+ * since values are combined with bitwise OR - the same reasoning as {@link
  * LabelAccess}.
  *
  * @author Peter Dell

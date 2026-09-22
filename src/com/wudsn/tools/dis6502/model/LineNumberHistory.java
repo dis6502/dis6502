@@ -13,11 +13,10 @@ import java.util.Deque;
  * to Definition" was started from, most recent last, for "Navigate Back to
  * Previous Position" to return to.
  * <p>
- * Replaces the {@code DIS_HISTORY} array in the C++ version's {@code
- * DisassemblyControlImpl} ({@code SaveHistory}/{@code BackInHistory}/{@code
- * ResetHistory}). That one stops recording once its fixed size is reached,
- * so after a long session "back" suddenly returns to some position from
- * long ago; this one forgets the oldest position instead.
+ * Bounded: once full, the oldest position is forgotten to make room for a
+ * new one, rather than refusing to record any further position (which
+ * would otherwise leave "back" returning to some position from long ago
+ * after a long session).
  *
  * @author Peter Dell
  */

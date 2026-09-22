@@ -16,11 +16,11 @@ import com.wudsn.tools.base.common.Log;
 /**
  * A workspace: the currently loaded disassembly project.
  * <p>
- * Ported from Workspace.h / Workspace.cpp. Unlike the C++ version, which
- * privately inherits from {@code EquateListChangedListener}/{@code
- * SegmentListChangedListener} to keep {@code HandleEquateListChanged}/{@code
- * HandleSegmentListChanged} out of its public interface, Java interface
- * methods are always public - there is no private-inheritance equivalent.
+ * Implements {@link EquateListChangedListener}/{@link
+ * SegmentListChangedListener} for its own internal bookkeeping - {@code
+ * handleEquateListChanged}/{@code handleSegmentListChanged} are callback
+ * machinery, not part of this class's own public API, but a Java interface
+ * method is always public; there is no way to implement one non-publicly.
  * Loading and saving a whole workspace file is not done here but by {@link
  * WorkspaceLogic} (and {@link Workspace1X} for the legacy binary format),
  * since it depends on application-level file I/O and logging.

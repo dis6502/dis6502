@@ -20,18 +20,11 @@ import java.util.List;
  * system): its base/vector address knowledge, and how to read/write its
  * native file formats into/from a {@link SegmentList}.
  * <p>
- * Ported from ComputerSystem.h / ComputerSystem.cpp. {@code
- * GetResourceFilePathByExtension} (looking up a per-system resource file
- * relative to the application's install folder) became {@link
- * #openResourceByExtension}, which reads the same file from the classpath
- * instead ({@code systems/<fileName><extension>} next to this class) - a
- * Java application has no install folder to rely on, and the resource
- * travels inside the jar this way. {@code GuessFileType(wstring_view filePath)} is ported as
- * {@link #guessFileType(File)}, reading only the 4-byte header directly
- * instead of the whole file (the C++ version reads the whole file via
- * {@code FileIO::ReadByteArray} then takes a 4-byte subsequence, since
- * {@code ByteSequence} is not ported - see {@link Segment} for that
- * precedent elsewhere in this port).
+ * {@link #openResourceByExtension} reads a per-system resource file
+ * ({@code systems/<fileName><extension>} next to this class) from the
+ * classpath, since a Java application has no install folder to rely on and
+ * the resource travels inside the jar this way. {@link #guessFileType(File)}
+ * reads only the file's 4-byte header directly, not the whole file.
  *
  * @author Peter Dell
  */

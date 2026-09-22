@@ -14,8 +14,6 @@ package com.wudsn.tools.dis6502.model.version22;
  * can verify, at class load time, that the current {@code MemoryType} still
  * agrees with this original layout for every value that existed back then.
  * Do not edit this enum: it must stay exactly as it was in version 2.2.
- * <p>
- * Ported from the {@code version_22} namespace in MemoryType.h.
  *
  * @author Peter Dell
  */

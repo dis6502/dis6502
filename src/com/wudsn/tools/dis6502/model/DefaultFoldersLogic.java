@@ -11,8 +11,7 @@ import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.ApplicationSettingsSection;
 
 /**
- * Creates, loads, and saves a {@link DefaultFolders} instance. Ported from
- * DefaultFoldersLogic.h / DefaultFoldersLogic.cpp.
+ * Creates, loads, and saves a {@link DefaultFolders} instance.
  *
  * @author Peter Dell
  */

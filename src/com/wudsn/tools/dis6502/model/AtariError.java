@@ -10,14 +10,9 @@ import com.wudsn.tools.dis6502.Messages;
 /**
  * Error codes returned by {@link AtariDOS}/{@link AtariDisk} operations.
  * <p>
- * Ported from AtariDOS.h / AtariDOS.cpp. {@code AtariDOS::GetErrorCode}
- * (which just returned the constant's name as a string) is superseded by
- * {@link #name()}. Fixed two typos in {@code GetErrorText}'s strings while
- * porting: {@code END_OF_FILE}'s text had a stray trailing {@code ")"},
- * and the default case read "Unkown error" - both fixed upstream too (see
- * those commits). The texts themselves are not string literals here but
- * {@link Messages} entries, like {@link ImgError}'s (see {@code
- * DiskImage.displayError}), so that they can be translated.
+ * The texts are not string literals here but {@link Messages} entries,
+ * like {@link ImgError}'s (see {@code DiskImage.displayError}), so that
+ * they can be translated.
  *
  * @author Peter Dell
  */

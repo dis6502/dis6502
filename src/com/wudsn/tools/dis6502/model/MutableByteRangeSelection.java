@@ -12,9 +12,9 @@ package com.wudsn.tools.dis6502.model;
  * {@link MutableMemoryInspectorState} - that class now holds one of these as
  * a private field and delegates to it, reproducing the same arithmetic it
  * always had; a second, fully independent instance is owned directly by
- * {@link com.wudsn.tools.dis6502.ui.DiskImageSectorsDialog}, matching how
- * the C++ source's {@code MemoryInspectorControl} is one reusable class with
- * an independent instance per window, never a single shared one.
+ * {@link com.wudsn.tools.dis6502.ui.DiskImageSectorsDialog} - this class is
+ * meant to be reusable, with one independent instance per owner, never a
+ * single shared one.
  *
  * @author Peter Dell
  */

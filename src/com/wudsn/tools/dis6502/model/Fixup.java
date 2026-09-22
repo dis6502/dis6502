@@ -11,10 +11,8 @@ import java.util.Comparator;
  * An address to fix up in a {@link Segment}: the address of the word to fix
  * up, and the index of the segment where the referenced label is located.
  * <p>
- * Ported from Fixup.h / Fixup.cpp. {@code SerializeTo}/{@code
- * DeserializeFrom} (XML persistence) are not ported: it is a transient
- * attribute of {@code Segment}, rebuilt by every disassembly, and the C++
- * version's own calls to them are commented out.
+ * Has no XML persistence: it is a transient attribute of {@code Segment},
+ * rebuilt by every disassembly.
  *
  * @author Peter Dell
  */

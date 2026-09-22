@@ -13,11 +13,8 @@ import java.util.TreeMap;
  * A list of {@link AddressLabel}s, kept in address order and indexed by
  * address.
  * <p>
- * Ported from AddressLabelList.h / AddressLabelList.cpp. The C++ version
- * maintains a hand-sorted {@code vector} (for order) alongside a separate
- * {@code map} (for lookup by address); this is replaced with a single
- * {@link TreeMap}, which provides both address-ordered iteration and O(log n)
- * lookup.
+ * Backed by a single {@link TreeMap}, which provides both address-ordered
+ * iteration and O(log n) lookup by address.
  *
  * @author Peter Dell
  */

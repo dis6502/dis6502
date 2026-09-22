@@ -15,15 +15,9 @@ import com.wudsn.tools.dis6502.ApplicationSettingsSection;
 
 /**
  * A "most recently used" file list, persisted through an {@link
- * ApplicationSettingsSection}.
- * <p>
- * Ported from MRUList.h / MRUList.cpp. Found and fixed a bug in {@link
- * #save()} while porting it: the C++ version wrote both the file path and
- * the file type to the same {@code "FileType_" + suffix} key (the file
- * path should have gone to {@code "FilePath_" + suffix}, the key {@link
- * #load()} actually reads back), so the second write silently clobbered
- * the first and no file path was ever actually saved - fixed upstream (see
- * that commit) and correct here from the start.
+ * ApplicationSettingsSection}. {@link #save()} writes the file path under
+ * {@code "FilePath_" + suffix} and the file type under {@code "FileType_"
+ * + suffix}, the same keys {@link #load()} reads back.
  *
  * @author Peter Dell
  */

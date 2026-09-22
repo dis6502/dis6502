@@ -12,12 +12,8 @@ import java.util.List;
  * One of the four sections a {@link DisassemblyResult} is split into: an
  * ordered list of {@link DisassemblyLine}s plus the section's type.
  * <p>
- * Ported from DisassemblySection.h / DisassemblySection.cpp. The C++ version
- * holds a list of fixed-size {@code DIS_BUFFER}s, a memory-chunking detail
- * with no Java equivalent (see {@link DisassemblyLine}); this holds a plain
- * {@code List<DisassemblyLine>} directly, so {@code ClearBuffers}/{@code
- * GetBufferCount}/{@code GetBuffer}/{@code FindLastBuffer}/{@code
- * AllocBuffer} are replaced by {@link #lines} itself and {@link #addLine}.
+ * Backed directly by a plain {@code List<DisassemblyLine>} ({@link
+ * #lines}), appended to via {@link #addLine}.
  *
  * @author Peter Dell
  */

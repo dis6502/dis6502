@@ -11,14 +11,13 @@ import com.wudsn.tools.base.common.HexUtility;
  * Model of an 8-bit memory with a 16 bit address space and little endian
  * byte order.
  * <p>
- * Ported from Memory.h / Memory.cpp. Unlike C++, Java has no unsigned
- * integer types, so this class does not define separate "byte"/"word"/
- * "address"/"offset" type aliases: ported code uses a plain {@code int} for
- * all of them, following the same convention as
- * {@link com.wudsn.tools.base.common.HexUtility}. A "byte" value is always in
- * [0, 255], a "word"/"address"/"offset" value is always in [0, 65535].
- * "address_offset" (a signed relative offset) needs no special type either,
- * since Java's {@code int} is already signed.
+ * Java has no unsigned integer types, so this class does not define
+ * separate "byte"/"word"/"address"/"offset" type aliases: code uses a
+ * plain {@code int} for all of them, following the same convention as
+ * {@link com.wudsn.tools.base.common.HexUtility}. A "byte" value is always
+ * in [0, 255], a "word"/"address"/"offset" value is always in [0, 65535].
+ * "address_offset" (a signed relative offset) needs no special type
+ * either, since Java's {@code int} is already signed.
  *
  * @author Peter Dell
  */

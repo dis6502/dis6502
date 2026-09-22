@@ -13,13 +13,8 @@ import com.wudsn.tools.dis6502.Messages;
  * (via {@link #cancel()}, or automatically via {@link #close()} if never
  * applied).
  * <p>
- * Ported from SegmentListInserter.h / SegmentListInserter.cpp. The C++
- * version cancels automatically in its destructor if still active when it
- * goes out of scope; Java has no equivalent deterministic destruction, so
- * this implements {@link AutoCloseable} instead - use it in a
- * try-with-resources block to get the same effect. The C++ "copy
- * constructor used only to support unique_ptr assignment" is not ported; it
- * has no Java equivalent use.
+ * Implements {@link AutoCloseable}: use it in a try-with-resources block,
+ * so an unapplied batch is automatically cancelled when the block exits.
  *
  * @author Peter Dell
  */

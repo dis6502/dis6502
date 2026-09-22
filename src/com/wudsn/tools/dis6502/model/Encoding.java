@@ -17,9 +17,7 @@ import com.wudsn.tools.dis6502.ValueSets;
 /**
  * Text encoding used for the disassembly output.
  * <p>
- * Ported from Encoding.h/Encoding.cpp as a WUDSN Base {@link ValueSet}
- * rather than a Java {@code enum}: that is the C++ version's {@code
- * Encoding} and {@code EncodingInfo}/{@code EncodingFactory} in one - {@link
+ * A WUDSN Base {@link ValueSet} rather than a Java {@code enum}: {@link
  * #getId()} is the key {@link Profile}'s serialization uses, {@link
  * #getText()} (also {@link #toString()}, so a combo box shows it) the
  * localizable display text from {@code ValueSets.properties}. The newline

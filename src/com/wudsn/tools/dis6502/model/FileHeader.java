@@ -14,9 +14,8 @@ import com.wudsn.tools.base.common.HexUtility;
  * "http://sdx.atari8.info/sdx_files/4.49/SDX449_Programming_Guide_EN.pdf">the
  * SDX Programming Guide</a> for the details of the SDX file formats.
  * <p>
- * Ported from FileHeader.h. Unlike a C++ {@code enum class}, a Java enum
- * cannot have an arbitrary underlying value baked into its ordinal, so each
- * constant carries its 16 bit marker value explicitly.
+ * A Java enum has no way to bake an arbitrary value into its ordinal, so
+ * each constant carries its 16 bit marker value explicitly.
  *
  * @author Peter Dell
  */

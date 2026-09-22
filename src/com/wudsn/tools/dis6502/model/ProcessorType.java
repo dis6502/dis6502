@@ -17,12 +17,10 @@ import com.wudsn.tools.dis6502.ValueSets;
 /**
  * The processor a {@link Segment}'s code is for.
  * <p>
- * Ported from ProcessorType.h as a WUDSN Base {@link ValueSet} rather than
- * a Java {@code enum} - like {@link FileType}, this is the C++ version's
- * {@code ProcessorType} and {@code ProcessorTypeInfo}/{@code
- * ProcessorTypeFactory} in one: {@link #getId()} is the key a workspace
- * file contains, {@link #getText()} the localizable display text ("MOS
- * 6502") from {@code ValueSets.properties}.
+ * A WUDSN Base {@link ValueSet} rather than a Java {@code enum} - like
+ * {@link FileType}: {@link #getId()} is the key a workspace file contains,
+ * {@link #getText()} the localizable display text ("MOS 6502") from
+ * {@code ValueSets.properties}.
  *
  * @author Peter Dell
  */

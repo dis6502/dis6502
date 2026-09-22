@@ -10,8 +10,7 @@ package com.wudsn.tools.dis6502.model;
  * count, and write-protect state, as filled in by {@link
  * DiskImage#getInfo}.
  * <p>
- * Ported from DiskImage.h ({@code ImgInfo}). Fields are public and mutable,
- * matching the C++ version's use as a plain out-parameter struct.
+ * Fields are public and mutable, used as a plain out-parameter struct.
  *
  * @author Peter Dell
  */

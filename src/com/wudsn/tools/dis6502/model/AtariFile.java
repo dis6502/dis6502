@@ -11,11 +11,9 @@ import java.util.Arrays;
  * A DOS 2.x directory entry, plus the transient sector-chain-walking state
  * used while reading/writing its data (see {@link AtariDOS}).
  * <p>
- * Ported from AtariDOS.h / AtariDOS.cpp ({@code AtariFile}). The C++
- * version's fields are only reachable by its {@code friend} class {@code
- * AtariDOS}; here they are package-private instead, the same adaptation
- * used throughout this port (see {@code SegmentList}/{@code
- * SegmentListInserter}).
+ * Its fields are package-private, reachable only from within {@link
+ * AtariDOS} - the same pattern as {@link SegmentList}/{@link
+ * SegmentListInserter}.
  *
  * @author Peter Dell
  */

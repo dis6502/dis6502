@@ -11,10 +11,8 @@ import java.util.Comparator;
  * An SDX system symbol to fix up in a {@link Segment}: the address of the
  * word to fix up, and the symbol name to write there.
  * <p>
- * Ported from Symbol.h / Symbol.cpp. {@code SerializeTo}/{@code
- * DeserializeFrom} (XML persistence) are not ported: it is a transient
- * attribute of {@code Segment}, rebuilt by every disassembly, and the C++
- * version's own calls to them are commented out.
+ * Has no XML persistence: it is a transient attribute of {@code Segment},
+ * rebuilt by every disassembly.
  *
  * @author Peter Dell
  */

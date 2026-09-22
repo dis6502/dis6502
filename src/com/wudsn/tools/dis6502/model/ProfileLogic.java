@@ -18,7 +18,6 @@ import com.wudsn.tools.dis6502.Messages;
 /**
  * Loads and saves a {@link Profile}, trying the legacy binary format
  * ({@link Profile1X}) before falling back to the modern XML format.
- * Ported from ProfileLogic.h / ProfileLogic.cpp.
  *
  * @author Peter Dell
  */

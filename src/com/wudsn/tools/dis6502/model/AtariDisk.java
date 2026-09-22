@@ -9,12 +9,10 @@ import java.io.IOException;
 
 /**
  * An Atari DOS 2.x disk image (.atr/.xfd), opened by path: each operation
- * re-opens and closes the underlying file (matching the C++ source, which
- * does the same).
+ * re-opens and closes the underlying file.
  * <p>
- * Ported from AtariDOS.h / AtariDOS.cpp ({@code AtariDisk}). Methods that
- * are primarily for iterating the directory delegate directly to {@link
- * AtariDOS}'s package-private methods.
+ * Methods that are primarily for iterating the directory delegate directly
+ * to {@link AtariDOS}'s package-private methods.
  *
  * @author Peter Dell
  */

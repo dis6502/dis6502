@@ -13,14 +13,11 @@ import com.wudsn.tools.base.common.HexUtility;
  * once the per-line limit is reached, the entry kind changes, or a real
  * instruction line needs to be added.
  * <p>
- * Ported from DisassemblyWriter.h / DisassemblyWriter.cpp. The C++ version
- * is declared a {@code friend} of {@code Disassembly} to reach its private
- * {@code lineWriter}/{@code absoluteAddress}/{@code markSize} fields and
- * {@code AddLine}/{@code AddLineWriter} methods; Java has no friend
- * mechanism, so those members are package-private on {@link Disassembly}
- * instead (accessible only from within this package), the same adaptation
- * already used for {@code SegmentList}/{@code SegmentListInserter}.
- * <p>
+ * Reaches {@link Disassembly}'s {@code lineWriter}/{@code absoluteAddress}/
+ * {@code markSize} fields and {@code addLine}/{@code addLineWriter} methods,
+ * which are package-private for that - the same pattern as {@link
+ * SegmentList}/{@link SegmentListInserter}.
+ *
  * @author Peter Dell
  */
 public final class DisassemblyWriter {
