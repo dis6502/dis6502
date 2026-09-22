@@ -14,27 +14,19 @@ import javax.swing.JComponent;
 
 /**
  * The flat-colored title bar shown above each of the main window's five part
- * panels, ported from {@code Main::PaintMainWindow} (src/ui/Main.cpp), which
- * paints one of these per part window - a fixed background color and (with
- * one exception, see below) black text, drawn with the same per-computer-
- * system {@link ComputerFont} as the part window's own content, not a plain
- * system font ({@code PaintMainWindow} selects {@code Main::GetResizedFont()}
- * before painting any of them). Reproduced here as a small custom-painted
- * component instead of a {@link javax.swing.border.TitledBorder} (used
- * elsewhere in this port for a plain, uncolored title) since {@code
- * TitledBorder} has no way to fill its own background.
+ * panels: a fixed background color and black text, drawn with the same
+ * per-computer-system {@link ComputerFont} as the part window's own
+ * content, not a plain system font. A small custom-painted component
+ * rather than a {@link javax.swing.border.TitledBorder} (used elsewhere in
+ * this port for a plain, uncolored title) since {@code TitledBorder} has
+ * no way to fill its own background.
  * <p>
- * The background fill is a plain {@link Graphics#fillRect}, matching {@code
- * DC::ExtTextOut}'s {@code ETO_OPAQUE} flag, which fills the whole passed
- * rectangle with the current background color before drawing the text -
- * not just the text's own bounding box.
+ * The background fill is a plain {@link Graphics#fillRect}, filling the
+ * whole rectangle with the background color before drawing the text - not
+ * just the text's own bounding box.
  * <p>
- * The memory inspector's title text color in C++ actually depends on
- * whether {@code MemoryInspectorControlImpl} has focus (black if focused,
- * gray otherwise) - not reproduced here: the C++ source's own comment at
- * that exact line reads {@code "// TODO Detection of focus does not
- * actually work."}, so that branch never actually returns anything but
- * black in practice. Every header here is always painted with black text.
+ * Every header here is always painted with black text; there is no
+ * focus-dependent color change.
  *
  * @author Peter Dell
  */
@@ -72,7 +64,7 @@ final class PartHeaderPanel extends JComponent {
 		g.setColor(getBackground());
 		g.fillRect(0, 0, getWidth(), getHeight());
 		if (computerFont != null) {
-			// Matches DC::ExtTextOut(1, 1, rc, title)'s offset from the rectangle's origin.
+			// 1 pixel offset from the rectangle's origin.
 			computerFont.drawText((Graphics2D) g, text, Color.BLACK, 1, 1);
 		}
 	}

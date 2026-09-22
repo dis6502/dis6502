@@ -37,15 +37,9 @@ import com.wudsn.tools.dis6502.Texts;
  * segment: the whole file, or a chosen byte range of it, loaded at a chosen
  * address.
  * <p>
- * Ported from ui/RawFileDialog.h / RawFileDialog.cpp, with one structural
- * simplification: the C++ version lets the user pick the byte range by
- * dragging a selection across a {@code MemoryInspectorControl} hex dump.
- * This dialog was ported before the memory inspector was, so it shows the
- * same read-only hex dump but replaces drag-selection with explicit "Start
+ * Shows a read-only hex dump of the file alongside explicit "Start
  * Offset"/"End Offset" fields, pre-filled with the whole file (offset 0 to
- * the last byte) to match {@code MemoryInspectorControl::GetSelection}'s
- * {@code bDefaultAll} behavior when nothing is selected. Address, like the
- * C++ version's field, is plain (no "$" prefix) hexadecimal; the offset
+ * the last byte). Address is plain (no "$" prefix) hexadecimal; the offset
  * fields are decimal, since they describe a position within the file, not
  * a 6502 address.
  *
@@ -149,7 +143,7 @@ public final class RawFileDialog extends JDialog {
 		okButton.setEnabled(!addressField.getText().trim().isEmpty());
 	}
 
-	/** Ported from RawFileDialog::OnOK, including MemoryInspectorControl::GetSelection's begin/end swap and end-of-buffer clamp. */
+	/** Swaps begin/end if reversed and clamps both to the buffer's bounds before committing the result. */
 	private void performOK() {
 		int begin = getOffset(startOffsetField, 0);
 		int end = getOffset(endOffsetField, fileBuffer.length - 1);
@@ -181,7 +175,7 @@ public final class RawFileDialog extends JDialog {
 		}
 	}
 
-	/** Ported from EditControl::GetAddress: an unparseable value is silently treated as 0, matching {@code swscanf(..., L"%04hX", ...)}'s behavior on no match. */
+	/** Parses a plain hexadecimal address field; an unparseable value is silently treated as 0. */
 	private static int getAddress(JTextField field) {
 		try {
 			return Integer.parseInt(field.getText().trim(), 16) & 0xFFFF;
@@ -209,11 +203,10 @@ public final class RawFileDialog extends JDialog {
 	}
 
 	/**
-	 * Ported from RawFileDialog::Show/InitDialog/OnOK, folded into one
-	 * blocking call as is idiomatic for a Swing modal {@link JDialog}.
-	 * Returns {@code true} if the user clicked OK; {@link #getFileBuffer}/
-	 * {@link #getBegin}/{@link #getResultSize}/{@link #getAddress} then give the
-	 * result, matching {@code GetFileBuffer}/{@code GetResult}.
+	 * Opens the dialog as one blocking call, idiomatic for a Swing modal
+	 * {@link JDialog}. Returns {@code true} if the user clicked OK; {@link
+	 * #getFileBuffer}/{@link #getBegin}/{@link #getResultSize}/{@link
+	 * #getAddress} then give the result.
 	 */
 	public boolean show(File file) throws IOException {
 		fileBuffer = Files.readAllBytes(file.toPath());

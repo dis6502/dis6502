@@ -17,8 +17,7 @@ import com.wudsn.tools.dis6502.Actions;
 /**
  * The application's main menu bar.
  * <p>
- * Ported from ui/MainWindowMenu.h / MainWindowMenu.cpp and dis6502.rc's
- * {@code MAIN_MENU} resource: File &gt;
+ * File &gt;
  * New/Open/Save/Save As/Save Disassembly Files.../Exit, File &gt; Open
  * File/Add File &gt; Executable/ROM Image/Cassette Image/Raw/Disk Image
  * Executable/Disk Image Boot Sectors/Disk Image Sectors File (see {@link
@@ -141,25 +140,14 @@ public final class MainMenu {
 	}
 
 	/**
-	 * Ported from {@code MainWindowMenu::CreateControl}'s {@code
-	 * AddIconToMenu} calls (dis6502.rc's {@code IDI_*} icon resources,
-	 * originally {@code src/icons/*.ico}) - migrated to PNG (see {@code
-	 * images/} at this project's classpath root, converted losslessly via
-	 * .NET's {@code System.Drawing.Icon}, since Java has no built-in ICO
-	 * reader) rather than kept as .ico, since {@link
-	 * ElementFactory#createImageIcon} only needs a format {@link
-	 * javax.swing.ImageIcon} can decode. {@code AddIconToMenu}'s own {@code
-	 * MakeBitMapTransparent} step (manually keying out a fixed background
-	 * color against {@code COLOR_MENU}, since old-style {@code HBITMAP}
-	 * menu icons have no real alpha channel) has no Java equivalent to
-	 * port: the converted PNGs' own pixel data already carries a real
-	 * alpha channel (confirmed genuinely semi-transparent, not just fully
-	 * opaque/transparent, on most of these icons), which {@link
-	 * javax.swing.JMenuItem}'s normal icon painting already composites
-	 * correctly against whatever background it is drawn on, unlike the
-	 * C++ source's single-color GDI bitmap. The seven {@code ID_FILE_ADD_*}
-	 * items reuse their {@code ID_FILE_OPEN_*} counterpart's icon, exactly
-	 * as {@code AddIconToMenu}'s own calls do.
+	 * Icons are PNGs (see {@code images/} at this project's classpath root)
+	 * loaded via {@link ElementFactory#createImageIcon}, which only needs a
+	 * format {@link javax.swing.ImageIcon} can decode. Their pixel data
+	 * carries a real alpha channel (confirmed genuinely semi-transparent,
+	 * not just fully opaque/transparent, on most of these icons), which
+	 * {@link javax.swing.JMenuItem}'s normal icon painting already
+	 * composites correctly against whatever background it is drawn on. The
+	 * seven "add" items reuse their "open" counterpart's icon.
 	 */
 	private void applyIcons() {
 		newWorkspaceMenuItem.setIcon(loadIcon("file_new"));
@@ -208,7 +196,7 @@ public final class MainMenu {
 		menu.add(openWorkspaceMenuItem);
 
 		JMenu openFileMenu = ElementFactory.createMenu(Actions.MainMenu_File_OpenFile);
-		openFileMenu.add(openAnyFileMenuItem); // New, not in the C++ menu: the type is guessed from the file.
+		openFileMenu.add(openAnyFileMenuItem); // The type is guessed from the file.
 		openFileMenu.addSeparator();
 		openFileMenu.add(openCassetteImageFileMenuItem);
 		openFileMenu.add(openDiskImageExecutableFileMenuItem);
