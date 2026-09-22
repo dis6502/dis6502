@@ -2,15 +2,14 @@
 
 These rules govern every computer system this port supports today (Atari
 800, Atari 5200, C64, Oric, the fallback Unknown system) and any system
-added in the future. They mirror the C++ source's own `systems/<name>/`
-folder layout - see the rationale section at the bottom for why, and for
-what does *not* follow C++'s layout.
+added in the future. The goal is that a reader can tell at a glance which
+classes are shared model infrastructure and which belong to one specific
+computer system.
 
 ## The package layout
 
 `com.wudsn.tools.dis6502.model.system` holds the shared infrastructure -
-exactly the three classes the C++ `systems/` folder itself holds directly,
-not inside a per-system subfolder:
+the base class, the factory, and the type registry:
 
 - `ComputerSystem` (abstract base)
 - `ComputerSystemFactory`
@@ -53,13 +52,10 @@ else - `Segment*`, `Workspace*`, `Disassembly*`, `Equate*`,
 No computer system gets its own `ui` subpackage, even where a dialog is
 only meaningful for one system in practice - the three Atari800-only
 disk-image dialogs (`DiskImageSectorsDialog`, `DiskImageExecutableFileDialog`,
-`SegmentWriteBootDiskDialog`) stay directly in `ui/`. This matches the C++
-source, whose own `ui/` folder has no per-system subfolders at all.
-`ComputerFont` also stays a single shared class holding every system's
-small glyph-mapping table itself, rather than being split per system -
-this was already a deliberate departure from C++ (which keeps a `.fon`
-file per system folder) made earlier in the port, for reasons unrelated to
-this package structure; do not undo it to force a per-system split here.
+`SegmentWriteBootDiskDialog`) stay directly in `ui/`. `ComputerFont` also
+stays a single shared class holding every system's small glyph-mapping
+table itself, rather than being split per system; do not undo that to
+force a per-system split here.
 
 ## Resource files
 
@@ -90,51 +86,7 @@ classpath resource wherever it sits.
 5. Add a mirroring `test/.../model/system/<name>/` test package if the
    system gets its own test class, following `Atari800Test`'s shape.
 6. Leave `ui/` alone unless the system needs a UI dialog no other system
-   would ever use *and* the project decides to depart from C++'s flat
-   `ui/` convention deliberately - that is a real design fork, not a
-   mechanical consequence of adding a system, and is worth asking about
-   explicitly rather than deciding silently.
-
-## Rationale
-
-The C++ source keeps every computer-system-specific file inside its own
-subfolder under `systems/`:
-
-```
-systems/
-  ComputerSystem.h/.cpp
-  ComputerSystemFactory.h/.cpp
-  ComputerSystemType.h/.cpp
-  ComputerSystemTest.h/.cpp
-  atari5200/
-    Atari5200.h/.cpp/.equ/.fon
-  atari800/
-    Atari800.h/.cpp/.equ/.fon, Atari800Test.h/.cpp
-    AtariDOS.h/.cpp
-    AtariDiskImage.h/.cpp
-    AtariDiskImageTest.h/.cpp
-    DiskImageFileInputStream.h/.cpp
-  c64/
-    C64.h/.cpp/.equ/.fon
-  oric/
-    Oric.h/.cpp/.equ/.fon
-  unknown/
-    Unknown.h/.cpp/.fon
-```
-
-The Java port mirrors this at the `model/` layer so a reader can tell at a
-glance which classes are shared model infrastructure and which belong to
-one specific computer system - but deliberately not everywhere C++ does:
-`ui/` and `ComputerFont`'s font resources stay flat/shared (see above),
-since porting-phase-over means matching C++ is no longer the default and
-each of those already had its own, unrelated reason to diverge. Package
-name is `model.system` (singular), matching this codebase's existing
-singular-subpackage precedent (`model.version22`) over C++'s literal
-plural folder name.
-
-This structure was implemented in full on 2026-09-23, verified with a
-clean `mvn compile`/`test-compile` and a full green `TestRunner` run
-(27/27); see that commit for the mechanics (import fixups, the
-`ComputerSystem#openResourceByExtension` change, etc.) if useful, but
-those mechanics are not repeated here since this document's job is to
-state the rule going forward, not narrate how it was first reached.
+   would ever use *and* the project decides to give `ui/` a per-system
+   split deliberately - that is a real design fork, not a mechanical
+   consequence of adding a system, and is worth asking about explicitly
+   rather than deciding silently.
