@@ -29,6 +29,7 @@ import com.wudsn.tools.dis6502.model.ReassemblyRoundTripTest;
 import com.wudsn.tools.dis6502.model.SegmentTest;
 import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogicTest;
+import com.wudsn.tools.dis6502.ui.DialogTextsTest;
 import com.wudsn.tools.dis6502.ui.FileChoosersTest;
 import com.wudsn.tools.dis6502.ui.ValueSetsTest;
 
@@ -147,6 +148,7 @@ public final class TestRunner {
 		runTest("ValueSetsTest", ValueSetsTest::testValueSets);
 		runTest("ProfileNotationTest", ProfileNotationTest::testProfileNotation);
 		runTest("ReassemblyRoundTripTest", ReassemblyRoundTripTest::testReassemblyRoundTrip);
+		runTest("DialogTextsTest", DialogTextsTest::testDialogTexts);
 
 		if (failedCount == 0) {
 			log("INFO: All " + totalCount + " unit tests were successful.");
