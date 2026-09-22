@@ -1028,17 +1028,15 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * No C++ counterpart - {@code MainSegment::PerformCommands}'s {@code
-	 * IDM_SEGMENT_DELETE} case only ever removes the one segment a
-	 * single-selection {@code ListBox} can have selected; see {@link
-	 * com.wudsn.tools.dis6502.ui.SegmentListPanel}'s own javadoc for why this
-	 * port deletes every selected segment instead.
+	 * Deletes every selected segment - see {@link
+	 * com.wudsn.tools.dis6502.ui.SegmentListPanel}'s own javadoc for the
+	 * multi-selection this supports.
 	 */
 	private void performDeleteSelectedSegments() {
 		workspace.getSegmentList().deleteSegments(mainWindow.segmentListPanel.getSelectedSegmentIndices());
 	}
 
-	/** Ported from MainSegment::SaveSegment. */
+	/** Saves the selected segment, with or without an executable header. */
 	private void performSaveSegment(boolean writeHeader) {
 		int segmentIndex = workspace.getSegmentList().getSelectedIndex();
 		if (segmentIndex < 0) {
@@ -1056,7 +1054,7 @@ public final class Dis6502 {
 		}
 	}
 
-	/** Ported from MainSegment::SaveAllSegments. */
+	/** Saves every segment concatenated into one executable file. */
 	private void performSaveAllSegments() {
 		if (workspace.getSegmentList().getCount() == 0) {
 			return;
@@ -1073,7 +1071,7 @@ public final class Dis6502 {
 		}
 	}
 
-	/** Ported from MainSegment::ShowPropertiesDialog. */
+	/** Opens {@link SegmentPropertiesDialog} for the selected segment. */
 	private void performShowSegmentProperties() {
 		int segmentIndex = workspace.getSegmentList().getSelectedIndex();
 		if (segmentIndex < 0) {
@@ -1085,17 +1083,16 @@ public final class Dis6502 {
 		}
 	}
 
-	/** Ported from the IDM_DUMP_FIND popup menu command, which opens MemoryInspectorFindStringDialog. */
+	/** Opens {@link MemoryInspectorFindStringDialog}. */
 	private void performShowMemoryInspectorFindDialog() {
 		new MemoryInspectorFindStringDialog(mainWindow.getFrame()).show(mainWindow.memoryInspectorPanel);
 	}
 
 	/**
-	 * Ported from the IDM_DUMP_FIND_NEXT popup menu command, which calls
-	 * MemoryInspector::FindNextString directly. Shows the same "not found"
-	 * alert {@link MemoryInspectorFindStringDialog#performOK} shows, since
-	 * {@link com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#findNextString}
-	 * stays free of popups (see that class's javadoc).
+	 * Shows the same "not found" alert {@link
+	 * MemoryInspectorFindStringDialog#performOK} shows, since {@link
+	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#findNextString} stays
+	 * free of popups (see that class's javadoc).
 	 */
 	private void performMemoryInspectorFindNext() {
 		if (!mainWindow.memoryInspectorPanel.findNextString()) {
@@ -1106,11 +1103,7 @@ public final class Dis6502 {
 		}
 	}
 
-	/**
-	 * Ported from MemoryInspector::SplitAtSelection (IDM_DUMP_SPLIT_AT_SELECTION):
-	 * splits the selected segment into two at the current byte selection's
-	 * start.
-	 */
+	/** Splits the selected segment into two at the current byte selection's start. */
 	private void performSplitAtSelection() {
 		if (memoryInspectorState.isSelectionEmpty()) {
 			return;
@@ -1119,11 +1112,9 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from MainMemoryInspector::SaveWithoutHeader/SaveWithHeader
-	 * (IDM_DUMP_SAVE_NO_HEADER/IDM_DUMP_SAVE_HEADER): writes the memory
-	 * inspector's current byte selection to a file, optionally prefixed
-	 * with a plain Atari executable header ($FFFF, begin address, end
-	 * address).
+	 * Writes the memory inspector's current byte selection to a file,
+	 * optionally prefixed with a plain Atari executable header ($FFFF, begin
+	 * address, end address).
 	 */
 	private void performSaveMemoryInspectorSelection(boolean withHeader) {
 		File file = fileChoosers.chooseSaveFile(mainWindow.getFrame(),
@@ -1151,11 +1142,10 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from the type submenu's commands (IDM_DUMP_SET_TYPE_*), which
-	 * all funnel into {@code MemoryInspector::SetType}. Routes the
-	 * LOBYTE/HIBYTE case to {@link #performSetMemoryInspectorLoHiType},
-	 * since it needs {@link LowHighByteDialog} and stricter validation;
-	 * every other type goes straight through {@link
+	 * Routes the LOBYTE/HIBYTE case to {@link
+	 * #performSetMemoryInspectorLoHiType}, since it needs {@link
+	 * LowHighByteDialog} and stricter validation; every other type goes
+	 * straight through {@link
 	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#setType}. Wired
 	 * directly to the popup menu's Change Type submenu via {@code
 	 * setTypeSelectionListener}, since each submenu item already knows its
@@ -1171,8 +1161,7 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Ported from the LOBYTE/HIBYTE branch of MemoryInspector::SetType: the
-	 * marked byte must be alone at the start of an immediate-mode
+	 * The marked byte must be alone at the start of an immediate-mode
 	 * instruction's operand, one byte after the opcode - {@link
 	 * LowHighByteDialog} then asks for the other, unknown half of the
 	 * "assumed word", whose raw value is stored directly in the operand
@@ -1216,7 +1205,7 @@ public final class Dis6502 {
 		updateDisassembly(false);
 	}
 
-	/** Ported from MemoryInspector::SetUnknownBlockToByte (IDM_DUMP_SET_UNKNOWN_BLOCK_TO_BYTE). */
+	/** Reclassifies every still-unknown byte in the selection as {@link MemoryType#BYTE}. */
 	private void performSetUnknownBlockToByte() {
 		mainWindow.memoryInspectorPanel.setUnknownBlockToByte();
 		updateDisassembly(false);
