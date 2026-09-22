@@ -1,6 +1,17 @@
 # Plan: headless-safe test coverage after KeyStroke's headless fix
 
-Status: proposal, 2026-09-23. Nothing below is implemented.
+**Status: done, 2026-09-23.** `DialogTextsTest.testPanelsAndMenu()` now
+runs unconditionally (only `testDialogs()`/`testValueSetFields()` stay
+behind the `isHeadless()` guard). Implemented the mnemonic-uniqueness
+check by walking the real constructed `MainMenu`/popup-menu component
+trees instead of adding a separate reflective `ActionsTest` - that needs
+no hand-maintained per-menu field groupings and tests what
+`ElementFactory` actually built, not just `Actions`' raw fields. This
+immediately caught and fixed three real, previously-invisible mnemonic
+collisions (Equates menu's "Display System Equates" vs. "Save User
+Equates", Memory Inspector popup's "Cut" vs. "Start code Trace",
+Segment List popup's "Delete" vs. "Move down"). Also documented the
+WUDSN Base reinstall step in `plans/PORTING_GUIDE.md`'s section 2.
 
 ## Background
 

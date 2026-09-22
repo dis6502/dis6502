@@ -55,8 +55,8 @@ be rediscovered:
   why `ui/` stays flat, and how to add a new computer system.
 - [`plans/HEADLESS_ACTIONS_TEST_PROPOSAL.md`](plans/HEADLESS_ACTIONS_TEST_PROPOSAL.md) -
   expanding headless test coverage now that WUDSN Base's `KeyStroke` no
-  longer throws when loading `Actions` on a display-less JVM - which UI
-  tests can drop their `isHeadless()` guard, and a new purely-reflective
-  `ActionsTest` (status: proposal).
+  longer throws when loading `Actions` on a display-less JVM: `MainMenu`
+  and every panel now get checked (including menu-mnemonic uniqueness)
+  on every CI run, not just with a display (status: done).
 
 New planning/guidance documents for future work should also go in `plans/`.

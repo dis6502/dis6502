@@ -12,7 +12,9 @@ import java.awt.Window;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
@@ -21,6 +23,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
@@ -45,13 +48,18 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
  * forgotten {@code setText} would leave behind, and a dialog whose
  * constructor throws. The drop-downs built from a {@link ValueSet} must
  * list the expected values in the expected order and round-trip a value.
+ * Every menu and popup also gets its mnemonics checked: every item has
+ * one, and no two items in the same menu (or the same panel's popup)
+ * share one - {@link com.wudsn.tools.base.gui.ElementFactory} itself only
+ * ever checks that a label has a mnemonic at all, not that it is unique
+ * among its siblings.
  * <p>
- * Skipped - not failed - when the JVM is headless: not only can a {@link
- * JDialog} not be constructed without a display, the WUDSN Base {@code
- * Actions} repository cannot even load there ({@code KeyStroke.M1} asks
- * the toolkit for the menu shortcut mask), so no class of the {@code ui}
- * package can. Every UI test of {@code plans/UI_SMOKE_TESTS_PROPOSAL.md}
- * therefore needs a display; see {@link #isHeadless()}.
+ * The panel/main-menu half of this test always runs, headless or not:
+ * {@link MainMenu} and every panel are plain {@link JComponent}s, not
+ * {@link Window}s, so they construct fine without a display. Only the
+ * dialog half is skipped - not failed - when the JVM is headless: a
+ * {@link JDialog} extends {@link Window}, which cannot be constructed
+ * without one; see {@link #isHeadless()}.
  *
  * @author Peter Dell
  */
@@ -64,13 +72,20 @@ public final class DialogTextsTest {
 	}
 
 	public static void testDialogTexts() throws Exception {
+		SwingUtilities.invokeAndWait(() -> {
+			try {
+				testPanelsAndMenu();
+			} catch (Exception ex) {
+				throw new RuntimeException(ex);
+			}
+		});
+
 		if (isHeadless()) {
-			Assert.log("DialogTextsTest skipped: no display");
+			Assert.log("DialogTextsTest: dialogs skipped, no display");
 			return;
 		}
 		SwingUtilities.invokeAndWait(() -> {
 			try {
-				testPanelsAndMenu();
 				testDialogs();
 				testValueSetFields();
 			} catch (Exception ex) {
@@ -81,10 +96,13 @@ public final class DialogTextsTest {
 	}
 
 	/**
-	 * Whether the UI tests must skip themselves: there is no display, so
-	 * nothing of the {@code ui} package can be used - or the build asked for
-	 * it ({@code -Ddis6502.skipUITests=true}, e.g. on a CI runner that has a
-	 * desktop but nobody to look at the windows the tests open).
+	 * Whether a UI test that needs a real, showing top-level window must
+	 * skip itself: there is no display, so a {@link JDialog}/{@link
+	 * javax.swing.JFrame} cannot be constructed - or the build asked for it
+	 * ({@code -Ddis6502.skipUITests=true}, e.g. on a CI runner that has a
+	 * desktop but nobody to look at the windows the tests open). A plain
+	 * {@link JComponent} (a panel, a menu) needs no such check - see this
+	 * class's own javadoc.
 	 */
 	public static boolean isHeadless() {
 		return GraphicsEnvironment.isHeadless() || Boolean.getBoolean("dis6502.skipUITests");
@@ -93,6 +111,7 @@ public final class DialogTextsTest {
 	private static void testPanelsAndMenu() throws Exception {
 		MainMenu mainMenu = new MainMenu();
 		checkTexts("MainMenu", mainMenu.menuBar);
+		checkMenuMnemonics(mainMenu.menuBar);
 		int menuItems = 0;
 		for (Component menu : mainMenu.menuBar.getComponents()) {
 			menuItems += countMenuItems((JMenu) menu);
@@ -191,9 +210,14 @@ public final class DialogTextsTest {
 		}
 	}
 
-	/** Every public {@link JMenuItem} field of {@code panel} carries a text - except the ones whose text is only known when the popup shows. */
+	/**
+	 * Every public {@link JMenuItem} field of {@code panel} carries a text
+	 * and a mnemonic unique among the panel's other fields - except the
+	 * ones whose text is only known when the popup shows.
+	 */
 	private static void checkPublicMenuItemFields(String name, Object panel) throws Exception {
 		int count = 0;
+		Set<Character> mnemonics = new HashSet<>();
 		for (Field field : panel.getClass().getFields()) {
 			if (Modifier.isStatic(field.getModifiers()) || !JMenuItem.class.isAssignableFrom(field.getType())) {
 				continue;
@@ -203,10 +227,44 @@ public final class DialogTextsTest {
 					|| field.getName().startsWith("addrRange"));
 			if (!dynamic) {
 				checkText(name + "." + field.getName(), item.getText());
+				checkMnemonicUnique(name + "." + field.getName(), item.getMnemonic(), mnemonics);
 				count++;
 			}
 		}
 		Assert.boolEquals(count > 0, true);
+	}
+
+	/** Checks every top-level menu's own mnemonic, then recurses into it via {@link #checkMenuMnemonics(JMenu)}. */
+	private static void checkMenuMnemonics(JMenuBar menuBar) {
+		Set<Character> topLevelMnemonics = new HashSet<>();
+		for (Component component : menuBar.getComponents()) {
+			JMenu menu = (JMenu) component;
+			checkMnemonicUnique("MainMenu." + menu.getText(), menu.getMnemonic(), topLevelMnemonics);
+			checkMenuMnemonics(menu);
+		}
+	}
+
+	/** Checks that {@code menu}'s direct children (items and submenu headers) have unique mnemonics among themselves, then recurses into every submenu. */
+	private static void checkMenuMnemonics(JMenu menu) {
+		Set<Character> mnemonics = new HashSet<>();
+		for (Component component : menu.getPopupMenu().getComponents()) {
+			if (component instanceof JMenuItem) {
+				JMenuItem item = (JMenuItem) component;
+				checkMnemonicUnique(menu.getText() + "." + item.getText(), item.getMnemonic(), mnemonics);
+			}
+			if (component instanceof JMenu) {
+				checkMenuMnemonics((JMenu) component);
+			}
+		}
+	}
+
+	/** Fails if {@code mnemonic} is 0 (missing) or already in {@code mnemonics}; otherwise records it. */
+	private static void checkMnemonicUnique(String where, int mnemonic, Set<Character> mnemonics) {
+		if (mnemonic == 0) {
+			Assert.fail(where + " has no mnemonic.");
+		} else if (!mnemonics.add(Character.toUpperCase((char) mnemonic))) {
+			Assert.fail(where + " has a mnemonic already used by another item in the same menu.");
+		}
 	}
 
 	private static void checkValueSetField(JDialog dialog, String fieldName, String expectedItems, ValueSet roundTripValue) throws Exception {

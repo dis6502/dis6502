@@ -59,6 +59,15 @@ the next attempt, since paths/versions may have drifted:
   `UIWiringTest`) need a display and skip themselves without one, or with
   `-Ddis6502.skipUITests=true` (what the CI workflow passes); the MADS round
   trip skips itself off Windows.
+- **A WUDSN Base source change needs a reinstall before dis6502's build
+  sees it.** dis6502 depends on `com.wudsn.tools.base`/`.base.atari` as
+  jars in the local Maven repository, not by building WUDSN Base from
+  source as part of the same reactor - editing WUDSN Base's own source
+  tree has no effect on dis6502's `mvn -o compile` until the jar is
+  refreshed: `mvn -o install -DskipTests` from
+  `WUDSN-Base/com.wudsn.tools.base` (and `.base.atari` if that module
+  changed too). Forgetting this step silently keeps testing against the
+  stale jar - no error, just old behavior.
 - **Running the unit test suite directly** (bypassing Maven's test runner,
   useful for fast iteration) needs a classpath with the right dependency
   jars, `target/classes`, and `target/test-classes` - confirm the exact jar
