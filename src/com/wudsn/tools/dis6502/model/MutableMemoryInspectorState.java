@@ -15,34 +15,24 @@ import java.util.Arrays;
  * {@link Workspace#getSegmentList()}/{@link Workspace#getProfile()}, rather
  * than a satellite object constructed and passed around by callers.
  * <p>
- * The segment/selection tracking is ported from
- * MemoryInspectorSelection.h/.cpp (this class's former name, before edit
- * mode merged into it - see below). {@code GetAddressRage} keeps its
- * original (misspelled) C++ name; unlike the C++ version, which returns the
- * address pair through {@code word&} out-parameters and a {@code bool}
- * success flag, {@link #getAddressRange} returns {@code null} when there is
- * no segment, since a null array is the more natural Java way to say "no
- * result" than an out-parameter pair.
+ * {@link #getAddressRange} returns {@code null} when there is no segment,
+ * since a null array is the more natural Java way to say "no result" than
+ * an out-parameter pair.
  * <p>
  * Edit mode - {@link #isEditMode()}, {@link #enterEditMode}/{@link
- * #quitEditMode()}, {@link #moveEditCursor}/{@link #typeEditChar} - is
- * ported from {@code MemoryInspector::SetEditMode}/{@code
- * MainController::QuitEditMode}/{@code MemoryInspectorControlImpl::KeyDown}/
- * {@code Char}. In the C++ source this state lives on the UI control
- * instead; it was moved to the model layer (first onto {@link Workspace}
- * directly, then here) so it can be exercised by a plain, headless unit
- * test instead of needing a real {@link java.awt.event.KeyEvent}/{@link
- * java.awt.event.MouseEvent}-driving Swing test - see {@code
- * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s class javadoc for the
- * keyboard/focus/timer/popup-menu wiring that still lives there and drives
- * these methods. It belongs on this class, not {@code Workspace} itself:
- * conceptually it is a workspace-wide lock (blocking every other command
- * while active, matching {@code MainMemoryInspector::PerformCommands}'s
- * modal gate in the C++ source) applied at a byte offset within whatever
- * segment this same object already has selected - {@link #enterEditMode}/
- * {@link #moveEditCursor}/{@link #typeEditChar} read {@link #segment}
- * directly rather than re-resolving "the current segment" through {@link
- * Workspace#getSegmentList()} a second time.
+ * #quitEditMode()}, {@link #moveEditCursor}/{@link #typeEditChar} - lives
+ * on the model layer rather than the UI control, so it can be exercised by
+ * a plain, headless unit test instead of needing a real {@link
+ * java.awt.event.KeyEvent}/{@link java.awt.event.MouseEvent}-driving Swing
+ * test - see {@code com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s
+ * class javadoc for the keyboard/focus/timer/popup-menu wiring that still
+ * lives there and drives these methods. It belongs on this class, not
+ * {@code Workspace} itself: conceptually it is a workspace-wide lock
+ * (blocking every other command while active) applied at a byte offset
+ * within whatever segment this same object already has selected - {@link
+ * #enterEditMode}/{@link #moveEditCursor}/{@link #typeEditChar} read
+ * {@link #segment} directly rather than re-resolving "the current segment"
+ * through {@link Workspace#getSegmentList()} a second time.
  * <p>
  * Implements {@link MemoryInspectorState} - see that interface's
  * javadoc for why - so {@link #segment} is private (with no external
@@ -180,12 +170,9 @@ public final class MutableMemoryInspectorState implements MemoryInspectorState {
 	}
 
 	/**
-	 * Ported from {@code MemoryInspector::SetEditMode(true)}/{@code
-	 * MemoryInspectorControlImpl::LButtonDblClk}'s cursor positioning - a
-	 * workspace-wide lock: while active, every other command that would
-	 * mutate the selected segment (or any other one) is expected to stay
-	 * blocked, matching {@code MainMemoryInspector::PerformCommands}'s modal
-	 * gate in the C++ source. {@code offset} is a byte offset into {@link
+	 * Enters edit mode as a workspace-wide lock: while active, every other
+	 * command that would mutate the selected segment (or any other one) is
+	 * expected to stay blocked. {@code offset} is a byte offset into {@link
 	 * #segment} - this method does not decide which offset to start at (a
 	 * fresh selection's first byte, or an exact double-clicked position);
 	 * that stays the caller's job. Returns {@code false} (leaving this
@@ -203,12 +190,11 @@ public final class MutableMemoryInspectorState implements MemoryInspectorState {
 	}
 
 	/**
-	 * Ported from {@code MainController::QuitEditMode}: releases the lock
-	 * {@link #enterEditMode} takes - a no-op if edit mode was not active.
-	 * Unlike {@code
-	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#quitEditMode}, this
-	 * only clears model state; resyncing the UI selection and re-running the
-	 * disassembly are that method's job, not this one's.
+	 * Releases the lock {@link #enterEditMode} takes - a no-op if edit mode
+	 * was not active. This only clears model state; resyncing the UI
+	 * selection and re-running the disassembly are {@code
+	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#quitEditMode}'s job,
+	 * not this one's.
 	 */
 	public void quitEditMode() {
 		editMode = false;
@@ -293,12 +279,10 @@ public final class MutableMemoryInspectorState implements MemoryInspectorState {
 	}
 
 	/**
-	 * Ported from {@code MemoryInspectorControlImpl::Char}: hex-digit/ASCII
-	 * data entry, plus Tab to switch panes. Every valid keystroke writes
-	 * immediately via {@link Segment#setData} - there is no staging buffer or
-	 * undo, matching the C++ source. Returns {@link
-	 * EditCharResult#NOT_HANDLED} (a no-op) if edit mode is not
-	 * active.
+	 * Hex-digit/ASCII data entry, plus Tab to switch panes. Every valid
+	 * keystroke writes immediately via {@link Segment#setData} - there is no
+	 * staging buffer or undo. Returns {@link EditCharResult#NOT_HANDLED} (a
+	 * no-op) if edit mode is not active.
 	 */
 	public EditCharResult typeEditChar(char c) {
 		if (!editMode) {

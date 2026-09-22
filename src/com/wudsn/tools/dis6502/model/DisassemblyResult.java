@@ -15,12 +15,8 @@ import java.util.NoSuchElementException;
  * lines), each holding an ordered list of {@link DisassemblyLine}s. A
  * section is {@code null} until {@link #allocSection} is called for it.
  * <p>
- * Ported from DisassemblyResult.h / DisassemblyResult.cpp. The C++ version
- * has separate mutable/const line iterator classes ({@code
- * DisassemblyResultLineIterator}/{@code DisassemblyResultConstLineIterator})
- * for const-correctness; this has a single {@link Iterator}-based {@link
- * LineIterator} instead, the same simplification already used elsewhere in
- * this port (see {@code AddressLabelList.findMutableAddressLabel}).
+ * Has a single {@link Iterator}-based {@link LineIterator}, rather than
+ * separate mutable/read-only iterator classes.
  *
  * @author Peter Dell
  */
@@ -169,12 +165,10 @@ public final class DisassemblyResult {
 	 * {@code findFirstLineNumber[0]} is updated to the found line's number.
 	 * <p>
 	 * The {@code first=false} branch's line-number comparison is {@code >}
-	 * rather than the original C++'s {@code >=} - a bug found while adding
-	 * "Find Next" to the Java port's UI: {@code >=} re-matches the same line
+	 * rather than {@code >=}: {@code >=} would re-match the same line
 	 * {@code findFirstLineNumber[0]} already points to before any later
 	 * line gets a chance, so a second "find next" search could never
-	 * advance past the first match. Fixed here and in the corresponding
-	 * C++ (DisassemblyResult::FindAndSelectLines).
+	 * advance past the first match.
 	 */
 	public boolean findAndSelectLines(boolean first, int[] findFirstLineNumber, String findString) {
 		boolean found = false;
@@ -224,9 +218,7 @@ public final class DisassemblyResult {
 	/**
 	 * Returns the line number of the line that defines {@code label} (its own
 	 * text starts with the label immediately followed by a space or colon),
-	 * or 0 if no line does. Ported from {@code
-	 * DisassemblyControlImpl::SelectDefinition}, minus its UI selection/scroll
-	 * side effects, left to the caller.
+	 * or 0 if no line does.
 	 */
 	public int findDefinitionLineNumber(String label) {
 		for (LineIterator i = createLineIterator(); i.hasNext();) {
@@ -244,9 +236,8 @@ public final class DisassemblyResult {
 	 * Finds the offset/size of the CODE_LINES instruction in
 	 * {@code segmentIndex} that spans offset 0, writing them to
 	 * {@code offset[0]}/{@code size[0]} (both reset to 0 first, and left at 0
-	 * if nothing matches) - a faithful port of the C++ signature, where
-	 * {@code offset} is passed by reference purely as an out-parameter despite
-	 * its name.
+	 * if nothing matches). {@code offset} is a single-element array used
+	 * purely as an out-parameter, despite its name.
 	 */
 	public void findOffsetAtStartOfInstruction(int segmentIndex, int[] offset, int[] size) {
 		offset[0] = 0;
@@ -266,13 +257,10 @@ public final class DisassemblyResult {
 	/**
 	 * Sequentially iterates every line across a contiguous range of sections.
 	 * Also assigns each returned line's line number as a running counter
-	 * starting at 1 - matching the C++ source's {@code
-	 * DisassemblyResultLineIterator::Next}, which is the only place {@code
-	 * DIS_LINE::SetLineNumber} is ever called. A line's number is therefore
-	 * only meaningful right after being visited by a full traversal (e.g.
-	 * {@link #createLineIterator()} run to completion); an earlier traversal
-	 * (say, only over one section) leaves other lines' numbers stale or
-	 * unset, exactly as in the C++ version.
+	 * starting at 1. A line's number is therefore only meaningful right
+	 * after being visited by a full traversal (e.g. {@link
+	 * #createLineIterator()} run to completion); an earlier traversal (say,
+	 * only over one section) leaves other lines' numbers stale or unset.
 	 */
 	public static final class LineIterator implements Iterator<DisassemblyLine> {
 

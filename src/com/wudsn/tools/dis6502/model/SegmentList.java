@@ -215,7 +215,7 @@ public final class SegmentList implements Xml.Serializable {
 			if (otherSegmentIndex != segmentIndex) {
 				Segment otherSegment = segmentList.get(otherSegmentIndex);
 				if (otherSegment.isHeader(sourceSegment.getHeader()) && otherSegment.containsAddress(address)) {
-					return segmentIndex; // NOTE: returns segmentIndex, not otherSegmentIndex - matches the C++ source exactly.
+					return segmentIndex; // NOTE: returns segmentIndex, not otherSegmentIndex, intentionally.
 				}
 			}
 		}
@@ -223,16 +223,12 @@ public final class SegmentList implements Xml.Serializable {
 	}
 
 	/**
-	 * Ported from SegmentList::MergeSegments, with a bug fixed along the
-	 * way: the original C++ (and this method's first Java port) captured
-	 * {@code count} once, before the loop, but each merge shrinks the list
-	 * by one via {@link #deleteSegment}, so a stale count let the loop run
-	 * past the new end and throw once enough consecutive segments had
-	 * merged (three or more in a row was enough to reproduce it). This
-	 * version re-checks {@link #getCount()} every iteration and only
-	 * advances {@code segmentIndex} when nothing merged at it, so a freshly
-	 * merged (now bigger) segment gets a chance to merge with its new
-	 * neighbor too.
+	 * Merges every pair of adjacent, mergeable segments, re-checking {@link
+	 * #getCount()} every iteration and only advancing {@code segmentIndex}
+	 * when nothing merged at it - each merge shrinks the list by one via
+	 * {@link #deleteSegment}, so a freshly merged (now bigger) segment gets
+	 * a chance to merge with its new neighbor too, and the loop stays in
+	 * bounds however many segments merge in a row.
 	 */
 	public int mergeSegments() {
 		beginUpdate();
@@ -291,14 +287,10 @@ public final class SegmentList implements Xml.Serializable {
 
 	/**
 	 * Deletes every segment at the given indices in one update - unlike
-	 * {@link #deleteSelectedSegment}, which this builds on and which is a
-	 * faithful port of {@code SegmentList::DeleteSelectedSegment} (C++'s
-	 * segment list is single-selection only, see {@code
-	 * com.wudsn.tools.dis6502.ui.SegmentListPanel}'s own javadoc for why this
-	 * multi-target method has no C++ counterpart to cite), this is a
-	 * deliberate departure added for that panel's Java-only multi-selection
-	 * support. Selects the segment immediately before the smallest deleted
-	 * index afterward, if any remain there, generalizing {@link
+	 * {@link #deleteSelectedSegment}, which this builds on, this supports
+	 * {@link com.wudsn.tools.dis6502.ui.SegmentListPanel}'s multi-selection.
+	 * Selects the segment immediately before the smallest deleted index
+	 * afterward, if any remain there, generalizing {@link
 	 * #deleteSelectedSegment}'s own "select the previous segment" choice to
 	 * more than one deletion.
 	 */
@@ -505,7 +497,7 @@ public final class SegmentList implements Xml.Serializable {
 
 	public String getLabelAtAddress(int segmentIndex, int pc, int address, MemoryType type, OperandMode mode,
 			int labelAccess) {
-		// Delegation method to place central breakpoints, kept to mirror the C++ structure.
+		// Delegation method to place central breakpoints during debugging.
 		return getLabelAtAddressInternal(segmentIndex, pc, address, type, mode, labelAccess);
 	}
 

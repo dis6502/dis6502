@@ -10,20 +10,16 @@ package com.wudsn.tools.dis6502.model;
  * bytes are code versus data, marking their {@link MemoryType} as it
  * goes.
  * <p>
- * Ported from the {@code MemoryInspector::Guess}/{@code GuessCode}/{@code
- * MarkOneByte}/{@code SortContext}/{@code SetDisplayList}/{@code
- * FindSegmentByAbsoluteAddress} parts of ui/MemoryInspector.h/.cpp - the
- * one piece of that class's logic substantial enough, and independent
- * enough of the UI, to warrant its own model-layer class rather than
- * living directly in {@code com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}
- * the way this port's other memory inspector actions do. {@code
- * MemoryInspectorStack} is used here exactly as intended - see its own
- * javadoc - as a private, per-guess work list of addresses still to
- * trace, not shared with anything else.
+ * The one piece of {@code com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s
+ * logic substantial enough, and independent enough of the UI, to warrant
+ * its own model-layer class rather than living directly there the way this
+ * port's other memory inspector actions do. {@link MemoryInspectorStack}
+ * is used here exactly as intended - see its own javadoc - as a private,
+ * per-guess work list of addresses still to trace, not shared with
+ * anything else.
  * <p>
- * A rough summary of what the algorithm does, since the C++ source has
- * almost no comments of its own: starting from one address, it walks
- * instructions marking each byte {@link MemoryType#CODE} until it hits an
+ * A summary of what the algorithm does: starting from one address, it
+ * walks instructions marking each byte {@link MemoryType#CODE} until it hits an
  * unconditional exit (BRK/RTI/RTS/JMP (Indirect)) or a byte already
  * marked as something other than {@link MemoryType#UNKNOWN}. A JSR/JMP
  * pushes its target address onto the work list to trace next (and JMP
@@ -46,15 +42,14 @@ package com.wudsn.tools.dis6502.model;
  * {@link Segment#allocateSymbol} already implements for a symbol table
  * fix-up named "PRINTF" (see that method's javadoc); it is not reused
  * from there since the two call sites need different surrounding
- * bookkeeping, matching the C++ source, which duplicates it the same
- * way.
+ * bookkeeping.
  *
  * @author Peter Dell
  */
 public final class GuessCodeLogic {
 
 	private static final class DumpRegister {
-		int reg = 0xFFFF; // 0xFFFF (dis_k::NO_DUMP in the C++ source) means "not known".
+		int reg = 0xFFFF; // 0xFFFF means "not known".
 		int seg = SegmentList.NO_SEGMENT_INDEX;
 		int ofs;
 		int segData;
@@ -109,9 +104,8 @@ public final class GuessCodeLogic {
 	}
 
 	/**
-	 * Ported from MemoryInspector::Guess. The caller is responsible for
-	 * re-running the disassembly afterward (matching {@code Refresh()}'s
-	 * {@code UpdateDisassembly} call), the same as {@code
+	 * The caller is responsible for re-running the disassembly afterward,
+	 * the same as {@code
 	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel#setType}/{@code
 	 * setUnknownBlockToByte} already leave to their callers.
 	 */
@@ -124,16 +118,15 @@ public final class GuessCodeLogic {
 		stack.clear();
 	}
 
-	/** Ported from MemoryInspector::FindSegmentByAbsoluteAddress. */
+	/** The index of the segment containing {@code address}, or {@link SegmentList#NO_SEGMENT_INDEX}. */
 	private int findSegmentByAbsoluteAddress(int address) {
 		return segmentList.findByAddr(address);
 	}
 
 	/**
-	 * Ported from MemoryInspector::MarkOneByte. {@code segmentIndex}/{@code
-	 * offset} are single-element arrays standing in for the C++ version's
-	 * reference out-parameters, mutated in place to cross into the next
-	 * segment when {@code offset} runs past the current one's end.
+	 * {@code segmentIndex}/{@code offset} are single-element arrays used as
+	 * out-parameters, mutated in place to cross into the next segment when
+	 * {@code offset} runs past the current one's end.
 	 */
 	private boolean markOneByte(int[] segmentIndex, int[] offset, MemoryType memoryType, boolean abortIfNotUnknown) {
 		Segment segment = segmentList.getSegment(segmentIndex[0]);
@@ -177,11 +170,10 @@ public final class GuessCodeLogic {
 	}
 
 	/**
-	 * Ported from MemoryInspector::SortContext: fills {@code wSrc}/{@code
-	 * wDest} (single-element out-arrays) so the addresses are ordered, and
-	 * returns whether the two contexts have consecutive addresses with
-	 * known register values at a known base address - matching the C++
-	 * version, {@code wSrc}/{@code wDest} are set whenever this returns
+	 * Fills {@code wSrc}/{@code wDest} (single-element out-arrays) so the
+	 * addresses are ordered, and returns whether the two contexts have
+	 * consecutive addresses with known register values at a known base
+	 * address. {@code wSrc}/{@code wDest} are set whenever this returns
 	 * {@code true}, but the actual retagging (and clearing
 	 * oldContext/newContext's address) only happens if both registers'
 	 * value also came from a real, known memory location.
@@ -232,7 +224,7 @@ public final class GuessCodeLogic {
 		return haveAddress;
 	}
 
-	/** Ported from MemoryInspector::SetDisplayList. */
+	/** Marks an Atari display list starting at {@code address}, following its jump/wait instructions. */
 	private void setDisplayList(int address) {
 		int segmentIndex = findSegmentByAbsoluteAddress(address);
 		if (segmentIndex == SegmentList.NO_SEGMENT_INDEX) {
@@ -273,7 +265,7 @@ public final class GuessCodeLogic {
 		}
 	}
 
-	/** Ported from MemoryInspector::GuessCode. */
+	/** Drains {@link #stack}, tracing each address per this class's javadoc. */
 	private void guessCode() {
 		DumpRegister reg = new DumpRegister();
 		DumpContext newContext = new DumpContext();

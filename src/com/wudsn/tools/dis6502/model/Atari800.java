@@ -17,26 +17,19 @@ import com.wudsn.tools.dis6502.Messages;
 
 /**
  * The Atari 800 computer system: the primary/default target of this tool.
- * <p>
- * Design deviations:
  * <ul>
- * <li>The C++ source's free-standing {@code Read}/{@code ReadData}/{@code
- * ReadSDXSymbol}/{@code WriteSDXSymbol} helpers (which thread a
- * bytes-remaining counter by reference) are consolidated into a private
- * {@link BoundedReader} nested class.</li>
+ * <li>The bytes-remaining-counter threading needed by several reads is
+ * consolidated into a private {@link BoundedReader} nested class.</li>
  * <li>{@code ReadExecutableFile}'s segment-data read
- * ({@code Segment.createMemoryBlockFromFile}) is - exactly like the C++
- * source, per its own "TODO: Introduce bounded InputStream" comment - not
- * bounds-checked against the remaining byte budget before reading, unlike
- * every other read in this class.</li>
- * <li>{@code ReadCassetteFile} had three bugs in the C++ source, all fixed
- * upstream and matched here rather than ported faithfully-but-broken: the
- * FUJI chunk's title text was never actually skipped (only accounted for
- * in the byte budget), the 2 bytes of the title's own length field were
- * never subtracted from that budget either, and a multi-chunk segment's
- * previously-accumulated bytes were discarded (read into uninitialized
- * memory) every time the accumulation buffer grew for a new chunk. See
- * the upstream Atari800.cpp commit history for the details.</li>
+ * ({@code Segment.createMemoryBlockFromFile}) is not bounds-checked against
+ * the remaining byte budget before reading, unlike every other read in this
+ * class - see the {@code TODO} at that call site.</li>
+ * <li>{@code ReadCassetteFile} is careful about three things: the FUJI
+ * chunk's title text is actually skipped, not just accounted for in the
+ * byte budget; the 2 bytes of the title's own length field are subtracted
+ * from that budget too; and a multi-chunk segment's previously-accumulated
+ * bytes are preserved when the accumulation buffer grows for a new
+ * chunk.</li>
  * </ul>
  *
  * @author Peter Dell
@@ -469,14 +462,11 @@ public final class Atari800 extends ComputerSystem {
 	 * CAS_SEGMENT.segmentCount}, read from the first chunk's payload, says
 	 * how many chunks belong to the segment currently being accumulated -
 	 * so segment data is built up in a growing buffer across chunks and only
-	 * turned into an actual {@link Segment} once that count reaches zero
-	 * (matching the class-level "Design deviations" note: the C++ source had
-	 * three bugs in this accumulation, all fixed here rather than preserved).
+	 * turned into an actual {@link Segment} once that count reaches zero.
 	 * <p>
 	 * A new (mostly unused, if this isn't a "data" chunk) {@link Segment} is
-	 * inserted on every loop iteration, matching the C++ source exactly,
-	 * quirky as that looks - preserved as observed since it's unclear
-	 * whether this is intentional.
+	 * inserted on every loop iteration, quirky as that looks - preserved as
+	 * observed since it's unclear whether this is intentional.
 	 */
 	@Override
 	protected void readCassetteFile(SegmentListInserter segmentListInserter, InputStream inputStream, long fileSize)
@@ -662,12 +652,7 @@ public final class Atari800 extends ComputerSystem {
 		outputStream.write(buffer);
 	}
 
-	/**
-	 * Reads little-endian words/bytes/SDX symbols while tracking a
-	 * bytes-remaining budget, matching the C++ source's free-standing
-	 * {@code Read}/{@code ReadData}/{@code ReadSDXSymbol} helpers (which
-	 * thread the counter through a reference parameter instead).
-	 */
+	/** Reads little-endian words/bytes/SDX symbols while tracking a bytes-remaining budget. */
 	private static final class BoundedReader {
 
 		private final InputStream inputStream;
