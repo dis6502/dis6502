@@ -34,10 +34,9 @@ import com.wudsn.tools.dis6502.model.Workspace;
  * A dialog for editing a segment's begin address, binary flag, label
  * prefix, and processor type.
  * <p>
- * Ported from ui/SegmentPropertiesDialog.h / SegmentPropertiesDialog.cpp,
- * folded into one blocking {@link #show} call as is idiomatic for a Swing
+ * Folded into one blocking {@link #show} call, as is idiomatic for a Swing
  * modal {@link JDialog}. {@link #performOK} mutates {@code segment}
- * directly, matching {@code SegmentPropertiesDialog::OnOK}.
+ * directly.
  *
  * @author Peter Dell
  */
@@ -120,7 +119,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 		return checkBox;
 	}
 
-	/** Ported from SegmentPropertiesDialog::OnOK. */
+	/** Validates the address and, if it checks out, commits every field to the segment and closes the dialog. */
 	private void performOK() {
 		int begin = getAddress(addressField);
 		int end = begin + segment.getSize() - 1; // TODO Will not work with >64K.
@@ -140,7 +139,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 		setVisible(false);
 	}
 
-	/** Ported from EditControl::GetAddress: an unparseable value is silently treated as 0, matching {@code swscanf(..., L"%04hX", ...)}'s behavior on no match. */
+	/** Parses a plain hexadecimal address field; an unparseable value is silently treated as 0. */
 	private static int getAddress(JTextField field) {
 		try {
 			return Integer.parseInt(field.getText().trim(), 16) & 0xFFFF;
@@ -149,7 +148,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 		}
 	}
 
-	/** Ported from SegmentPropertiesDialog::Show/InitDialog/CreateControls. */
+	/** Opens the dialog pre-filled with the segment's current properties. */
 	public boolean show(Workspace workspace, Segment segment) {
 		this.segment = segment;
 

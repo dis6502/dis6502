@@ -32,30 +32,17 @@ import com.wudsn.tools.dis6502.model.Segment;
  * current segment, by browsing it as a picture in one of the 8 Atari
  * ANTIC graphics modes ({@link GraphicMode}/{@link GraphicPanel}).
  * <p>
- * Ported from ui/SelectSpritesDialog.h/.cpp - this port deliberately
- * renames the C++ source's "Sprite" naming (the dialog resource {@code
- * FINDSPRITESBOX}, caption "Sprite Selection", class {@code
- * SelectSpritesDialog}, and the {@code SPRITE_*}/{@code Sprite*}
- * identifiers throughout {@code SpriteControl}/{@code SpriteControlImpl})
- * to "Graphic"/"Graphics" instead, since that term does not fit this
- * project's domain - a departure from C++ fidelity made deliberately, not
- * a mistranslation of the original (which genuinely uses "Sprite"
- * throughout, including its own "Graphic Mode:" field label being drawn
- * by a control whose window class is still named {@code
- * SpriteControlClass}). "Ported from"/"Matches" references elsewhere in
- * this class and {@link GraphicMode}/{@link GraphicPanel} keep citing the
- * real C++ identifiers verbatim regardless, since those are historical
- * facts about the C++ source, not names this port chose.
+ * Called "Graphic"/"Graphics" throughout this dialog and {@link
+ * GraphicMode}/{@link GraphicPanel}, rather than "Sprite" - the original
+ * terminology doesn't fit what this feature actually does (browsing raw
+ * memory as an ANTIC-mode picture, not moving game sprites around).
  * <p>
- * Folded into one blocking {@link #show} call as is idiomatic for a Swing
- * modal {@link JDialog}. {@code InitDialog}'s extensive manual control-
- * repositioning code (the C++ version's own comment flags its dialog
- * template as "too small") is not needed - {@link GridBagLayout}/{@link
- * #pack} handle that. The vertical scroll position ({@code SelectGoto}'s
- * {@code wIndex}) and bytes-per-line ({@code SelectMode}'s {@code
- * wSpriteNbBytes}) are plain {@link JScrollBar}/{@link JSpinner} controls
- * pushed into {@link GraphicPanel} directly, rather than being owned by
- * the picture control itself - see that class's javadoc.
+ * Folded into one blocking {@link #show} call, as is idiomatic for a Swing
+ * modal {@link JDialog}. {@link GridBagLayout}/{@link #pack} handle the
+ * layout. The vertical scroll position and bytes-per-line are plain
+ * {@link JScrollBar}/{@link JSpinner} controls pushed into {@link
+ * GraphicPanel} directly, rather than being owned by the picture control
+ * itself - see that class's javadoc.
  *
  * @author Peter Dell
  */
@@ -140,7 +127,7 @@ public final class SelectGraphicsDialog extends JDialog {
 		setLocationRelativeTo(owner);
 	}
 
-	/** Ported from SelectSpritesDialog::SelectMode. */
+	/** Reconfigures the bytes-per-line spinner and graphic panel for the newly selected mode. */
 	private void performModeChanged() {
 		GraphicMode mode = modeField.getValue();
 		graphicPanel.setMode(mode);
@@ -152,7 +139,7 @@ public final class SelectGraphicsDialog extends JDialog {
 		updateAddressLabel();
 	}
 
-	/** Ported from the address-formatting part of SelectSpritesDialog::SelectGoto/ProcessCommand's IDC_GRAPHIC case. */
+	/** Shows the current index (and selection, if any) as an address or address range. */
 	private void updateAddressLabel() {
 		int begin = graphicPanel.getIndex();
 		int end = graphicPanel.getSelection();
@@ -163,7 +150,7 @@ public final class SelectGraphicsDialog extends JDialog {
 		}
 	}
 
-	/** Ported from SelectSpritesDialog::OnOK. */
+	/** Commits the current selection (or lack of one) as the result and closes the dialog. */
 	private void performOK() {
 		int begin = graphicPanel.getIndex();
 		int end = graphicPanel.getSelection();
@@ -179,7 +166,7 @@ public final class SelectGraphicsDialog extends JDialog {
 		setVisible(false);
 	}
 
-	/** Ported from SelectSpritesDialog::Show/InitDialog/SelectGoto. */
+	/** Opens the dialog on {@code memoryInspectorState}'s segment, pre-selecting its current byte range if any. */
 	public boolean show(MemoryInspectorState memoryInspectorState) {
 		segment = memoryInspectorState.getSegment();
 		graphicPanel.setBuffer(segment.memoryBlock.getData());
@@ -197,7 +184,7 @@ public final class SelectGraphicsDialog extends JDialog {
 		graphicPanel.setIndex(begin);
 		graphicPanel.setSelection(end);
 
-		modeField.setValue(GraphicMode.ANTIC_F); // Matches the C++ constructor's wSpriteMode = 15 default.
+		modeField.setValue(GraphicMode.ANTIC_F); // Default mode.
 		performModeChanged();
 
 		confirmed = false;
