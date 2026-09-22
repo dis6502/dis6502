@@ -26,42 +26,31 @@ import com.wudsn.tools.dis6502.model.DisassemblySectionType;
  * A read-only, custom-painted list of disassembly listing lines, drawn with
  * the real per-computer-system font from {@link ComputerFont} - the same
  * reason {@link HexGridPanel} needs it (see that class's/{@link
- * ComputerFont}'s javadoc): the C++ source draws the disassembly listing
- * with the very same {@code ComputerFont}-derived font as the memory
- * inspector ({@code DisassemblyWindow.cpp}'s {@code
- * disassemblyControl->SetFont(partLayout->GetLayout()->GetFont())} uses the
- * same shared {@code Layout} font {@code Main::SetLayoutFont}/{@code
- * WorkspaceFont::GetResizedFont} sets for the whole window), not a plain
- * system font - a plain Java font would be visually wrong for this listing
- * too, not just cosmetically inconsistent, since it can contain literal
- * ATASCII/PETSCII text and graphics characters from {@code STRING}/{@code
- * SBYTE} data.
+ * ComputerFont}'s javadoc): a plain Java font would be visually wrong for
+ * this listing, not just cosmetically inconsistent, since it can contain
+ * literal ATASCII/PETSCII text and graphics characters from {@code
+ * STRING}/{@code SBYTE} data.
  * <p>
- * Ported from ui/DisassemblyControlImpl.cpp's paint routine: virtualized
- * scrolling relies on Swing's clip-rect-based repaint the same way {@link
- * HexGridPanel} does. The popup menu is {@link DisassemblyPanel}'s, not
- * this class's; {@link #highlightLine}/{@link #scrollLineToVisible}
- * carry over from it, used for both search-result/cross-reference
- * navigation and (new here) click/drag line selection, and {@link
- * #lineIndexAtY} is the pixel-to-line half of that selection mapping, used
- * by {@link DisassemblyPanel}'s own mouse handling. Cell dimensions come straight
+ * Virtualized scrolling relies on Swing's clip-rect-based repaint the same
+ * way {@link HexGridPanel} does. The popup menu is {@link
+ * DisassemblyPanel}'s, not this class's; {@link #highlightLine}/{@link
+ * #scrollLineToVisible} are used for both search-result/cross-reference
+ * navigation and click/drag line selection, and {@link #lineIndexAtY} is
+ * the pixel-to-line half of that selection mapping, used by {@link
+ * DisassemblyPanel}'s own mouse handling. Cell dimensions come straight
  * from {@link ComputerFont#getGlyphWidth}/{@link
  * ComputerFont#getGlyphHeight} - already scaled for on-screen legibility,
  * see that class's javadoc - rather than this class applying its own zoom
  * factor.
  * <p>
- * {@link #paintLineInColor} ports {@code PrintOneLineInColor}/{@code
- * FlushPartOfLine}'s per-token syntax coloring (mnemonic/number/string/
- * comment/plain), which this panel used to skip entirely (every line drawn
- * in one plain black {@link ComputerFont#drawText} call) - see that
- * method's own javadoc for the token classification. {@link
- * #setLineNumbersActive} ports the C++ source's optional line-number
- * column - see that method's own javadoc for why this class reads {@link
- * com.wudsn.tools.dis6502.model.Profile#useLineNumbers} instead of storing
- * it directly (that field is the real ported settings source: a Profile
- * dialog checkbox, not a menu item - {@code Dis6502} pushes it in on every
- * disassembly refresh, matching {@code MainDisassembly::RefreshDisControl}'s
- * {@code disassemblyControl->SetLineNumbersActive(...)} call).
+ * {@link #paintLineInColor} does per-token syntax coloring
+ * (mnemonic/number/string/comment/plain) - see that method's own javadoc
+ * for the token classification. {@link #setLineNumbersActive} controls an
+ * optional line-number column - see that method's own javadoc for why this
+ * class reads {@link com.wudsn.tools.dis6502.model.Profile#useLineNumbers}
+ * instead of storing it directly (that field is the real settings source:
+ * a Profile dialog checkbox, not a menu item - {@code Dis6502} pushes it
+ * in on every disassembly refresh).
  *
  * @author Peter Dell
  */
@@ -69,8 +58,7 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 
 	private static final long serialVersionUID = 1L;
 
-	// "NNNN " - 4-digit zero-padded line number plus a space, matching PrintAll's
-	// "%04lu %s" prefix (more digits print as-is past 9999, exactly like %04lu).
+	// "NNNN " - 4-digit zero-padded line number plus a space (more digits print as-is past 9999).
 	private static final int LINE_NUMBER_PREFIX_LENGTH = 5;
 
 	private List<DisassemblyLine> lines = Collections.emptyList();
@@ -91,13 +79,10 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Ported from {@code MainDisassembly::RefreshDisControl}'s {@code
-	 * disassemblyControl->SetLineNumbersActive(::g_Workspace->GetConstProfile()->useLineNumbers)}
-	 * call - {@code Dis6502} calls this alongside every {@link
+	 * {@code Dis6502} calls this alongside every {@link
 	 * DisassemblyPanel#refresh}, pushing in the current profile's {@code
-	 * useLineNumbers} setting the same way the C++ source does, rather than
-	 * this panel reaching for a {@code Workspace}/{@code Profile} reference
-	 * itself.
+	 * useLineNumbers} setting, rather than this panel reaching for a
+	 * {@code Workspace}/{@code Profile} reference itself.
 	 */
 	public void setLineNumbersActive(boolean lineNumbersActive) {
 		this.lineNumbersActive = lineNumbersActive;
@@ -175,8 +160,7 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 		}
 	}
 
-	// Colors for the different parts of a disassembly line, ported from
-	// DisassemblyControlImpl.cpp's Colors[]/DIS_STATE table.
+	// Colors for the different parts of a disassembly line.
 	private static final Color COLOR_NORMAL = Color.BLACK;
 	private static final Color COLOR_COMMENT = new Color(0, 128, 0);
 	private static final Color COLOR_NUMBER = new Color(128, 0, 0);
@@ -185,31 +169,25 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 	private static final Color COLOR_UNREFERENCED = new Color(192, 192, 192);
 
 	/**
-	 * Ported from {@code PrintOneLineInColor}: a hand-written character
-	 * scanner that classifies {@code disassemblyLine}'s text into runs - a
-	 * leading label (or, if column 0 isn't a label start character, the
-	 * whole rest of the line is a comment), the instruction mnemonic (or,
-	 * for an {@code =}/{@code *} equate/org line, plain text), an optional
-	 * quoted string or {@code #}-immediate operand, any {@code $}-prefixed
-	 * hex numbers (comma-separated), and a trailing {@code ;} comment - and
-	 * draws each run in its own color via {@link #flushPartOfLine} (ported
-	 * from {@code FlushPartOfLine}). {@code referenced} (from {@link
-	 * #isReferenced}) overrides every run's own color with a flat grey,
-	 * matching the C++ source's own override - used only for system/user
-	 * equates sections, where an unreferenced equate is greyed out rather
-	 * than removed.
+	 * A hand-written character scanner that classifies {@code
+	 * disassemblyLine}'s text into runs - a leading label (or, if column 0
+	 * isn't a label start character, the whole rest of the line is a
+	 * comment), the instruction mnemonic (or, for an {@code =}/{@code *}
+	 * equate/org line, plain text), an optional quoted string or {@code
+	 * #}-immediate operand, any {@code $}-prefixed hex numbers
+	 * (comma-separated), and a trailing {@code ;} comment - and draws each
+	 * run in its own color via {@link #flushPartOfLine}. {@code referenced}
+	 * (from {@link #isReferenced}) overrides every run's own color with a
+	 * flat grey - used only for system/user equates sections, where an
+	 * unreferenced equate is greyed out rather than removed.
 	 * <p>
-	 * When {@link #lineNumbersActive}, a leading {@code "NNNN "} run (4-digit
-	 * zero-padded line number plus a space) is drawn first, in the same
-	 * color the rest of this method would use for plain text - ported from
-	 * the {@code if (lineNumbersActive) { ... }} block at the very start of
-	 * {@code PrintOneLineInColor}, which consumes that prefix from the
-	 * shared text buffer {@code PrintAll} built via {@code "%04lu %s"}; this
-	 * port instead formats {@link DisassemblyLine#getLineNumber()} directly
+	 * When {@link #lineNumbersActive}, a leading {@code "NNNN "} run
+	 * (4-digit zero-padded line number plus a space) is drawn first, in the
+	 * same color the rest of this method would use for plain text -
+	 * formatted directly from {@link DisassemblyLine#getLineNumber()}
 	 * rather than prepending it to {@code text} and re-parsing the digits
 	 * back out, since the real line number is already available as an
-	 * {@code int} here - same visible result, without the C++ source's
-	 * buffer-sharing contortion.
+	 * {@code int} here.
 	 * <p>
 	 * The yellow selected-line background fill is not this method's
 	 * responsibility - this panel already paints that separately via
@@ -332,7 +310,7 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 		}
 	}
 
-	/** {@code &szText[wSrcIndex - 1]} in the C++ source: the text from the last character read (re-including it) to the end. */
+	/** The text from the last character read (re-including it) to the end. */
 	private static String restOfLine(String text, int[] index) {
 		return text.substring(Math.min(index[0] - 1, text.length()));
 	}
@@ -342,8 +320,7 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Ported from the referenced-section check in {@code PrintAll}: all
-	 * sections other than the system/user equates are never greyed out,
+	 * All sections other than the system/user equates are never greyed out,
 	 * regardless of {@link DisassemblyLine#referenced}.
 	 */
 	private static boolean isReferenced(DisassemblyLine disassemblyLine) {
@@ -355,11 +332,9 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * Ported from {@code FlushPartOfLine}: draws one colored run and returns
-	 * the x position just past it, using this font's own real glyph width
-	 * (the C++ source hardcoded a fixed 8px console-font width instead,
-	 * matching what every other call site in this class already uses via
-	 * {@link ComputerFont#drawText}).
+	 * Draws one colored run and returns the x position just past it, using
+	 * this font's own real glyph width - the same way every other call site
+	 * in this class already uses {@link ComputerFont#drawText}.
 	 */
 	private int flushPartOfLine(Graphics2D g2, int x, int y, Color color, String text) {
 		computerFont.drawText(g2, text, color, x, y);

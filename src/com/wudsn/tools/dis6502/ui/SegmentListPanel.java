@@ -33,75 +33,51 @@ import com.wudsn.tools.dis6502.model.WorkspaceProperty;
 /**
  * A list of the current workspace's segments.
  * <p>
- * Ported from ui/SegmentListWindow.h / SegmentListWindow.cpp and the
- * selection handling part of ui/MainSegment.cpp - {@link #refresh} from
- * {@code MainSegment::UpdateList}, {@link #selected} from {@code
- * MainSegment::Selected} - simplified to a plain {@link JList} for this
- * first pass; the {@code updating} guard replicates {@code
- * MainSegment::updateCounter}'s reentrancy protection between the two
- * directions of selection sync. Each row's text is {@link
- * Segment#toString()}, a faithful port of {@code Segment::ToString}, the
- * exact same single-string-per-segment format {@code
- * MainSegment::UpdateList}'s own {@code segmentListWindow->AddSegment(
- * segment->ToString())} call builds the real Win32 {@code ListBox} from -
- * an earlier version of this class instead showed a {@link javax.swing.JTable}
- * with separate Title/Header/Begin/End/Size/Binary columns, which has no
- * C++ counterpart at all ({@code Segment::ToString} has no title in it
- * either - segment titles are shown nowhere in the C++ segment list).
+ * The {@code updating} guard prevents reentrancy between the two
+ * directions of selection sync: {@link #refresh}, which rebuilds the list
+ * from the model, and {@link #selected}, which pushes a UI selection back
+ * into the model. Each row's text is {@link Segment#toString()}, a single
+ * string per segment. An earlier version of this class instead showed a
+ * {@link javax.swing.JTable} with separate Title/Header/Begin/End/Size/
+ * Binary columns; that was abandoned in favor of the current plain {@link
+ * JList}.
  * <p>
- * One deliberate departure from the C++ source: {@code
- * SegmentListWindow.cpp} creates a plain single-selection Win32 {@code
- * ListBox} ({@code LB_GETCURSEL}/{@code LB_SETCURSEL}, no {@code
- * LBS_MULTIPLESEL}/{@code LBS_EXTENDEDSEL}), and {@code
- * SegmentList::DeleteSelectedSegment}/{@link
- * com.wudsn.tools.dis6502.model.SegmentList#deleteSelectedSegment} only
- * ever removes that one segment - there is no multi-segment delete in the
- * original at all. This port's {@link #list} uses {@link
- * ListSelectionModel#MULTIPLE_INTERVAL_SELECTION} instead, letting {@link
- * #deleteMenuItem} remove every selected segment in one step via {@link
- * #getSelectedSegmentIndices}/{@link
+ * {@link #list} uses {@link ListSelectionModel#MULTIPLE_INTERVAL_SELECTION},
+ * letting {@link #deleteMenuItem} remove every selected segment in one step
+ * via {@link #getSelectedSegmentIndices}/{@link
  * com.wudsn.tools.dis6502.model.SegmentList#deleteSegments} - every other
  * command ({@link #moveUpMenuItem}/{@link #moveDownMenuItem}/{@link
  * #saveNoHeaderMenuItem}/{@link #saveHeaderMenuItem}/{@link
  * #propertiesMenuItem}) is inherently single-segment and stays gated on
  * exactly one selected row (see {@link #updatePopupMenuState}), and {@link
- * #mergeMenuItem} is untouched - {@code SegmentList::MergeSegments}/{@link
- * com.wudsn.tools.dis6502.model.SegmentList#mergeSegments} was already a
- * whole-list sweep for adjacent, compatible segments that never looked at
- * the selection to begin with.
+ * #mergeMenuItem} is unaffected by selection - {@link
+ * com.wudsn.tools.dis6502.model.SegmentList#mergeSegments} is a whole-list
+ * sweep for adjacent, compatible segments that never looks at the
+ * selection to begin with.
  * <p>
- * {@link #updatePopupMenuState} is ported
- * from {@code SegmentListPopupMenu::Update} and {@link #maybeShowPopup}
- * from {@code MainSegment::RButtonDownProc} (including its "no segments,
- * no menu" guard); the popup's items are exposed as public fields, with
- * their commands wired up by {@code Dis6502} the same way {@link
- * MainMenu}'s items are, since running them (saving files, editing a
- * segment) needs things ({@code Application}, a parent {@link
+ * {@link #updatePopupMenuState}/{@link #maybeShowPopup} (including its "no
+ * segments, no menu" guard) drive the popup; the popup's items are exposed
+ * as public fields, with their commands wired up by {@code Dis6502} the
+ * same way {@link MainMenu}'s items are, since running them (saving files,
+ * editing a segment) needs things ({@code Application}, a parent {@link
  * java.awt.Frame}) this panel does not otherwise have. Each item is built
  * via {@code com.wudsn.tools.base.gui.ElementFactory} from an {@code
- * Action} in {@code com.wudsn.tools.dis6502.Actions} (label/mnemonic
- * sourced from {@code dis6502.rc}'s {@code SEGMENT_LIST_POPUP_MENU}), the
- * same pattern {@link MainMenu} uses - see that class's/{@code Actions}'
- * own javadoc.
+ * Action} in {@code com.wudsn.tools.dis6502.Actions}, the same pattern
+ * {@link MainMenu} uses - see that class's/{@code Actions}' own javadoc.
  * <p>
- * {@link #setComputerFont} is ported from {@code PartWindow::ApplyLayout}'s
- * blanket {@code SetFont(partLayout->GetLayout()->GetFont())} call, which
- * every part window gets, not just the memory inspector/disassembly
- * listing - {@code SegmentListWindow} is a plain native {@code ListBox}, so
- * in C++ this happens automatically via {@code WM_SETFONT}. This list only
- * ever shows already-formatted metadata text, not raw byte values, so it
- * needs none of {@link ComputerFont}'s byte-indexed glyph lookup - but it
- * still cannot just be {@code list.setFont(...)} plus {@link JList}'s
- * default renderer: on real screen output (unlike the offscreen renders
- * used to develop this font support), Windows applies its own ClearType/
- * subpixel text antialiasing to ordinary Swing text painting, which blurs
- * this small pixel-art font into illegible dots. Every other {@code
- * ComputerFont}-driven panel avoids this because {@link
- * ComputerFont#drawText} explicitly disables antialiasing before drawing;
- * {@link ComputerFontListCellRenderer} (shared with {@link XRefPanel})
- * gives this list the same explicit control by painting cell text through
- * {@code drawText} itself instead of relying on the default renderer's
- * {@code g.drawString}.
+ * This list only ever shows already-formatted metadata text, not raw byte
+ * values, so {@link #setComputerFont} needs none of {@link ComputerFont}'s
+ * byte-indexed glyph lookup - but it still cannot just be {@code
+ * list.setFont(...)} plus {@link JList}'s default renderer: on real screen
+ * output (unlike the offscreen renders used to develop this font support),
+ * the desktop applies its own subpixel text antialiasing to ordinary Swing
+ * text painting, which blurs this small pixel-art font into illegible
+ * dots. Every other {@code ComputerFont}-driven panel avoids this because
+ * {@link ComputerFont#drawText} explicitly disables antialiasing before
+ * drawing; {@link ComputerFontListCellRenderer} (shared with {@link
+ * XRefPanel}) gives this list the same explicit control by painting cell
+ * text through {@code drawText} itself instead of relying on the default
+ * renderer's {@code g.drawString}.
  *
  * @author Peter Dell
  */
@@ -168,7 +144,7 @@ public final class SegmentListPanel extends JPanel {
 		add(scrollPane, BorderLayout.CENTER);
 	}
 
-	/** Ported from PartWindow::ApplyLayout's SetFont(partLayout->GetLayout()->GetFont()) - call whenever the workspace's computer system or double-height setting changes. */
+	/** Call whenever the workspace's computer system or double-height setting changes. */
 	public void setComputerFont(ComputerFont computerFont) {
 		list.setFont(computerFont.getAwtFont());
 		cellRenderer.setComputerFont(computerFont);
@@ -176,24 +152,22 @@ public final class SegmentListPanel extends JPanel {
 	}
 
 	/**
-	 * The currently loaded file's name, shown in {@link #header} - ported
-	 * from {@code Main::PaintMainWindow}'s {@code
-	 * std::filesystem::path(binPath).filename()}. Call whenever {@code
-	 * Dis6502}'s own current-file state changes; pass {@code null} once
-	 * there is none.
+	 * The currently loaded file's name, shown in {@link #header}. Call
+	 * whenever {@code Dis6502}'s own current-file state changes; pass
+	 * {@code null} once there is none.
 	 */
 	public void setFileName(String fileName) {
 		this.fileName = fileName == null ? "" : fileName;
 		updateHeaderText();
 	}
 
-	/** Ported from Main::PaintMainWindow's segment list title block (IDS_SEGMENT_TITLE/IDS_SEGMENT_TITLE_NO_SEGMENTS_LOADED). */
+	/** Shows the file name and segment count, or a "no segments loaded" message if the workspace is empty. */
 	private void updateHeaderText() {
 		boolean empty = workspace == null || workspace.getSegmentList().isEmpty();
 		header.setText(empty ? Texts.SegmentListPanel_NoSegmentsLoadedTitle : TextUtility.format(Texts.SegmentListPanel_Title, fileName));
 	}
 
-	/** Ported from MainSegment::RButtonDownProc (the "no edit mode" branch - there is no memory inspector edit mode to check here yet). */
+	/** Shows the popup menu, unless there are no segments to act on. */
 	private void maybeShowPopup(MouseEvent e) {
 		if (!e.isPopupTrigger() || workspace == null || workspace.getSegmentList().isEmpty()) {
 			return;
@@ -203,13 +177,11 @@ public final class SegmentListPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from SegmentListPopupMenu::Update, with one deliberate
-	 * departure: {@link #deleteMenuItem} is enabled for one or more selected
-	 * rows (see this class's own javadoc for the multi-selection this
-	 * enables), while every other item stays gated on exactly one selected
-	 * row, since Move Up/Down, Save (with/without header) and Properties are
-	 * inherently single-segment operations - unchanged from C++, which never
-	 * had more than one row to consider in the first place.
+	 * {@link #deleteMenuItem} is enabled for one or more selected rows (see
+	 * this class's own javadoc for the multi-selection this enables), while
+	 * every other item stays gated on exactly one selected row, since Move
+	 * Up/Down, Save (with/without header) and Properties are inherently
+	 * single-segment operations.
 	 */
 	private void updatePopupMenuState() {
 		int segmentCount = workspace.getSegmentList().getCount();
@@ -250,7 +222,7 @@ public final class SegmentListPanel extends JPanel {
 		refresh();
 	}
 
-	/** Ported from MainSegment::UpdateList. */
+	/** Rebuilds the list from the workspace's current segments and selection. */
 	public void refresh() {
 		updating = true;
 		try {
@@ -274,13 +246,12 @@ public final class SegmentListPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from MainSegment::Selected - {@code
-	 * list.getSelectedIndex()} (the smallest selected index, by {@link
-	 * JList}'s own contract) still drives {@link Workspace#getSegmentList()}'s
-	 * single {@code selectedIndex} with multi-selection enabled, so the
-	 * memory inspector/Properties/Save Segment/Move Up/Down - every
-	 * inherently single-segment concept in this port - keep tracking one
-	 * well-defined "current" segment exactly as before, regardless of how
+	 * {@code list.getSelectedIndex()} (the smallest selected index, by
+	 * {@link JList}'s own contract) drives {@link
+	 * Workspace#getSegmentList()}'s single {@code selectedIndex} even with
+	 * multi-selection enabled, so the memory inspector/Properties/Save
+	 * Segment/Move Up/Down - every inherently single-segment concept here -
+	 * keep tracking one well-defined "current" segment, regardless of how
 	 * many rows are actually selected.
 	 */
 	private void selected() {

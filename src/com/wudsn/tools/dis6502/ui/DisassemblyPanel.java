@@ -48,56 +48,44 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * text search that drives the cross-reference list (see {@link
  * #findField}/{@link #findButton}/{@link #findNextButton}, wired up by
  * {@code Dis6502} to {@link DisassemblyResult#findAndSelectLines} and
- * {@link XRefPanel}) - {@code findButton} runs a fresh search (matching
- * {@code MainDisassembly::Find}), {@code findNextButton} continues it
- * (matching {@code MainDisassembly::FindNextString(false)}, bound in C++
- * to ID_DIS_FIND_NEXT).
+ * {@link XRefPanel}) - {@code findButton} runs a fresh search, {@code
+ * findNextButton} continues it.
  * <p>
- * Ported from ui/DisassemblyWindow.h / DisassemblyWindow.cpp and
- * ui/DisassemblyControl(Impl).h/.cpp. The listing itself is {@link
- * DisassemblyGridPanel}, a custom-painted, read-only list using the real
- * per-computer-system bitmap glyphs from {@link ComputerFont} - see that
- * class's javadoc for why (the C++ source draws this listing with the same
- * font as the memory inspector, not a plain system font) and {@link
- * DisassemblyGridPanel}'s own javadoc for exactly which parts of {@code
- * DisassemblyControlImpl.cpp} this replicates (plain text layout,
- * virtualized via Swing's clip-rect repaint) and which it does not (inline
- * editing, the full popup menu - neither existed in this port before this
- * rewrite either). {@link #navigateToLine} (scrolling to and highlighting
- * a line, used by both Find/XRef navigation and {@link #selectLineAt})
- * and {@link #selectLineAt} itself (clicking or dragging in the listing to
- * select a line, reported to {@code Dis6502} via {@link
- * #setLineSelectionListener} - ported from {@code
- * DisassemblyControlImpl::MouseMove}'s per-line click handling, see that
- * method's javadoc for the {@code dwLastLine} correspondence) are the
- * pieces of the C++ control's selection behavior this port implements. A
+ * The listing itself is {@link DisassemblyGridPanel}, a custom-painted,
+ * read-only list using the real per-computer-system bitmap glyphs from
+ * {@link ComputerFont} - see that class's javadoc for why - and {@link
+ * DisassemblyGridPanel}'s own javadoc for exactly what it implements
+ * (plain text layout, virtualized via Swing's clip-rect repaint) and what
+ * it does not (inline editing, the full popup menu). {@link
+ * #navigateToLine} (scrolling to and highlighting a line, used by both
+ * Find/XRef navigation and {@link #selectLineAt}) and {@link
+ * #selectLineAt} itself (clicking or dragging in the listing to select a
+ * line, reported to {@code Dis6502} via {@link #setLineSelectionListener})
+ * are the pieces of this listing's selection behavior this panel owns. A
  * plain click/drag never navigates away from the clicked line - only a
- * double-click or Return does, via {@link #navigateToDefinitionOfSelectedLine}/
- * {@link #setNavigateToDefinitionListener}, ported from {@code
- * DisassemblyControlImpl::FindReference}/{@code MainDisassembly::FindDef}
- * (see {@code Dis6502#performFindDisassemblyReferences}'s javadoc for a bug
- * this port used to have here: navigating on every plain click).
- * {@link #setComputerFont} must be called by {@code Dis6502} whenever the
- * workspace's computer system or double-font-height setting changes,
- * matching {@code DisassemblyWindow}'s use of {@code
- * WorkspaceFont::GetResizedFont}.
+ * double-click or Return does, via {@link
+ * #navigateToDefinitionOfSelectedLine}/{@link
+ * #setNavigateToDefinitionListener} (see {@code
+ * Dis6502#performFindDisassemblyReferences}'s javadoc for a bug this port
+ * used to have here: navigating on every plain click). {@link
+ * #setComputerFont} must be called by {@code Dis6502} whenever the
+ * workspace's computer system or double-font-height setting changes.
  * <p>
- * The right-click popup menu ({@link #maybeShowPopup}) is a still-reduced
- * port of ui/DisassemblyPopupMenu.h/.cpp's {@code DISASSEMBLY_POPUP_MENU}:
- * Add/Edit Comment, Find/Find Next, and - since {@link #findLabelInLine}
- * turned out to need nothing more than the clicked line's own text (see
- * that method's javadoc for why this is not the "mouse-position label
- * parsing" it first looked like) - Find Definition/References, Rename,
- * and Address Range too, reusing already-ported pieces ({@link
- * DisassemblyResult#findAndSelectLines}/{@link
- * DisassemblyResult#findDefinitionLineNumber}, {@code Equate.extractAddress}/
- * {@code isAutomaticLabel}, {@link EquateDialog}/{@link
- * EquateRangeDialog}) - see {@code Dis6502}'s wiring of {@link
- * #findDefMenuItem}/{@link #findRef1MenuItem}/{@link #findRef2MenuItem}/
- * {@link #renameDefMenuItem}/{@link #renameRefMenuItem}/{@link
- * #addrRangeDefMenuItem}/{@link #addrRangeRefMenuItem}. Navigate Back to
- * Previous Position ({@link #backInHistoryMenuItem}, Backspace) returns to
- * where Navigate to Definition was started from - see {@link
+ * The right-click popup menu ({@link #maybeShowPopup}) offers Add/Edit
+ * Comment, Find/Find Next, and - since {@link #findLabelInLine} turned out
+ * to need nothing more than the clicked line's own text (see that
+ * method's javadoc for why this is not the "mouse-position label parsing"
+ * it first looked like) - Find Definition/References, Rename, and Address
+ * Range too, reusing {@link DisassemblyResult#findAndSelectLines}/{@link
+ * DisassemblyResult#findDefinitionLineNumber}, {@code
+ * Equate.extractAddress}/{@code isAutomaticLabel}, {@link
+ * EquateDialog}/{@link EquateRangeDialog} - see {@code Dis6502}'s wiring
+ * of {@link #findDefMenuItem}/{@link #findRef1MenuItem}/{@link
+ * #findRef2MenuItem}/{@link #renameDefMenuItem}/{@link
+ * #renameRefMenuItem}/{@link #addrRangeDefMenuItem}/{@link
+ * #addrRangeRefMenuItem}. Navigate Back to Previous Position ({@link
+ * #backInHistoryMenuItem}, Backspace) returns to where Navigate to
+ * Definition was started from - see {@link
  * #navigateToDefinitionLine}/{@link #navigateBack} and {@link
  * LineNumberHistory}. The "Change type of immediate byte to" submenu works
  * on the right-clicked instruction, not on a byte selection like the
@@ -112,9 +100,7 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * java.awt.Frame}/{@code Workspace} this panel does not have), reading
  * {@link #getRightClickedLine}/{@link #getRightClickedLabelDefinition}/
  * {@link #getRightClickedLabelReference} - all three frozen at the moment
- * the popup was shown, matching {@code MainDisassembly::DrawMenu} capturing
- * {@code disSelection}/{@code labelDefinition}/{@code labelReference} once
- * per right-click rather than re-deriving them when a menu item is later
+ * the popup was shown, rather than re-derived when a menu item is later
  * clicked. Every static item is built via {@code
  * com.wudsn.tools.base.gui.ElementFactory} from an {@code Action} in
  * {@code com.wudsn.tools.dis6502.Actions}, the same as {@link MainMenu};
@@ -122,15 +108,13 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * and friends) stay plain {@code JMenuItem}s built with no label at all,
  * since their text is {@code "{0}"}-templated and only resolved at
  * popup-show time - see {@link #setDynamicLabel} and {@code Actions}' own
- * javadoc. {@link #editCommentMenuItem}'s Add/Edit Comment, unlike {@code
- * MainDisassembly::AddComment} (which always passes the sentinel size
- * {@code 0xFFFF} for {@link CommentDialog} to snap to the enclosing
- * instruction via {@code DisassemblyResult::findOffsetAtStartOfInstruction}),
- * uses the clicked line's own {@code offset}/{@code size} directly -
- * correct for the common case of right-clicking an actual instruction
- * line, though not necessarily identical for a label/equate-only line
- * with no byte size of its own; that model-layer method is ported and
- * available, just not wired up for this yet.
+ * javadoc. {@link #editCommentMenuItem}'s Add/Edit Comment uses the
+ * clicked line's own {@code offset}/{@code size} directly, rather than
+ * snapping to the enclosing instruction - correct for the common case of
+ * right-clicking an actual instruction line, though not necessarily
+ * identical for a label/equate-only line with no byte size of its own; a
+ * model-layer method for that snapping is available, just not wired up
+ * for this yet.
  *
  * @author Peter Dell
  */
@@ -175,7 +159,7 @@ public final class DisassemblyPanel extends JPanel {
 
 	private final LineNumberHistory history = new LineNumberHistory();
 
-	/** The submenu's types, in menu order (a separator goes before the last one) - same order as the C++ .rc template. */
+	/** The submenu's types, in menu order (a separator goes before the last one). */
 	private static final MemoryType[] IMMEDIATE_TYPES = { MemoryType.CODE, MemoryType.LOBYTE, MemoryType.HIBYTE,
 			MemoryType.STRING, MemoryType.UNKNOWN };
 	private static final Action[] IMMEDIATE_TYPE_ACTIONS = { Actions.DisassemblyPopupMenu_ImmediateType_Code,
@@ -332,11 +316,9 @@ public final class DisassemblyPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from {@code DisassemblyControlImpl::FindReference} (double-click)
-	 * and {@code MainDisassembly::FindDef} (Return, {@code ID_DIS_FIND_DEF}) -
-	 * both navigate to the definition of the currently selected line's
-	 * referenced label, unlike a plain click/drag (see {@link #selectLineAt}),
-	 * which only reports the selection and refreshes the XRef list, never
+	 * Navigates to the definition of the currently selected line's referenced
+	 * label, unlike a plain click/drag (see {@link #selectLineAt}), which
+	 * only reports the selection and refreshes the XRef list, never
 	 * navigating away from the clicked line.
 	 */
 	private void navigateToDefinitionOfSelectedLine() {
@@ -347,12 +329,11 @@ public final class DisassemblyPanel extends JPanel {
 
 	/**
 	 * Goes to the line a label is defined at, remembering where that was
-	 * started from for {@link #navigateBack}. Ported from {@code
-	 * DisassemblyControlImpl::SelectDefinitionAndNotifyParent}: like there,
-	 * the target line ends up selected exactly as if it had been clicked, so
-	 * the memory inspector and the XRef list follow. "Where it was started
-	 * from" is {@code originLine} if given (the right-clicked line, for the
-	 * popup item), else the selected line (Return/double-click).
+	 * started from for {@link #navigateBack}. The target line ends up
+	 * selected exactly as if it had been clicked, so the memory inspector
+	 * and the XRef list follow. "Where it was started from" is {@code
+	 * originLine} if given (the right-clicked line, for the popup item),
+	 * else the selected line (Return/double-click).
 	 */
 	public boolean navigateToDefinitionLine(int lineNumber, DisassemblyLine originLine) {
 		Integer index = lineNumberToIndex.get(lineNumber);
@@ -368,7 +349,7 @@ public final class DisassemblyPanel extends JPanel {
 		return true;
 	}
 
-	/** Navigate Back to Previous Position - ported from {@code DisassemblyControlImpl::BackInHistory}. Does nothing if there is no previous position. */
+	/** Navigate Back to Previous Position. Does nothing if there is no previous position. */
 	public void navigateBack() {
 		Integer index = lineNumberToIndex.get(history.pop());
 		if (index != null) {
@@ -382,18 +363,13 @@ public final class DisassemblyPanel extends JPanel {
 	}
 
 	/**
-	 * Ported from the per-line click handling in {@code
-	 * DisassemblyControlImpl::MouseMove} (reached here through a single
-	 * click/drag rather than continuous mouse-capture tracking, since
-	 * that's the idiomatic Swing shape for this - {@link
-	 * #lastSelectedLineIndex} plays the same role as the C++ source's
-	 * {@code dwLastLine}, only re-notifying {@link #lineSelectionListener}
-	 * when the line under the cursor actually changes): highlights the
-	 * clicked line and reports it - along with the label its operand
-	 * references, or the one it defines if it has no reference (matching
-	 * {@code MainDisassembly::Proc}'s DIS_XREF handler: {@code label =
-	 * GetLabelReference(); if empty, label = GetLabelDefinition()}) - to
-	 * {@link #lineSelectionListener}.
+	 * Reached through a single click/drag rather than continuous
+	 * mouse-capture tracking, since that's the idiomatic Swing shape for
+	 * this - {@link #lastSelectedLineIndex} only re-notifies {@link
+	 * #lineSelectionListener} when the line under the cursor actually
+	 * changes: highlights the clicked line and reports it - along with the
+	 * label its operand references, or the one it defines if it has no
+	 * reference - to {@link #lineSelectionListener}.
 	 */
 	private void selectLineAt(MouseEvent e) {
 		int index = grid.lineIndexAtY(e.getY());
@@ -428,13 +404,7 @@ public final class DisassemblyPanel extends JPanel {
 		this.navigateToDefinitionListener = navigateToDefinitionListener;
 	}
 
-	/**
-	 * Ported from DisassemblyControlImpl::RButtonDown/MainDisassembly::DrawMenu.
-	 * Rebuilds the popup's item set from scratch every time, the idiomatic
-	 * Swing way to do what the C++ version's {@code DisassemblyPopupMenu::
-	 * Update} does by editing a fixed .rc-defined template in place ({@code
-	 * SetText}/{@code DeleteEntry}/{@code DeleteSepartor}).
-	 */
+	/** Rebuilds the popup's item set from scratch every time it is shown. */
 	private void maybeShowPopup(MouseEvent e) {
 		if (!e.isPopupTrigger()) {
 			return;
@@ -544,12 +514,12 @@ public final class DisassemblyPanel extends JPanel {
 
 	/**
 	 * Splits {@code text} into the label it defines and the label its operand
-	 * references. Ported from {@code DisassemblyControlImpl::FindLabelInLine} -
-	 * despite that method's name suggesting it needs to know where in the line
-	 * the mouse was, it only ever parses the whole line's text structurally
-	 * (leading identifier = definition; skip the mnemonic; an operand starting
-	 * with a letter/@/_ after an optional #/(/&gt;/&lt; prefix = reference), with
-	 * no mouse position involved at all.
+	 * references. Despite this method's name possibly suggesting it needs to
+	 * know where in the line the mouse was, it only ever parses the whole
+	 * line's text structurally (leading identifier = definition; skip the
+	 * mnemonic; an operand starting with a letter/@/_ after an optional
+	 * #/(/&gt;/&lt; prefix = reference), with no mouse position involved at
+	 * all.
 	 */
 	private static LabelsInLine findLabelInLine(String text) {
 		int[] index = { 0 };
@@ -644,7 +614,7 @@ public final class DisassemblyPanel extends JPanel {
 		return rightClickedLabelReference;
 	}
 
-	/** Ported from DisassemblyWindow's use of WorkspaceFont::GetResizedFont - call whenever the workspace's computer system or double-height setting changes. */
+	/** Call whenever the workspace's computer system or double-height setting changes. */
 	public void setComputerFont(ComputerFont computerFont) {
 		grid.setComputerFont(computerFont);
 		header.setComputerFont(computerFont);
