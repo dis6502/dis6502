@@ -70,7 +70,7 @@ public final class MemoryInspectorStateTest {
 		Assert.boolEquals(state.isEditMode(), false);
 		Assert.longEquals(state.getEditCursorOffset(), -1);
 
-		// A second quit is a harmless no-op, matching MainController::QuitEditMode's oldEditMode check.
+		// A second quit is a harmless no-op.
 		state.quitEditMode();
 		Assert.boolEquals(state.isEditMode(), false);
 
@@ -79,7 +79,7 @@ public final class MemoryInspectorStateTest {
 		Assert.boolEquals(state.typeEditChar('5') == EditCharResult.NOT_HANDLED, true);
 	}
 
-	/** Ported from MemoryInspectorControlImpl::KeyDown's edit-mode branch. */
+	/** Covers cursor navigation across nibbles, bytes, and lines in both the hex and ASCII panes. */
 	private static void testCursorNavigation() {
 		MutableMemoryInspectorState state = newStateWithSelectedSegment(0x21); // 33 bytes: two full 16-byte lines plus one.
 		state.enterEditMode(0, EditPane.HEX_HIGH);
@@ -154,7 +154,7 @@ public final class MemoryInspectorStateTest {
 		Assert.boolEquals(state.getEditCursorPane() == expectedPane, true);
 	}
 
-	/** Ported from MemoryInspectorControlImpl::Char's hex-nibble write path. */
+	/** Covers typing hex digits into the hex pane, including advancing past the buffer's end. */
 	private static void testHexDigitWrite() {
 		MutableMemoryInspectorState state = newStateWithSelectedSegment(2);
 		Segment segment = state.getSegment();
@@ -178,7 +178,7 @@ public final class MemoryInspectorStateTest {
 		assertCursor(state, 1, EditPane.HEX_LOW); // Left exactly where it was, matching the exit path's own contract.
 	}
 
-	/** Ported from MemoryInspectorControlImpl::Char's ASCII-pane write path, including the SBYTE transform. */
+	/** Covers typing characters into the ASCII pane, including the SBYTE transform. */
 	private static void testAsciiWrite() {
 		MutableMemoryInspectorState state = newStateWithSelectedSegment(3);
 		Segment segment = state.getSegment();

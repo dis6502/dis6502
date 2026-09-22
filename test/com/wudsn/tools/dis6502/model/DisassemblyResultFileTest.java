@@ -12,13 +12,10 @@ import java.nio.file.Files;
 import com.wudsn.tools.dis6502.Application;
 
 /**
- * Ported from DisassemblyResultFileTest.h / DisassemblyResultFileTest.cpp.
- * Like the C++ version, this only exercises {@code saveListing} for every
- * include-file variant without crashing - it does not compare the produced
- * listing against a reference file. Unlike the C++ version, which writes
- * into a checked-in {@code tst/suite} output folder, this writes into a
- * freshly created temporary directory (logged, so it can still be inspected
- * manually), since the Java port has no equivalent checked-in fixture tree.
+ * Exercises {@code saveListing} for every include-file variant without
+ * crashing - it does not compare the produced listing against a reference
+ * file. Writes into a freshly created temporary directory (logged, so it
+ * can still be inspected manually).
  *
  * @author Peter Dell
  */
