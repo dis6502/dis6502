@@ -19,11 +19,9 @@ import com.wudsn.tools.dis6502.model.MRUList;
  * Tracks recently used workspace and non-workspace files, and populates the
  * "Recent Workspaces"/"Recent Files" menus.
  * <p>
- * Ported from ui/MRUController.h / MRUController.cpp and ui/MRUMenu.h /
- * MRUMenu.cpp, folded together - {@code MRUMenu}'s only job (filling a
- * native menu with up to 5 numbered items and mapping a chosen item's
- * command ID back to its {@link MRUEntry}) is simple enough in Swing, where
- * each {@link JMenuItem} can just carry its own {@link
+ * Filling the menu with up to 5 numbered items and mapping a chosen item
+ * back to its {@link MRUEntry} is simple enough in Swing, where each
+ * {@link JMenuItem} can just carry its own {@link
  * java.awt.event.ActionListener}, not to need a separate class.
  *
  * @author Peter Dell
@@ -78,9 +76,9 @@ public final class MRUController {
 
 	/**
 	 * Repopulates {@code menu} with the workspace or non-workspace recent
-	 * entries (up to {@value #MRU_MAX_ENTRIES}, numbered as in the C++
-	 * source's "&amp;1 ...", "&amp;2 ..." menu items), disabling it if there
-	 * are none. Selecting an item invokes {@code onSelect} with its entry.
+	 * entries (up to {@value #MRU_MAX_ENTRIES}, numbered "1 ...", "2 ..."),
+	 * disabling it if there are none. Selecting an item invokes
+	 * {@code onSelect} with its entry.
 	 */
 	public void fillMenu(JMenu menu, boolean workspaces, MRUEntrySelectionListener onSelect) {
 		menu.removeAll();

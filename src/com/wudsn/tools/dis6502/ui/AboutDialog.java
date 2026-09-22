@@ -30,36 +30,26 @@ import com.wudsn.tools.dis6502.Texts;
 /**
  * The application's About box.
  * <p>
- * Ported from ui/AboutDialog.h/.cpp and the {@code ABOUTBOX} resource in
- * dis6502.rc: the dialog/product icon and alfred bitmap images (converted
- * from {@code dis6502.ico}/{@code alfred.bmp} to PNG - see {@code
- * MainMenu#applyIcons}'s javadoc for why - and loaded the same way, via
- * {@link ElementFactory#createImageIcon}) and the {@code CTEXT} lines - held
- * as {@link Texts#AboutDialog_WindowTitle}/{@link Texts#AboutDialog_Title}/
- * {@link Texts#AboutDialog_Subtitle}/{@link Texts#AboutDialog_Text} (the last
- * one, one line per {@code \n}) rather than literal strings here, matching
- * every other user-visible string in this project - see {@link Texts}'s own
- * javadoc for why these live there and not in {@link Text}, which is
- * reserved for real ported {@code IDS_*} mirrors. Laid out with plain Swing
- * layout instead of the .rc's pixel-exact control coordinates - see the
- * {@code ui} package's general porting note on Swing idioms vs. literal
- * Win32 translation. This dialog replaces {@code Dis6502#performAbout}'s
- * previous plain-text {@link javax.swing.JOptionPane}, which already carried
- * this same text forward, except for one already-established difference
- * kept as-is: "James Wilkinson,james@slor.net" in the .rc has no space
- * after the comma, apparently a typo, and the Java text already reads
- * "James Wilkinson, james@slor.net".
+ * The dialog/product icon and alfred bitmap images are PNGs - see {@code
+ * MainMenu#applyIcons}'s javadoc for why - loaded via {@link
+ * ElementFactory#createImageIcon}. The text is held as {@link
+ * Texts#AboutDialog_WindowTitle}/{@link Texts#AboutDialog_Title}/{@link
+ * Texts#AboutDialog_Subtitle}/{@link Texts#AboutDialog_Text} (the last one,
+ * one line per {@code \n}) rather than literal strings here, matching every
+ * other user-visible string in this project - see {@link Texts}'s own
+ * javadoc for why. Laid out with plain Swing layout instead of pixel-exact
+ * control coordinates - see the {@code ui} package's general porting note
+ * on Swing idioms. This dialog replaces {@code Dis6502#performAbout}'s
+ * previous plain-text {@link javax.swing.JOptionPane}, which already
+ * carried this same text forward.
  * <p>
- * {@code IDC_LIST_VERSION}, the C++ source's per-module version/description
- * listbox, is not ported: it reads {@code DIS6502.exe}'s own Win32 file version
- * resource via {@code GetFileVersionInfo}, which has no meaningful equivalent
- * for a launched-from-a-jar Java application (there is no single versioned
- * native module to query the way a real .exe carries its own embedded version
- * resource) - dropped rather than faked with a placeholder.
- * {@code WM_CTLCOLORSTATIC}/{@code WM_CTLCOLORBTN}/{@code WM_CTLCOLORDLG}
- * forcing every control's background to white is matched by giving the content
- * pane an explicit white background instead of each control individually, since
- * Swing components already inherit their container's background by default.
+ * A per-module version/description listbox is not implemented: there is no
+ * single versioned native module to query the way a native executable
+ * carries its own embedded version resource for a launched-from-a-jar Java
+ * application - dropped rather than faked with a placeholder. Every
+ * control's background is forced to white by giving the content pane an
+ * explicit white background, since Swing components already inherit their
+ * container's background by default.
  *
  * @author Peter Dell
  */

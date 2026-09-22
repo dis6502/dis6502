@@ -22,21 +22,17 @@ import com.wudsn.tools.dis6502.model.SegmentList;
 /**
  * A dialog for editing the user comment attached to a byte range.
  * <p>
- * Ported from ui/CommentDialog.h / CommentDialog.cpp, folded into one
- * blocking {@link #show} call as is idiomatic for a Swing modal
- * {@link JDialog}. Wired from both the memory inspector's own byte
+ * Folded into one blocking {@link #show} call, as is idiomatic for a Swing
+ * modal {@link JDialog}. Wired from both the memory inspector's own byte
  * selection ({@code Dis6502#performEditMemoryInspectorComment}) and a
- * right-clicked disassembly line ({@code Dis6502#performEditDisassemblyComment}),
- * matching the C++ version's two trigger paths - but unlike the C++
- * version, which always passes the sentinel {@code size} {@code 0xFFFF}
- * for the disassembly-line path (snapped via {@code
- * DisassemblyResult::FindOffsetAtStartOfInstruction} to the enclosing
- * instruction), the disassembly path here passes the clicked line's own
- * {@code offset}/{@code size} directly - that snapping is not ported, see
- * {@link com.wudsn.tools.dis6502.ui.DisassemblyPanel}'s javadoc. Like
- * {@link SegmentPropertiesDialog}/{@link WorkspaceDialog}, the mutation
- * ({@link SegmentList#setUserComment}) happens directly in {@link
- * #performOK}, not left to the caller.
+ * right-clicked disassembly line ({@code
+ * Dis6502#performEditDisassemblyComment}); the disassembly path passes the
+ * clicked line's own {@code offset}/{@code size} directly, without
+ * snapping to the enclosing instruction - see {@link
+ * com.wudsn.tools.dis6502.ui.DisassemblyPanel}'s javadoc. Like {@link
+ * SegmentPropertiesDialog}/{@link WorkspaceDialog}, the mutation ({@link
+ * SegmentList#setUserComment}) happens directly in {@link #performOK}, not
+ * left to the caller.
  *
  * @author Peter Dell
  */
@@ -78,14 +74,14 @@ public final class CommentDialog extends JDialog {
 		setLocationRelativeTo(owner);
 	}
 
-	/** Ported from CommentDialog::OnOK, folded together with its Show's final SetUserComment call. */
+	/** Commits the edited comment and closes the dialog. */
 	private void performOK() {
 		segmentList.setUserComment(segmentIndex, offset, size, commentArea.getText());
 		confirmed = true;
 		setVisible(false);
 	}
 
-	/** Ported from CommentDialog::Show/InitDialog. */
+	/** Opens the dialog pre-filled with the existing comment; returns whether the user clicked OK. */
 	public boolean show(SegmentList segmentList, int segmentIndex, int offset, int size) {
 		this.segmentList = segmentList;
 		this.segmentIndex = segmentIndex;

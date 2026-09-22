@@ -35,18 +35,11 @@ import com.wudsn.tools.dis6502.Texts;
  * as either ASCII text or hexadecimal bytes - the two fields stay in sync
  * via {@link FindStringDialog}.
  * <p>
- * Ported from ui/MemoryInspectorFindStringDialog.h / .cpp, folded into one
- * blocking {@link #show} call as is idiomatic for a Swing modal
- * {@link JDialog}. {@code IDC_RADIO_ALL}/{@code IDC_RADIO_SELECTED} become
- * {@link #allSegmentsRadioButton}/{@link #selectedSegmentRadioButton}; the
- * C++ version's {@code AllSegmentsCheckBox} field name is kept in spirit
- * only - the .rc resource actually pairs it with a "Selected Segment"
- * radio button in a group, which this reproduces directly. {@link
- * #performOK} mirrors {@code OnOK}: on a successful search it closes the
- * dialog, on a failed one it shows the "not found" alert and stays open,
- * matching {@code MemoryInspector::FindNextString}'s own alert (shown
- * here instead, since {@link MemoryInspectorPanel} stays free of popups -
- * see its javadoc).
+ * Folded into one blocking {@link #show} call, as is idiomatic for a Swing
+ * modal {@link JDialog}. {@link #performOK}: on a successful search it
+ * closes the dialog, on a failed one it shows a "not found" alert and
+ * stays open - shown here rather than by the caller, since {@link
+ * MemoryInspectorPanel} stays free of popups - see its javadoc.
  *
  * @author Peter Dell
  */
@@ -170,7 +163,7 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 		return radioButton;
 	}
 
-	/** Ported from MemoryInspectorFindStringDialog::ProcessCommand's IDC_FINDASCII/EN_CHANGE case. */
+	/** Keeps {@link #hexField} in sync as the user types in {@link #asciiField}. */
 	private void asciiChanged() {
 		if (updatingFields) {
 			return;
@@ -182,7 +175,7 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 		okButton.setEnabled(find);
 	}
 
-	/** Ported from MemoryInspectorFindStringDialog::ProcessCommand's IDC_FINDHEX/EN_CHANGE case. */
+	/** Keeps {@link #asciiField} in sync as the user types in {@link #hexField}. */
 	private void hexChanged() {
 		if (updatingFields) {
 			return;
@@ -194,7 +187,7 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 		okButton.setEnabled(find);
 	}
 
-	/** Ported from MemoryInspectorFindStringDialog::OnOK. */
+	/** Runs the search; closes the dialog on a match, otherwise shows a "not found" alert. */
 	private void performOK() {
 		boolean find = findStringDialog.hexStringToAsciiString(hexField.getText());
 		if (!find) {
@@ -213,7 +206,7 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 		}
 	}
 
-	/** Ported from MemoryInspectorFindStringDialog::Show/InitDialog. */
+	/** Opens the dialog pre-filled with the current search state; returns whether the user found a match. */
 	public boolean show(MemoryInspectorPanel memoryInspectorPanel) {
 		this.memoryInspectorPanel = memoryInspectorPanel;
 
