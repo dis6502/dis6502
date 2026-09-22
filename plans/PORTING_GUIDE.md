@@ -52,12 +52,19 @@ the next attempt, since paths/versions may have drifted:
 - **C++ build (verify a C++ fix actually compiles):**
   `& "C:\Program Files\Microsoft Visual Studio\<version>\Community\MSBuild\Current\Bin\MSBuild.exe" "<repo>\dis6502.sln" -t:dis6502 -p:Configuration=Debug -p:Platform=Win32 -m -v:minimal`
 - **Java build:** `mvn -o compile` / `mvn -o test-compile` from the jdis6502
-  repo root.
+  repo root. **`mvn -o test`** (and every build phase after it, so `package`
+  too) runs the whole `TestRunner` suite through `TestRunnerTest`, a
+  one-method JUnit 3 bridge, and fails the build when a test does (since
+  2026-09-22). The UI tests (`DialogTextsTest`, `RenderingTest`,
+  `UIWiringTest`) need a display and skip themselves without one, or with
+  `-Ddis6502.skipUITests=true` (what the CI workflow passes); the MADS round
+  trip skips itself off Windows.
 - **Running the unit test suite directly** (bypassing Maven's test runner,
   useful for fast iteration) needs a classpath with the right dependency
   jars, `target/classes`, and `target/test-classes` - confirm the exact jar
   names/versions in the local `.m2` repo before assuming an old command
-  still works.
+  still works. The tests write their settings to a throw-away `test`
+  preferences node (`TestRunner.run`), never to the user's.
 - **Git Bash / `javac`/`java` classpaths must use Windows-style paths**
   (`C:/...`), not Unix-style (`/c/...`) - a Unix-style classpath entry
   silently fails to resolve classes instead of erroring clearly.

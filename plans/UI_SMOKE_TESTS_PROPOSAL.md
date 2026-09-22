@@ -1,6 +1,16 @@
 # Proposal: which UI smoke tests become tests in the repository
 
-Status: proposal, 2026-09-22. Nothing below is implemented.
+Status: implemented 2026-09-22, in the suggested order - settings isolation
+(`Application(Preferences)`, `dis6502.settingsNode`, `TestRunner.run`),
+`DialogTextsTest`, `UIWiringTest` (the eight scenarios), `RenderingTest`,
+and `TestRunner` in the Maven build through the JUnit 3 bridge
+`TestRunnerTest`. Two things turned out differently from the text below:
+nothing of the `ui` package loads headless (WUDSN Base's `Actions` needs
+the toolkit), so all three UI tests skip without a display rather than
+running "headless where possible"; and the CI build passes
+`-Ddis6502.skipUITests=true`, since its Windows runner has a desktop but
+nobody to look at the windows. The scratch programs the tests replaced can
+go. The text below is the proposal as written.
 
 ## Background
 

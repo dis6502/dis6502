@@ -72,9 +72,10 @@ Not port gaps - identical in C++ - but limits a user will meet:
   operand-changing flags flipped. Found and fixed on the way: the
   ZP-as-byte directive wrote its bytes with four hex digits
   (`.byte $00AD,...`), inherited from C++.
-- The live checks are scratch programs in `C:\TEMP\claude\dis6502-smoketest`
-  and not part of the suite. Which of them should become tests, and what
-  that needs, is in `UI_SMOKE_TESTS_PROPOSAL.md` (2026-09-22).
+- ~~The live checks are scratch programs and not part of the suite~~ - done
+  2026-09-22 per `UI_SMOKE_TESTS_PROPOSAL.md`: `DialogTextsTest`,
+  `UIWiringTest` (eight scenarios against the running application) and
+  `RenderingTest` are in `TestRunner`, which `mvn test` now runs.
 - There is no Oric or Atari 5200 fixture with a reassembly check, and no
   test for the Default Folders save/reload per computer system.
 

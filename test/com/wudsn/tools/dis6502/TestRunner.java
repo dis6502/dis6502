@@ -93,6 +93,13 @@ public final class TestRunner {
 	private static final String SETTINGS_NODE = "test";
 
 	public static void main(String[] args) {
+		if (run() > 0) {
+			System.exit(1);
+		}
+	}
+
+	/** Runs the whole suite with its settings isolated and returns the number of failed tests - what {@code main} and {@link TestRunnerTest} share. */
+	public static int run() {
 		System.setProperty(Application.SETTINGS_NODE_PROPERTY, SETTINGS_NODE);
 		TestRunner runner = new TestRunner();
 		try {
@@ -100,9 +107,7 @@ public final class TestRunner {
 		} finally {
 			removeTestSettings();
 		}
-		if (runner.failedCount > 0) {
-			System.exit(1);
-		}
+		return runner.failedCount;
 	}
 
 	/** Leaves the user's settings as they were: whatever the tests stored under the test node is dropped. */

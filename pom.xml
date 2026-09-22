@@ -15,6 +15,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
+		<!-- Set to true to skip the tests that need a display (see DialogTextsTest.isHeadless). -->
+		<dis6502.skipUITests>false</dis6502.skipUITests>
 	</properties>
 
 	<dependencies>
@@ -27,6 +29,14 @@
 			<groupId>com.wudsn.tools</groupId>
 			<artifactId>com.wudsn.tools.base.atari</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+		<!-- Only for TestRunnerTest, the one-method bridge that lets Surefire run TestRunner;
+		     the tests themselves use no framework (see TestRunner's javadoc). -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
@@ -43,6 +53,21 @@
 			</resource>
 		</resources>
 		<plugins>
+			<!-- Runs the whole suite through TestRunnerTest on every build ("mvn test"/"package").
+			     Pinned to a version whose JUnit 3 provider is in the offline repository. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.2.5</version>
+				<configuration>
+					<includes>
+						<include>**/TestRunnerTest.java</include>
+					</includes>
+					<systemPropertyVariables>
+						<dis6502.skipUITests>${dis6502.skipUITests}</dis6502.skipUITests>
+					</systemPropertyVariables>
+				</configuration>
+			</plugin>
 			<!-- Merges this project's classes with com.wudsn.tools.base(.atari) into a
 			     single runnable jar. -->
 			<plugin>

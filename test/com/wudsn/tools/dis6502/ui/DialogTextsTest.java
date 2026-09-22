@@ -80,9 +80,14 @@ public final class DialogTextsTest {
 		Assert.log("DialogTextsTest completed");
 	}
 
-	/** Whether the UI tests must skip themselves: there is no display, so nothing of the {@code ui} package can be used. */
+	/**
+	 * Whether the UI tests must skip themselves: there is no display, so
+	 * nothing of the {@code ui} package can be used - or the build asked for
+	 * it ({@code -Ddis6502.skipUITests=true}, e.g. on a CI runner that has a
+	 * desktop but nobody to look at the windows the tests open).
+	 */
 	public static boolean isHeadless() {
-		return GraphicsEnvironment.isHeadless();
+		return GraphicsEnvironment.isHeadless() || Boolean.getBoolean("dis6502.skipUITests");
 	}
 
 	private static void testPanelsAndMenu() throws Exception {

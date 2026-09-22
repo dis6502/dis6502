@@ -48,6 +48,10 @@ public final class ReassemblyRoundTripTest {
 	}
 
 	public static void testReassemblyRoundTrip() throws IOException, InterruptedException {
+		if (!System.getProperty("os.name", "").startsWith("Windows")) {
+			Assert.log("ReassemblyRoundTripTest skipped: the vendored MADS is a Windows executable");
+			return;
+		}
 		testUnit("unit001", FileType.EXECUTABLE_FILE, "test-resources/disassembly/unit001/in/autorun.xex",
 				"test-resources/disassembly/unit001/ref/autorun.xex");
 		testUnit("unit002", FileType.EXECUTABLE_FILE, "test-resources/disassembly/unit002/in/multisegment.xex",
