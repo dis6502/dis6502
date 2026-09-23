@@ -789,7 +789,7 @@ public final class Dis6502 {
 			application.sendMessage(Messages.E033, file.getPath());
 			return false;
 		default:
-			// ERROR: Disk image is corrupted or not an Atari single/enhanced density disk or file too big
+			// ERROR: Disk image is corrupted or not an Atari single/enhanced density disk or file too big.
 			application.sendMessage(Messages.E036);
 			return false;
 		}
@@ -1042,7 +1042,7 @@ public final class Dis6502 {
 	private void performMergeSegments() {
 		if (workspace.getSegmentList().getCount() > 1) {
 			int mergedCount = workspace.getSegmentList().mergeSegments();
-			// INFO: {0} contiguous segments merged
+			// INFO: {0} contiguous segments merged.
 			application.sendMessage(Messages.I015, String.valueOf(mergedCount));
 		}
 	}

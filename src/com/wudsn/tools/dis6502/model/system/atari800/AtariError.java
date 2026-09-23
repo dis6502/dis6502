@@ -40,58 +40,58 @@ public enum AtariError {
 	public String getErrorText() {
 		switch (this) {
 		case OK:
-			// INFO: OK
+			// INFO: Operation completed.
 			return Messages.I074.format();
 		case NO_ENTRY_FOUND:
-			// ERROR: No matching directory entry found
+			// ERROR: No matching directory entry found.
 			return Messages.E075.format();
 		case END_OF_FILE:
-			// ERROR: End of file reached
+			// ERROR: End of file reached.
 			return Messages.E076.format();
 		case DISK_NOT_FOUND:
-			// ERROR: Disk not found
+			// ERROR: Disk not found.
 			return Messages.E077.format();
 		case DIRECTORY_NOT_FOUND:
-			// ERROR: Directory not found
+			// ERROR: Directory not found.
 			return Messages.E078.format();
 		case DIRECTORY_READ:
-			// ERROR: Cannot read directory
+			// ERROR: Cannot read directory.
 			return Messages.E079.format();
 		case DIRECTORY_WRITE:
-			// ERROR: Cannot write directory
+			// ERROR: Cannot write directory.
 			return Messages.E080.format();
 		case INVALID_VTOC_ENTRY:
-			// ERROR: Invalid VTOC entry
+			// ERROR: Invalid VTOC entry.
 			return Messages.E081.format();
 		case SECTOR_NOT_FOUND:
-			// ERROR: Sector not found
+			// ERROR: Sector not found.
 			return Messages.E082.format();
 		case FILE_READ:
-			// ERROR: Cannot read file
+			// ERROR: Cannot read file.
 			return Messages.E083.format();
 		case FILE_WRITE:
-			// ERROR: Cannot write file
+			// ERROR: Cannot write file.
 			return Messages.E084.format();
 		case FILE_CORRUPTED:
-			// ERROR: File structure is corrupted
+			// ERROR: File structure is corrupted.
 			return Messages.E085.format();
 		case FILE_ALREADY_EXISTS:
-			// ERROR: File already exists
+			// ERROR: File already exists.
 			return Messages.E086.format();
 		case NO_FREE_SECTOR:
-			// ERROR: No free sector
+			// ERROR: No free sector.
 			return Messages.E087.format();
 		case BITMAP_READ:
-			// ERROR: Cannot read bitmap
+			// ERROR: Cannot read bitmap.
 			return Messages.E088.format();
 		case BITMAP_WRITE:
-			// ERROR: Cannot write bitmap
+			// ERROR: Cannot write bitmap.
 			return Messages.E089.format();
 		case SECTOR_ALREADY_FREE:
-			// ERROR: Sector is already free
+			// ERROR: Sector is already free.
 			return Messages.E090.format();
 		case FILE_SEEK:
-			// ERROR: Cannot seek file position
+			// ERROR: Cannot seek file position.
 			return Messages.E091.format();
 		}
 		throw new IllegalStateException("No error text for " + name() + ".");

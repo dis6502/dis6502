@@ -64,7 +64,7 @@ public final class ValueSetsTest {
 			texts.add(error.getErrorText());
 		}
 		Assert.longEquals(texts.size(), AtariError.values().length);
-		Assert.stringEquals(AtariError.DISK_NOT_FOUND.getErrorText(), "Disk not found");
+		Assert.stringEquals(AtariError.DISK_NOT_FOUND.getErrorText(), "Disk not found.");
 
 		Assert.log("ValueSetsTest completed");
 	}

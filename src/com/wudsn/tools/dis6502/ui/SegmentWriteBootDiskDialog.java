@@ -199,7 +199,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 
 		default:
 			// Messages.E036 has no placeholder, so filePath is silently dropped here.
-			// ERROR: Disk image is corrupted or not an Atari single/enhanced density disk or file too big
+			// ERROR: Disk image is corrupted or not an Atari single/enhanced density disk or file too big.
 			throw new IOException(Messages.E036.format());
 		}
 	}
