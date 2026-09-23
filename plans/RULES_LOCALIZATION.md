@@ -38,7 +38,7 @@ underlying exception's text, another `Message`'s already-formatted
 output) - adding one would just tack a second, misplaced period onto
 whatever that nested message already ends with:
 
-- `E004=Cannot parse equate line "'{0}". Error: {1}` - `{1}` is a parser's
+- `E004=Cannot parse equate line "{0}". Error: {1}` - `{1}` is a parser's
   own error string.
 - `E092=Could not read disk image "{0}": {1}` - `{1}` is an `AtariError`'s
   own formatted text.
@@ -46,6 +46,31 @@ whatever that nested message already ends with:
 This does not apply when a trailing placeholder is just a plain value, not
 a nested message - `E051=Unsupported file header {0}.` still ends with
 its own period, since `{0}` there is only a header value, not a message.
+
+## Quoting a placeholder's value
+
+A placeholder filled with a value that can genuinely contain whitespace -
+a file/workspace/profile path, an arbitrary string being processed -
+is wrapped in double quotes, not single quotes, so an embedded space in
+the actual value doesn't blur into the surrounding sentence:
+
+```
+E064=File "{0}" is empty.
+```
+
+This only applies to a placeholder holding a real, variable-length
+string. It does not apply to:
+
+- A single character, e.g. `E063=Character '{0}' ({1}) at position {2}
+  of string "{3}" is no ASCII character...` - `{0}` is one character
+  (stays single-quoted), `{3}` is the whole string being written (double-
+  quoted).
+- A value that structurally can never contain whitespace, such as an XML
+  tag name (`E065=Mismatched root element: expected '{0}' but found
+  '{1}'.` - the XML spec's own `Name` production forbids whitespace).
+- A number, enum/`ValueSet` value, or other fixed-format token - none of
+  `Messages.properties`'s many `{0} bytes`/count-style placeholders need
+  quoting of either kind.
 
 ## Comment every `Messages.*` call site with its text
 
