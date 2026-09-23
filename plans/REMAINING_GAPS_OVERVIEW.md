@@ -12,13 +12,13 @@ from it, per this project's convention - git history has each write-up
 their commits: `LogPanel` coloring, and `MainUITest.cpp` being a headless
 console suite rather than a UI driver). The "explicitly unverified" items of
 the first pass were all settled by the second audit
-([`FINAL_GAP_ANALYSIS.md`](FINAL_GAP_ANALYSIS.md)) or since: the legacy
-loaders are tested against real `WRK14`/`PRF17` fixtures, `ImgError`/`AtariError`
-match the C++ enums one to one, `Application`'s settings and messages are
-exercised by the suite, C++'s `OperatingSystem::ExecuteCommand` was only ever
-used by its test harness, and menu commands and icons were checked one by
-one. Numbers are kept as originally assigned, so references elsewhere
-(commit messages, `plans/MEMORY.md`) stay valid.
+([`FINAL_GAP_ANALYSIS.md`](FINAL_GAP_ANALYSIS.md), which also verified every
+menu command and icon one by one) or since: the legacy loaders are tested
+against real `WRK14`/`PRF17` fixtures, `ImgError`/`AtariError` match the C++
+enums one to one, `Application`'s settings and messages are exercised by the
+suite, and C++'s `OperatingSystem::ExecuteCommand` was only ever used by its
+test harness. Numbers are kept as originally assigned, so references
+elsewhere (commit messages, `plans/MEMORY.md`) stay valid.
 
 **Note (2026-09-21):** the porting phase itself is now over - see
 `plans/PORTING_GUIDE.md`'s status note and `plans/MEMORY.md`'s top section.
