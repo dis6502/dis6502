@@ -122,6 +122,7 @@ public final class TestRunner {
 		runTest("SegmentTest", SegmentTest::testSegment);
 		runTest("SegmentTest.testSegmentRangeEdit", SegmentTest::testSegmentRangeEdit);
 		runTest("DisassemblyResultTest", DisassemblyResultTest::testDisassemblyResult);
+		runTest("DisassemblyResultTest.testFindAndSelectLines", DisassemblyResultTest::testFindAndSelectLines);
 		runTest("DisassemblyResultFileTest", DisassemblyResultFileTest::testDisassemblyResultFile);
 		runTest("ComputerSystemTest", () -> ComputerSystemTest.testSystems(new ComputerSystemFactory()));
 		runTest("Profile1XTest", Profile1XTest::testProfile1X);

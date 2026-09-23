@@ -7,6 +7,7 @@ package com.wudsn.tools.dis6502.model;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
 
 /**
@@ -175,10 +176,15 @@ public final class DisassemblyResult {
 	 * {@code findFirstLineNumber[0]} already points to before any later line gets a
 	 * chance, so a second "find next" search could never advance past the first
 	 * match.
+	 * <p>
+	 * Matching is case-insensitive - {@code findString} is upper-cased once here
+	 * ({@link Locale#ROOT}, so this doesn't vary with the running system's
+	 * locale), each line upper-cased the same way before comparing.
 	 */
 	public boolean findAndSelectLines(boolean first, int[] findFirstLineNumber, String findString) {
 		boolean found = false;
 		int xrefLineNumber = 1;
+		String findStringUpperCase = findString.toUpperCase(Locale.ROOT);
 
 		for (LineIterator i = createLineIterator(); i.hasNext();) {
 			DisassemblyLine line = i.next();
@@ -190,7 +196,7 @@ public final class DisassemblyResult {
 				line.xrefLineNumber = 0;
 
 				// Do we have the substring in the line?
-				if (line.getLine().contains(findString)) {
+				if (line.getLine().toUpperCase(Locale.ROOT).contains(findStringUpperCase)) {
 					// This is the good line. Mark it as selected.
 					line.xrefLineNumber = xrefLineNumber++;
 
@@ -208,7 +214,7 @@ public final class DisassemblyResult {
 				// after the line has been found.
 				if (line.getLineNumber() > findFirstLineNumber[0] && !found) {
 					// Do we have the substring in the line?
-					if (line.getLine().contains(findString)) {
+					if (line.getLine().toUpperCase(Locale.ROOT).contains(findStringUpperCase)) {
 						// This is the good line. Mark it as selected.
 						line.selected = true;
 						// Keep the first line for the next search operation.

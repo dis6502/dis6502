@@ -68,6 +68,38 @@ public final class DisassemblyResultTest {
 		Assert.boolEquals(resultIterator.hasNext(), false);
 	}
 
+	/** Search is case-insensitive - "lda" matches both "LDA #$01" and "lda #$02", but not "STA $D000". */
+	public static void testFindAndSelectLines() {
+		DisassemblyResult result = new DisassemblyResult();
+		DisassemblySection section = result.allocSection(DisassemblySectionType.CODE_LINES);
+		DisassemblyLine templateLine = new DisassemblyLine(section);
+
+		section.addLine(templateLine, "LDA #$01");
+		section.addLine(templateLine, "STA $D000");
+		section.addLine(templateLine, "lda #$02");
+
+		int[] findFirstLineNumber = { 0 };
+		Assert.boolEquals(result.findAndSelectLines(true, findFirstLineNumber, "lda"), true);
+		Assert.longEquals(findFirstLineNumber[0], 1);
+
+		DisassemblyResult.LineIterator iterator = result.createLineIterator();
+		DisassemblyLine line1 = iterator.next();
+		Assert.longEquals(line1.xrefLineNumber, 1);
+		Assert.boolEquals(line1.selected, true);
+
+		DisassemblyLine line2 = iterator.next();
+		Assert.longEquals(line2.xrefLineNumber, 0);
+		Assert.boolEquals(line2.selected, false);
+
+		DisassemblyLine line3 = iterator.next();
+		Assert.longEquals(line3.xrefLineNumber, 2);
+		Assert.boolEquals(line3.selected, false);
+
+		// Find next, also case-insensitive, continues forward from line 1 to line 3.
+		Assert.boolEquals(result.findAndSelectLines(false, findFirstLineNumber, "LDA"), true);
+		Assert.longEquals(findFirstLineNumber[0], 3);
+	}
+
 	/** Fills every section of {@code result} with placeholder lines, for {@link DisassemblyResultFileTest}. */
 	static void generateDisassemblyResult(DisassemblyResult result, int linesPerSection) {
 		result.clear();
