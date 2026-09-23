@@ -5,7 +5,6 @@
  */
 package com.wudsn.tools.dis6502.model;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;

@@ -215,6 +215,7 @@ public final class Disassembly {
 	}
 
 	/** Adds a label which is defined as a value in the SYSTEM_EQUATES file. */
+	// TODO: Why is this unused?
 	private void addLabelValue(String label, int address, DisassemblySectionType disassemblySectionType,
 			String comment) {
 		int systemAddr = disassemblySectionType == DisassemblySectionType.SYSTEM_EQUATES ? 0xFFFF : DisassemblyLine.NO_SYSTEM_ADDRESS;

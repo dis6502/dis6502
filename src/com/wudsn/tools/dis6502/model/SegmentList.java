@@ -13,7 +13,6 @@ import java.util.Objects;
 import org.w3c.dom.Element;
 
 import com.wudsn.tools.base.common.HexUtility;
-import com.wudsn.tools.base.common.Log;
 
 /**
  * The list of {@link Segment}s of a {@link Workspace}, plus the transient
