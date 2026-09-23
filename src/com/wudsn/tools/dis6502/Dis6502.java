@@ -1723,7 +1723,7 @@ public final class Dis6502 {
 	private void performFindInDisassembly() {
 		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
 		String findString = mainWindow.disassemblyPanel.findField.getText();
-		if (disassemblyResult == null || findString.isEmpty()) {
+		if (disassemblyResult.isEmpty() || findString.isEmpty()) {
 			return;
 		}
 		findFirstLineNumber[0] = 0;
@@ -1753,7 +1753,7 @@ public final class Dis6502 {
 	private void performFindNextInDisassembly() {
 		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
 		String findString = mainWindow.disassemblyPanel.findField.getText();
-		if (disassemblyResult == null || findString.isEmpty()) {
+		if (disassemblyResult.isEmpty() || findString.isEmpty()) {
 			return;
 		}
 		boolean found = disassemblyResult.findAndSelectLines(false, findFirstLineNumber, findString);
@@ -1777,7 +1777,7 @@ public final class Dis6502 {
 	 */
 	private void performXRefSelected(int xrefLineNumber) {
 		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
-		if (disassemblyResult == null) {
+		if (disassemblyResult.isEmpty()) {
 			return;
 		}
 		for (DisassemblyResult.LineIterator i = disassemblyResult.createLineIterator(); i.hasNext();) {
@@ -1842,7 +1842,7 @@ public final class Dis6502 {
 			return;
 		}
 		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
-		if (disassemblyResult == null) {
+		if (disassemblyResult.isEmpty()) {
 			return;
 		}
 		int segmentIndex = memoryInspectorState.getSegmentIndex();
