@@ -36,7 +36,7 @@ acceptance bar for every batch.
 - `plans/*.md` - these are deliberately a historical record of the port
   (`REMAINING_GAPS_OVERVIEW.md`, `FINAL_GAP_ANALYSIS.md`,
   `ACTIONS_ELEMENT_FACTORY_MIGRATION.md`, `POPUP_MENU_ACCELERATORS_PLAN.md`,
-  `PORTING_GUIDE.md`, `MEMORY.md`, `TEXT_INDEX.md`, `DIS6502_WIN32_TODOS.txt`)
+  `PORTING_GUIDE.md`, `MEMORY.md`, `RULES_LOCALIZATION.md`, `DIS6502_WIN32_TODOS.txt`)
   - their entire point is documenting C++-vs-Java differences and decisions,
     for exactly the kind of future reader who'd ask "why does this Java code
     do X" and finds the answer in git history or these files. Stripping C++
