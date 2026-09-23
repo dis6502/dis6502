@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
- * The full disassembly output: one {@link DisassemblySection} per {@link
- * DisassemblySectionType} (system equates, user equates, code equates, code
- * lines), each holding an ordered list of {@link DisassemblyLine}s. A
+ * The full disassembly output: one {@link DisassemblySection} per
+ * {@link DisassemblySectionType} (system equates, user equates, code equates,
+ * code lines), each holding an ordered list of {@link DisassemblyLine}s. A
  * section is {@code null} until {@link #allocSection} is called for it.
  * <p>
  * Has a single {@link Iterator}-based {@link LineIterator}, rather than
@@ -61,7 +61,9 @@ public final class DisassemblyResult {
 		return getSection(DisassemblySection.getIndex(disassemblySectionType));
 	}
 
-	/** Clears the section for {@code disassemblySectionType} (drops all its lines). */
+	/**
+	 * Clears the section for {@code disassemblySectionType} (drops all its lines).
+	 */
 	public void clearSection(DisassemblySectionType disassemblySectionType) {
 		sections[DisassemblySection.getIndex(disassemblySectionType)] = null;
 	}
@@ -80,6 +82,10 @@ public final class DisassemblyResult {
 		return section;
 	}
 
+	public boolean isEmpty() {
+		return getLineCount() == 0;
+	}
+
 	public int getLineCount() {
 		int lineCount = 0;
 		for (DisassemblySection section : sections) {
@@ -91,8 +97,8 @@ public final class DisassemblyResult {
 	}
 
 	/**
-	 * Selects the line with the given line number, deselecting every other
-	 * line. Returns the selected line, or {@code null} if none matched.
+	 * Selects the line with the given line number, deselecting every other line.
+	 * Returns the selected line, or {@code null} if none matched.
 	 */
 	public DisassemblyLine selectLine(int lineNumber) {
 		DisassemblyLine selectedLine = null;
@@ -109,8 +115,8 @@ public final class DisassemblyResult {
 	}
 
 	/**
-	 * Selects the line at the given segment/offset, deselecting every other
-	 * line. Returns the selected line's number, or 0 if none matched.
+	 * Selects the line at the given segment/offset, deselecting every other line.
+	 * Returns the selected line's number, or 0 if none matched.
 	 */
 	public int selectLine(int segmentIndex, int offset) {
 		int selectedLineNumber = 0;
@@ -128,8 +134,8 @@ public final class DisassemblyResult {
 
 	/**
 	 * Extends the current selection up to and including the line at the given
-	 * segment/offset. Returns {@code false} without changing anything if no
-	 * line matches that segment/offset.
+	 * segment/offset. Returns {@code false} without changing anything if no line
+	 * matches that segment/offset.
 	 */
 	public boolean extendSelectionTo(int segmentIndex, int offset) {
 		int selectedLineNumber = 0;
@@ -159,16 +165,16 @@ public final class DisassemblyResult {
 
 	/**
 	 * Finds and selects lines containing {@code findString}. On {@code first},
-	 * scans every line from the start, numbering every match for the XRef
-	 * search window and selecting the first one found; otherwise scans
-	 * forward from {@code findFirstLineNumber[0]} for the next match.
+	 * scans every line from the start, numbering every match for the XRef search
+	 * window and selecting the first one found; otherwise scans forward from
+	 * {@code findFirstLineNumber[0]} for the next match.
 	 * {@code findFirstLineNumber[0]} is updated to the found line's number.
 	 * <p>
-	 * The {@code first=false} branch's line-number comparison is {@code >}
-	 * rather than {@code >=}: {@code >=} would re-match the same line
-	 * {@code findFirstLineNumber[0]} already points to before any later
-	 * line gets a chance, so a second "find next" search could never
-	 * advance past the first match.
+	 * The {@code first=false} branch's line-number comparison is {@code >} rather
+	 * than {@code >=}: {@code >=} would re-match the same line
+	 * {@code findFirstLineNumber[0]} already points to before any later line gets a
+	 * chance, so a second "find next" search could never advance past the first
+	 * match.
 	 */
 	public boolean findAndSelectLines(boolean first, int[] findFirstLineNumber, String findString) {
 		boolean found = false;
@@ -198,7 +204,8 @@ public final class DisassemblyResult {
 					found = true;
 				}
 			} else {
-				// Ignore all lines up to and including the line found in a previous search, and after the line has been found.
+				// Ignore all lines up to and including the line found in a previous search, and
+				// after the line has been found.
 				if (line.getLineNumber() > findFirstLineNumber[0] && !found) {
 					// Do we have the substring in the line?
 					if (line.getLine().contains(findString)) {
@@ -216,16 +223,16 @@ public final class DisassemblyResult {
 	}
 
 	/**
-	 * Returns the line number of the line that defines {@code label} (its own
-	 * text starts with the label immediately followed by a space or colon),
-	 * or 0 if no line does.
+	 * Returns the line number of the line that defines {@code label} (its own text
+	 * starts with the label immediately followed by a space or colon), or 0 if no
+	 * line does.
 	 */
 	public int findDefinitionLineNumber(String label) {
 		for (LineIterator i = createLineIterator(); i.hasNext();) {
 			DisassemblyLine line = i.next();
 			String text = line.getLine();
-			if (text.startsWith(label)
-					&& (text.length() == label.length() || text.charAt(label.length()) == ' ' || text.charAt(label.length()) == ':')) {
+			if (text.startsWith(label) && (text.length() == label.length() || text.charAt(label.length()) == ' '
+					|| text.charAt(label.length()) == ':')) {
 				return line.getLineNumber();
 			}
 		}
@@ -233,11 +240,10 @@ public final class DisassemblyResult {
 	}
 
 	/**
-	 * Finds the offset/size of the CODE_LINES instruction in
-	 * {@code segmentIndex} that spans offset 0, writing them to
-	 * {@code offset[0]}/{@code size[0]} (both reset to 0 first, and left at 0
-	 * if nothing matches). {@code offset} is a single-element array used
-	 * purely as an out-parameter, despite its name.
+	 * Finds the offset/size of the CODE_LINES instruction in {@code segmentIndex}
+	 * that spans offset 0, writing them to {@code offset[0]}/{@code size[0]} (both
+	 * reset to 0 first, and left at 0 if nothing matches). {@code offset} is a
+	 * single-element array used purely as an out-parameter, despite its name.
 	 */
 	public void findOffsetAtStartOfInstruction(int segmentIndex, int[] offset, int[] size) {
 		offset[0] = 0;
@@ -255,12 +261,12 @@ public final class DisassemblyResult {
 	}
 
 	/**
-	 * Sequentially iterates every line across a contiguous range of sections.
-	 * Also assigns each returned line's line number as a running counter
-	 * starting at 1. A line's number is therefore only meaningful right
-	 * after being visited by a full traversal (e.g. {@link
-	 * #createLineIterator()} run to completion); an earlier traversal (say,
-	 * only over one section) leaves other lines' numbers stale or unset.
+	 * Sequentially iterates every line across a contiguous range of sections. Also
+	 * assigns each returned line's line number as a running counter starting at 1.
+	 * A line's number is therefore only meaningful right after being visited by a
+	 * full traversal (e.g. {@link #createLineIterator()} run to completion); an
+	 * earlier traversal (say, only over one section) leaves other lines' numbers
+	 * stale or unset.
 	 */
 	public static final class LineIterator implements Iterator<DisassemblyLine> {
 
