@@ -109,6 +109,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 		getContentPane().add(formPanel, BorderLayout.CENTER);
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
+		getRootPane().setDefaultButton(okButton);
 		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 

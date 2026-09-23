@@ -125,6 +125,7 @@ public final class EquateDialog extends JDialog {
 		setSize(480, 420);
 		setLocationRelativeTo(owner);
 
+		getRootPane().setDefaultButton(okButton);
 		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 

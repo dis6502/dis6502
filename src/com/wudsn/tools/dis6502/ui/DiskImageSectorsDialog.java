@@ -188,6 +188,7 @@ public final class DiskImageSectorsDialog extends JDialog {
 		setSize(1000, 560);
 		setLocationRelativeTo(owner);
 
+		getRootPane().setDefaultButton(okButton);
 		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 

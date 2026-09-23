@@ -137,6 +137,7 @@ public final class RawFileDialog extends JDialog {
 		setSize(700, 500);
 		setLocationRelativeTo(owner);
 
+		getRootPane().setDefaultButton(okButton);
 		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 

@@ -119,6 +119,7 @@ public final class EquateRangeDialog extends JDialog {
 		getContentPane().add(formPanel, BorderLayout.CENTER);
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
+		getRootPane().setDefaultButton(okButton);
 		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 

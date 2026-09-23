@@ -109,6 +109,7 @@ public final class LowHighByteDialog extends JDialog {
 		pack();
 		setLocationRelativeTo(owner);
 
+		getRootPane().setDefaultButton(okButton);
 		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 

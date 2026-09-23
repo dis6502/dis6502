@@ -129,6 +129,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 		pack();
 		setLocationRelativeTo(owner);
 
+		getRootPane().setDefaultButton(okButton);
 		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 

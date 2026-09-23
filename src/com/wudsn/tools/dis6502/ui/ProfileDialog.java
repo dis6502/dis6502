@@ -197,6 +197,7 @@ public final class ProfileDialog extends JDialog {
 		pack();
 		setLocationRelativeTo(owner);
 
+		getRootPane().setDefaultButton(okButton);
 		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
