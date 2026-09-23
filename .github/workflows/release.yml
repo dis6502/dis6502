@@ -68,7 +68,7 @@ jobs:
 
       - name: Build the dis6502 shaded jar
         # The tests run as part of the build; the ones that need a display are skipped here.
-        run: mvn -B -ntp package -Ddis6502.skipUITests=true
+        run: mvn -B -ntp package "-Ddis6502.skipUITests=true"
         working-directory: dis6502
 
       - name: Determine app version
