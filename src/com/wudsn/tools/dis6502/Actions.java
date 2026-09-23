@@ -106,12 +106,12 @@ public final class Actions extends NLS {
 	public static Action MainMenu_File_NewWorkspace = new Action(KeyEvent.VK_N, KeyStroke.M1);
 	public static Action MainMenu_File_OpenWorkspace = new Action(KeyEvent.VK_O, KeyStroke.M1);
 	public static Action MainMenu_File_OpenFile;
-	public static Action MainMenu_File_OpenAnyFile;
+	public static Action MainMenu_File_OpenAnyFile = new Action(KeyEvent.VK_O, KeyStroke.M1 | KeyStroke.M2);
 	public static Action MainMenu_File_OpenCassetteImageFile;
 	public static Action MainMenu_File_OpenDiskImageExecutableFile;
 	public static Action MainMenu_File_OpenDiskImageBootSectors;
 	public static Action MainMenu_File_OpenDiskImageSectors;
-	public static Action MainMenu_File_OpenExecutableFile = new Action(KeyEvent.VK_O, KeyStroke.M1 | KeyStroke.M2);
+	public static Action MainMenu_File_OpenExecutableFile;
 	public static Action MainMenu_File_OpenRawFile;
 	public static Action MainMenu_File_OpenROMImageFile;
 	public static Action MainMenu_File_AddFile;
