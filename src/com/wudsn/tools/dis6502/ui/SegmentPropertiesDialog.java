@@ -22,7 +22,6 @@ import javax.swing.JTextField;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.base.gui.ValueSetField;
-import com.wudsn.tools.base.repository.DataType;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Texts;
@@ -46,7 +45,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 
 
 	private final JTextField addressField = new JTextField(6);
-	private final JCheckBox binaryCheckBox = checkBox(DataTypes.SegmentPropertiesDialog_Binary);
+	private final JCheckBox binaryCheckBox = ElementFactory.createCheckBox(DataTypes.SegmentPropertiesDialog_Binary);
 	private final JTextField labelPrefixField = new JTextField(10);
 	private final ValueSetField<ProcessorType> processorField = new ValueSetField<ProcessorType>(ProcessorType.getSelectableValues());
 
@@ -110,13 +109,6 @@ public final class SegmentPropertiesDialog extends JDialog {
 		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(formPanel, BorderLayout.CENTER);
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-	}
-
-	/** Builds a self-labeled checkbox (text plus mnemonic) from a {@link com.wudsn.tools.base.repository.DataType}, see {@link DataTypes}. */
-	private static JCheckBox checkBox(DataType dataType) {
-		JCheckBox checkBox = new JCheckBox();
-		ElementUtilities.applyLabel(checkBox, dataType);
-		return checkBox;
 	}
 
 	/** Validates the address and, if it checks out, commits every field to the segment and closes the dialog. */

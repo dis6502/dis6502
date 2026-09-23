@@ -1,6 +1,29 @@
 # Proposal: add ElementFactory.createCheckBox/createRadioButton(DataType)
 
-Status: proposal, 2026-09-23. Nothing below is implemented.
+**Status: done, 2026-09-23.** `ElementFactory.createCheckBox`/
+`createRadioButton(DataType)` added to WUDSN Base as proposed;
+`ElementUtilities.applyLabel(AbstractButton, DataType)` and all three
+duplicated wrapper methods removed from dis6502, all 24 call sites
+(`ProfileDialog` - 18 checkboxes + 3 radio buttons, `SegmentPropertiesDialog` -
+1 checkbox, `MemoryInspectorFindStringDialog` - 2 radio buttons) switched
+to the new factory methods directly. Verified with a real (non-headless)
+`TestRunner` run - `DialogTextsTest` actually constructs all three
+dialogs and checks their texts/mnemonics/tooltips, not just a compile
+check.
+
+**Follow-up, same day:** `ElementUtilities`'s remaining method,
+`applyLabel(JLabel, DataType, JComponent)` (mutates an existing label in
+place - `LowHighByteDialog`'s only remaining local helper), moved into
+`ElementFactory` too, as a public overload of the same name. While
+touching that code, `createLabel(DataType, JComponent)` was rewritten to
+construct a `JLabel` and delegate to the new overload instead of carrying
+its own separate copy of the `&`-mnemonic-parsing logic, and the
+`AbstractButton` counterpart (previously a private `applyDataTypeLabel`
+inside `ElementFactory`) was renamed to a third `applyLabel` overload and
+made public too, for the same "mutate an existing instance" use case
+`createCheckBox`/`createRadioButton` didn't need but a future caller
+might. `ElementUtilities.java` now holds only `closeOnEscape` -
+everything `DataType`-label-related lives in `ElementFactory`.
 
 ## What's actually duplicated
 

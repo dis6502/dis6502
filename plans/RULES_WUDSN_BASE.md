@@ -50,13 +50,18 @@ future toolbar or dialog can reuse the same pattern.
   public static JToggleButton createToggleButton(Action action, boolean withMnemonic)
   public static void setButtonTextAndMnemonic(AbstractButton button, Action action)
   public static JLabel createLabel(DataType dataType, JComponent field)
+  public static JCheckBox createCheckBox(DataType dataType)
+  public static JRadioButton createRadioButton(DataType dataType)
+  public static void applyLabel(JLabel label, DataType dataType, JComponent field)
+  public static void applyLabel(AbstractButton button, DataType dataType)
   ```
-  `createLabel` is the one method here keyed by `DataType` (a paired
-  field's label text) rather than `Action` - there is no `ElementFactory`
-  equivalent yet for a self-labeled `JCheckBox`/`JRadioButton` built from a
-  `DataType`; this project's own `ElementUtilities.applyLabel(AbstractButton,
-  DataType)` fills that gap locally today (see
-  `plans/ELEMENTFACTORY_DATATYPE_BUTTONS_PROPOSAL.md`).
+  `createLabel`/`createCheckBox`/`createRadioButton`/`applyLabel` are the
+  methods here keyed by `DataType` (a paired field's label text, or a
+  self-labeled control's own text) rather than `Action` - use these, not a
+  hand-rolled `&`-mnemonic parser, for any new self-labeled `JCheckBox`/
+  `JRadioButton`, or to re-label an existing `JLabel`/button in place
+  (e.g. `LowHighByteDialog`'s Low/High Byte swap) rather than constructing
+  a new one.
   `createMenu`/`createMenuItem` require the label to contain a mnemonic
   marker and **throw at build time if it doesn't** - this is deliberate
   fail-fast validation, not something to route around. `createMenuItem`

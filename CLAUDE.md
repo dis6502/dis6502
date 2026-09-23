@@ -64,10 +64,11 @@ be rediscovered:
   and a `SerializedLambda` proof-of-concept, decided against changing it
   (status: decided, kept as-is).
 - [`plans/ELEMENTFACTORY_DATATYPE_BUTTONS_PROPOSAL.md`](plans/ELEMENTFACTORY_DATATYPE_BUTTONS_PROPOSAL.md) -
-  adding `ElementFactory.createCheckBox`/`createRadioButton(DataType)` to
-  WUDSN Base, removing three duplicated wrapper methods and a ~20-line
-  local helper (`ElementUtilities.applyLabel`) across 23 call sites in
-  `ProfileDialog`/`SegmentPropertiesDialog`/`MemoryInspectorFindStringDialog`
-  (status: proposal).
+  moving every `DataType`-keyed self-labeling helper
+  (`createCheckBox`/`createRadioButton`/both `applyLabel` overloads) into
+  `ElementFactory`, removing `ElementUtilities`'s local reimplementations
+  and three duplicated wrapper methods across 26 call sites in
+  `ProfileDialog`/`SegmentPropertiesDialog`/`MemoryInspectorFindStringDialog`/
+  `LowHighByteDialog` (status: done).
 
 New planning/guidance documents for future work should also go in `plans/`.

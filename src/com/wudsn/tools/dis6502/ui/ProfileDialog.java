@@ -65,30 +65,30 @@ public final class ProfileDialog extends JDialog {
 	// General.
 	private final JTextField commentField = new JTextField(4);
 	private final JTextField hexNotationField = new JTextField(4);
-	private final JCheckBox illegalInstructionCheckBox = checkBox(DataTypes.Profile_UseIllegalOpcodes);
-	private final JCheckBox useHexCheckBox = checkBox(DataTypes.Profile_UseHexNotation);
-	private final JCheckBox alignInstructionCheckBox = checkBox(DataTypes.Profile_AlignInstructions);
-	private final JCheckBox lineNumberingCheckBox = checkBox(DataTypes.Profile_UseLineNumbers);
-	private final JCheckBox showLowerCaseCheckBox = checkBox(DataTypes.Profile_ShowLowerCaseInstructions);
-	private final JCheckBox showImpliciteCheckBox = checkBox(DataTypes.Profile_ShowAInAccumulatorMode);
-	private final JCheckBox showColonCheckBox = checkBox(DataTypes.Profile_ShowColonAfterLabel);
-	private final JCheckBox displayOpcodesCheckBox = checkBox(DataTypes.Profile_ShowOpcodeAsComment);
-	private final JCheckBox showByte0CheckBox = checkBox(DataTypes.Profile_ShowBRKAsByte0);
-	private final JCheckBox showZPAsByteCheckBox = checkBox(DataTypes.Profile_ShowZPAbsoluteAsByte);
+	private final JCheckBox illegalInstructionCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_UseIllegalOpcodes);
+	private final JCheckBox useHexCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_UseHexNotation);
+	private final JCheckBox alignInstructionCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_AlignInstructions);
+	private final JCheckBox lineNumberingCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_UseLineNumbers);
+	private final JCheckBox showLowerCaseCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_ShowLowerCaseInstructions);
+	private final JCheckBox showImpliciteCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_ShowAInAccumulatorMode);
+	private final JCheckBox showColonCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_ShowColonAfterLabel);
+	private final JCheckBox displayOpcodesCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_ShowOpcodeAsComment);
+	private final JCheckBox showByte0CheckBox = ElementFactory.createCheckBox(DataTypes.Profile_ShowBRKAsByte0);
+	private final JCheckBox showZPAsByteCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_ShowZPAbsoluteAsByte);
 	private final JTextField forceAbsoluteField = new JTextField(4);
-	private final JCheckBox nonASCIIAsBytesCheckBox = checkBox(DataTypes.Profile_ShowNonASCIIChararactersAsBytes);
+	private final JCheckBox nonASCIIAsBytesCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_ShowNonASCIIChararactersAsBytes);
 	private final JTextField bytePerLineField = new JTextField(3);
 	private final JTextField wordPerLineField = new JTextField(3);
 	private final JTextField charPerLineField = new JTextField(3);
 	private final JTextField quoteForASCIIStringsField = new JTextField(3);
 
 	// Directive Syntax.
-	private final JCheckBox numOnlyInByteCheckBox = checkBox(DataTypes.Profile_DirectiveBYTEOnlyNumbersAllowed);
+	private final JCheckBox numOnlyInByteCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_DirectiveBYTEOnlyNumbersAllowed);
 	private final JTextField byteSyntaxField = new JTextField(6);
 	private final JTextField byteSeparatorField = new JTextField(3);
-	private final JCheckBox wordAllowedCheckBox = checkBox(DataTypes.Profile_DirectiveWORDAllowed);
+	private final JCheckBox wordAllowedCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_DirectiveWORDAllowed);
 	private final JTextField wordSyntaxField = new JTextField(6);
-	private final JCheckBox sByteAllowedCheckBox = checkBox(DataTypes.Profile_DirectiveSBYTEAllowed);
+	private final JCheckBox sByteAllowedCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_DirectiveSBYTEAllowed);
 	private final JTextField sByteSyntaxField = new JTextField(6);
 	private final JTextField orgSyntaxField = new JTextField(6);
 	private final JTextField lowHeadSyntaxField = new JTextField(6);
@@ -97,20 +97,20 @@ public final class ProfileDialog extends JDialog {
 	private final JTextField highHeadSyntaxField = new JTextField(6);
 	private final JTextField highTailSyntaxField = new JTextField(6);
 	private final JTextField endSyntaxField = new JTextField(8);
-	private final JCheckBox endFilenameCheckBox = checkBox(DataTypes.Profile_DirectiveENDNeedsFilename);
+	private final JCheckBox endFilenameCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_DirectiveENDNeedsFilename);
 	private final JTextField endTailField = new JTextField(8);
-	private final JCheckBox dsAllowedCheckBox = checkBox(DataTypes.Profile_DirectiveDSAllowed);
+	private final JCheckBox dsAllowedCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_DirectiveDSAllowed);
 	private final JTextField dsSyntaxField = new JTextField(6);
 
 	// Disassembly Listing.
 	private final ValueSetField<Encoding> outputEncodingField = new ValueSetField<Encoding>(Encoding.getOutputValues());
-	private final JCheckBox removeUnusedLabelsCheckBox = checkBox(DataTypes.Profile_OmitUnreferencedSystemLabels);
-	private final JCheckBox includeAllowedCheckBox = checkBox(DataTypes.Profile_DirectiveINCLUDEAllowed);
+	private final JCheckBox removeUnusedLabelsCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_OmitUnreferencedSystemLabels);
+	private final JCheckBox includeAllowedCheckBox = ElementFactory.createCheckBox(DataTypes.Profile_DirectiveINCLUDEAllowed);
 	private final JTextField includeHeadField = new JTextField(8);
 	private final JTextField includeTailField = new JTextField(8);
-	private final JRadioButton radioIncludeOneFile = radioButton(DataTypes.Profile_DirectiveINCLUDEAllEquatesInOneIncludeFile);
-	private final JRadioButton radioIncludeAllFiles = radioButton(DataTypes.Profile_DirectiveINCLUDEAllIncludesInMainFile);
-	private final JRadioButton radioIncludeNextFile = radioButton(DataTypes.Profile_DirectiveINCLUDEEachFileIncludesNextFile);
+	private final JRadioButton radioIncludeOneFile = ElementFactory.createRadioButton(DataTypes.Profile_DirectiveINCLUDEAllEquatesInOneIncludeFile);
+	private final JRadioButton radioIncludeAllFiles = ElementFactory.createRadioButton(DataTypes.Profile_DirectiveINCLUDEAllIncludesInMainFile);
+	private final JRadioButton radioIncludeNextFile = ElementFactory.createRadioButton(DataTypes.Profile_DirectiveINCLUDEEachFileIncludesNextFile);
 	private final JTextField maxIncludeLinesField = new JTextField(6);
 
 	private final ProfileLogic profileLogic;
@@ -259,20 +259,6 @@ public final class ProfileDialog extends JDialog {
 		c.insets = new Insets(2, 4, 2, 4);
 		c.anchor = GridBagConstraints.WEST;
 		return c;
-	}
-
-	/** Builds a self-labeled checkbox (text plus mnemonic) from a {@link DataType}, see {@link DataTypes}. */
-	private static JCheckBox checkBox(DataType dataType) {
-		JCheckBox checkBox = new JCheckBox();
-		ElementUtilities.applyLabel(checkBox, dataType);
-		return checkBox;
-	}
-
-	/** Builds a self-labeled radio button (text plus mnemonic) from a {@link DataType}, see {@link DataTypes}. */
-	private static JRadioButton radioButton(DataType dataType) {
-		JRadioButton radioButton = new JRadioButton();
-		ElementUtilities.applyLabel(radioButton, dataType);
-		return radioButton;
 	}
 
 	private static void addFullWidth(JPanel panel, int row, JComponent component) {

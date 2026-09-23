@@ -128,9 +128,9 @@ public final class LowHighByteDialog extends JDialog {
 	/** Opens the dialog labeled for whichever half is known; returns whether the user clicked OK. */
 	public boolean show(MemoryType memoryType, int knownByte) {
 		boolean lowIsKnown = memoryType == MemoryType.LOBYTE;
-		ElementUtilities.applyLabel(knownByteLabel, lowIsKnown ? DataTypes.LowHighByteDialog_LowByte : DataTypes.LowHighByteDialog_HighByte,
+		ElementFactory.applyLabel(knownByteLabel, lowIsKnown ? DataTypes.LowHighByteDialog_LowByte : DataTypes.LowHighByteDialog_HighByte,
 				knownByteField);
-		ElementUtilities.applyLabel(unknownByteLabel, lowIsKnown ? DataTypes.LowHighByteDialog_HighByte : DataTypes.LowHighByteDialog_LowByte,
+		ElementFactory.applyLabel(unknownByteLabel, lowIsKnown ? DataTypes.LowHighByteDialog_HighByte : DataTypes.LowHighByteDialog_LowByte,
 				unknownByteField);
 		knownByteField.setText(String.format("%02X", knownByte));
 		unknownByteField.setText("");

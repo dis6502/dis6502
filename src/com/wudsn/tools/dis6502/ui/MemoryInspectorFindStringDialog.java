@@ -26,7 +26,6 @@ import javax.swing.event.DocumentListener;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
-import com.wudsn.tools.base.repository.DataType;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Texts;
 
@@ -50,8 +49,8 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 	private final FindStringDialog findStringDialog = new FindStringDialog();
 	private final JTextField asciiField = new JTextField(20);
 	private final JTextField hexField = new JTextField(20);
-	private final JRadioButton allSegmentsRadioButton = radioButton(DataTypes.MemoryInspectorFindStringDialog_AllSegments);
-	private final JRadioButton selectedSegmentRadioButton = radioButton(DataTypes.MemoryInspectorFindStringDialog_SelectedSegment);
+	private final JRadioButton allSegmentsRadioButton = ElementFactory.createRadioButton(DataTypes.MemoryInspectorFindStringDialog_AllSegments);
+	private final JRadioButton selectedSegmentRadioButton = ElementFactory.createRadioButton(DataTypes.MemoryInspectorFindStringDialog_SelectedSegment);
 	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 
 	private MemoryInspectorPanel memoryInspectorPanel;
@@ -154,13 +153,6 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 		pack();
 		setLocationRelativeTo(owner);
-	}
-
-	/** Builds a self-labeled radio button (text plus mnemonic) from a {@link DataType}, see {@link DataTypes}. */
-	private static JRadioButton radioButton(DataType dataType) {
-		JRadioButton radioButton = new JRadioButton();
-		ElementUtilities.applyLabel(radioButton, dataType);
-		return radioButton;
 	}
 
 	/** Keeps {@link #hexField} in sync as the user types in {@link #asciiField}. */
