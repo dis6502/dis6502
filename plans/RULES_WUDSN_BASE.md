@@ -45,9 +45,18 @@ future toolbar or dialog can reuse the same pattern.
   ```java
   public static JMenu createMenu(Action action)
   public static JMenuItem createMenuItem(Action action, String actionCommand)
+  public static JCheckBoxMenuItem createCheckBoxMenuItem(Action action)
   public static JButton createButton(Action action, boolean withMnemonic)
+  public static JToggleButton createToggleButton(Action action, boolean withMnemonic)
   public static void setButtonTextAndMnemonic(AbstractButton button, Action action)
+  public static JLabel createLabel(DataType dataType, JComponent field)
   ```
+  `createLabel` is the one method here keyed by `DataType` (a paired
+  field's label text) rather than `Action` - there is no `ElementFactory`
+  equivalent yet for a self-labeled `JCheckBox`/`JRadioButton` built from a
+  `DataType`; this project's own `ElementUtilities.applyLabel(AbstractButton,
+  DataType)` fills that gap locally today (see
+  `plans/ELEMENTFACTORY_DATATYPE_BUTTONS_PROPOSAL.md`).
   `createMenu`/`createMenuItem` require the label to contain a mnemonic
   marker and **throw at build time if it doesn't** - this is deliberate
   fail-fast validation, not something to route around. `createMenuItem`
@@ -72,13 +81,6 @@ future toolbar or dialog can reuse the same pattern.
   actually used.
 - **No icon support anywhere in `Action`/`ElementFactory`.** A future
   toolbar that wants icons needs a separate mechanism.
-- **No `createCheckBoxMenuItem`.** Build the `JCheckBoxMenuItem` directly
-  and call `ElementFactory.setButtonTextAndMnemonic(item, action)`; set
-  an accelerator manually afterward only if the `Action` has one:
-  ```java
-  JCheckBoxMenuItem item = new JCheckBoxMenuItem();
-  ElementFactory.setButtonTextAndMnemonic(item, action);
-  ```
 - **Dynamic, runtime-generated items have no place in this pattern.** A
   submenu whose children are generated at runtime from changing data (an
   MRU list, for example) has no fixed label to put in a `.properties`
