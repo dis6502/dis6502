@@ -152,6 +152,8 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 		pack();
 		setLocationRelativeTo(owner);
+
+		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** Keeps {@link #hexField} in sync as the user types in {@link #asciiField}. */

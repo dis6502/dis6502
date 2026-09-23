@@ -108,6 +108,8 @@ public final class SegmentPropertiesDialog extends JDialog {
 		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(formPanel, BorderLayout.CENTER);
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+
+		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** Validates the address and, if it checks out, commits every field to the segment and closes the dialog. */

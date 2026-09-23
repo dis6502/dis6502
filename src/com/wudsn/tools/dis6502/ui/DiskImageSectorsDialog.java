@@ -187,6 +187,8 @@ public final class DiskImageSectorsDialog extends JDialog {
 		getContentPane().add(southPanel, BorderLayout.SOUTH);
 		setSize(1000, 560);
 		setLocationRelativeTo(owner);
+
+		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** The font the sector's bytes are painted with - see {@link HexGridPanel#setComputerFont}. */

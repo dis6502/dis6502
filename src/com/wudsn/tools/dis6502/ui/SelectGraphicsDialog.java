@@ -125,6 +125,8 @@ public final class SelectGraphicsDialog extends JDialog {
 		getContentPane().add(bottomPanel, BorderLayout.SOUTH);
 		pack();
 		setLocationRelativeTo(owner);
+
+		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** Reconfigures the bytes-per-line spinner and graphic panel for the newly selected mode. */

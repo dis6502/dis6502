@@ -108,6 +108,8 @@ public final class LowHighByteDialog extends JDialog {
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 		pack();
 		setLocationRelativeTo(owner);
+
+		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** Parses and commits {@link #unknownByte}. */

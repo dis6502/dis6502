@@ -73,6 +73,8 @@ public final class WorkspaceDialog extends JDialog {
 		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(formPanel, BorderLayout.CENTER);
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+
+		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** Commits the selected computer system to the workspace and closes the dialog. */

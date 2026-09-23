@@ -111,6 +111,8 @@ public final class DiskImageExecutableFileDialog extends JDialog {
 		getContentPane().add(southPanel, BorderLayout.SOUTH);
 		setSize(420, 420);
 		setLocationRelativeTo(owner);
+
+		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** Confirms the selected file and closes the dialog. */

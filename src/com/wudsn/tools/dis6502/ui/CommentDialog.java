@@ -72,6 +72,8 @@ public final class CommentDialog extends JDialog {
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 		pack();
 		setLocationRelativeTo(owner);
+
+		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** Commits the edited comment and closes the dialog. */

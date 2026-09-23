@@ -128,6 +128,8 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 
 		pack();
 		setLocationRelativeTo(owner);
+
+		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** Prompts for a target file and writes the boot disk to it. */

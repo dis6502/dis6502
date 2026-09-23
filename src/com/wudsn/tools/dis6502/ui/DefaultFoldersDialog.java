@@ -106,6 +106,8 @@ public final class DefaultFoldersDialog extends JDialog {
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 		pack();
 		setLocationRelativeTo(owner);
+
+		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** Opens a directory chooser for {@code folderType}'s field. */

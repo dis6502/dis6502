@@ -97,6 +97,8 @@ public final class DisassemblyProgressDialog extends JDialog {
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 		pack();
 		setLocationRelativeTo(owner);
+
+		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	public DisassemblyProgressMonitor getMonitor() {

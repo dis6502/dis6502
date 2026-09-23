@@ -118,6 +118,8 @@ public final class EquateRangeDialog extends JDialog {
 		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(formPanel, BorderLayout.CENTER);
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+
+		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** Validates the fields and, if they check out, applies the range and closes the dialog; a validation failure just shows the error and leaves the dialog open. */
