@@ -273,17 +273,23 @@ public final class DisassemblyPanel extends JPanel {
 		// WHEN_IN_FOCUSED_WINDOW like MemoryInspectorPanel's own popup-menu
 		// accelerators - unlike Return above, these carry no risk of stealing a
 		// common key from an unrelated focused component, so no such narrowing is
-		// needed. Calling findButton/findNextButton.doClick() directly - not
-		// popupFindMenuItem/popupFindNextMenuItem.doClick() - sidesteps relying on
-		// those popup items' own liveness entirely: the same empirical finding
-		// documented in MemoryInspectorPanel.bindPopupMenuAccelerators applies
-		// here too (a standalone JPopupMenu's item accelerators, which {@code
-		// ElementFactory.createMenuItem} applies automatically from these same
-		// Actions, only fire while that popup instance is open), and this panel's
-		// popup is rebuilt from scratch on every right-click besides - hence the
-		// isPopupMenuVisible() guard below, deferring to the item's own
-		// accelerator whenever the popup happens to already be showing.
-		bindAccelerator(Actions.DisassemblyPopupMenu_Find, findButton::doClick);
+		// needed. isPopupMenuVisible() below defers to the item's own accelerator
+		// whenever the popup happens to already be showing - the same empirical
+		// finding documented in MemoryInspectorPanel.bindPopupMenuAccelerators
+		// applies here too (a standalone JPopupMenu's item accelerators, which
+		// {@code ElementFactory.createMenuItem} applies automatically from these
+		// same Actions, only fire while that popup instance is open).
+		// Ctrl+Shift+F itself doesn't run findButton.doClick() (unlike Shift+F3
+		// below, or popupFindMenuItem's own click handler): the C++ original's
+		// equivalent keystroke opened a modal find dialog for the user to type
+		// into, and findField is this panel's replacement for that dialog (see
+		// this class's own javadoc) - so the keyboard shortcut's job now is
+		// putting the user into that field, not re-running whatever was last
+		// typed into it.
+		bindAccelerator(Actions.DisassemblyPopupMenu_Find, () -> {
+			findField.requestFocusInWindow();
+			findField.selectAll();
+		});
 		bindAccelerator(Actions.DisassemblyPopupMenu_FindNext, findNextButton::doClick);
 	}
 
