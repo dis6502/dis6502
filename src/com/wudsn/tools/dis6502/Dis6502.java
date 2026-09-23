@@ -1739,6 +1739,7 @@ public final class Dis6502 {
 		if (found) {
 			mainWindow.disassemblyPanel.navigateToLine(findFirstLineNumber[0]);
 		}
+		mainWindow.disassemblyPanel.findNextButton.requestFocusInWindow();
 	}
 
 	/** Continues the last search from {@link #findFirstLineNumber} rather than starting over. */
