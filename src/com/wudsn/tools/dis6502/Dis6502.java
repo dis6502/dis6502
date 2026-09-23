@@ -673,6 +673,7 @@ public final class Dis6502 {
 		mruController.addFile(file.getPath(), fileType);
 		mruController.save();
 		refreshMRUMenus();
+		updateFileMenuState(); // fillMenu's own enabling ignores edit mode - this is the authoritative pass.
 		mainWindow.segmentListPanel.refresh();
 		updateDisassembly(true);
 		updateTitle();
@@ -1625,6 +1626,7 @@ public final class Dis6502 {
 			mruController.addFile(file.getPath(), FileType.WORKSPACE_FILE);
 			mruController.save();
 			refreshMRUMenus();
+			updateFileMenuState(); // fillMenu's own enabling ignores edit mode - this is the authoritative pass.
 			updateTitle();
 		}
 		return saved;
