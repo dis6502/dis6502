@@ -32,6 +32,21 @@ window title, a group title, or any other short UI-element label, never a
 full sentence - never ends with one (e.g. `WorkspaceDialog_Title=New
 Workspace`).
 
+**Exception**: a message ending in `: {N}` gets no period of its own when
+that placeholder is filled with another message in its own right (an
+underlying exception's text, another `Message`'s already-formatted
+output) - adding one would just tack a second, misplaced period onto
+whatever that nested message already ends with:
+
+- `E004=Cannot parse equate line "'{0}". Error: {1}` - `{1}` is a parser's
+  own error string.
+- `E092=Could not read disk image "{0}": {1}` - `{1}` is an `AtariError`'s
+  own formatted text.
+
+This does not apply when a trailing placeholder is just a plain value, not
+a nested message - `E051=Unsupported file header {0}.` still ends with
+its own period, since `{0}` there is only a header value, not a message.
+
 ## Comment every `Messages.*` call site with its text
 
 A bare `Messages.I069`/`E007`-style field reference doesn't say what
