@@ -140,7 +140,7 @@ public final class DisassemblyResultWriter implements AutoCloseable {
 				if (c == 10 || c == 13 || (32 <= c && c <= 127)) {
 					buffer[i] = (byte) c;
 				} else {
-					// ERROR: Character '{0}' ({1}) at position {2} of string '{3}' is no ASCII character and cannot be written in {4} encoding mode.
+					// ERROR: Character '{0}' ({1}) at position {2} of string "{3}" is no ASCII character and cannot be written in {4} encoding mode.
 					throw new IOException(Messages.E063.format(String.valueOf(c), String.valueOf((int) c), String.valueOf(i), value,
 							"ASCII"));
 				}
@@ -155,7 +155,7 @@ public final class DisassemblyResultWriter implements AutoCloseable {
 				if (c <= 255) {
 					buffer[i] = (byte) c;
 				} else {
-					// ERROR: Character '{0}' ({1}) at position {2} of string '{3}' is no ASCII character and cannot be written in {4} encoding mode.
+					// ERROR: Character '{0}' ({1}) at position {2} of string "{3}" is no ASCII character and cannot be written in {4} encoding mode.
 					throw new IOException(Messages.E063.format(String.valueOf(c), String.valueOf((int) c), String.valueOf(i), value,
 							"ATASCII"));
 				}

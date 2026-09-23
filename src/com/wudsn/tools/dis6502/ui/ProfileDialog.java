@@ -486,7 +486,7 @@ public final class ProfileDialog extends JDialog {
 			setDialogValues(loadedProfile);
 			getDialogValues(workingProfile);
 		} else {
-			// ERROR: Could not load profile '{0}'. See the log for details.
+			// ERROR: Could not load profile "{0}". See the log for details.
 			JOptionPane.showMessageDialog(this, Messages.E047.format(lastProfileFile.getPath()), Texts.ProfileDialog_LoadTitle,
 					JOptionPane.ERROR_MESSAGE);
 		}

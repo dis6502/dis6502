@@ -694,7 +694,7 @@ public final class Dis6502 {
 
 	private boolean openWorkspaceFile(File file) {
 		if (!workspaceLogic.load(workspace, file.getPath())) {
-			// ERROR: Could not open workspace '{0}'. See the log for details.
+			// ERROR: Could not open workspace "{0}". See the log for details.
 			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E038.format(file.getPath()),
 					Texts.Dis6502_OpenWorkspaceTitle, JOptionPane.ERROR_MESSAGE);
 			return false;
@@ -716,7 +716,7 @@ public final class Dis6502 {
 
 		if (!workspaceLogic.addFile(workspace, fileType, file.getPath())) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					// ERROR: Could not add file '{0}'. See the log for details. / Could not open file '{0}'. See the log for details.
+					// ERROR: Could not add file "{0}". See the log for details. / Could not open file "{0}". See the log for details.
 					(add ? Messages.E040 : Messages.E049).format(file.getPath()),
 					getFileTypeOpenTitle(fileType, add), JOptionPane.ERROR_MESSAGE);
 			return false;
@@ -833,7 +833,7 @@ public final class Dis6502 {
 		}
 		if (!success) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
-					// ERROR: Could not add file '{0}'. See the log for details. / Could not open file '{0}'. See the log for details.
+					// ERROR: Could not add file "{0}". See the log for details. / Could not open file "{0}". See the log for details.
 					(add ? Messages.E040 : Messages.E049).format(dialog.getExecutableFileName()),
 					getFileTypeOpenTitle(FileType.DISK_IMAGE_EXECUTABLE_FILE, add), JOptionPane.ERROR_MESSAGE);
 			return false;

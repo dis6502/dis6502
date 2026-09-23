@@ -70,7 +70,7 @@ public final class EquateListLogic {
 			while ((line = reader.readLine()) != null) {
 				EquateList.EquateResult result = equateList.addEquate(line);
 				if (!result.error.isEmpty()) {
-					// ERROR: Cannot parse equate line "'{0}". Error: {1}
+					// ERROR: Cannot parse equate line "{0}". Error: {1}
 					application.sendMessage(Messages.E004, line, result.error);
 				}
 			}
