@@ -63,10 +63,5 @@ be rediscovered:
   pattern can drop the redundant string via reflection; options considered
   and a `SerializedLambda` proof-of-concept, decided against changing it
   (status: decided, kept as-is).
-- [`plans/DIS6502_UI_PACKAGE_MOVE_ANALYSIS.md`](plans/DIS6502_UI_PACKAGE_MOVE_ANALYSIS.md) -
-  whether moving `Dis6502` into the `ui` package would simplify anything;
-  measured, it references `model` more than `ui`, nothing could be
-  narrowed to package-private, and the move would cost ~50 javadoc links
-  plus two build-config edits (status: analyzed, recommended against).
 
 New planning/guidance documents for future work should also go in `plans/`.
