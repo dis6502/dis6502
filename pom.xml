@@ -13,8 +13,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
+		<maven.compiler.release>21</maven.compiler.release>
 		<!-- Set to true to skip the tests that need a display (see DialogTextsTest.isHeadless). -->
 		<dis6502.skipUITests>false</dis6502.skipUITests>
 	</properties>
