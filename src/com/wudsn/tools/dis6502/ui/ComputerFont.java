@@ -194,7 +194,7 @@ public final class ComputerFont {
 	private static Font loadFont(String resourceName) {
 		try (InputStream in = ComputerFont.class.getResourceAsStream(resourceName)) {
 			if (in == null) {
-				// ERROR: Font resource not found: {0}.
+				// ERROR: Font resource "{0}" not found.
 				throw new IOException(Messages.E066.format(resourceName));
 			}
 			return Font.createFont(Font.TRUETYPE_FONT, in);
