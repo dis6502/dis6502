@@ -58,13 +58,13 @@ the actual value doesn't blur into the surrounding sentence:
 E064=File "{0}" is empty.
 ```
 
-This only applies to a placeholder holding a real, variable-length
-string. It does not apply to:
+Applies even to a single-character placeholder, e.g.
+`E063=Character "{0}" ({1}) at position {2} of string "{3}" is no ASCII
+character...` - both `{0}` (the one offending character) and `{3}` (the
+whole string being written) are double-quoted.
 
-- A single character, e.g. `E063=Character '{0}' ({1}) at position {2}
-  of string "{3}" is no ASCII character...` - `{0}` is one character
-  (stays single-quoted), `{3}` is the whole string being written (double-
-  quoted).
+It does not apply to:
+
 - A value that structurally can never contain whitespace, such as an XML
   tag name (`E065=Mismatched root element: expected '{0}' but found
   '{1}'.` - the XML spec's own `Name` production forbids whitespace).
