@@ -518,8 +518,8 @@ public final class Dis6502 {
 		mainMenu.newWorkspaceMenuItem.setEnabled(notEditing);
 		setOpenAndAddEnabled(mainMenu.openAnyFileMenuItem, mainMenu.addAnyFileMenuItem, notEditing);
 		mainMenu.openWorkspaceMenuItem.setEnabled(notEditing);
-		mainMenu.recentWorkspacesMenu.setEnabled(notEditing);
-		mainMenu.recentFilesMenu.setEnabled(notEditing);
+		mainMenu.recentWorkspacesMenu.setEnabled(notEditing && mruController.hasEntries(true));
+		mainMenu.recentFilesMenu.setEnabled(notEditing && mruController.hasEntries(false));
 
 		setOpenAndAddEnabled(mainMenu.openCassetteImageFileMenuItem, mainMenu.addCassetteImageFileMenuItem,
 				notEditing && computerSystem.isSupportedFileType(FileType.CASSETTE_IMAGE_FILE));

@@ -67,6 +67,11 @@ public final class MRUController {
 		return workspaceList.getLastFilePath(FileType.WORKSPACE_FILE);
 	}
 
+	/** Whether the workspace or non-workspace recent list has at least one entry - see {@link #fillMenu}'s own disabling rule. */
+	public boolean hasEntries(boolean workspaces) {
+		return !(workspaces ? workspaceList : fileList).getEntries().isEmpty();
+	}
+
 	public String getLastFilePath(FileType fileType) {
 		if (fileType == FileType.WORKSPACE_FILE) {
 			return workspaceList.getLastFilePath(fileType);
