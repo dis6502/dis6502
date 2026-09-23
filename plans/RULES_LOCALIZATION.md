@@ -24,6 +24,33 @@ in one of the two classes above, not inline in the calling code:
 - `setToolTipText(...)`
 - `throw new IOException(...)`
 
+## Punctuation
+
+A `Messages.java` text that reads as a regular sentence ends with a period
+(e.g. `E003=Not a valid workspace.`). A `Texts.java` title - a dialog's
+window title, a group title, or any other short UI-element label, never a
+full sentence - never ends with one (e.g. `WorkspaceDialog_Title=New
+Workspace`).
+
+## Comment every `Messages.*` call site with its text
+
+A bare `Messages.I069`/`E007`-style field reference doesn't say what
+actually gets logged or shown without cross-referencing
+`Messages.properties`. Every real usage (`application.sendMessage(...)`/
+`sendInfoMessage(...)`/`sendErrorMessage(...)`, `.format(...)`, a bare
+`return Messages.Xxx;`) gets a one-line comment directly above it with the
+field's literal text, placeholders included, prefixed with its severity:
+
+```java
+// ERROR: Not a valid workspace.
+application.sendMessage(Messages.E003);
+```
+
+A line that picks between two messages (e.g. a ternary) gets both texts on
+one comment, separated by `" / "`. A comment that only talks about a
+`Messages.*` field generically, rather than using one specific field
+(such as a javadoc note), does not need this - it isn't a call site.
+
 ## What stays out of `Texts.java`/`Messages.java`, permanently
 
 These never move, no matter how many of them exist - they are
