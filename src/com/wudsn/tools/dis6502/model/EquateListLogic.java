@@ -79,7 +79,7 @@ public final class EquateListLogic {
 			return false;
 		}
 
-		// INFO: {0} equate lines with {1} labels loaded.
+		// INFO: Loaded {0} equate lines with {1} labels.
 		application.sendMessage(Messages.I008, String.valueOf(equateList.getCount()),
 				String.valueOf(equateList.getLabelCount()));
 		equateList.notifyListeners();
