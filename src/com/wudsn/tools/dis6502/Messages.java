@@ -44,13 +44,6 @@ public final class Messages extends NLS {
 	/** {@link Dis6502#performWriteBootDisk}'s "no segment in memory" error. */
 	public static Message E006;
 
-	/**
-	 * {@link com.wudsn.tools.dis6502.model.WorkspaceLogic#addRawSegment}/
-	 * {@link com.wudsn.tools.dis6502.model.WorkspaceLogic#addDiskImageBootSectorsSegment}'s
-	 * file-read error.
-	 */
-	public static Message E007;
-
 	/** {@link com.wudsn.tools.dis6502.model.EquateListLogic#load}'s equate-count summary. */
 	public static Message I008;
 

@@ -789,8 +789,8 @@ public final class Dis6502 {
 			application.sendMessage(Messages.E033, file.getPath());
 			return false;
 		default:
-			// ERROR: Disk image is corrupted or not an Atari single/enhanced density disk or file too big.
-			application.sendMessage(Messages.E036);
+			// ERROR: Disk image "{0}" is corrupted or not an Atari single/enhanced density disk or file too big.
+			application.sendMessage(Messages.E036, file.getPath());
 			return false;
 		}
 

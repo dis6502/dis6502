@@ -196,7 +196,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 
 		case DISK_NOT_FOUND:
 			// ERROR: Could not write disk image "{0}": {1}
-			throw new IOException(Messages.E093.format(filePath));
+			throw new IOException(Messages.E093.format(filePath, error.getErrorText()));
 
 		default:
 			// ERROR: Disk image "{0}" is corrupted or not an Atari single/enhanced density
