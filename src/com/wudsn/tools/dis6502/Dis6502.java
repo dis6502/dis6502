@@ -1706,6 +1706,7 @@ public final class Dis6502 {
 		mainWindow.disassemblyPanel.setLineNumbersActive(workspace.getProfile().useLineNumbers);
 		mainWindow.disassemblyPanel.refresh(workspace.getDisassemblyResult());
 		mainWindow.disassemblyPanel.findField.setText("");
+		mainWindow.disassemblyPanel.findNextButton.setEnabled(false);
 		mainWindow.xrefPanel.updateList("", Collections.emptyList());
 	}
 
@@ -1715,23 +1716,24 @@ public final class Dis6502 {
 	 * field rather than triggering from a label double-click, see {@link
 	 * DisassemblyPanel}'s javadoc. Populates {@link XRefPanel} with every
 	 * matching line and scrolls the disassembly view to the first one.
+	 * {@link DisassemblyPanel#findNextButton} is only enabled - and only
+	 * takes focus - once this finds more than one match, since with at most
+	 * one there is nothing for it to advance to.
 	 */
 	private void performFindInDisassembly() {
 		DisassemblyResult disassemblyResult = workspace.getDisassemblyResult();
-		if (disassemblyResult == null) {
+		String findString = mainWindow.disassemblyPanel.findField.getText();
+		if (disassemblyResult == null || findString.isEmpty()) {
 			return;
 		}
-		String findString = mainWindow.disassemblyPanel.findField.getText();
 		findFirstLineNumber[0] = 0;
 		boolean found = disassemblyResult.findAndSelectLines(true, findFirstLineNumber, findString);
 
 		List<XRefPanel.Entry> entries = new ArrayList<>();
-		if (!findString.isEmpty()) {
-			for (DisassemblyResult.LineIterator i = disassemblyResult.createLineIterator(); i.hasNext();) {
-				DisassemblyLine line = i.next();
-				if (line.xrefLineNumber != 0) {
-					entries.add(new XRefPanel.Entry(line.xrefLineNumber, line.getLine()));
-				}
+		for (DisassemblyResult.LineIterator i = disassemblyResult.createLineIterator(); i.hasNext();) {
+			DisassemblyLine line = i.next();
+			if (line.xrefLineNumber != 0) {
+				entries.add(new XRefPanel.Entry(line.xrefLineNumber, line.getLine()));
 			}
 		}
 		mainWindow.xrefPanel.updateList(findString, entries);
@@ -1739,7 +1741,12 @@ public final class Dis6502 {
 		if (found) {
 			mainWindow.disassemblyPanel.navigateToLine(findFirstLineNumber[0]);
 		}
-		mainWindow.disassemblyPanel.findNextButton.requestFocusInWindow();
+
+		boolean hasMultipleMatches = entries.size() > 1;
+		mainWindow.disassemblyPanel.findNextButton.setEnabled(hasMultipleMatches);
+		if (hasMultipleMatches) {
+			mainWindow.disassemblyPanel.findNextButton.requestFocusInWindow();
+		}
 	}
 
 	/** Continues the last search from {@link #findFirstLineNumber} rather than starting over. */

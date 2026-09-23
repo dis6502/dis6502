@@ -30,6 +30,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
@@ -173,6 +175,29 @@ public final class DisassemblyPanel extends JPanel {
 	public DisassemblyPanel() {
 		super(new BorderLayout());
 		header.setText(Texts.DisassemblyPanel_Title);
+
+		findButton.setEnabled(false);
+		findNextButton.setEnabled(false);
+		findField.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				updateFindButtonEnabled();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				updateFindButtonEnabled();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				updateFindButtonEnabled();
+			}
+
+			private void updateFindButtonEnabled() {
+				findButton.setEnabled(!findField.getText().isEmpty());
+			}
+		});
 
 		JPanel findButtonsPanel = new JPanel();
 		findButtonsPanel.add(findButton);
