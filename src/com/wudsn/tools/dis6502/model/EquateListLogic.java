@@ -47,6 +47,7 @@ public final class EquateListLogic {
 			return load(equateList, new FileInputStream(filePath), filePath);
 		} catch (IOException ex) {
 			equateList.clear();
+			// INFO: Loading equate file "{0}".
 			application.sendMessage(Messages.I009, filePath);
 			application.sendErrorMessage(ex);
 			return false;
@@ -61,6 +62,7 @@ public final class EquateListLogic {
 	 */
 	public boolean load(EquateList equateList, InputStream inputStream, String displayName) {
 		equateList.clear();
+		// INFO: Loading equate file "{0}".
 		application.sendMessage(Messages.I009, displayName);
 
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
@@ -68,6 +70,7 @@ public final class EquateListLogic {
 			while ((line = reader.readLine()) != null) {
 				EquateList.EquateResult result = equateList.addEquate(line);
 				if (!result.error.isEmpty()) {
+					// ERROR: Cannot parse equate line "'{0}". Error: {1}
 					application.sendMessage(Messages.E004, line, result.error);
 				}
 			}
@@ -76,6 +79,7 @@ public final class EquateListLogic {
 			return false;
 		}
 
+		// INFO: {0} equate lines with {1} labels loaded.
 		application.sendMessage(Messages.I008, String.valueOf(equateList.getCount()),
 				String.valueOf(equateList.getLabelCount()));
 		equateList.notifyListeners();
@@ -84,6 +88,7 @@ public final class EquateListLogic {
 
 	/** Saves equates to a text equates file, or (if {@code xasm}) an XASM 3.0.0 label table. Logs instead of throwing. */
 	public void save(EquateList equateList, String filePath, boolean xasm) {
+		// INFO: Saving equate file "{0}".
 		application.sendMessage(Messages.I012, filePath);
 
 		try (Writer writer = new OutputStreamWriter(new FileOutputStream(filePath),

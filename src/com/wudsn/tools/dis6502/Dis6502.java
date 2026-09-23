@@ -249,6 +249,7 @@ public final class Dis6502 {
 
 		mainWindow = new MainWindow();
 		application.setLogPanel(mainWindow.logPanel);
+		// INFO: Welcome to DIS6502 version {0} {1}.
 		application.sendMessage(Messages.I001, Texts.Dis6502_Version, Texts.Dis6502_VersionDate);
 		mainWindow.segmentListPanel.setWorkspace(workspace);
 		mainWindow.segmentListPanel.moveUpMenuItem.addActionListener(e -> workspace.getSegmentList().moveSelectedSegmentUp());
@@ -582,6 +583,7 @@ public final class Dis6502 {
 		currentFile = null;
 
 		if (new WorkspaceDialog(mainWindow.getFrame()).show(workspace)) {
+			// INFO: New workspace prepared for computer system "{0}".
 			application.sendMessage(Messages.I016, workspace.getComputerSystem().getType().getText());
 		}
 		loadSystemEquatesIfEmpty(); // Already done by the workspace listener if the dialog changed the computer system.
@@ -633,6 +635,7 @@ public final class Dis6502 {
 					return false;
 				}
 				if (fileType == FileType.ANY_FILE) {
+					// INFO: File type of "{0}" is not recognized for computer system {1}, opening it as raw file.
 					application.sendMessage(Messages.I073, file.getPath(), workspace.getComputerSystem().getType().getText());
 					fileType = FileType.RAW_FILE;
 				}
@@ -691,6 +694,7 @@ public final class Dis6502 {
 
 	private boolean openWorkspaceFile(File file) {
 		if (!workspaceLogic.load(workspace, file.getPath())) {
+			// ERROR: Could not open workspace '{0}'. See the log for details.
 			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E038.format(file.getPath()),
 					Texts.Dis6502_OpenWorkspaceTitle, JOptionPane.ERROR_MESSAGE);
 			return false;
@@ -712,6 +716,7 @@ public final class Dis6502 {
 
 		if (!workspaceLogic.addFile(workspace, fileType, file.getPath())) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
+					// ERROR: Could not add file '{0}'. See the log for details. / Could not open file '{0}'. See the log for details.
 					(add ? Messages.E040 : Messages.E049).format(file.getPath()),
 					getFileTypeOpenTitle(fileType, add), JOptionPane.ERROR_MESSAGE);
 			return false;
@@ -728,6 +733,7 @@ public final class Dis6502 {
 	 * format for a {@link ComputerSystem} to parse.
 	 */
 	private boolean openRawFile(File file, boolean add) {
+		// INFO: Loading raw file "{0}".
 		application.sendMessage(Messages.I022, file.getPath());
 
 		RawFileDialog dialog = new RawFileDialog(mainWindow.getFrame());
@@ -775,12 +781,15 @@ public final class Dis6502 {
 		case OK:
 			break;
 		case DISK_NOT_FOUND:
+			// ERROR: Could not read disk image "{0}": {1}
 			application.sendMessage(Messages.E092, file.getPath(), error.getErrorText());
 			return false;
 		case NO_ENTRY_FOUND:
+			// ERROR: No file found in disk image "{0}".
 			application.sendMessage(Messages.E033, file.getPath());
 			return false;
 		default:
+			// ERROR: Disk image is corrupted or not an Atari single/enhanced density disk or file too big
 			application.sendMessage(Messages.E036);
 			return false;
 		}
@@ -796,6 +805,7 @@ public final class Dis6502 {
 		if (!confirmed) {
 			return false;
 		}
+		// INFO: Loading disk image executable "{0}" file from disk image "{1}".
 		application.sendMessage(Messages.I019, dialog.getExecutableFileName(), file.getPath());
 
 		byte[] fileBuffer;
@@ -806,6 +816,7 @@ public final class Dis6502 {
 			return false;
 		}
 		if (fileBuffer.length == 0) {
+			// ERROR: File in disk image is empty.
 			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E041.format(),
 					Texts.DiskImageExecutableFileDialog_Title, JOptionPane.ERROR_MESSAGE);
 			return false;
@@ -822,6 +833,7 @@ public final class Dis6502 {
 		}
 		if (!success) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
+					// ERROR: Could not add file '{0}'. See the log for details. / Could not open file '{0}'. See the log for details.
 					(add ? Messages.E040 : Messages.E049).format(dialog.getExecutableFileName()),
 					getFileTypeOpenTitle(FileType.DISK_IMAGE_EXECUTABLE_FILE, add), JOptionPane.ERROR_MESSAGE);
 			return false;
@@ -835,6 +847,7 @@ public final class Dis6502 {
 	 * first) is {@link WorkspaceLogic#addDiskImageBootSectorsSegment}.
 	 */
 	private boolean openDiskImageBootSectors(File file, boolean add) {
+		// INFO: Loading disk image boot sectors from disk image "{0}".
 		application.sendMessage(Messages.I018, file.getPath());
 
 		ImgInfo info = new ImgInfo();
@@ -854,6 +867,7 @@ public final class Dis6502 {
 			return false;
 		}
 		if ((sector.sectorData[1] & 0xFF) == 0) {
+			// ERROR: Disk image "{0}" is not bootable.
 			application.sendMessage(Messages.E034, file.getPath());
 			return false;
 		}
@@ -886,6 +900,7 @@ public final class Dis6502 {
 		if (items.isEmpty()) {
 			return false;
 		}
+		// INFO: Loading {0} disk image sectors from disk image "{1}".
 		application.sendMessage(Messages.I020, String.valueOf(items.size()), file.getPath());
 
 		clearWorkspaceUnlessAdding(add);
@@ -939,10 +954,13 @@ public final class Dis6502 {
 	/** {@link #openReadableFile}'s per-{@link FileType} "opening file" log message. */
 	private static Message getFileTypeOpenMessage(FileType fileType) {
 		if (fileType == FileType.EXECUTABLE_FILE) {
+			// INFO: Loading executable file "{0}".
 			return Messages.I021;
 		} else if (fileType == FileType.ROM_IMAGE_FILE) {
+			// INFO: Loading ROM image file "{0}".
 			return Messages.I023;
 		} else if (fileType == FileType.CASSETTE_IMAGE_FILE) {
+			// INFO: Loading cassette file "{0}".
 			return Messages.I017;
 		}
 		throw new IllegalArgumentException("Parameter 'fileType' has unsupported value " + fileType.getKey() + ".");
@@ -1024,6 +1042,7 @@ public final class Dis6502 {
 	private void performMergeSegments() {
 		if (workspace.getSegmentList().getCount() > 1) {
 			int mergedCount = workspace.getSegmentList().mergeSegments();
+			// INFO: {0} contiguous segments merged
 			application.sendMessage(Messages.I015, String.valueOf(mergedCount));
 		}
 	}
@@ -1180,10 +1199,12 @@ public final class Dis6502 {
 		int size = memoryInspectorState.getSize();
 
 		if (begin == 0) {
+			// ERROR: LOBYTE/HIBYTE not allowed for first byte of segment.
 			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E031.format(), Texts.Dis6502_SetTypeTitle, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 		if (size != 1) {
+			// ERROR: LOBYTE/HIBYTE cannot be applied on a multi-byte selection.
 			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E032.format(), Texts.Dis6502_SetTypeTitle, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
@@ -1191,6 +1212,7 @@ public final class Dis6502 {
 		int previousOpcode = segment.getData(begin - 1);
 		InstructionSet instructionSet = workspace.getInstructionSet(segment.processorType);
 		if (instructionSet.getInstruction(previousOpcode).getOperandMode() != OperandMode.Immediate) {
+			// ERROR: LOBYTE/HIBYTE is relevant only for immediate operand.
 			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E025.format(), Texts.Dis6502_SetTypeTitle, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
@@ -1289,6 +1311,7 @@ public final class Dis6502 {
 		}
 		byte[] bytes = clipboardText == null ? null : decodeHexString(clipboardText);
 		if (bytes == null || bytes.length == 0) {
+			// ERROR: Clipboard does not contain a valid hex byte sequence to paste.
 			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E071.format(), Texts.Dis6502_PasteSelectionTitle,
 					JOptionPane.ERROR_MESSAGE);
 			return;
@@ -1296,6 +1319,7 @@ public final class Dis6502 {
 
 		Segment segment = memoryInspectorState.getSegment();
 		if (!segment.canInsertRange(bytes.length)) {
+			// ERROR: Pasting {0} bytes would make the segment larger than 64 KB.
 			JOptionPane.showMessageDialog(mainWindow.getFrame(), Messages.E072.format(String.valueOf(bytes.length)),
 					Texts.Dis6502_PasteSelectionTitle, JOptionPane.ERROR_MESSAGE);
 			return;
@@ -1658,6 +1682,7 @@ public final class Dis6502 {
 	private void performWriteBootDisk() {
 		Segment segment = memoryInspectorState.getSegment();
 		if (segment == null) {
+			// ERROR: There is no segment in memory.
 			application.sendMessage(Messages.E006);
 			return;
 		}

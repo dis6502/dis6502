@@ -70,6 +70,7 @@ public final class DisassemblyResultFile {
 	}
 
 	private void openWriter(DisassemblyResultWriter writer, File file) throws IOException {
+		// INFO: Saving disassembly file "{0}".
 		application.sendMessage(Messages.I024, file.getPath());
 		writer.openFile(file);
 	}

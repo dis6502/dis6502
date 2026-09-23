@@ -76,6 +76,7 @@ public final class Atari5200 extends ComputerSystem {
 			throws IOException {
 		// Check that the file length is less than 32K.
 		if (fileSize > 32768L) {
+			// ERROR: Only 32k ROMs are supported.
 			throw new IOException(Messages.E050.format());
 		}
 

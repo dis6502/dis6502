@@ -131,16 +131,21 @@ public final class EquateRangeDialog extends JDialog {
 
 		String title = Texts.EquateRangeDialog_Title;
 		if (startAddress == 0) {
+			// ERROR: Invalid start address.
 			JOptionPane.showMessageDialog(this, Messages.E042.format(), title, JOptionPane.ERROR_MESSAGE);
 		} else if (endAddress == 0) {
+			// ERROR: Invalid end address.
 			JOptionPane.showMessageDialog(this, Messages.E043.format(), title, JOptionPane.ERROR_MESSAGE);
 		} else if (startAddress > endAddress) {
+			// ERROR: Start address greater than end address.
 			JOptionPane.showMessageDialog(this, Messages.E044.format(), title, JOptionPane.ERROR_MESSAGE);
 		} else if (selectedEquate == null) {
+			// ERROR: No base equate selected.
 			JOptionPane.showMessageDialog(this, Messages.E045.format(), title, JOptionPane.ERROR_MESSAGE);
 		} else {
 			int baseAddress = selectedEquate.getLabelValue();
 			if (baseAddress >= startAddress && baseAddress <= endAddress) {
+				// ERROR: Equate address is inside range.
 				JOptionPane.showMessageDialog(this, Messages.E046.format(), title, JOptionPane.ERROR_MESSAGE);
 			} else {
 				userEquateList.setRange(selectedEquate.getLabel(), baseAddress, startAddress, endAddress);

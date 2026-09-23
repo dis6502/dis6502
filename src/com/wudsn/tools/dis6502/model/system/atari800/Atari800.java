@@ -181,6 +181,7 @@ public final class Atari800 extends ComputerSystem {
 		if (header != FileHeader.ATARI_BINARY && header != FileHeader.SDX_FIXED_BLK
 				&& header != FileHeader.SDX_SYM_REQUIRED && header != FileHeader.SDX_SYM_DEFINED
 				&& header != FileHeader.SDX_FIX_UP_BLK && header != FileHeader.SDX_RELOC_BLK) {
+			// ERROR: Unsupported file header {0}.
 			throw new IOException(Messages.E051.format(String.valueOf(header)));
 		}
 
@@ -295,12 +296,14 @@ public final class Atari800 extends ComputerSystem {
 				int end = reader.readWordLE();
 
 				if (end < begin) {
+					// ERROR: Segment end address is lower than segment start address.
 					throw new IOException(Messages.E052.format());
 				}
 
 				// Check the data size.
 				int size = end - begin + 1;
 				if (size > reader.getBytesRemaining()) {
+					// ERROR: Stream has {0} bytes left and is too short for segment of size {1}.
 					throw new IOException(Messages.E053.format(String.valueOf(reader.getBytesRemaining()), String.valueOf(size)));
 				}
 
@@ -424,6 +427,7 @@ public final class Atari800 extends ComputerSystem {
 			byte[] carHeader = new byte[CAR_HEADER_SIZE];
 			readFully(inputStream, carHeader);
 			if (carHeader[0] != 'C' || carHeader[1] != 'A' || carHeader[2] != 'R' || carHeader[3] != 'T') {
+				// ERROR: Invalid stream header. Stream is not a CART stream.
 				throw new IOException(Messages.E054.format());
 			}
 			bytesRemaining -= CAR_HEADER_SIZE;
@@ -442,6 +446,7 @@ public final class Atari800 extends ComputerSystem {
 			begin = base16K;
 			end = end16K;
 		} else {
+			// ERROR: Unsupported cartridge size {0}.
 			throw new IOException(Messages.E055.format(String.valueOf(bytesRemaining)));
 		}
 
@@ -484,6 +489,7 @@ public final class Atari800 extends ComputerSystem {
 		byte[] casHeader = new byte[CAS_HEADER_SIZE];
 		readFully(inputStream, casHeader);
 		if (!Arrays.equals(casHeader, FUJI)) {
+			// ERROR: Invalid file header. Stream is not a FUJI stream.
 			throw new IOException(Messages.E056.format());
 		}
 
@@ -652,6 +658,7 @@ public final class Atari800 extends ComputerSystem {
 
 	private static void writeSDXSymbol(String symbol, OutputStream outputStream) throws IOException {
 		if (symbol.length() > SDX_SYMBOL_LEN) {
+			// ERROR: Length of SDX symbol '{0}' exceeds maximum length {1}.
 			throw new IOException(Messages.E057.format(symbol, String.valueOf(SDX_SYMBOL_LEN)));
 		}
 		byte[] buffer = new byte[SDX_SYMBOL_LEN];
@@ -684,6 +691,7 @@ public final class Atari800 extends ComputerSystem {
 
 		private void checkedReadFully(byte[] buffer, int length) throws IOException {
 			if (length > bytesRemaining) {
+				// ERROR: Computed remaining length of stream of {0} is smaller than requested amount of {1} to read.
 				throw new IOException(Messages.E058.format(String.valueOf(bytesRemaining), String.valueOf(length)));
 			}
 			Atari800.readFully(inputStream, buffer);
@@ -722,6 +730,7 @@ public final class Atari800 extends ComputerSystem {
 		void readIntoMemoryBlock(Segment segment) throws IOException {
 			int size = segment.getSize();
 			if (size > bytesRemaining) {
+				// ERROR: Computed remaining length of stream of {0} is smaller than requested amount of {1} to read.
 				throw new IOException(Messages.E058.format(String.valueOf(bytesRemaining), String.valueOf(size)));
 			}
 			segment.memoryBlock.readData(inputStream, size);

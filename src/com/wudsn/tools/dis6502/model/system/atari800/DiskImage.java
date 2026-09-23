@@ -252,18 +252,23 @@ public final class DiskImage {
 		case ATR:
 			break;
 		case BAD_MAGIC:
+			// ERROR: ATR file does not have a "NICKATARI" signature.
 			application.sendMessage(Messages.E026);
 			break;
 		case FILE_NOT_FOUND:
+			// ERROR: File does not exist.
 			application.sendMessage(Messages.E028);
 			break;
 		case OUT_OF_RANGE:
+			// ERROR: Sector out of range.
 			application.sendMessage(Messages.E029);
 			break;
 		case DISK_ERROR:
+			// ERROR: Disk error occurred.
 			application.sendMessage(Messages.E027);
 			break;
 		case WRITE_PROTECT:
+			// ERROR: Disk image is write protected.
 			application.sendMessage(Messages.E030);
 			break;
 		}

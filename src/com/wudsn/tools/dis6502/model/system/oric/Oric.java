@@ -84,6 +84,7 @@ public final class Oric extends ComputerSystem {
 		// Check that the file begins with 2 0xFF (well, both bytes of $1616 happen to be equal).
 		int header = readWordLE(inputStream);
 		if (header != FileHeader.ORIC_BINARY.getValue()) {
+			// ERROR: Unsupported file header {0}.
 			throw new IOException(Messages.E051.format(String.valueOf(header)));
 		}
 
@@ -109,6 +110,7 @@ public final class Oric extends ComputerSystem {
 			int begin = readWordBE(inputStream);
 
 			if (end < begin) {
+				// ERROR: Segment end address is lower than segment start address.
 				throw new IOException(Messages.E052.format());
 			}
 			bytesRemaining -= 4;

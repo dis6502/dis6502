@@ -112,6 +112,7 @@ public class Application {
 	}
 
 	public void sendErrorMessage(Throwable ex) {
+		// ERROR: {0}
 		sendMessage(Messages.E005, String.valueOf(ex.getMessage()));
 	}
 

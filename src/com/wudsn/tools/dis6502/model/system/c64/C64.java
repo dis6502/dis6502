@@ -100,6 +100,7 @@ public final class C64 extends ComputerSystem {
 	protected void readExecutableFile(SegmentListInserter segmentListInserter, InputStream inputStream, long fileSize)
 			throws IOException {
 		if (fileSize > PRG_MAX_SIZE) {
+			// ERROR: File size of {0} bytes exceeds the maximum file size of executable files on C64.
 			throw new IOException(Messages.E059.format(String.valueOf(fileSize)));
 		}
 		int address = readWordLE(inputStream);
@@ -118,6 +119,7 @@ public final class C64 extends ComputerSystem {
 		int segmentIndex;
 		if (firstSegmentIndex == SegmentList.NO_SEGMENT_INDEX) {
 			if (segmentList.getCount() > 1) {
+				// ERROR: Executable files on C64 can only have one segment.
 				throw new IOException(Messages.E060.format());
 			}
 			segmentIndex = 0;

@@ -158,6 +158,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 
 		switch (error) {
 		case NO_ENTRY_FOUND:
+			// ERROR: No directory entries found in the disk image.
 			throw new IOException(Messages.E067.format());
 
 		case OK: {
@@ -193,10 +194,12 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 
 		case DISK_NOT_FOUND:
 			// Messages.E007 ("Error: {0}") has one placeholder, filled with filePath.
+			// ERROR: {0}
 			throw new IOException(Messages.E007.format(filePath));
 
 		default:
 			// Messages.E036 has no placeholder, so filePath is silently dropped here.
+			// ERROR: Disk image is corrupted or not an Atari single/enhanced density disk or file too big
 			throw new IOException(Messages.E036.format());
 		}
 	}

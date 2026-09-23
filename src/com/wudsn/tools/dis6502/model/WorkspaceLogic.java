@@ -80,6 +80,7 @@ public final class WorkspaceLogic {
 	public boolean load(Workspace workspace, String filePath) {
 		workspace.init();
 
+		// INFO: Loading workspace file "{0}".
 		application.sendMessage(Messages.I011, filePath);
 
 		File file = new File(filePath);
@@ -104,6 +105,7 @@ public final class WorkspaceLogic {
 		} catch (IOException ex) {
 			workspace.endUpdate();
 			workspace.init();
+			// ERROR: Not a valid workspace.
 			application.sendMessage(Messages.E003);
 			application.sendErrorMessage(ex);
 		}
@@ -136,6 +138,7 @@ public final class WorkspaceLogic {
 	 * throwing.
 	 */
 	public boolean save(Workspace workspace, String filePath) {
+		// INFO: Saving workspace file "{0}".
 		application.sendMessage(Messages.I014, filePath);
 		workspace.setFilePath(filePath);
 
@@ -188,6 +191,7 @@ public final class WorkspaceLogic {
 			segmentListInserter.apply();
 		} catch (RuntimeException ex) {
 			segmentListInserter.cancel();
+			// ERROR: {0}
 			application.sendMessage(Messages.E007, String.valueOf(ex.getMessage()));
 		}
 	}
@@ -252,6 +256,7 @@ public final class WorkspaceLogic {
 			segmentListInserter.apply();
 		} catch (RuntimeException ex) {
 			segmentListInserter.cancel();
+			// ERROR: {0}
 			application.sendMessage(Messages.E007, String.valueOf(ex.getMessage()));
 		}
 	}

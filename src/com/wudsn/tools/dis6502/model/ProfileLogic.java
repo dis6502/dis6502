@@ -40,12 +40,14 @@ public final class ProfileLogic {
 
 	/** Loads a profile from disk (the legacy binary format or the modern XML format). Returns {@code false}, and logs, instead of throwing. */
 	public boolean load(Profile profile, String filePath) {
+		// INFO: Loading profile file "{0}".
 		application.sendMessage(Messages.I010, filePath);
 
 		try {
 			File file = new File(filePath);
 			byte[] buffer = Files.readAllBytes(file.toPath());
 			if (buffer.length == 0) {
+				// ERROR: File '{0}' is empty.
 				throw new IOException(Messages.E064.format(filePath));
 			}
 			if (!Profile1X.load(profile, buffer, application)) {
@@ -53,6 +55,7 @@ public final class ProfileLogic {
 			}
 			return true;
 		} catch (IOException ex) {
+			// ERROR: Not a valid profile.
 			application.sendMessage(Messages.E002);
 			application.sendErrorMessage(ex);
 			return false;
@@ -70,6 +73,7 @@ public final class ProfileLogic {
 	}
 
 	public void save(Profile profile, String filePath) {
+		// INFO: Saving profile file "{0}".
 		application.sendMessage(Messages.I013, filePath);
 
 		try (OutputStream outputStream = new FileOutputStream(filePath)) {

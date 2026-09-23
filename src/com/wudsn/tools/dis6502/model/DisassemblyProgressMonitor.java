@@ -56,14 +56,17 @@ public class DisassemblyProgressMonitor {
 
 	public void setPass(String pass) {
 		this.pass = pass;
+		// INFO: Pass {0}
 		application.sendMessage(Messages.I069, pass);
 	}
 
 	public void setSegmentNumber(int segmentNumber) {
+		// INFO: Segment {0}
 		application.sendMessage(Messages.I070, String.valueOf(segmentNumber));
 	}
 
 	public void sendInfo(String message) {
+		// INFO: Pass {0} - {1}
 		application.sendMessage(Messages.I068, pass, message);
 	}
 

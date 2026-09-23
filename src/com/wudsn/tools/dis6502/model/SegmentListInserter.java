@@ -43,6 +43,7 @@ public final class SegmentListInserter implements AutoCloseable {
 		assert active;
 
 		if (currentIndex == SegmentList.MAX_SEGMENTS) {
+			// ERROR: No more free segments (maximum is 4096).
 			throw new IllegalStateException(Messages.E035.format());
 		}
 		Segment segment = segmentList.insertSegmentAt(currentIndex);

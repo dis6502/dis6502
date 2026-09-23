@@ -123,6 +123,7 @@ public final class Xml {
 		}
 		Element root = document.getDocumentElement();
 		if (!root.getTagName().equals(elementName)) {
+			// ERROR: Mismatched root element: expected '{0}' but found '{1}'.
 			throw new IOException(Messages.E065.format(elementName, root.getTagName()));
 		}
 		serializable.deserializeFrom(root);
