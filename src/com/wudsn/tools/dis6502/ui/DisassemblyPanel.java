@@ -176,6 +176,7 @@ public final class DisassemblyPanel extends JPanel {
 		super(new BorderLayout());
 		header.setText(Texts.DisassemblyPanel_Title);
 
+		findField.setEnabled(false);
 		findButton.setEnabled(false);
 		findNextButton.setEnabled(false);
 		findField.getDocument().addDocumentListener(new DocumentListener() {
@@ -312,8 +313,10 @@ public final class DisassemblyPanel extends JPanel {
 		// putting the user into that field, not re-running whatever was last
 		// typed into it.
 		bindAccelerator(Actions.DisassemblyPopupMenu_Find, () -> {
-			findField.requestFocusInWindow();
-			findField.selectAll();
+			if (findField.isEnabled()) {
+				findField.requestFocusInWindow();
+				findField.selectAll();
+			}
 		});
 		bindAccelerator(Actions.DisassemblyPopupMenu_FindNext, findNextButton::doClick);
 	}
@@ -668,7 +671,18 @@ public final class DisassemblyPanel extends JPanel {
 		rightClickedLine = null;
 		lastSelectedLineIndex = -1;
 
-		if (disassemblyResult == null || disassemblyResult.getLineCount() == 0) {
+		// The find field/shortcut only make sense once there is something to search -
+		// disabling it (and clearing any stale query) here, rather than relying on
+		// every caller to remember to do so, keeps it correct regardless of which of
+		// this method's own callers triggered the refresh.
+		boolean hasDisassembly = disassemblyResult != null && !disassemblyResult.isEmpty();
+		findField.setEnabled(hasDisassembly);
+		if (!hasDisassembly) {
+			findField.setText("");
+		}
+		findNextButton.setEnabled(false);
+
+		if (!hasDisassembly) {
 			disassemblyLines = Collections.emptyList();
 			grid.setLines(Collections.emptyList());
 			return;

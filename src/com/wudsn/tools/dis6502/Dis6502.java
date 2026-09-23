@@ -1706,7 +1706,6 @@ public final class Dis6502 {
 		mainWindow.disassemblyPanel.setLineNumbersActive(workspace.getProfile().useLineNumbers);
 		mainWindow.disassemblyPanel.refresh(workspace.getDisassemblyResult());
 		mainWindow.disassemblyPanel.findField.setText("");
-		mainWindow.disassemblyPanel.findNextButton.setEnabled(false);
 		mainWindow.xrefPanel.updateList("", Collections.emptyList());
 	}
 
