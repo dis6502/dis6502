@@ -69,6 +69,8 @@ public final class MainMenu {
 	public final JMenu fileMenu = ElementFactory.createMenu(com.wudsn.tools.base.Actions.MainMenu_File);
 	public final JMenuItem newWorkspaceMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_NewWorkspace, "newWorkspaceMenuItem");
 	public final JMenuItem openWorkspaceMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenWorkspace, "openWorkspaceMenuItem");
+	public final JMenu openFileMenu = ElementFactory.createMenu(Actions.MainMenu_File_OpenFile);
+	public final JMenu addFileMenu = ElementFactory.createMenu(Actions.MainMenu_File_AddFile);
 	public final JMenuItem openAnyFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenAnyFile, "openAnyFileMenuItem");
 	public final JMenuItem openCassetteImageFileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_File_OpenCassetteImageFile,
 			"openCassetteImageFileMenuItem");
@@ -147,10 +149,20 @@ public final class MainMenu {
 	 * not just fully opaque/transparent, on most of these icons), which
 	 * {@link javax.swing.JMenuItem}'s normal icon painting already
 	 * composites correctly against whatever background it is drawn on. The
-	 * seven "add" items reuse their "open" counterpart's icon.
+	 * seven "add" items reuse their "open" counterpart's icon; {@link
+	 * #recentWorkspacesMenu}/{@link #recentFilesMenu} share one "recent"
+	 * icon. Every top-level File-menu entry needs an icon (even
+	 * {@link #openFileMenu}/{@link #addFileMenu}, which have no natural one
+	 * of their own): the native Windows look and feel reserves extra left
+	 * padding for an enabled, icon-less {@link javax.swing.JMenu} submenu
+	 * sitting next to icon-bearing siblings, but not for an icon-less leaf
+	 * {@link javax.swing.JMenuItem} in the same spot - an icon on every
+	 * sibling avoids the mismatch rather than working around it.
 	 */
 	private void applyIcons() {
 		newWorkspaceMenuItem.setIcon(loadIcon("file_new"));
+		openFileMenu.setIcon(loadIcon("menu_open_file"));
+		addFileMenu.setIcon(loadIcon("menu_add_file"));
 
 		openCassetteImageFileMenuItem.setIcon(loadIcon("file_open_cassette_image_file"));
 		openDiskImageBootSectorsMenuItem.setIcon(loadIcon("file_open_disk_image_boot_sectors"));
@@ -170,6 +182,8 @@ public final class MainMenu {
 
 		saveDisassemblyFilesMenuItem.setIcon(loadIcon("file_save_disassembly_files"));
 		writeBootDiskMenuItem.setIcon(loadIcon("file_save_disk_image_boot_sectors"));
+		recentWorkspacesMenu.setIcon(loadIcon("menu_recent"));
+		recentFilesMenu.setIcon(loadIcon("menu_recent"));
 
 		clearUserEquatesMenuItem.setIcon(loadIcon("labels_clear_user_equates"));
 		editUserEquatesMenuItem.setIcon(loadIcon("labels_edit_user_equates"));
@@ -195,7 +209,6 @@ public final class MainMenu {
 
 		menu.add(openWorkspaceMenuItem);
 
-		JMenu openFileMenu = ElementFactory.createMenu(Actions.MainMenu_File_OpenFile);
 		openFileMenu.add(openAnyFileMenuItem); // The type is guessed from the file.
 		openFileMenu.addSeparator();
 		openFileMenu.add(openCassetteImageFileMenuItem);
@@ -207,7 +220,6 @@ public final class MainMenu {
 		openFileMenu.add(openROMImageFileMenuItem);
 		menu.add(openFileMenu);
 
-		JMenu addFileMenu = ElementFactory.createMenu(Actions.MainMenu_File_AddFile);
 		addFileMenu.add(addAnyFileMenuItem);
 		addFileMenu.addSeparator();
 		addFileMenu.add(addCassetteImageFileMenuItem);
