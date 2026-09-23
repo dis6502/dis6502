@@ -191,8 +191,7 @@ public final class WorkspaceLogic {
 			segmentListInserter.apply();
 		} catch (RuntimeException ex) {
 			segmentListInserter.cancel();
-			// ERROR: {0}
-			application.sendMessage(Messages.E007, String.valueOf(ex.getMessage()));
+			application.sendErrorMessage(ex);
 		}
 	}
 
@@ -256,8 +255,7 @@ public final class WorkspaceLogic {
 			segmentListInserter.apply();
 		} catch (RuntimeException ex) {
 			segmentListInserter.cancel();
-			// ERROR: {0}
-			application.sendMessage(Messages.E007, String.valueOf(ex.getMessage()));
+			application.sendErrorMessage(ex);
 		}
 	}
 }

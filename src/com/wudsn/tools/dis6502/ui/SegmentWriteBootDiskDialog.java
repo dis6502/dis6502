@@ -36,23 +36,21 @@ import com.wudsn.tools.dis6502.model.system.atari800.AtariFile;
 import com.wudsn.tools.dis6502.model.system.atari800.DiskImage;
 
 /**
- * Turns a segment into a bootable Atari DOS disk: overwrites an existing
- * disk image's first sectors (bypassing its file system entirely) with the
- * segment's bytes, preceded by a 6-byte boot header (sector count, load
- * address, init address).
+ * Turns a segment into a bootable Atari DOS disk: overwrites an existing disk
+ * image's first sectors (bypassing its file system entirely) with the segment's
+ * bytes, preceded by a 6-byte boot header (sector count, load address, init
+ * address).
  * <p>
  * Folded into one {@link #show} call, as is idiomatic for a Swing modal
- * {@link JDialog}, the same way {@link CommentDialog}/{@link
- * AssembleDialog} etc. do. {@code writeBootDisk} stays here rather than
- * moving to the model layer. Like {@link AssembleDialog}, {@link
- * #performOK} only closes the dialog once a target file has actually been
- * written or a real error occurred - cancelling the save-file chooser
- * leaves the dialog open.
+ * {@link JDialog}, the same way {@link CommentDialog}/{@link AssembleDialog}
+ * etc. do. {@code writeBootDisk} stays here rather than moving to the model
+ * layer. Like {@link AssembleDialog}, {@link #performOK} only closes the dialog
+ * once a target file has actually been written or a real error occurred -
+ * cancelling the save-file chooser leaves the dialog open.
  * <p>
- * TODO: {@link DiskImage#writeAbsoluteSector} never reports a write
- * failure (e.g. a write-protected target disk image) back to {@link
- * #writeBootDisk}. This dialog can therefore report success while having
- * written nothing.
+ * TODO: {@link DiskImage#writeAbsoluteSector} never reports a write failure
+ * (e.g. a write-protected target disk image) back to {@link #writeBootDisk}.
+ * This dialog can therefore report success while having written nothing.
  *
  * @author Peter Dell
  */
@@ -145,12 +143,16 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 			writeBootDisk(file.getPath());
 			setVisible(false);
 		} catch (IOException ex) {
-			JOptionPane.showMessageDialog(this, ex.getMessage(), Texts.SegmentWriteBootDiskDialog_Title, JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, ex.getMessage(), Texts.SegmentWriteBootDiskDialog_Title,
+					JOptionPane.ERROR_MESSAGE);
 			setVisible(false);
 		}
 	}
 
-	/** Writes the boot header plus the segment's data across {@code filePath}'s first sectors. */
+	/**
+	 * Writes the boot header plus the segment's data across {@code filePath}'s
+	 * first sectors.
+	 */
 	private void writeBootDisk(String filePath) throws IOException {
 		AtariFile info = new AtariFile();
 		AtariDisk atariDisk = AtariDOS.openAtariDisk(filePath);
@@ -158,8 +160,8 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 
 		switch (error) {
 		case NO_ENTRY_FOUND:
-			// ERROR: No directory entries found in the disk image.
-			throw new IOException(Messages.E067.format());
+			// ERROR: No directory entries found in the disk image "{0}".
+			throw new IOException(Messages.E067.format(filePath));
 
 		case OK: {
 			int headerSize = 6;
@@ -193,14 +195,13 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 		}
 
 		case DISK_NOT_FOUND:
-			// Messages.E007 ("Error: {0}") has one placeholder, filled with filePath.
-			// ERROR: {0}
-			throw new IOException(Messages.E007.format(filePath));
+			// ERROR: Could not write disk image "{0}": {1}
+			throw new IOException(Messages.E093.format(filePath));
 
 		default:
-			// Messages.E036 has no placeholder, so filePath is silently dropped here.
-			// ERROR: Disk image is corrupted or not an Atari single/enhanced density disk or file too big.
-			throw new IOException(Messages.E036.format());
+			// ERROR: Disk image "{0}" is corrupted or not an Atari single/enhanced density
+			// disk or file too big.
+			throw new IOException(Messages.E036.format(filePath));
 		}
 	}
 

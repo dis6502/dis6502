@@ -320,6 +320,7 @@ public final class Messages extends NLS {
 
 	/** {@link Dis6502#openDiskImageExecutableFile}'s "disk image could not be read" log line: the file, and the {@link com.wudsn.tools.dis6502.model.AtariError}'s text. */
 	public static Message E092;
+	public static Message E093;
 
 	static {
 		initializeClass(Messages.class, null);
