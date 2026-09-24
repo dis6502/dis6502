@@ -479,7 +479,8 @@ public final class Dis6502 {
 	/** App-wide (not per-workspace), see {@link #getTextFont}. */
 	private static final String DISPLAY_SETTINGS_SECTION = "Display";
 	private static final String TEXT_FONT_FAMILY_KEY = "TextFontFamily";
-	private static final int TEXT_FONT_POINT_SIZE = 16; // An ordinary readable size - unrelated to ComputerFont's tiny native-pixel-height derivation.
+	private static final String TEXT_FONT_SIZE_KEY = "TextFontSize";
+	private static final int TEXT_FONT_DEFAULT_POINT_SIZE = 16; // An ordinary readable size - unrelated to ComputerFont's tiny native-pixel-height derivation.
 
 	/**
 	 * Reacts to a {@link WorkspaceProperty#COMPUTER_SYSTEM_TYPE}/{@link
@@ -506,17 +507,21 @@ public final class Dis6502 {
 
 	/**
 	 * The user's chosen "text font" preference, persisted under {@link
-	 * #DISPLAY_SETTINGS_SECTION}/{@link #TEXT_FONT_FAMILY_KEY} the same way
-	 * {@code ProfileLogic}'s {@code "LastProfile"} is - an empty (default)
-	 * family name means "use the native font", so {@code nativeFont} itself
-	 * is returned, not a separate lookup.
+	 * #DISPLAY_SETTINGS_SECTION}/{@link #TEXT_FONT_FAMILY_KEY}/{@link
+	 * #TEXT_FONT_SIZE_KEY} the same way {@code ProfileLogic}'s {@code
+	 * "LastProfile"} is - an empty (default) family name means "use the
+	 * native font", so {@code nativeFont} itself is returned, not a
+	 * separate lookup; the size preference is then irrelevant, since
+	 * {@code nativeFont} follows "Double Font Height" instead.
 	 */
 	private TextFont getTextFont(ComputerFont nativeFont) {
-		String fontFamilyName = application.getSettingsSection(DISPLAY_SETTINGS_SECTION).getString(TEXT_FONT_FAMILY_KEY, "");
+		ApplicationSettingsSection settings = application.getSettingsSection(DISPLAY_SETTINGS_SECTION);
+		String fontFamilyName = settings.getString(TEXT_FONT_FAMILY_KEY, "");
 		if (fontFamilyName.isEmpty()) {
 			return nativeFont;
 		}
-		return PlainTextFont.get(fontFamilyName, TEXT_FONT_POINT_SIZE, workspace.isViewDoubleHeight());
+		int pointSize = settings.getUnsignedInt(TEXT_FONT_SIZE_KEY, TEXT_FONT_DEFAULT_POINT_SIZE);
+		return PlainTextFont.get(fontFamilyName, pointSize, workspace.isViewDoubleHeight());
 	}
 
 	/** Enables/disables the Equates menu's Clear/Save/Export items based on whether system/user equates exist. */
@@ -1645,13 +1650,18 @@ public final class Dis6502 {
 	private void performShowTextFont() {
 		ApplicationSettingsSection settings = application.getSettingsSection(DISPLAY_SETTINGS_SECTION);
 		String currentFontFamilyName = settings.getString(TEXT_FONT_FAMILY_KEY, "");
+		int currentPointSize = settings.getUnsignedInt(TEXT_FONT_SIZE_KEY, TEXT_FONT_DEFAULT_POINT_SIZE);
 		ComputerFont nativeFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
 
 		TextFontDialog dialog = new TextFontDialog(mainWindow.getFrame());
-		String newFontFamilyName = dialog.show(currentFontFamilyName, nativeFont);
-		if (!newFontFamilyName.equals(currentFontFamilyName)) {
-			settings.writeString(TEXT_FONT_FAMILY_KEY, newFontFamilyName);
-			updateFonts();
+		if (dialog.show(currentFontFamilyName, currentPointSize, nativeFont)) {
+			String newFontFamilyName = dialog.getSelectedFontFamilyName();
+			int newPointSize = dialog.getSelectedPointSize();
+			if (!newFontFamilyName.equals(currentFontFamilyName) || newPointSize != currentPointSize) {
+				settings.writeString(TEXT_FONT_FAMILY_KEY, newFontFamilyName);
+				settings.writeUnsignedInt(TEXT_FONT_SIZE_KEY, newPointSize);
+				updateFonts();
+			}
 		}
 	}
 

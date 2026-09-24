@@ -19,6 +19,8 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
@@ -31,16 +33,21 @@ import com.wudsn.tools.dis6502.Texts;
  * {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}) - either the computer's own
  * native font (the default, {@link Texts#TextFontDialog_NativeFont} in
  * {@link #fontComboBox}) or any installed mono-spaced system font (see
- * {@link PlainTextFont#getAvailableFontFamilyNames}).
+ * {@link PlainTextFont#getAvailableFontFamilyNames}), at a chosen point
+ * size ({@link #sizeSpinner}, disabled while the native font is selected -
+ * that font's own size instead follows the existing "Double Font Height"
+ * setting, unrelated to this dialog).
  * <p>
  * {@link #preview} shows a fixed sample string in the currently selected
- * font, updated live as the combo box selection changes, via the exact
- * same {@link TextFont} a real panel would end up using - so a distorted
- * or missing glyph in an installed font is visible before committing to
- * it. Persisting the choice and calling {@code Dis6502.updateFonts()} is
- * the caller's job, matching every other settings dialog in this project;
- * {@link #show} only returns the newly chosen font family name ({@code ""}
- * for the native font).
+ * font/size, updated live as either control changes, via the exact same
+ * {@link TextFont} a real panel would end up using - so a distorted or
+ * missing glyph in an installed font is visible before committing to it.
+ * Persisting the choice and calling {@code Dis6502.updateFonts()} is the
+ * caller's job, matching every other settings dialog in this project -
+ * {@link #show} only reports whether the user clicked OK; {@link
+ * #getSelectedFontFamilyName}/{@link #getSelectedPointSize} then give the
+ * result, the same "boolean {@code show}, separate getters" shape {@link
+ * DiskImageSectorsDialog}/{@link RawFileDialog} already use.
  *
  * @author Peter Dell
  */
@@ -49,9 +56,11 @@ public final class TextFontDialog extends JDialog {
 	private static final long serialVersionUID = 1L;
 
 	private static final String SAMPLE_TEXT = "ABCXYZ 0123 abcxyz";
-	private static final int PREVIEW_POINT_SIZE = 16;
+	private static final int MIN_POINT_SIZE = 6;
+	private static final int MAX_POINT_SIZE = 72;
 
 	private final JComboBox<String> fontComboBox = new JComboBox<>();
+	private final JSpinner sizeSpinner = new JSpinner(new SpinnerNumberModel(16, MIN_POINT_SIZE, MAX_POINT_SIZE, 1));
 	private final JPanel preview = new JPanel() {
 		private static final long serialVersionUID = 1L;
 
@@ -65,14 +74,19 @@ public final class TextFontDialog extends JDialog {
 
 	private ComputerFont nativeFont;
 	private boolean confirmed;
-	private String result = "";
+	private String selectedFontFamilyName = "";
+	private int selectedPointSize;
 
 	public TextFontDialog(Frame owner) {
 		super(owner, true);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setTitle(Texts.TextFontDialog_Title);
 
-		fontComboBox.addActionListener(e -> preview.repaint());
+		fontComboBox.addActionListener(e -> {
+			sizeSpinner.setEnabled(!isNativeFontSelected());
+			preview.repaint();
+		});
+		sizeSpinner.addChangeListener(e -> preview.repaint());
 
 		preview.setBackground(Color.WHITE);
 		preview.setPreferredSize(new Dimension(320, 40));
@@ -88,6 +102,14 @@ public final class TextFontDialog extends JDialog {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1;
 		formPanel.add(fontComboBox, c);
+
+		c.gridx = 0;
+		c.gridy = 1;
+		c.fill = GridBagConstraints.NONE;
+		c.weightx = 0;
+		formPanel.add(ElementFactory.createLabel(DataTypes.TextFontDialog_Size, sizeSpinner), c);
+		c.gridx = 1;
+		formPanel.add(sizeSpinner, c);
 
 		okButton.addActionListener(e -> performOK());
 		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
@@ -105,32 +127,45 @@ public final class TextFontDialog extends JDialog {
 		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
-	/** {@code ""} (the native font entry) or a real installed family name - never {@code null}. */
-	private TextFont selectedTextFont() {
+	private boolean isNativeFontSelected() {
 		Object selected = fontComboBox.getSelectedItem();
-		if (selected == null || Texts.TextFontDialog_NativeFont.equals(selected)) {
+		return selected == null || Texts.TextFontDialog_NativeFont.equals(selected);
+	}
+
+	private TextFont selectedTextFont() {
+		if (isNativeFontSelected()) {
 			return nativeFont;
 		}
-		return PlainTextFont.get((String) selected, PREVIEW_POINT_SIZE, false);
+		return PlainTextFont.get((String) fontComboBox.getSelectedItem(), (Integer) sizeSpinner.getValue(), false);
 	}
 
 	private void performOK() {
-		Object selected = fontComboBox.getSelectedItem();
-		result = (selected == null || Texts.TextFontDialog_NativeFont.equals(selected)) ? "" : (String) selected;
+		selectedFontFamilyName = isNativeFontSelected() ? "" : (String) fontComboBox.getSelectedItem();
+		selectedPointSize = (Integer) sizeSpinner.getValue();
 		confirmed = true;
 		setVisible(false);
 	}
 
+	/** {@code ""} for the native font, a real installed family name otherwise - only meaningful after {@link #show} returned {@code true}. */
+	public String getSelectedFontFamilyName() {
+		return selectedFontFamilyName;
+	}
+
+	/** Only meaningful after {@link #show} returned {@code true}; ignored by the native font, which follows "Double Font Height" instead. */
+	public int getSelectedPointSize() {
+		return selectedPointSize;
+	}
+
 	/**
 	 * Opens the dialog pre-selecting {@code currentFontFamilyName} ({@code
-	 * ""} = native font); {@code nativeFont} drives {@link #preview} while
-	 * that entry is selected. Returns the newly chosen family name if the
-	 * user clicked OK ({@code ""} for the native font), or {@code
-	 * currentFontFamilyName} unchanged if they clicked Cancel/closed the
-	 * dialog - the caller only needs to act if the result differs from
-	 * what it passed in.
+	 * ""} = native font) and {@code currentPointSize}; {@code nativeFont}
+	 * drives {@link #preview} while the native entry is selected. Returns
+	 * whether the user clicked OK - {@link #getSelectedFontFamilyName}/
+	 * {@link #getSelectedPointSize} then give the result; on Cancel/close,
+	 * neither getter is updated, so the caller's own already-current values
+	 * remain correct.
 	 */
-	public String show(String currentFontFamilyName, ComputerFont nativeFont) {
+	public boolean show(String currentFontFamilyName, int currentPointSize, ComputerFont nativeFont) {
 		this.nativeFont = nativeFont;
 
 		fontComboBox.removeAllItems();
@@ -139,6 +174,8 @@ public final class TextFontDialog extends JDialog {
 			fontComboBox.addItem(familyName);
 		}
 		fontComboBox.setSelectedItem(currentFontFamilyName.isEmpty() ? Texts.TextFontDialog_NativeFont : currentFontFamilyName);
+		sizeSpinner.setValue(Math.max(MIN_POINT_SIZE, Math.min(MAX_POINT_SIZE, currentPointSize)));
+		sizeSpinner.setEnabled(!isNativeFontSelected());
 
 		// Packed here, not in the constructor: the combo box is still empty at
 		// construction time, so packing then sized the dialog too narrow to
@@ -147,9 +184,8 @@ public final class TextFontDialog extends JDialog {
 		setLocationRelativeTo(getOwner());
 
 		confirmed = false;
-		result = currentFontFamilyName;
 		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
 
-		return confirmed ? result : currentFontFamilyName;
+		return confirmed;
 	}
 }

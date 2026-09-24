@@ -79,7 +79,7 @@ be rediscovered:
   `PlainTextFont` handles a custom font with ordinary antialiased Swing
   rendering instead of `ComputerFont`'s pixel-art-tuned one); the memory
   inspector's grid itself stays untouched, always the native font, hex
-  and ASCII/ATASCII preview alike; picked from a new `View > Text
-  Font...` dialog (status: done).
+  and ASCII/ATASCII preview alike; picked, along with its point size, from
+  a new `View > Text Font...` dialog (status: done).
 
 New planning/guidance documents for future work should also go in `plans/`.

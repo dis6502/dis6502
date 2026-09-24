@@ -36,4 +36,8 @@ public final class ApplicationSettingsSection {
 	public int getUnsignedInt(String keyName, int defaultValue) {
 		return preferences.getInt(keyName, defaultValue);
 	}
+
+	public void writeUnsignedInt(String keyName, int value) {
+		preferences.putInt(keyName, value);
+	}
 }

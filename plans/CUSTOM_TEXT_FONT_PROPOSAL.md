@@ -14,6 +14,16 @@ the user's chosen font too, via a new `setTextFont(TextFont)` split out
 from `setComputerFont(ComputerFont)` (grid only now). Verified with the
 full test suite (headless and real-display) plus interactive smoke tests
 exercising the real menu item and dialog.
+**Follow-up refinement:** the font's point size is also user-selectable
+now, not fixed - `TextFontDialog` gained a `JSpinner` (6-72pt, disabled
+while the native font is selected, since that font's size instead follows
+the existing "Double Font Height" setting) next to the family combo box,
+persisted under a new `"TextFontSize"` key alongside `"TextFontFamily"`
+via a new `ApplicationSettingsSection.writeUnsignedInt` (the existing
+`getUnsignedInt` had no write counterpart before this). Verified with the
+full test suite plus an interactive smoke test confirming the spinner
+enables/disables correctly and the chosen size round-trips through
+Preferences.
 
 ## Request
 
