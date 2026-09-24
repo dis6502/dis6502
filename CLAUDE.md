@@ -72,10 +72,12 @@ be rediscovered:
   `LowHighByteDialog` (status: done).
 
 - [`plans/CUSTOM_TEXT_FONT_PROPOSAL.md`](plans/CUSTOM_TEXT_FONT_PROPOSAL.md) -
-  letting the user pick a mono-spaced font for everything `ComputerFont`
-  renders except the memory inspector's ASCII/ATASCII byte-preview column,
-  which always stays the computer's authentic native font; the hard part
-  is `HexGridPanel`'s hex/address text sharing one pixel grid with that
-  always-native column (status: proposal).
+  letting the user pick a mono-spaced font for the disassembly listing, log
+  panel, segment list, and XRef panel, via a new `TextFont` interface
+  (`ComputerFont` implements it unchanged; a new, much simpler
+  `PlainTextFont` handles a custom font with ordinary antialiased Swing
+  rendering instead of `ComputerFont`'s pixel-art-tuned one); the memory
+  inspector's grid stays untouched, always the native font end to end
+  (status: proposal).
 
 New planning/guidance documents for future work should also go in `plans/`.

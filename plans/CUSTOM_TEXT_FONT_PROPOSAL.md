@@ -1,13 +1,14 @@
-# Proposal: a user-chosen mono-spaced font for everything except the memory inspector's byte preview
+# Proposal: a user-chosen mono-spaced font for everything except the memory inspector's grid
 
 ## Request
 
 Every place that today renders through `ComputerFont` should be able to use
 a different, user-chosen mono-spaced font instead of the computer's real
-character set - except the memory inspector's 8/16-character ASCII/ATASCII
-byte preview column, which must always show the computer's authentic native
-glyphs. The font choice is a user preference, picked later through some UI
-not designed here, and persisted.
+character set - except the memory inspector's grid (its hex/address text
+*and* its 8/16-character ASCII/ATASCII byte preview column), which always
+stays exactly as it is today, in the computer's authentic native font. The
+font choice is a user preference, picked later through some UI not designed
+here, and persisted.
 
 ## Analysis: every current `ComputerFont` call site
 
@@ -17,7 +18,7 @@ them:
 
 - **`drawGlyph(g2, value, color, x, y)`** - draws one raw memory byte's
   *authentic hardware glyph* (shifted by `codePointBase` into the font's
-  byte-indexed range). This is the "must always be native" case.
+  byte-indexed range).
 - **`drawText(g2, text, color, x, y)`** / **`getAwtFont()`** - draws this
   port's own already-generated text (hex digits, addresses, mnemonics,
   labels, comments, list entries, log lines) at each character's own direct
@@ -26,189 +27,168 @@ them:
   only font `ComputerFont` has ever offered.
 
 Grepping every `setComputerFont`/`drawGlyph`/`drawText`/`getAwtFont` call
-site gives three groups:
+site, and folding in the two scope decisions made while discussing this
+proposal (the memory inspector's grid stays native end to end, not just its
+byte-preview column; and the other consumers should not be forced through
+`ComputerFont`'s own rendering machinery at all - see below), gives two
+groups:
 
-**Group A - always native, never swappable (the stated exception).**
-Exactly one: `HexGridPanel`'s two `drawGlyph` calls
-(`paintLine`/`paintCursorAsciiCell`), painting the memory inspector's (and
-`DiskImageSectorsDialog`'s embedded sector-browsing grid's) ASCII/ATASCII
-column - one authentic glyph per raw byte.
+**Group A - always native, untouched by this proposal.**
+`HexGridPanel` (the memory inspector's grid, and `DiskImageSectorsDialog`'s
+embedded sector-browsing grid) - every `drawText`/`drawGlyph` call in it,
+not just the ASCII column's `drawGlyph` calls. `MemoryInspectorPanel`'s and
+`DiskImageSectorsDialog`'s existing `setComputerFont(ComputerFont)` methods
+need no change at all: they always receive the workspace's native
+`ComputerFont`, exactly as today. This sidesteps the one genuinely hard
+problem the first pass at this proposal ran into - `HexGridPanel`'s
+hex/address text sharing one pixel grid (`cellW`/`cellH`, also driving
+`getPreferredSize` and both mouse-hit-testing methods) with the
+always-native ASCII column - by simply not putting `HexGridPanel` in scope.
 
-**Group B - custom-painted "text" grids, each owns its own pixel geometry.**
-Rebuild their own row height/column width from whatever `ComputerFont`
-they're given, with no dependency on Group A's font:
+**Group B - "generated text" consumers, candidates for the user's chosen font:**
 
-- `DisassemblyGridPanel` - the whole disassembly listing. No `drawGlyph`
-  call anywhere in it; free to size itself entirely around a different
-  font.
+- `DisassemblyGridPanel` - the whole disassembly listing.
 - `PartHeaderPanel` - every part window's colored title bar text.
-  Standalone, no grid to stay aligned with.
 - `ComputerFontListCellRenderer` - `JList` cell painting for
-  `SegmentListPanel`/`XRefPanel`, already sizes each cell from
-  `getFontMetrics(getFont())` independently per cell.
+  `SegmentListPanel`/`XRefPanel`.
+- `LogPanel`'s `JTextPane`, `SegmentListPanel`'s `JList`, `XRefPanel`'s
+  `JList` - via `getAwtFont()`, already just plain Swing components.
 
-**Group C - plain Swing components via `getAwtFont()`.** Just want an
-ordinary `Font` object for standard (antialiased) Swing text rendering, no
-custom bitmap-glyph cache involved at all:
+## Why Group B should not route through `ComputerFont` for a custom font
 
-- `LogPanel`'s `JTextPane`
-- `SegmentListPanel`'s `JList`
-- `XRefPanel`'s `JList`
+`ComputerFont`'s `drawText` exists to solve one specific problem: the tiny
+pixel-art retro TTFs (Atari Classic/C64 Classic, native 8px cell height)
+need crisp, hard edges at any display scale, so it disables antialiasing
+and rasterizes each glyph into a cached bitmap blitted with nearest-
+neighbor scaling (a real HiDPI bug fix, per that class's own javadoc).
+`ComputerFontListCellRenderer` exists for the matching reason - its own
+javadoc notes that plain `list.setFont(...)` blurs that pixel-art font into
+"illegible dots" under ClearType/subpixel antialiasing.
 
-**The one hard case: `HexGridPanel`'s hex/address text is Group B, but it
-shares one pixel grid with Group A.** `paintLine` draws the address, every
-hex byte pair, and the `|` separator via `drawText` in the *same* row, at
-the *same* `cellW`/`cellH` unit, as the ASCII glyph column's `drawGlyph`
-calls right next to them - and that shared `cellW` also drives
-`getPreferredSize`, scroll-to-visible, and both mouse-hit-testing methods
-(`x / cellW`, `y / cellH`). Group A's font can never change; if Group B's
-font in this one panel could suddenly have a different natural glyph
-width, the grid stops being uniform and all of that pixel math breaks.
-
-## Why forcing the chosen font to fit the native cell size is the wrong fix
-
-The obvious-looking fix - derive the chosen text font, then squeeze/stretch
-it with a non-uniform `AffineTransform` (the same trick `ComputerFont`
-already uses for double-height) until its glyph box matches the native
-font's `cellW`/`cellH` exactly - keeps every existing pixel-math line in
-`HexGridPanel` untouched, but it defeats the point of the feature: it
-visually distorts the very font the user picked *because* they wanted it to
-look different. Double-height's Y-only stretch is acceptable because it is
-a deliberate CRT-style effect; force-fitting an arbitrary system font's
-natural proportions is not the same thing.
+None of that helps an ordinary system monospace font the user picks for
+readability - forcing antialiasing *off* and nearest-neighbor-scaling a
+bitmap is the wrong way to render a normal font; it would look worse
+(jagged) than plain antialiased `Graphics2D`/Swing rendering, which is
+presumably the whole point of offering a font choice. So Group B should get
+a genuinely separate, much simpler rendering path for a custom font, not a
+`ComputerFont` instance wrapping an arbitrary font family.
 
 ## Proposed design
 
-### 1. Generalize `ComputerFont` to derive from *any* named font, not just the two retro TTFs
-
-`ComputerFont.create(ComputerSystemType, boolean)` already has exactly this
-fallback for Oric/Unknown:
+### 1. A small `TextFont` interface; `ComputerFont` implements it unchanged
 
 ```java
-return derive(new Font(Font.MONOSPACED, Font.PLAIN, 1), doubleHeight, -1); // Oric, unknown.
-```
-
-`derive()` already takes an arbitrary base `Font`, an already-generic
-mechanism just never exposed. Add one new public factory next to
-`get(ComputerSystemType, boolean)`, using the identical `codePointBase < 0`
-(no byte-shift) path, cached the same way (a second pair of maps keyed by
-font family name instead of `ComputerSystemType`):
-
-```java
-private static final Map<String, ComputerFont> CUSTOM_NORMAL_INSTANCES = new HashMap<>();
-private static final Map<String, ComputerFont> CUSTOM_DOUBLE_HEIGHT_INSTANCES = new HashMap<>();
-
-/** Derives a ComputerFont from any installed font family, for a user-chosen
-  * "text" font - same no-byte-shift mechanism as the Oric/Unknown fallback,
-  * just exposed and keyed by name instead of computer system. */
-public static synchronized ComputerFont getCustom(String fontFamilyName, boolean doubleHeight) {
-    Map<String, ComputerFont> instances = doubleHeight ? CUSTOM_DOUBLE_HEIGHT_INSTANCES : CUSTOM_NORMAL_INSTANCES;
-    ComputerFont existing = instances.get(fontFamilyName);
-    if (existing != null) {
-        return existing;
-    }
-    ComputerFont created = derive(new Font(fontFamilyName, Font.PLAIN, 1), doubleHeight, -1);
-    instances.put(fontFamilyName, created);
-    return created;
+public interface TextFont {
+    void drawText(Graphics2D g2, String text, Color color, int x, int y);
+    int getGlyphWidth();
+    int getGlyphHeight();
+    Font getAwtFont();
 }
 ```
 
-Because `derive()` always sets the font's point size to the same fixed
-`NATIVE_HEIGHT * ZOOM` (or its double-height transform) regardless of which
-`Font` comes in, a custom instance's `getGlyphHeight()` always matches a
-native instance's - only `getGlyphWidth()` legitimately differs per font
-family. That is the whole reason only width, never height, needs
-reconciling below.
+`ComputerFont` already has exactly these four methods, with matching
+signatures - `public final class ComputerFont implements TextFont` is the
+only change needed to it. `drawGlyph` stays `ComputerFont`-only, outside
+the interface - Group B never calls it, and a plain custom font has no
+byte-indexed glyph range to shift into anyway.
 
-### 2. Thread two `ComputerFont` references through the app instead of one
+### 2. `PlainTextFont` - a much smaller sibling for a custom font
 
-`Dis6502.updateFonts()` becomes the single place that decides what the
-"text font" actually is - `nativeFont` unchanged, `textFont` either the
-same instance (default, zero visual change) or a `getCustom(...)` instance
-once a preference is set:
+```java
+public final class PlainTextFont implements TextFont {
+    private final Font font;
+    private final int glyphWidth;
+    private final int glyphHeight;
+
+    private PlainTextFont(Font font, int glyphWidth, int glyphHeight) {
+        this.font = font;
+        this.glyphWidth = glyphWidth;
+        this.glyphHeight = glyphHeight;
+    }
+
+    /** {@code pointSize} lets the caller match the app's current text size - see the sizing note below. */
+    public static PlainTextFont get(String fontFamilyName, int pointSize) {
+        Font font = new Font(fontFamilyName, Font.PLAIN, pointSize);
+        BufferedImage probe = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = probe.createGraphics();
+        try {
+            FontMetrics metrics = g2.getFontMetrics(font);
+            return new PlainTextFont(font, metrics.charWidth('M'), metrics.getHeight());
+        } finally {
+            g2.dispose();
+        }
+    }
+
+    @Override
+    public void drawText(Graphics2D g2, String text, Color color, int x, int y) {
+        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2.setFont(font);
+        g2.setColor(color);
+        g2.drawString(text, x, y + g2.getFontMetrics(font).getAscent());
+    }
+
+    @Override
+    public int getGlyphWidth() { return glyphWidth; }
+    @Override
+    public int getGlyphHeight() { return glyphHeight; }
+    @Override
+    public Font getAwtFont() { return font; }
+}
+```
+
+No bitmap cache, no forced-off antialiasing, no per-character rendering
+loop: since the feature only ever offers genuinely mono-spaced fonts (a
+constraint on what the picker lists, not enforced here), a single
+`drawString` call already lands every character at its font's own uniform
+advance width - the same guarantee `ComputerFont`'s per-character bitmap
+placement exists to provide for a font that (for the retro TTFs' authentic
+byte-indexed glyphs) cannot be assumed to behave that way.
+
+**Sizing**: `PlainTextFont.get` takes an explicit point size rather than
+deriving one the way `ComputerFont.derive` pins to the pixel-art font's
+tiny native height - a user-chosen readable font wants an ordinary text
+point size, not the retro font's native 8px-derived one. One shared
+`PlainTextFont` instance (one fixed point size) is reused across every
+Group B consumer, so sizing stays consistent app-wide; the exact default
+point size is an implementation detail for whenever this is built, not
+fixed here. Double-height mode, if it should also stretch a custom font,
+needs the same Y-only `AffineTransform` trick `ComputerFont.derive` already
+uses for its own double-height case - a direct reuse of an existing
+technique, not a new problem.
+
+### 3. Group B fields widen from `ComputerFont` to `TextFont`; call sites barely change
+
+`DisassemblyGridPanel`, `PartHeaderPanel`, and `ComputerFontListCellRenderer`
+each already hold exactly one `ComputerFont` field and call `drawText`/
+`getGlyphWidth`/`getGlyphHeight` on it - widening that field's declared
+type to `TextFont` (renaming the setter to `setTextFont(TextFont)` for
+clarity, since it's no longer necessarily a `ComputerFont`) needs no other
+change in any of them: each `TextFont` implementation already renders
+itself correctly, so there is no caller-side branching to add anywhere,
+including in `ComputerFontListCellRenderer` - it keeps working for both the
+native and the custom-font case without knowing which one it has.
+`LogPanel`/`SegmentListPanel`/`XRefPanel` keep calling `.getAwtFont()`
+through the same widened field, feeding a `JTextPane`/`JList` exactly as
+today.
+
+`Dis6502.updateFonts()` becomes the one place that decides what the "text
+font" is:
 
 ```java
 private void updateFonts() {
     ComputerFont nativeFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
-    ComputerFont textFont = getTextFont(workspace.isViewDoubleHeight()); // nativeFont if no preference is set
+    TextFont textFont = getTextFont(); // nativeFont itself if no preference is set, else a shared PlainTextFont instance
 
-    mainWindow.memoryInspectorPanel.setComputerFont(nativeFont);
-    mainWindow.memoryInspectorPanel.setTextFont(textFont);       // new
-    mainWindow.disassemblyPanel.setComputerFont(textFont);       // was nativeFont
-    mainWindow.xrefPanel.setComputerFont(textFont);              // was nativeFont
-    mainWindow.logPanel.setComputerFont(textFont);               // was nativeFont
-    mainWindow.segmentListPanel.setComputerFont(textFont);       // was nativeFont
+    mainWindow.memoryInspectorPanel.setComputerFont(nativeFont); // unchanged
+    mainWindow.disassemblyPanel.setTextFont(textFont);           // was setComputerFont(nativeFont)
+    mainWindow.xrefPanel.setTextFont(textFont);                  // was setComputerFont(nativeFont)
+    mainWindow.logPanel.setTextFont(textFont);                   // was setComputerFont(nativeFont)
+    mainWindow.segmentListPanel.setTextFont(textFont);           // was setComputerFont(nativeFont)
 }
 ```
 
-Every Group B/C panel keeps its existing single-argument `setComputerFont`
-method completely unchanged - only *which* font `updateFonts()` passes it
-changes (from `nativeFont` to `textFont`), since none of them ever call
-`drawGlyph`. `DisassemblyPanel`/`MemoryInspectorPanel` (which each wrap a
-grid plus a `PartHeaderPanel`) forward accordingly - `DisassemblyPanel`
-passes the one font it receives to both children unchanged (its
-`DisassemblyGridPanel` has no Group A dependency at all); only
-`MemoryInspectorPanel` needs both:
-
-```java
-public void setComputerFont(ComputerFont computerFont) { // native, for the grid's ASCII column
-    grid.setComputerFont(computerFont);
-}
-public void setTextFont(ComputerFont textFont) { // new
-    grid.setTextFont(textFont);
-    header.setComputerFont(textFont);
-}
-```
-
-`DiskImageSectorsDialog` (its own embedded `HexGridPanel`, set once when
-the dialog opens, not part of the live `updateFonts()` cascade) gets the
-same two-call treatment at its one call site in
-`Dis6502.openDiskImageSectors`.
-
-### 3. `HexGridPanel`: two independent column widths, one shared row height
-
-Row height stays exactly as today (`cellH = computerFont.getGlyphHeight()`,
-Group A's font) - per the point above, it already matches whatever text
-font is in use, by construction. Column width splits in two:
-
-```java
-private ComputerFont computerFont; // native - drives cellH and the ASCII column (unchanged name/field, existing call sites keep working)
-private ComputerFont textFont;     // new - drives the address/hex-pair columns; defaults to computerFont until setTextFont is called
-
-public void setTextFont(ComputerFont textFont) {
-    this.textFont = textFont;
-    revalidate();
-    repaint();
-}
-
-private ComputerFont textFont() {
-    return textFont != null ? textFont : computerFont; // never null in practice once wired, but keeps construction-order safe
-}
-```
-
-Every pixel-math line that currently multiplies by one `cellW` splits into
-a `textCellW` (address prefix, each hex byte pair, the `|` separator) and
-an `asciiCellW` (the ASCII glyph column only) - contained entirely within
-`HexGridPanel.java`:
-
-- `paintLine`: `hexX = (5 + row * 3) * textCellW`; the ASCII column starts
-  at a fixed pixel offset (`5 * textCellW + bytesPerLine * 3 * textCellW`)
-  plus `row * asciiCellW`, instead of everything sharing one `cellW`.
-- `getPreferredSize`/`neededFor16BytesPerLine`: total width is the hex
-  portion's `textCellW`-based width plus the ASCII portion's
-  `asciiCellW`-based width, not one uniform multiply.
-- The two hit-testing methods (`getEditCursorOffset`-style pixel-to-cell
-  lookups) split the same way: which pane the `x` coordinate falls in first
-  (compare against the hex/ASCII boundary pixel offset), then divide by
-  that pane's own cell width.
-- `drawText(g2, "|", ...)` (the separator) and the cursor-nibble painting
-  (`paintCursorHexCell`/`paintCursorSubCell`) use `textFont()` instead of
-  `computerFont`, matching whichever pane they paint into;
-  `paintCursorAsciiCell`'s `drawGlyph` call stays on `computerFont`
-  unconditionally.
-
-This is a contained, single-file change - real, but bounded, and it never
-distorts either font.
+`DiskImageSectorsDialog` and `HexGridPanel` are Group A - neither needs any
+change.
 
 ### 4. Persistence
 
@@ -221,10 +201,9 @@ ApplicationSettingsSection settings = application.getSettingsSection("Display");
 String textFontFamily = settings.getString("TextFontFamily", ""); // "" = use the native font, today's behavior
 ```
 
-Read once at startup (or lazily in `updateFonts()`/a small
-`Dis6502.getTextFont(boolean doubleHeight)` helper), written whenever the
-user changes it through whatever picker UI eventually calls
-`settings.writeString("TextFontFamily", chosenFamilyName)` -
+Read once at startup (or lazily in a small `Dis6502.getTextFont()` helper),
+written whenever the user changes it through whatever picker UI eventually
+calls `settings.writeString("TextFontFamily", chosenFamilyName)`.
 `ApplicationSettingsSection` already persists through
 `java.util.prefs.Preferences`, the same cross-platform mechanism MRU
 lists/default folders/last-profile already use, so nothing new is needed
@@ -233,15 +212,19 @@ on the storage side.
 ## Explicitly out of scope for this proposal
 
 - **The actual picker UI.** Per the request, the font choice is the user's
-  to make "later" - this proposal only makes the choice possible and
-  makes sure it is remembered. A future small dialog (or a combo box
-  in a future general Preferences dialog, following `DefaultFoldersDialog`'s
-  existing shape) would list installed mono-spaced fonts (the standard
-  Java idiom: `GraphicsEnvironment.getAvailableFontFamilyNames()` filtered
-  to families where `metrics.charWidth('i') == metrics.charWidth('W')`)
-  and call `settings.writeString(...)` plus re-run `updateFonts()`.
+  to make "later" - this proposal only makes the choice possible and makes
+  sure it is remembered. A future small dialog (or a combo box in a future
+  general Preferences dialog, following `DefaultFoldersDialog`'s existing
+  shape) would list installed mono-spaced fonts (the standard Java idiom:
+  `GraphicsEnvironment.getAvailableFontFamilyNames()` filtered to families
+  where `metrics.charWidth('i') == metrics.charWidth('W')`) and call
+  `settings.writeString(...)` plus re-run `updateFonts()`.
+- **`HexGridPanel`, `DiskImageSectorsDialog`, `MemoryInspectorPanel`** -
+  Group A, completely untouched; always the workspace's native
+  `ComputerFont`, for both the hex/address text and the ASCII/ATASCII
+  preview column, exactly as today.
 - **Any change to `drawGlyph`, `codePointBase`, or the two retro TTFs
-  themselves** - Group A is completely untouched.
+  themselves.**
 - **`GraphicPanel`** - shares `ComputerFont`'s glyph-caching *technique*
   conceptually (per that class's own javadoc reference) but does not
   actually consume `ComputerFont` - nothing to change there.
@@ -249,19 +232,16 @@ on the storage side.
 ## Verification plan
 
 1. With no preference set (`textFontFamily=""`), `textFont` is always
-   exactly the `nativeFont` instance - confirm every Group B/C panel's
+   exactly the `nativeFont` instance - confirm every Group B panel's
    rendering is pixel-identical to today's (a hand-computed-value
    regression check, not a new visible feature yet).
 2. Manually set the new preference to a real installed mono-spaced family
    (e.g. `"Consolas"` on Windows) and confirm, via a real (non-headless)
    `TestRunner` run and a live smoke test: the disassembly listing, log
-   panel, segment list, and XRef panel all render in the chosen font, the
-   memory inspector's hex/address text renders in the chosen font, and its
-   ASCII/ATASCII preview column still renders the computer's authentic
-   glyphs unchanged, correctly aligned with the hex column.
-3. Confirm double-height mode still keeps both fonts' row heights equal
-   with a custom text font selected.
-4. Add a hand-computed-value unit test for `ComputerFont.getCustom` (glyph
-   height matches `ComputerFont.get(...)`'s for the same `doubleHeight`,
-   instances are cached/reused per family name) alongside existing
-   `ComputerFont`-adjacent coverage.
+   panel, segment list, and XRef panel all render in the chosen font,
+   antialiased and legible, while the memory inspector's grid (hex,
+   address, and ASCII/ATASCII preview alike) is completely unaffected.
+3. Add a hand-computed-value unit test for `PlainTextFont.get` (glyph
+   width/height come out consistent with a directly-queried
+   `FontMetrics` for the same family/point size, repeated calls are safe)
+   alongside existing `ComputerFont`-adjacent coverage.
