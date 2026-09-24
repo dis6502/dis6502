@@ -71,4 +71,11 @@ be rediscovered:
   `ProfileDialog`/`SegmentPropertiesDialog`/`MemoryInspectorFindStringDialog`/
   `LowHighByteDialog` (status: done).
 
+- [`plans/CUSTOM_TEXT_FONT_PROPOSAL.md`](plans/CUSTOM_TEXT_FONT_PROPOSAL.md) -
+  letting the user pick a mono-spaced font for everything `ComputerFont`
+  renders except the memory inspector's ASCII/ATASCII byte-preview column,
+  which always stays the computer's authentic native font; the hard part
+  is `HexGridPanel`'s hex/address text sharing one pixel grid with that
+  always-native column (status: proposal).
+
 New planning/guidance documents for future work should also go in `plans/`.
