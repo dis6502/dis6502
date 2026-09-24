@@ -73,11 +73,13 @@ be rediscovered:
 
 - [`plans/CUSTOM_TEXT_FONT_PROPOSAL.md`](plans/CUSTOM_TEXT_FONT_PROPOSAL.md) -
   letting the user pick a mono-spaced font for the disassembly listing, log
-  panel, segment list, and XRef panel, via a new `TextFont` interface
+  panel, segment list, XRef panel, and every part panel's title bar
+  (memory inspector's included), via a new `TextFont` interface
   (`ComputerFont` implements it unchanged; a new, much simpler
   `PlainTextFont` handles a custom font with ordinary antialiased Swing
   rendering instead of `ComputerFont`'s pixel-art-tuned one); the memory
-  inspector's grid stays untouched, always the native font end to end;
-  picked from a new `View > Text Font...` dialog (status: done).
+  inspector's grid itself stays untouched, always the native font, hex
+  and ASCII/ATASCII preview alike; picked from a new `View > Text
+  Font...` dialog (status: done).
 
 New planning/guidance documents for future work should also go in `plans/`.

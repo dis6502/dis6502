@@ -2,13 +2,18 @@
 
 **Status: done.** Implemented as designed below - `TextFont`/`PlainTextFont`
 added, every Group B panel switched over, `HexGridPanel`/
-`MemoryInspectorPanel`/`DiskImageSectorsDialog` untouched, persistence
-wired into `Dis6502.updateFonts()`/`getTextFont()`. The picker UI this
-document originally left as a follow-up (`View > Text Font...`,
-`TextFontDialog`) has since been implemented too - applies immediately, no
-restart needed. Verified with the full test suite (headless and
-real-display) plus interactive smoke tests exercising the real menu item
-and dialog.
+`DiskImageSectorsDialog` untouched, persistence wired into
+`Dis6502.updateFonts()`/`getTextFont()`. The picker UI this document
+originally left as a follow-up (`View > Text Font...`, `TextFontDialog`)
+has since been implemented too - applies immediately, no restart needed.
+**Follow-up refinement:** `MemoryInspectorPanel`'s title-bar text moved
+from Group A to Group B - only its grid (raw byte values, including the
+ASCII/ATASCII preview column) needs to stay native; the plain title text
+above it is exactly like every other part panel's header, so it follows
+the user's chosen font too, via a new `setTextFont(TextFont)` split out
+from `setComputerFont(ComputerFont)` (grid only now). Verified with the
+full test suite (headless and real-display) plus interactive smoke tests
+exercising the real menu item and dialog.
 
 ## Request
 
@@ -54,6 +59,9 @@ problem the first pass at this proposal ran into - `HexGridPanel`'s
 hex/address text sharing one pixel grid (`cellW`/`cellH`, also driving
 `getPreferredSize` and both mouse-hit-testing methods) with the
 always-native ASCII column - by simply not putting `HexGridPanel` in scope.
+(`MemoryInspectorPanel`'s own title-bar text is a separate matter - it
+moved to Group B in a follow-up round, see the status note above; only its
+`grid` field stays in this group.)
 
 **Group B - "generated text" consumers, candidates for the user's chosen font:**
 
@@ -226,10 +234,12 @@ on the storage side.
   `TextFontDialog` (a `JComboBox` of installed mono-spaced font families
   plus a live preview, using exactly the mechanism sketched here), wired
   through `Dis6502.performShowTextFont()`.
-- **`HexGridPanel`, `DiskImageSectorsDialog`, `MemoryInspectorPanel`** -
-  Group A, completely untouched; always the workspace's native
-  `ComputerFont`, for both the hex/address text and the ASCII/ATASCII
-  preview column, exactly as today.
+- **`HexGridPanel`, `DiskImageSectorsDialog`, and `MemoryInspectorPanel`'s
+  own `grid` field** - Group A, completely untouched; always the
+  workspace's native `ComputerFont`, for both the hex/address text and the
+  ASCII/ATASCII preview column, exactly as today.
+  (`MemoryInspectorPanel`'s title-bar text is not in this group - see the
+  status note above.)
 - **Any change to `drawGlyph`, `codePointBase`, or the two retro TTFs
   themselves.**
 - **`GraphicPanel`** - shares `ComputerFont`'s glyph-caching *technique*
