@@ -1,5 +1,12 @@
 # Proposal: a user-chosen mono-spaced font for everything except the memory inspector's grid
 
+**Status: done.** Implemented as designed below - `TextFont`/`PlainTextFont`
+added, every Group B panel switched over, `HexGridPanel`/
+`MemoryInspectorPanel`/`DiskImageSectorsDialog` untouched, persistence
+wired into `Dis6502.updateFonts()`/`getTextFont()`. Verified with the full
+test suite (headless and real-display) plus a live smoke test with a real
+installed font. The picker UI itself remains a follow-up, as scoped below.
+
 ## Request
 
 Every place that today renders through `ComputerFont` should be able to use
