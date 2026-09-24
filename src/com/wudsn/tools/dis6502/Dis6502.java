@@ -485,17 +485,19 @@ public final class Dis6502 {
 	 * Reacts to a {@link WorkspaceProperty#COMPUTER_SYSTEM_TYPE}/{@link
 	 * WorkspaceProperty#FONT} change - every part window shares one font
 	 * set, matching {@link ComputerFont}'s javadoc. {@link
-	 * MemoryInspectorPanel} always gets the native {@code nativeFont}
-	 * (see its own {@code setComputerFont} javadoc for why); every other
-	 * part window gets {@code textFont}, the user's chosen font if one is
-	 * set, else {@code nativeFont} itself - see
-	 * {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}.
+	 * MemoryInspectorPanel}'s grid always gets the native {@code
+	 * nativeFont} (see its own {@code setComputerFont} javadoc for why);
+	 * every part window's title bar - {@link MemoryInspectorPanel}'s
+	 * included - and every other panel's own content gets {@code
+	 * textFont}, the user's chosen font if one is set, else {@code
+	 * nativeFont} itself - see {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}.
 	 */
 	private void updateFonts() {
 		ComputerFont nativeFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
 		TextFont textFont = getTextFont(nativeFont);
 
 		mainWindow.memoryInspectorPanel.setComputerFont(nativeFont);
+		mainWindow.memoryInspectorPanel.setTextFont(textFont);
 		mainWindow.disassemblyPanel.setTextFont(textFont);
 		mainWindow.xrefPanel.setTextFont(textFont);
 		mainWindow.logPanel.setTextFont(textFont);

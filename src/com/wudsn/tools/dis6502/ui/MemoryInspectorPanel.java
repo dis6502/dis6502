@@ -114,7 +114,9 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * exactly what it implements (the paint routine, mouse-drag selection)
  * and what it does not (in-place editing). {@link #setComputerFont} must
  * be called by {@code Dis6502} whenever the workspace's computer system or
- * double-font-height setting changes.
+ * double-font-height setting changes; {@link #setTextFont} likewise for
+ * {@link #header}'s own font (see that method's javadoc for why the two
+ * differ).
  * <p>
  * The Change Type submenu is the one popup item that is not a single
  * {@code JMenuItem} field: with thirteen items, each already knowing exactly
@@ -535,14 +537,24 @@ public final class MemoryInspectorPanel extends JPanel {
 	/**
 	 * Call whenever the workspace's computer system or double-height
 	 * setting changes. Always the workspace's native {@link ComputerFont},
-	 * never a user-chosen one - unlike every other part panel, this one
-	 * shows raw byte values via {@link #grid}'s ASCII/ATASCII preview
-	 * column, which must stay authentic (see
+	 * never a user-chosen one - unlike {@link #header} (see {@link
+	 * #setTextFont}), {@link #grid} shows raw byte values via its
+	 * ASCII/ATASCII preview column, which must stay authentic (see
 	 * {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}).
 	 */
 	public void setComputerFont(ComputerFont computerFont) {
 		grid.setComputerFont(computerFont);
-		header.setTextFont(computerFont);
+	}
+
+	/**
+	 * Call whenever the workspace's computer system, double-height
+	 * setting, or user-chosen text font preference changes. Unlike {@link
+	 * #grid} (see {@link #setComputerFont}), {@link #header} only ever
+	 * shows plain title text, not raw byte values, so it follows the same
+	 * user-chosen {@link TextFont} every other part panel's header does.
+	 */
+	public void setTextFont(TextFont textFont) {
+		header.setTextFont(textFont);
 	}
 
 	/**
