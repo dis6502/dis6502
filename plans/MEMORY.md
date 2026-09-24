@@ -147,6 +147,28 @@ are used in `switch` statements or as file format values (`MemoryType`,
 `DisassemblySectionType`, the event kinds `WorkspaceProperty`/
 `SegmentList.Property`, and internal state enums).
 
+### Keep every persisted preference's key names and coded defaults in one dedicated class
+
+A persisted user preference's settings-section name, preference key
+name(s), and coded default value(s) belong in one dedicated class (e.g.
+`Options`, `src/com/wudsn/tools/dis6502/Options.java`) - not as private
+constants inside `Dis6502` (the class that reads/writes them via
+`ApplicationSettingsSection`), and not duplicated as a separate constant
+inside whatever dialog exposes the preference in the UI. Both the
+persistence/lookup code and any UI code that needs to know a control's
+coded default (e.g. a dialog resetting itself to defaults) read the same
+fields off that one class, so the two can never drift apart; adding a
+future preference then means adding one key/default pair there, not
+touching multiple files.
+
+This was learned when `TextFontFamily`/`TextFontSize` (the preference
+`OptionsDialog` manages) initially had their settings-section name, key
+names, and default value living as private constants in `Dis6502`, plus
+a separate `DEFAULT_POINT_SIZE` constant duplicated in `OptionsDialog`
+itself; the user asked for all of it to move into one new `Options`
+class instead. Apply the same pattern to any future persisted
+preference added to this project.
+
 ## Swing UI conventions
 
 ### Wire popup menu items directly - no hidden `doClick()` indirection
