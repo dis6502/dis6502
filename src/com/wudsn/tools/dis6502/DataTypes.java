@@ -144,6 +144,7 @@ public final class DataTypes extends NLS {
 	// OptionsDialog.
 	public static DataType OptionsDialog_Font = new DataType(String.class);
 	public static DataType OptionsDialog_Size = new DataType(String.class);
+	public static DataType OptionsDialog_NativeFontZoom = new DataType(String.class);
 
 	// WorkspaceDialog.
 	public static DataType WorkspaceDialog_ComputerSystem = new DataType(String.class);

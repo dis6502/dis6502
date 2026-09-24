@@ -68,12 +68,14 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
  * glyph as a small bitmap sidesteps that: the bitmap itself is always
  * rasterized through a fresh {@link BufferedImage}'s own identity-
  * transform {@code Graphics2D}, so it is pixel-perfect regardless of the
- * caller's transform; drawing that bitmap back onto the caller's
- * {@code Graphics2D} with {@link RenderingHints#VALUE_INTERPOLATION_NEAREST_NEIGHBOR}
- * scales it by simple pixel replication, which stays crisp and blocky at
- * any display scale instead of reintroducing hinting-related artifacts -
- * the same technique {@link GraphicPanel#paintComponent} already uses for
- * the same reason.
+ * caller's transform; {@link #drawChar} then draws that already-correctly-
+ * sized bitmap back onto the caller's {@code Graphics2D} 1:1, unscaled (see
+ * that method's own javadoc for why even a nominally-1:1 <em>scaled</em>
+ * draw call was found to drop a pixel row on Windows' hardware-accelerated
+ * pipeline) - the same overall bitmap-caching technique {@link
+ * GraphicPanel#paintComponent} already uses for the HiDPI reason above,
+ * though that class's own 2x on-screen zoom does still need an actual
+ * scaled draw, just not through this exact bug's trigger.
  * <p>
  * No TTF is available for Oric/Unknown - those fall back to a plain
  * {@link Font#MONOSPACED} system font with no byte-index shift ({@link
@@ -84,12 +86,15 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
  * for one simple, standard rendering mechanism everywhere, rather than
  * keeping a second, bitmap-based code path alive for just two systems.
  * <p>
- * {@link #getGlyphWidth}/{@link #getGlyphHeight} already include the 2x
- * on-screen scale {@link HexGridPanel}/{@link
+ * {@link #getGlyphWidth}/{@link #getGlyphHeight} already include the
+ * caller-chosen {@code zoom} on-screen scale {@link HexGridPanel}/{@link
  * DisassemblyGridPanel} need for legibility (baked into the point size
  * passed to {@link Font#deriveFont}, not a separate scaling step those
- * callers used to do themselves) - the same 2x adjustment applies to
- * {@link GraphicPanel} as well. {@link #getAwtFont()} exposes the plain
+ * callers used to do themselves) - see {@link
+ * com.wudsn.tools.dis6502.Options#NATIVE_FONT_ZOOM_KEY}, the user's
+ * persisted preference for it, unrelated to {@link
+ * com.wudsn.tools.dis6502.Options#TEXT_FONT_SIZE_KEY} which only ever
+ * applies to a chosen {@link PlainTextFont}. {@link #getAwtFont()} exposes the plain
  * derived {@link Font} for components that just need normal Unicode text
  * at the real system font's style (e.g. {@link SegmentListPanel}'s
  * segment metadata, which is already-formatted text - titles, hex
@@ -108,11 +113,13 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
  */
 public final class ComputerFont implements TextFont {
 
-	private static final int ZOOM = 1;
 	private static final int NATIVE_HEIGHT = 8; // Pixels, matching the original 8px raster cell height.
 
-	private static final Map<ComputerSystemType, ComputerFont> NORMAL_INSTANCES = new HashMap<>(); // A value set, not an enum.
-	private static final Map<ComputerSystemType, ComputerFont> DOUBLE_HEIGHT_INSTANCES = new HashMap<>();
+	/** Caches one instance per (system, double height, zoom) combination - a value set, not an enum. */
+	private record InstanceKey(ComputerSystemType type, boolean doubleHeight, int zoom) {
+	}
+
+	private static final Map<InstanceKey, ComputerFont> INSTANCES = new HashMap<>();
 
 	private static Font atariClassicBase;
 	private static Font c64ClassicBase;
@@ -136,25 +143,25 @@ public final class ComputerFont implements TextFont {
 		this.codePointBase = codePointBase;
 	}
 
-	/** Caches one instance per {@link ComputerSystemType}, separately for normal and double-height fonts. */
-	public static synchronized ComputerFont get(ComputerSystemType type, boolean doubleHeight) {
-		Map<ComputerSystemType, ComputerFont> instances = doubleHeight ? DOUBLE_HEIGHT_INSTANCES : NORMAL_INSTANCES;
-		ComputerFont existing = instances.get(type);
+	/** Caches one instance per {@link InstanceKey}. {@code zoom} is the on-screen scale - see this class's own javadoc. */
+	public static synchronized ComputerFont get(ComputerSystemType type, boolean doubleHeight, int zoom) {
+		InstanceKey key = new InstanceKey(type, doubleHeight, zoom);
+		ComputerFont existing = INSTANCES.get(key);
 		if (existing != null) {
 			return existing;
 		}
-		ComputerFont created = create(type, doubleHeight);
-		instances.put(type, created);
+		ComputerFont created = create(type, doubleHeight, zoom);
+		INSTANCES.put(key, created);
 		return created;
 	}
 
-	private static ComputerFont create(ComputerSystemType type, boolean doubleHeight) {
+	private static ComputerFont create(ComputerSystemType type, boolean doubleHeight, int zoom) {
 		if (type == ComputerSystemType.ATARI5200 || type == ComputerSystemType.ATARI800) {
-			return derive(getAtariClassicBase(), doubleHeight, 0xE000);
+			return derive(getAtariClassicBase(), doubleHeight, 0xE000, zoom);
 		} else if (type == ComputerSystemType.C64) {
-			return derive(getC64ClassicBase(), doubleHeight, 0x100);
+			return derive(getC64ClassicBase(), doubleHeight, 0x100, zoom);
 		}
-		return derive(new Font(Font.MONOSPACED, Font.PLAIN, 1), doubleHeight, -1); // Oric, unknown.
+		return derive(new Font(Font.MONOSPACED, Font.PLAIN, 1), doubleHeight, -1, zoom); // Oric, unknown.
 	}
 
 	/**
@@ -166,8 +173,8 @@ public final class ComputerFont implements TextFont {
 	 * when measuring, so {@link #glyphWidth} still comes out equal to the
 	 * normal instance's.
 	 */
-	private static ComputerFont derive(Font base, boolean doubleHeight, int codePointBase) {
-		int pixelHeight = NATIVE_HEIGHT * ZOOM;
+	private static ComputerFont derive(Font base, boolean doubleHeight, int codePointBase, int zoom) {
+		int pixelHeight = NATIVE_HEIGHT * zoom;
 		Font sized = base.deriveFont((float) pixelHeight);
 		if (doubleHeight) {
 			sized = sized.deriveFont(AffineTransform.getScaleInstance(1.0, 2.0));
@@ -275,14 +282,29 @@ public final class ComputerFont implements TextFont {
 		}
 	}
 
+	/**
+	 * {@code glyphImage} is always exactly {@link #glyphWidth} x {@link
+	 * #glyphHeight} already (see {@link #renderGlyphImage}), so this draws
+	 * it 1:1 via the plain, unscaled {@link Graphics2D#drawImage(Image, int,
+	 * int, java.awt.image.ImageObserver)} overload rather than the
+	 * width/height-taking one - deliberately, even though the numbers would
+	 * come out identical either way: on a real on-screen {@code Graphics2D}
+	 * (never reproduced through an offscreen {@link BufferedImage}), the
+	 * scaled overload still goes through a texture-sampling path whose
+	 * nearest-neighbor rounding is sensitive to the ambient device-scale
+	 * transform even at a nominal 1:1 logical scale - confirmed from a
+	 * reported screenshot's raw pixels: most source rows appeared exactly
+	 * twice but some only once, an irregular duplication pattern, not a
+	 * clean doubling - the signature of a fractional scale factor being
+	 * rounded per-row rather than applied uniformly. Small at the smallest
+	 * zoom levels, where every row is a larger fraction of the glyph;
+	 * effectively invisible at double height, where genuine intentional
+	 * duplication already dominates. The unscaled overload has no scale
+	 * factor to round at all.
+	 */
 	private void drawChar(Graphics2D g2, char ch, Color color, int x, int y) {
 		BufferedImage glyphImage = getGlyphImage(ch, color);
-		Object oldHint = g2.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-		g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-		g2.drawImage(glyphImage, x, y, glyphWidth, glyphHeight, null);
-		if (oldHint != null) {
-			g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, oldHint);
-		}
+		g2.drawImage(glyphImage, x, y, null);
 	}
 
 	private BufferedImage getGlyphImage(char ch, Color color) {

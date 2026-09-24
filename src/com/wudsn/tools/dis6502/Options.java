@@ -30,6 +30,16 @@ public final class Options {
 	public static final String TEXT_FONT_SIZE_KEY = "TextFontSize";
 	public static final int TEXT_FONT_SIZE_DEFAULT = 16;
 
+	/**
+	 * How many times {@code ComputerFont}'s authentic 8-pixel-tall glyph cell
+	 * is scaled up for on-screen legibility - a separate preference from
+	 * {@link #TEXT_FONT_SIZE_KEY}, which only ever applies to a chosen plain
+	 * font, since the memory inspector's grid always uses the native font
+	 * regardless of {@link #TEXT_FONT_FAMILY_KEY}.
+	 */
+	public static final String NATIVE_FONT_ZOOM_KEY = "NativeFontZoom";
+	public static final int NATIVE_FONT_ZOOM_DEFAULT = 1;
+
 	private Options() {
 	}
 }

@@ -27,6 +27,7 @@ import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Options;
 import com.wudsn.tools.dis6502.Texts;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * A general application-options dialog - today just the mono-spaced {@link
@@ -38,29 +39,33 @@ import com.wudsn.tools.dis6502.Texts;
  * Texts#OptionsDialog_NativeFont} in {@link #fontComboBox}) or any
  * installed mono-spaced system font (see {@link
  * PlainTextFont#getAvailableFontFamilyNames}), at a chosen point size
- * ({@link #sizeSpinner}, disabled while the native font is selected -
- * that font's own size instead follows the existing "Double Font Height"
- * setting, unrelated to this dialog).
+ * ({@link #sizeSpinner}, disabled while the native font is selected - a
+ * point size has no meaning for it). {@link #zoomSpinner} is a separate,
+ * always-enabled control: how large the native font's own 8-pixel-tall
+ * glyph cell renders, since {@link MemoryInspectorPanel}'s grid always
+ * uses the native font regardless of {@link #fontComboBox}'s choice - see
+ * {@link Options#NATIVE_FONT_ZOOM_KEY}.
  * <p>
  * {@link #preview} shows a fixed sample string in the currently selected
- * font/size, updated live as either control changes, via the exact same
+ * font/size, updated live as any control changes, via the exact same
  * {@link TextFont} a real panel would end up using - so a distorted or
  * missing glyph in an installed font is visible before committing to it.
  * Persisting the choice and calling {@code Dis6502.updateFonts()} is the
  * caller's job, matching every other settings dialog in this project -
  * {@link #show} only reports whether the user clicked OK; {@link
- * #getSelectedFontFamilyName}/{@link #getSelectedPointSize} then give the
- * result, the same "boolean {@code show}, separate getters" shape {@link
- * DiskImageSectorsDialog}/{@link RawFileDialog} already use.
+ * #getSelectedFontFamilyName}/{@link #getSelectedPointSize}/{@link
+ * #getSelectedZoom} then give the result, the same "boolean {@code show},
+ * separate getters" shape {@link DiskImageSectorsDialog}/{@link
+ * RawFileDialog} already use.
  * <p>
  * {@link #restoreDefaultsButton} only resets this dialog's own controls
  * back to their coded defaults (native font, {@link
- * Options#TEXT_FONT_SIZE_DEFAULT}) - a pending edit like any other control
- * here, not an immediate action: it takes a click on {@link #okButton} to
- * actually delete the persisted preferences, via {@link
- * #isRestoreDefaultsRequested}, exactly like every other field only takes
- * effect once the caller sees {@link #show} return {@code true}.
- * Cancel/close discards it, same as any other edit.
+ * Options#TEXT_FONT_SIZE_DEFAULT}, {@link Options#NATIVE_FONT_ZOOM_DEFAULT}) -
+ * a pending edit like any other control here, not an immediate action: it
+ * takes a click on {@link #okButton} to actually delete the persisted
+ * preferences, via {@link #isRestoreDefaultsRequested}, exactly like every
+ * other field only takes effect once the caller sees {@link #show} return
+ * {@code true}. Cancel/close discards it, same as any other edit.
  *
  * @author Peter Dell
  */
@@ -71,10 +76,14 @@ public final class OptionsDialog extends JDialog {
 	private static final String SAMPLE_TEXT = "ABCXYZ 0123 abcxyz";
 	private static final int MIN_POINT_SIZE = 6;
 	private static final int MAX_POINT_SIZE = 72;
+	private static final int MIN_ZOOM = 1;
+	private static final int MAX_ZOOM = 8;
 
 	private final JComboBox<String> fontComboBox = new JComboBox<>();
 	private final JSpinner sizeSpinner = new JSpinner(
 			new SpinnerNumberModel(Options.TEXT_FONT_SIZE_DEFAULT, MIN_POINT_SIZE, MAX_POINT_SIZE, 1));
+	private final JSpinner zoomSpinner = new JSpinner(
+			new SpinnerNumberModel(Options.NATIVE_FONT_ZOOM_DEFAULT, MIN_ZOOM, MAX_ZOOM, 1));
 	private final JPanel preview = new JPanel() {
 		private static final long serialVersionUID = 1L;
 
@@ -89,11 +98,13 @@ public final class OptionsDialog extends JDialog {
 	private final JButton restoreDefaultsButton = ElementFactory.createButton(
 			com.wudsn.tools.dis6502.Actions.OptionsDialog_RestoreDefaults, true);
 
-	private ComputerFont nativeFont;
+	private ComputerSystemType computerSystemType;
+	private boolean doubleHeight;
 	private boolean confirmed;
 	private boolean restoreDefaultsRequested;
 	private String selectedFontFamilyName = "";
 	private int selectedPointSize;
+	private int selectedZoom;
 
 	public OptionsDialog(Frame owner) {
 		super(owner, true);
@@ -105,6 +116,7 @@ public final class OptionsDialog extends JDialog {
 			preview.repaint();
 		});
 		sizeSpinner.addChangeListener(e -> preview.repaint());
+		zoomSpinner.addChangeListener(e -> preview.repaint());
 		restoreDefaultsButton.addActionListener(e -> performRestoreDefaults());
 
 		preview.setBackground(Color.WHITE);
@@ -129,6 +141,12 @@ public final class OptionsDialog extends JDialog {
 		formPanel.add(ElementFactory.createLabel(DataTypes.OptionsDialog_Size, sizeSpinner), c);
 		c.gridx = 1;
 		formPanel.add(sizeSpinner, c);
+
+		c.gridx = 0;
+		c.gridy = 2;
+		formPanel.add(ElementFactory.createLabel(DataTypes.OptionsDialog_NativeFontZoom, zoomSpinner), c);
+		c.gridx = 1;
+		formPanel.add(zoomSpinner, c);
 
 		okButton.addActionListener(e -> performOK());
 		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
@@ -159,7 +177,7 @@ public final class OptionsDialog extends JDialog {
 
 	private TextFont selectedTextFont() {
 		if (isNativeFontSelected()) {
-			return nativeFont;
+			return ComputerFont.get(computerSystemType, doubleHeight, (Integer) zoomSpinner.getValue());
 		}
 		return PlainTextFont.get((String) fontComboBox.getSelectedItem(), (Integer) sizeSpinner.getValue(), false);
 	}
@@ -167,6 +185,7 @@ public final class OptionsDialog extends JDialog {
 	private void performOK() {
 		selectedFontFamilyName = isNativeFontSelected() ? "" : (String) fontComboBox.getSelectedItem();
 		selectedPointSize = (Integer) sizeSpinner.getValue();
+		selectedZoom = (Integer) zoomSpinner.getValue();
 		confirmed = true;
 		setVisible(false);
 	}
@@ -176,6 +195,7 @@ public final class OptionsDialog extends JDialog {
 		fontComboBox.setSelectedItem(Texts.OptionsDialog_NativeFont);
 		sizeSpinner.setValue(Options.TEXT_FONT_SIZE_DEFAULT);
 		sizeSpinner.setEnabled(false);
+		zoomSpinner.setValue(Options.NATIVE_FONT_ZOOM_DEFAULT);
 		preview.repaint();
 	}
 
@@ -184,9 +204,19 @@ public final class OptionsDialog extends JDialog {
 		return selectedFontFamilyName;
 	}
 
-	/** Only meaningful after {@link #show} returned {@code true}; ignored by the native font, which follows "Double Font Height" instead. */
+	/** Only meaningful after {@link #show} returned {@code true}; ignored by the native font, which follows {@link #getSelectedZoom} instead. */
 	public int getSelectedPointSize() {
 		return selectedPointSize;
+	}
+
+	/**
+	 * How large the native font's glyph cell renders - only meaningful after
+	 * {@link #show} returned {@code true}. Applies regardless of {@link
+	 * #getSelectedFontFamilyName}, since the memory inspector's grid always
+	 * uses the native font.
+	 */
+	public int getSelectedZoom() {
+		return selectedZoom;
 	}
 
 	/**
@@ -194,9 +224,9 @@ public final class OptionsDialog extends JDialog {
 	 * meaningful after {@link #show} returned {@code true}. When {@code
 	 * true}, the caller should delete its own persisted preferences (so a
 	 * coded default added later also takes effect) rather than write
-	 * {@link #getSelectedFontFamilyName}/{@link #getSelectedPointSize}'s
-	 * values, even though those already equal the current coded defaults
-	 * either way.
+	 * {@link #getSelectedFontFamilyName}/{@link #getSelectedPointSize}/
+	 * {@link #getSelectedZoom}'s values, even though those already equal the
+	 * current coded defaults either way.
 	 */
 	public boolean isRestoreDefaultsRequested() {
 		return restoreDefaultsRequested;
@@ -204,16 +234,22 @@ public final class OptionsDialog extends JDialog {
 
 	/**
 	 * Opens the dialog pre-selecting {@code currentFontFamilyName} ({@code
-	 * ""} = native font) and {@code currentPointSize}; {@code nativeFont}
-	 * drives {@link #preview} while the native entry is selected.
+	 * ""} = native font), {@code currentPointSize} and {@code currentZoom};
+	 * {@code computerSystemType}/{@code doubleHeight} let {@link #preview}
+	 * build the exact native {@link ComputerFont} a real panel would use,
+	 * at whatever zoom is currently dialed in, while the native entry is
+	 * selected.
 	 * <p>
 	 * Returns whether the user clicked OK - {@link #getSelectedFontFamilyName}/
-	 * {@link #getSelectedPointSize}/{@link #isRestoreDefaultsRequested} then
-	 * give the result; on Cancel/close, none of them are updated, so the
-	 * caller's own already-current values remain correct.
+	 * {@link #getSelectedPointSize}/{@link #getSelectedZoom}/{@link
+	 * #isRestoreDefaultsRequested} then give the result; on Cancel/close,
+	 * none of them are updated, so the caller's own already-current values
+	 * remain correct.
 	 */
-	public boolean show(String currentFontFamilyName, int currentPointSize, ComputerFont nativeFont) {
-		this.nativeFont = nativeFont;
+	public boolean show(String currentFontFamilyName, int currentPointSize, int currentZoom, ComputerSystemType computerSystemType,
+			boolean doubleHeight) {
+		this.computerSystemType = computerSystemType;
+		this.doubleHeight = doubleHeight;
 
 		fontComboBox.removeAllItems();
 		fontComboBox.addItem(Texts.OptionsDialog_NativeFont);
@@ -223,6 +259,7 @@ public final class OptionsDialog extends JDialog {
 		fontComboBox.setSelectedItem(currentFontFamilyName.isEmpty() ? Texts.OptionsDialog_NativeFont : currentFontFamilyName);
 		sizeSpinner.setValue(Math.max(MIN_POINT_SIZE, Math.min(MAX_POINT_SIZE, currentPointSize)));
 		sizeSpinner.setEnabled(!isNativeFontSelected());
+		zoomSpinner.setValue(Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom)));
 
 		// Packed here, not in the constructor: the combo box is still empty at
 		// construction time, so packing then sized the dialog too narrow to

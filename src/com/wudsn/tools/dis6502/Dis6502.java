@@ -497,7 +497,7 @@ public final class Dis6502 {
 	 * nativeFont} itself - see {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}.
 	 */
 	private void updateFonts() {
-		ComputerFont nativeFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
+		ComputerFont nativeFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight(), getNativeFontZoom());
 		TextFont textFont = getTextFont(nativeFont);
 
 		mainWindow.memoryInspectorPanel.setComputerFont(nativeFont);
@@ -514,8 +514,9 @@ public final class Dis6502 {
 	 * Options#TEXT_FONT_SIZE_KEY} the same way {@code ProfileLogic}'s
 	 * {@code "LastProfile"} is - an empty (default) family name means "use
 	 * the native font", so {@code nativeFont} itself is returned, not a
-	 * separate lookup; the size preference is then irrelevant, since
-	 * {@code nativeFont} follows "Double Font Height" instead.
+	 * separate lookup; the point-size preference is then irrelevant to it,
+	 * since {@code nativeFont} already has its own size baked in (see
+	 * {@link #getNativeFontZoom}) and follows "Double Font Height" too.
 	 */
 	private TextFont getTextFont(ComputerFont nativeFont) {
 		ApplicationSettingsSection settings = application.getSettingsSection(Options.SECTION);
@@ -525,6 +526,17 @@ public final class Dis6502 {
 		}
 		int pointSize = settings.getUnsignedInt(Options.TEXT_FONT_SIZE_KEY, Options.TEXT_FONT_SIZE_DEFAULT);
 		return PlainTextFont.get(fontFamilyName, pointSize, workspace.isViewDoubleHeight());
+	}
+
+	/**
+	 * The user's chosen native-font zoom preference (see {@link
+	 * Options#NATIVE_FONT_ZOOM_KEY}) - always relevant, since {@link
+	 * MemoryInspectorPanel}'s grid uses the native font regardless of
+	 * {@link #getTextFont}'s choice.
+	 */
+	private int getNativeFontZoom() {
+		ApplicationSettingsSection settings = application.getSettingsSection(Options.SECTION);
+		return settings.getUnsignedInt(Options.NATIVE_FONT_ZOOM_KEY, Options.NATIVE_FONT_ZOOM_DEFAULT);
 	}
 
 	/** Enables/disables the Equates menu's Clear/Save/Export items based on whether system/user equates exist. */
@@ -933,7 +945,7 @@ public final class Dis6502 {
 		}
 
 		DiskImageSectorsDialog dialog = new DiskImageSectorsDialog(mainWindow.getFrame());
-		dialog.setComputerFont(ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight()));
+		dialog.setComputerFont(ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight(), getNativeFontZoom()));
 		if (!dialog.show(file.getPath(), info)) {
 			return false;
 		}
@@ -1662,19 +1674,22 @@ public final class Dis6502 {
 		ApplicationSettingsSection settings = application.getSettingsSection(Options.SECTION);
 		String currentFontFamilyName = settings.getString(Options.TEXT_FONT_FAMILY_KEY, Options.TEXT_FONT_FAMILY_DEFAULT);
 		int currentPointSize = settings.getUnsignedInt(Options.TEXT_FONT_SIZE_KEY, Options.TEXT_FONT_SIZE_DEFAULT);
-		ComputerFont nativeFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
+		int currentZoom = getNativeFontZoom();
 
 		OptionsDialog dialog = new OptionsDialog(mainWindow.getFrame());
-		if (dialog.show(currentFontFamilyName, currentPointSize, nativeFont)) {
+		if (dialog.show(currentFontFamilyName, currentPointSize, currentZoom, workspace.getComputerSystem().getType(),
+				workspace.isViewDoubleHeight())) {
 			if (dialog.isRestoreDefaultsRequested()) {
 				settings.clear();
 				updateFonts();
 			} else {
 				String newFontFamilyName = dialog.getSelectedFontFamilyName();
 				int newPointSize = dialog.getSelectedPointSize();
-				if (!newFontFamilyName.equals(currentFontFamilyName) || newPointSize != currentPointSize) {
+				int newZoom = dialog.getSelectedZoom();
+				if (!newFontFamilyName.equals(currentFontFamilyName) || newPointSize != currentPointSize || newZoom != currentZoom) {
 					settings.writeString(Options.TEXT_FONT_FAMILY_KEY, newFontFamilyName);
 					settings.writeUnsignedInt(Options.TEXT_FONT_SIZE_KEY, newPointSize);
+					settings.writeUnsignedInt(Options.NATIVE_FONT_ZOOM_KEY, newZoom);
 					updateFonts();
 				}
 			}

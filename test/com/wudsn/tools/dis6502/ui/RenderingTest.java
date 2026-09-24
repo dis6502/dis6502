@@ -17,6 +17,7 @@ import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
 import com.wudsn.tools.dis6502.Application;
+import com.wudsn.tools.dis6502.Options;
 import com.wudsn.tools.dis6502.model.Assert;
 import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
@@ -69,7 +70,7 @@ public final class RenderingTest {
 	/** The highlighted line's row is painted yellow, an unreferenced equate's row grey, the rows in between neither. */
 	private static void testDisassemblyGridPaint(Workspace workspace) {
 		DisassemblyGridPanel grid = new DisassemblyGridPanel();
-		ComputerFont font = ComputerFont.get(ComputerSystemType.ATARI800, false);
+		ComputerFont font = ComputerFont.get(ComputerSystemType.ATARI800, false, Options.NATIVE_FONT_ZOOM_DEFAULT);
 		grid.setTextFont(font);
 		List<DisassemblyLine> lines = new ArrayList<>();
 		for (Iterator<DisassemblyLine> i = workspace.getDisassemblyResult().createLineIterator(); i.hasNext();) {
@@ -100,7 +101,7 @@ public final class RenderingTest {
 	/** The selected bytes' cells are painted yellow, the line after the selection is not. */
 	private static void testHexGridPaint(Workspace workspace) {
 		HexGridPanel grid = new HexGridPanel();
-		ComputerFont font = ComputerFont.get(ComputerSystemType.ATARI800, false);
+		ComputerFont font = ComputerFont.get(ComputerSystemType.ATARI800, false, Options.NATIVE_FONT_ZOOM_DEFAULT);
 		grid.setComputerFont(font);
 		Segment segment = workspace.getSegmentList().getSegment(0);
 		grid.setByteSource(new SegmentByteSource(segment));

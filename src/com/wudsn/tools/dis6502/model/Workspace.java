@@ -88,7 +88,7 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 
 		viewDisplayAsScreenCode = false;
 		viewNoDisassembly = false;
-		viewDoubleHeight = true;
+		viewDoubleHeight = false;
 
 		memoryInspectorState.clear();
 		endUpdate();

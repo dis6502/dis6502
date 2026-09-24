@@ -18,6 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 
+import com.wudsn.tools.dis6502.Options;
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblySectionType;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
@@ -73,7 +74,7 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 
 	public DisassemblyGridPanel() {
 		setBackground(Color.WHITE);
-		setTextFont(ComputerFont.get(ComputerSystemType.ATARI800, false));
+		setTextFont(ComputerFont.get(ComputerSystemType.ATARI800, false, Options.NATIVE_FONT_ZOOM_DEFAULT));
 	}
 
 	public void setTextFont(TextFont textFont) {

@@ -21,6 +21,7 @@ import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
+import com.wudsn.tools.dis6502.Options;
 import com.wudsn.tools.dis6502.model.ByteRangeSelection;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState.EditPane;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState;
@@ -142,7 +143,7 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 	public HexGridPanel() {
 		setBackground(Color.WHITE);
 		setFocusable(true);
-		setComputerFont(ComputerFont.get(ComputerSystemType.ATARI800, false));
+		setComputerFont(ComputerFont.get(ComputerSystemType.ATARI800, false, Options.NATIVE_FONT_ZOOM_DEFAULT));
 
 		MouseAdapter dragHandler = new MouseAdapter() {
 			@Override

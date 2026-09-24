@@ -19,6 +19,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
+import com.wudsn.tools.dis6502.Options;
 import com.wudsn.tools.dis6502.model.Assert;
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblyResult;
@@ -63,7 +64,7 @@ public final class PopupStructureTest {
 	/** The popup for a {@code jsr} line: Navigate to Definition offered, Back disabled (no history), the immediate submenu disabled. */
 	private static void testPopupStructure(Workspace workspace) throws Exception {
 		DisassemblyPanel panel = new DisassemblyPanel();
-		ComputerFont font = ComputerFont.get(ComputerSystemType.ATARI800, false);
+		ComputerFont font = ComputerFont.get(ComputerSystemType.ATARI800, false, Options.NATIVE_FONT_ZOOM_DEFAULT);
 		panel.setTextFont(font);
 		panel.setImmediateTypeProvider(line -> line.getLine().contains("#$") ? new DisassemblyPanel.ImmediateType(MemoryType.UNKNOWN, true) : null);
 		panel.refresh(workspace.getDisassemblyResult());
