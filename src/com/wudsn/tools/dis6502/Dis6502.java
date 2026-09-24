@@ -88,6 +88,7 @@ import com.wudsn.tools.dis6502.ui.SegmentPropertiesDialog;
 import com.wudsn.tools.dis6502.ui.SegmentWriteBootDiskDialog;
 import com.wudsn.tools.dis6502.ui.SelectGraphicsDialog;
 import com.wudsn.tools.dis6502.ui.TextFont;
+import com.wudsn.tools.dis6502.ui.TextFontDialog;
 import com.wudsn.tools.dis6502.ui.UIApplication;
 import com.wudsn.tools.dis6502.ui.WorkspaceDialog;
 import com.wudsn.tools.dis6502.ui.XRefPanel;
@@ -326,6 +327,7 @@ public final class Dis6502 {
 		mainWindow.mainMenu.doubleFontHeightMenuItem.addActionListener(e -> performToggleViewDoubleFontHeight());
 		mainWindow.mainMenu.defaultFoldersMenuItem.addActionListener(e -> performShowDefaultFolders());
 		mainWindow.mainMenu.profileMenuItem.addActionListener(e -> performShowProfile());
+		mainWindow.mainMenu.textFontMenuItem.addActionListener(e -> performShowTextFont());
 
 		mainWindow.mainMenu.aboutMenuItem.addActionListener(e -> performAbout());
 
@@ -1634,6 +1636,20 @@ public final class Dis6502 {
 		if (dialog.show(workspace.getProfile(), workspace.getComputerSystem().getType())) {
 			workspace.notifyProfileChanged();
 			updateDisassembly(true); // Forced: refreshes even while "No Disassembly" is on.
+		}
+	}
+
+	/** Opens {@link TextFontDialog} and, if the choice changed, persists it and re-runs {@link #updateFonts}. */
+	private void performShowTextFont() {
+		ApplicationSettingsSection settings = application.getSettingsSection(DISPLAY_SETTINGS_SECTION);
+		String currentFontFamilyName = settings.getString(TEXT_FONT_FAMILY_KEY, "");
+		ComputerFont nativeFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
+
+		TextFontDialog dialog = new TextFontDialog(mainWindow.getFrame());
+		String newFontFamilyName = dialog.show(currentFontFamilyName, nativeFont);
+		if (!newFontFamilyName.equals(currentFontFamilyName)) {
+			settings.writeString(TEXT_FONT_FAMILY_KEY, newFontFamilyName);
+			updateFonts();
 		}
 	}
 

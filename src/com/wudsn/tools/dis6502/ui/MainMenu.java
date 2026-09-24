@@ -27,9 +27,10 @@ import com.wudsn.tools.dis6502.Actions;
  * Clear/Display System Equates, Clear/Edit User Equates, Define Address
  * Range..., and Open/Save/Export User Equates (see {@link EquateDialog}/
  * {@link EquateRangeDialog}), View &gt; Display as Screen Code/No
- * Disassembly/Double Font Height/Default Folders.../Profile... dialogs
- * (see {@link MemoryInspectorPanel}/{@link DefaultFoldersDialog}/{@link
- * ProfileDialog}), and Help &gt; About. Every item is wired to its action
+ * Disassembly/Double Font Height/Default Folders.../Profile.../Text
+ * Font... dialogs (see {@link MemoryInspectorPanel}/{@link
+ * DefaultFoldersDialog}/{@link ProfileDialog}/{@link TextFontDialog}), and
+ * Help &gt; About. Every item is wired to its action
  * by {@code Dis6502}, which also decides when the File menu's items are
  * enabled (see {@code Dis6502.updateFileMenuState}).
  * <p>
@@ -130,6 +131,7 @@ public final class MainMenu {
 	public final JCheckBoxMenuItem doubleFontHeightMenuItem = ElementFactory.createCheckBoxMenuItem(Actions.MainMenu_View_DoubleFontHeight);
 	public final JMenuItem defaultFoldersMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_View_DefaultFolders, "defaultFoldersMenuItem");
 	public final JMenuItem profileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_View_Profile, "profileMenuItem");
+	public final JMenuItem textFontMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_View_TextFont, "textFontMenuItem");
 
 	public final JMenuItem aboutMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Help_About, "aboutMenuItem");
 
@@ -279,6 +281,7 @@ public final class MainMenu {
 
 		menu.add(defaultFoldersMenuItem);
 		menu.add(profileMenuItem);
+		menu.add(textFontMenuItem);
 
 		return menu;
 	}

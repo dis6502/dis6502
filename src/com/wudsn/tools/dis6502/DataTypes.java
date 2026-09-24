@@ -141,6 +141,9 @@ public final class DataTypes extends NLS {
 	public static DataType SelectGraphicsDialog_BytesPerLine = new DataType(String.class);
 	public static DataType SelectGraphicsDialog_Address = new DataType(String.class);
 
+	// TextFontDialog.
+	public static DataType TextFontDialog_Font = new DataType(String.class);
+
 	// WorkspaceDialog.
 	public static DataType WorkspaceDialog_ComputerSystem = new DataType(String.class);
 

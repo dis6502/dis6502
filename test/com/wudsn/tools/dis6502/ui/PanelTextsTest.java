@@ -61,7 +61,7 @@ public final class PanelTextsTest {
 		for (Component menu : mainMenu.menuBar.getComponents()) {
 			menuItems += countMenuItems((JMenu) menu);
 		}
-		Assert.longEquals(menuItems, 36); // File 23 (with its Open/Add submenus, the Recent ones empty until filled), Equates 8, View 4, Help 1.
+		Assert.longEquals(menuItems, 37); // File 23 (with its Open/Add submenus, the Recent ones empty until filled), Equates 8, View 5, Help 1.
 
 		UITest.checkTexts("DisassemblyPanel", new DisassemblyPanel());
 		UITest.checkTexts("LogPanel", new LogPanel());

@@ -8,10 +8,13 @@ package com.wudsn.tools.dis6502.ui;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.GraphicsEnvironment;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A {@link TextFont} wrapping an arbitrary, user-chosen mono-spaced system
@@ -67,6 +70,29 @@ public final class PlainTextFont implements TextFont {
 		} finally {
 			g2.dispose();
 		}
+	}
+
+	/**
+	 * Every installed font family whose advance width is the same for every
+	 * character (probed via {@code 'i'}/{@code 'W'}, the standard Java
+	 * idiom for detecting a mono-spaced font, since AWT has no direct
+	 * "isMonospaced" query) - {@link TextFontDialog}'s candidate list.
+	 */
+	public static List<String> getAvailableFontFamilyNames() {
+		List<String> result = new ArrayList<>();
+		BufferedImage probe = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2 = probe.createGraphics();
+		try {
+			for (String familyName : GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()) {
+				FontMetrics metrics = g2.getFontMetrics(new Font(familyName, Font.PLAIN, 12));
+				if (metrics.charWidth('i') == metrics.charWidth('W') && metrics.charWidth('i') > 0) {
+					result.add(familyName);
+				}
+			}
+		} finally {
+			g2.dispose();
+		}
+		return result;
 	}
 
 	@Override
