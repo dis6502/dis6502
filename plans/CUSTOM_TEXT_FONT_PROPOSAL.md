@@ -17,6 +17,14 @@ an immediate action: only clicking OK afterward actually calls the new
 `"Display"` settings section (so a coded default added later also takes
 effect automatically), via `OptionsDialog.isRestoreDefaultsRequested()`;
 Cancel discards it exactly like any other pending edit.
+**Follow-up refinement:** every settings-section name, preference key, and
+coded default value this dialog manages moved out of `Dis6502`/
+`OptionsDialog` and into a new `Options` class (`SECTION`,
+`TEXT_FONT_FAMILY_KEY`/`_DEFAULT`, `TEXT_FONT_SIZE_KEY`/`_DEFAULT`) - the
+single source of truth both classes now read, so the dialog's own
+"restore to defaults" state and `Dis6502`'s persistence/lookup code can
+never drift apart, and adding a future option just means adding one more
+key/default pair here rather than duplicating it across both files.
 **Follow-up refinement:** `MemoryInspectorPanel`'s title-bar text moved
 from Group A to Group B - only its grid (raw byte values, including the
 ASCII/ATASCII preview column) needs to stay native; the plain title text

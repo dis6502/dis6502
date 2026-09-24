@@ -25,6 +25,7 @@ import javax.swing.SpinnerNumberModel;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Options;
 import com.wudsn.tools.dis6502.Texts;
 
 /**
@@ -53,12 +54,13 @@ import com.wudsn.tools.dis6502.Texts;
  * DiskImageSectorsDialog}/{@link RawFileDialog} already use.
  * <p>
  * {@link #restoreDefaultsButton} only resets this dialog's own controls
- * back to their coded defaults (native font, {@link #DEFAULT_POINT_SIZE}) -
- * a pending edit like any other control here, not an immediate action: it
- * takes a click on {@link #okButton} to actually delete the persisted
- * preferences, via {@link #isRestoreDefaultsRequested}, exactly like every
- * other field only takes effect once the caller sees {@link #show} return
- * {@code true}. Cancel/close discards it, same as any other edit.
+ * back to their coded defaults (native font, {@link
+ * Options#TEXT_FONT_SIZE_DEFAULT}) - a pending edit like any other control
+ * here, not an immediate action: it takes a click on {@link #okButton} to
+ * actually delete the persisted preferences, via {@link
+ * #isRestoreDefaultsRequested}, exactly like every other field only takes
+ * effect once the caller sees {@link #show} return {@code true}.
+ * Cancel/close discards it, same as any other edit.
  *
  * @author Peter Dell
  */
@@ -70,11 +72,9 @@ public final class OptionsDialog extends JDialog {
 	private static final int MIN_POINT_SIZE = 6;
 	private static final int MAX_POINT_SIZE = 72;
 
-	/** The coded default point size for a user-chosen font - the single source of truth {@code Dis6502} also reads. */
-	public static final int DEFAULT_POINT_SIZE = 16;
-
 	private final JComboBox<String> fontComboBox = new JComboBox<>();
-	private final JSpinner sizeSpinner = new JSpinner(new SpinnerNumberModel(DEFAULT_POINT_SIZE, MIN_POINT_SIZE, MAX_POINT_SIZE, 1));
+	private final JSpinner sizeSpinner = new JSpinner(
+			new SpinnerNumberModel(Options.TEXT_FONT_SIZE_DEFAULT, MIN_POINT_SIZE, MAX_POINT_SIZE, 1));
 	private final JPanel preview = new JPanel() {
 		private static final long serialVersionUID = 1L;
 
@@ -174,7 +174,7 @@ public final class OptionsDialog extends JDialog {
 	private void performRestoreDefaults() {
 		restoreDefaultsRequested = true;
 		fontComboBox.setSelectedItem(Texts.OptionsDialog_NativeFont);
-		sizeSpinner.setValue(DEFAULT_POINT_SIZE);
+		sizeSpinner.setValue(Options.TEXT_FONT_SIZE_DEFAULT);
 		sizeSpinner.setEnabled(false);
 		preview.repaint();
 	}

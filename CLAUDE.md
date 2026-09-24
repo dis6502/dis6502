@@ -85,6 +85,9 @@ be rediscovered:
   since more unrelated preferences are expected to land there later; its
   "Restore Defaults" button only resets the dialog's own controls - a
   pending edit like any other, discarded by Cancel - and only deletes the
-  persisted preferences once OK is clicked) (status: done).
+  persisted preferences once OK is clicked; every settings-section name,
+  preference key, and coded default value lives in one new `Options`
+  class, the single source of truth both `Dis6502` and `OptionsDialog`
+  read) (status: done).
 
 New planning/guidance documents for future work should also go in `plans/`.

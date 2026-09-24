@@ -476,11 +476,6 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.segmentChanged(memoryInspectorState);
 	}
 
-	/** App-wide (not per-workspace), see {@link #getTextFont}. */
-	private static final String DISPLAY_SETTINGS_SECTION = "Display";
-	private static final String TEXT_FONT_FAMILY_KEY = "TextFontFamily";
-	private static final String TEXT_FONT_SIZE_KEY = "TextFontSize";
-
 	/**
 	 * Reacts to a {@link WorkspaceProperty#COMPUTER_SYSTEM_TYPE}/{@link
 	 * WorkspaceProperty#FONT} change - every part window shares one font
@@ -506,20 +501,20 @@ public final class Dis6502 {
 
 	/**
 	 * The user's chosen "text font" preference, persisted under {@link
-	 * #DISPLAY_SETTINGS_SECTION}/{@link #TEXT_FONT_FAMILY_KEY}/{@link
-	 * #TEXT_FONT_SIZE_KEY} the same way {@code ProfileLogic}'s {@code
-	 * "LastProfile"} is - an empty (default) family name means "use the
-	 * native font", so {@code nativeFont} itself is returned, not a
+	 * Options#SECTION}/{@link Options#TEXT_FONT_FAMILY_KEY}/{@link
+	 * Options#TEXT_FONT_SIZE_KEY} the same way {@code ProfileLogic}'s
+	 * {@code "LastProfile"} is - an empty (default) family name means "use
+	 * the native font", so {@code nativeFont} itself is returned, not a
 	 * separate lookup; the size preference is then irrelevant, since
 	 * {@code nativeFont} follows "Double Font Height" instead.
 	 */
 	private TextFont getTextFont(ComputerFont nativeFont) {
-		ApplicationSettingsSection settings = application.getSettingsSection(DISPLAY_SETTINGS_SECTION);
-		String fontFamilyName = settings.getString(TEXT_FONT_FAMILY_KEY, "");
+		ApplicationSettingsSection settings = application.getSettingsSection(Options.SECTION);
+		String fontFamilyName = settings.getString(Options.TEXT_FONT_FAMILY_KEY, Options.TEXT_FONT_FAMILY_DEFAULT);
 		if (fontFamilyName.isEmpty()) {
 			return nativeFont;
 		}
-		int pointSize = settings.getUnsignedInt(TEXT_FONT_SIZE_KEY, OptionsDialog.DEFAULT_POINT_SIZE);
+		int pointSize = settings.getUnsignedInt(Options.TEXT_FONT_SIZE_KEY, Options.TEXT_FONT_SIZE_DEFAULT);
 		return PlainTextFont.get(fontFamilyName, pointSize, workspace.isViewDoubleHeight());
 	}
 
@@ -1649,15 +1644,15 @@ public final class Dis6502 {
 	 * Opens {@link OptionsDialog} and, if OK was clicked, either persists
 	 * the chosen font (if it changed) or - if {@link
 	 * OptionsDialog#isRestoreDefaultsRequested} - deletes every persisted
-	 * setting in {@code DISPLAY_SETTINGS_SECTION} via {@link
+	 * setting in {@link Options#SECTION} via {@link
 	 * ApplicationSettingsSection#clear()} instead, so a coded default added
 	 * later also takes effect automatically; either way, {@link
 	 * #updateFonts} re-runs only when something actually changed.
 	 */
 	private void performShowOptions() {
-		ApplicationSettingsSection settings = application.getSettingsSection(DISPLAY_SETTINGS_SECTION);
-		String currentFontFamilyName = settings.getString(TEXT_FONT_FAMILY_KEY, "");
-		int currentPointSize = settings.getUnsignedInt(TEXT_FONT_SIZE_KEY, OptionsDialog.DEFAULT_POINT_SIZE);
+		ApplicationSettingsSection settings = application.getSettingsSection(Options.SECTION);
+		String currentFontFamilyName = settings.getString(Options.TEXT_FONT_FAMILY_KEY, Options.TEXT_FONT_FAMILY_DEFAULT);
+		int currentPointSize = settings.getUnsignedInt(Options.TEXT_FONT_SIZE_KEY, Options.TEXT_FONT_SIZE_DEFAULT);
 		ComputerFont nativeFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
 
 		OptionsDialog dialog = new OptionsDialog(mainWindow.getFrame());
@@ -1669,8 +1664,8 @@ public final class Dis6502 {
 				String newFontFamilyName = dialog.getSelectedFontFamilyName();
 				int newPointSize = dialog.getSelectedPointSize();
 				if (!newFontFamilyName.equals(currentFontFamilyName) || newPointSize != currentPointSize) {
-					settings.writeString(TEXT_FONT_FAMILY_KEY, newFontFamilyName);
-					settings.writeUnsignedInt(TEXT_FONT_SIZE_KEY, newPointSize);
+					settings.writeString(Options.TEXT_FONT_FAMILY_KEY, newFontFamilyName);
+					settings.writeUnsignedInt(Options.TEXT_FONT_SIZE_KEY, newPointSize);
 					updateFonts();
 				}
 			}
