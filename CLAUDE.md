@@ -77,7 +77,7 @@ be rediscovered:
   (`ComputerFont` implements it unchanged; a new, much simpler
   `PlainTextFont` handles a custom font with ordinary antialiased Swing
   rendering instead of `ComputerFont`'s pixel-art-tuned one); the memory
-  inspector's grid stays untouched, always the native font end to end
-  (status: done - the picker UI itself is a follow-up, not part of this).
+  inspector's grid stays untouched, always the native font end to end;
+  picked from a new `View > Text Font...` dialog (status: done).
 
 New planning/guidance documents for future work should also go in `plans/`.

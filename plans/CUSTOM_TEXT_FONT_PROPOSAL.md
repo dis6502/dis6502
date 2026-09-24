@@ -3,9 +3,12 @@
 **Status: done.** Implemented as designed below - `TextFont`/`PlainTextFont`
 added, every Group B panel switched over, `HexGridPanel`/
 `MemoryInspectorPanel`/`DiskImageSectorsDialog` untouched, persistence
-wired into `Dis6502.updateFonts()`/`getTextFont()`. Verified with the full
-test suite (headless and real-display) plus a live smoke test with a real
-installed font. The picker UI itself remains a follow-up, as scoped below.
+wired into `Dis6502.updateFonts()`/`getTextFont()`. The picker UI this
+document originally left as a follow-up (`View > Text Font...`,
+`TextFontDialog`) has since been implemented too - applies immediately, no
+restart needed. Verified with the full test suite (headless and
+real-display) plus interactive smoke tests exercising the real menu item
+and dialog.
 
 ## Request
 
@@ -218,14 +221,11 @@ on the storage side.
 
 ## Explicitly out of scope for this proposal
 
-- **The actual picker UI.** Per the request, the font choice is the user's
-  to make "later" - this proposal only makes the choice possible and makes
-  sure it is remembered. A future small dialog (or a combo box in a future
-  general Preferences dialog, following `DefaultFoldersDialog`'s existing
-  shape) would list installed mono-spaced fonts (the standard Java idiom:
-  `GraphicsEnvironment.getAvailableFontFamilyNames()` filtered to families
-  where `metrics.charWidth('i') == metrics.charWidth('W')`) and call
-  `settings.writeString(...)` plus re-run `updateFonts()`.
+- **The actual picker UI** was left for later at proposal time, and has
+  since been built as its own follow-up: `View > Text Font...` opens
+  `TextFontDialog` (a `JComboBox` of installed mono-spaced font families
+  plus a live preview, using exactly the mechanism sketched here), wired
+  through `Dis6502.performShowTextFont()`.
 - **`HexGridPanel`, `DiskImageSectorsDialog`, `MemoryInspectorPanel`** -
   Group A, completely untouched; always the workspace's native
   `ComputerFont`, for both the hex/address text and the ASCII/ATASCII
