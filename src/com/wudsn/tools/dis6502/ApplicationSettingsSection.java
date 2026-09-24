@@ -5,6 +5,7 @@
  */
 package com.wudsn.tools.dis6502;
 
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 /**
@@ -39,5 +40,14 @@ public final class ApplicationSettingsSection {
 
 	public void writeUnsignedInt(String keyName, int value) {
 		preferences.putInt(keyName, value);
+	}
+
+	/** Deletes every key in this section, so a later {@code getXxx} call falls back to its own coded default again. */
+	public void clear() {
+		try {
+			preferences.clear();
+		} catch (BackingStoreException ex) {
+			throw new IllegalStateException(ex);
+		}
 	}
 }

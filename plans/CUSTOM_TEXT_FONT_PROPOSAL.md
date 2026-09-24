@@ -6,6 +6,15 @@ added, every Group B panel switched over, `HexGridPanel`/
 `Dis6502.updateFonts()`/`getTextFont()`. The picker UI this document
 originally left as a follow-up (`View > Text Font...`, `TextFontDialog`)
 has since been implemented too - applies immediately, no restart needed.
+**Follow-up refinement:** the picker dialog and its `View` menu item were
+renamed to a general `OptionsDialog`/`View > Options...`, since more
+(unrelated) preferences are expected to land there over time - the font
+picker is no longer assumed to be the dialog's only purpose. It also
+gained a "Restore Defaults" button, `ApplicationSettingsSection.clear()`,
+that deletes every key in the `"Display"` settings section immediately
+(not gated by OK/Cancel), so every coded default - including ones added
+later - applies from then on; the running app reflects the restored
+defaults right away too, even while the dialog stays open.
 **Follow-up refinement:** `MemoryInspectorPanel`'s title-bar text moved
 from Group A to Group B - only its grid (raw byte values, including the
 ASCII/ATASCII preview column) needs to stay native; the plain title text
@@ -15,7 +24,8 @@ from `setComputerFont(ComputerFont)` (grid only now). Verified with the
 full test suite (headless and real-display) plus interactive smoke tests
 exercising the real menu item and dialog.
 **Follow-up refinement:** the font's point size is also user-selectable
-now, not fixed - `TextFontDialog` gained a `JSpinner` (6-72pt, disabled
+now, not fixed - the dialog (`TextFontDialog` at the time, since renamed
+to `OptionsDialog` - see above) gained a `JSpinner` (6-72pt, disabled
 while the native font is selected, since that font's size instead follows
 the existing "Double Font Height" setting) next to the family combo box,
 persisted under a new `"TextFontSize"` key alongside `"TextFontFamily"`
@@ -240,10 +250,11 @@ on the storage side.
 ## Explicitly out of scope for this proposal
 
 - **The actual picker UI** was left for later at proposal time, and has
-  since been built as its own follow-up: `View > Text Font...` opens
-  `TextFontDialog` (a `JComboBox` of installed mono-spaced font families
-  plus a live preview, using exactly the mechanism sketched here), wired
-  through `Dis6502.performShowTextFont()`.
+  since been built as its own follow-up: `View > Options...` opens
+  `OptionsDialog` (a `JComboBox` of installed mono-spaced font families
+  plus a live preview, using exactly the mechanism sketched here, plus a
+  point-size spinner and a "Restore Defaults" button - see the status
+  note above), wired through `Dis6502.performShowOptions()`.
 - **`HexGridPanel`, `DiskImageSectorsDialog`, and `MemoryInspectorPanel`'s
   own `grid` field** - Group A, completely untouched; always the
   workspace's native `ComputerFont`, for both the hex/address text and the

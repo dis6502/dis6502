@@ -81,6 +81,7 @@ import com.wudsn.tools.dis6502.ui.MRUController;
 import com.wudsn.tools.dis6502.ui.MainMenu;
 import com.wudsn.tools.dis6502.ui.MainWindow;
 import com.wudsn.tools.dis6502.ui.MemoryInspectorFindStringDialog;
+import com.wudsn.tools.dis6502.ui.OptionsDialog;
 import com.wudsn.tools.dis6502.ui.PlainTextFont;
 import com.wudsn.tools.dis6502.ui.ProfileDialog;
 import com.wudsn.tools.dis6502.ui.RawFileDialog;
@@ -88,7 +89,6 @@ import com.wudsn.tools.dis6502.ui.SegmentPropertiesDialog;
 import com.wudsn.tools.dis6502.ui.SegmentWriteBootDiskDialog;
 import com.wudsn.tools.dis6502.ui.SelectGraphicsDialog;
 import com.wudsn.tools.dis6502.ui.TextFont;
-import com.wudsn.tools.dis6502.ui.TextFontDialog;
 import com.wudsn.tools.dis6502.ui.UIApplication;
 import com.wudsn.tools.dis6502.ui.WorkspaceDialog;
 import com.wudsn.tools.dis6502.ui.XRefPanel;
@@ -327,7 +327,7 @@ public final class Dis6502 {
 		mainWindow.mainMenu.doubleFontHeightMenuItem.addActionListener(e -> performToggleViewDoubleFontHeight());
 		mainWindow.mainMenu.defaultFoldersMenuItem.addActionListener(e -> performShowDefaultFolders());
 		mainWindow.mainMenu.profileMenuItem.addActionListener(e -> performShowProfile());
-		mainWindow.mainMenu.textFontMenuItem.addActionListener(e -> performShowTextFont());
+		mainWindow.mainMenu.optionsMenuItem.addActionListener(e -> performShowOptions());
 
 		mainWindow.mainMenu.aboutMenuItem.addActionListener(e -> performAbout());
 
@@ -480,7 +480,6 @@ public final class Dis6502 {
 	private static final String DISPLAY_SETTINGS_SECTION = "Display";
 	private static final String TEXT_FONT_FAMILY_KEY = "TextFontFamily";
 	private static final String TEXT_FONT_SIZE_KEY = "TextFontSize";
-	private static final int TEXT_FONT_DEFAULT_POINT_SIZE = 16; // An ordinary readable size - unrelated to ComputerFont's tiny native-pixel-height derivation.
 
 	/**
 	 * Reacts to a {@link WorkspaceProperty#COMPUTER_SYSTEM_TYPE}/{@link
@@ -520,7 +519,7 @@ public final class Dis6502 {
 		if (fontFamilyName.isEmpty()) {
 			return nativeFont;
 		}
-		int pointSize = settings.getUnsignedInt(TEXT_FONT_SIZE_KEY, TEXT_FONT_DEFAULT_POINT_SIZE);
+		int pointSize = settings.getUnsignedInt(TEXT_FONT_SIZE_KEY, OptionsDialog.DEFAULT_POINT_SIZE);
 		return PlainTextFont.get(fontFamilyName, pointSize, workspace.isViewDoubleHeight());
 	}
 
@@ -1646,15 +1645,27 @@ public final class Dis6502 {
 		}
 	}
 
-	/** Opens {@link TextFontDialog} and, if the choice changed, persists it and re-runs {@link #updateFonts}. */
-	private void performShowTextFont() {
+	/**
+	 * Opens {@link OptionsDialog} and, if the choice changed, persists it
+	 * and re-runs {@link #updateFonts}. Also passes the dialog a "restore
+	 * defaults" callback - {@link ApplicationSettingsSection#clear()} on
+	 * the same {@code DISPLAY_SETTINGS_SECTION} the dialog's own settings
+	 * live under, followed by {@link #updateFonts} so the running app
+	 * reflects the coded defaults immediately, even while the dialog stays
+	 * open - see {@code OptionsDialog.restoreDefaultsButton}'s own javadoc
+	 * for why that runs right away instead of waiting for OK.
+	 */
+	private void performShowOptions() {
 		ApplicationSettingsSection settings = application.getSettingsSection(DISPLAY_SETTINGS_SECTION);
 		String currentFontFamilyName = settings.getString(TEXT_FONT_FAMILY_KEY, "");
-		int currentPointSize = settings.getUnsignedInt(TEXT_FONT_SIZE_KEY, TEXT_FONT_DEFAULT_POINT_SIZE);
+		int currentPointSize = settings.getUnsignedInt(TEXT_FONT_SIZE_KEY, OptionsDialog.DEFAULT_POINT_SIZE);
 		ComputerFont nativeFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
 
-		TextFontDialog dialog = new TextFontDialog(mainWindow.getFrame());
-		if (dialog.show(currentFontFamilyName, currentPointSize, nativeFont)) {
+		OptionsDialog dialog = new OptionsDialog(mainWindow.getFrame());
+		if (dialog.show(currentFontFamilyName, currentPointSize, nativeFont, () -> {
+			settings.clear();
+			updateFonts();
+		})) {
 			String newFontFamilyName = dialog.getSelectedFontFamilyName();
 			int newPointSize = dialog.getSelectedPointSize();
 			if (!newFontFamilyName.equals(currentFontFamilyName) || newPointSize != currentPointSize) {

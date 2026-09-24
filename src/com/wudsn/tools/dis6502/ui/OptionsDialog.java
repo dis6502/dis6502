@@ -28,13 +28,16 @@ import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Texts;
 
 /**
- * A dialog for picking the mono-spaced {@link TextFont} used by every part
- * panel except the memory inspector's grid (see
- * {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}) - either the computer's own
- * native font (the default, {@link Texts#TextFontDialog_NativeFont} in
- * {@link #fontComboBox}) or any installed mono-spaced system font (see
- * {@link PlainTextFont#getAvailableFontFamilyNames}), at a chosen point
- * size ({@link #sizeSpinner}, disabled while the native font is selected -
+ * A general application-options dialog - today just the mono-spaced {@link
+ * TextFont} used by every part panel except the memory inspector's grid
+ * (see {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}), but named and
+ * structured to gain further, unrelated preferences over time rather than
+ * staying a single-purpose "text font" dialog. The font choice is either
+ * the computer's own native font (the default, {@link
+ * Texts#OptionsDialog_NativeFont} in {@link #fontComboBox}) or any
+ * installed mono-spaced system font (see {@link
+ * PlainTextFont#getAvailableFontFamilyNames}), at a chosen point size
+ * ({@link #sizeSpinner}, disabled while the native font is selected -
  * that font's own size instead follows the existing "Double Font Height"
  * setting, unrelated to this dialog).
  * <p>
@@ -48,10 +51,21 @@ import com.wudsn.tools.dis6502.Texts;
  * #getSelectedFontFamilyName}/{@link #getSelectedPointSize} then give the
  * result, the same "boolean {@code show}, separate getters" shape {@link
  * DiskImageSectorsDialog}/{@link RawFileDialog} already use.
+ * <p>
+ * {@link #restoreDefaultsButton} applies immediately, independent of
+ * OK/Cancel: it runs the caller-supplied {@code restoreDefaultsAction}
+ * (which deletes every persisted preference this dialog manages, so the
+ * coded defaults apply from then on and take effect right away, even
+ * while this dialog stays open), then resets every control here back to
+ * its own coded default so the dialog's own display matches. OK afterward
+ * simply re-persists that already-applied default state; Cancel leaves
+ * the already-applied restore in place, since "Restore Defaults" is a
+ * direct action, not a pending edit gated by OK/Cancel like the other
+ * controls.
  *
  * @author Peter Dell
  */
-public final class TextFontDialog extends JDialog {
+public final class OptionsDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
 
@@ -59,8 +73,11 @@ public final class TextFontDialog extends JDialog {
 	private static final int MIN_POINT_SIZE = 6;
 	private static final int MAX_POINT_SIZE = 72;
 
+	/** The coded default point size for a user-chosen font - the single source of truth {@code Dis6502} also reads. */
+	public static final int DEFAULT_POINT_SIZE = 16;
+
 	private final JComboBox<String> fontComboBox = new JComboBox<>();
-	private final JSpinner sizeSpinner = new JSpinner(new SpinnerNumberModel(16, MIN_POINT_SIZE, MAX_POINT_SIZE, 1));
+	private final JSpinner sizeSpinner = new JSpinner(new SpinnerNumberModel(DEFAULT_POINT_SIZE, MIN_POINT_SIZE, MAX_POINT_SIZE, 1));
 	private final JPanel preview = new JPanel() {
 		private static final long serialVersionUID = 1L;
 
@@ -71,22 +88,27 @@ public final class TextFontDialog extends JDialog {
 		}
 	};
 	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
+	// Fully qualified: com.wudsn.tools.base.Actions is already imported as "Actions" for ButtonBar_OK/Cancel above.
+	private final JButton restoreDefaultsButton = ElementFactory.createButton(
+			com.wudsn.tools.dis6502.Actions.OptionsDialog_RestoreDefaults, true);
 
 	private ComputerFont nativeFont;
+	private Runnable restoreDefaultsAction;
 	private boolean confirmed;
 	private String selectedFontFamilyName = "";
 	private int selectedPointSize;
 
-	public TextFontDialog(Frame owner) {
+	public OptionsDialog(Frame owner) {
 		super(owner, true);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle(Texts.TextFontDialog_Title);
+		setTitle(Texts.OptionsDialog_Title);
 
 		fontComboBox.addActionListener(e -> {
 			sizeSpinner.setEnabled(!isNativeFontSelected());
 			preview.repaint();
 		});
 		sizeSpinner.addChangeListener(e -> preview.repaint());
+		restoreDefaultsButton.addActionListener(e -> performRestoreDefaults());
 
 		preview.setBackground(Color.WHITE);
 		preview.setPreferredSize(new Dimension(320, 40));
@@ -97,7 +119,7 @@ public final class TextFontDialog extends JDialog {
 		c.anchor = GridBagConstraints.WEST;
 		c.gridx = 0;
 		c.gridy = 0;
-		formPanel.add(ElementFactory.createLabel(DataTypes.TextFontDialog_Font, fontComboBox), c);
+		formPanel.add(ElementFactory.createLabel(DataTypes.OptionsDialog_Font, fontComboBox), c);
 		c.gridx = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1;
@@ -107,16 +129,22 @@ public final class TextFontDialog extends JDialog {
 		c.gridy = 1;
 		c.fill = GridBagConstraints.NONE;
 		c.weightx = 0;
-		formPanel.add(ElementFactory.createLabel(DataTypes.TextFontDialog_Size, sizeSpinner), c);
+		formPanel.add(ElementFactory.createLabel(DataTypes.OptionsDialog_Size, sizeSpinner), c);
 		c.gridx = 1;
 		formPanel.add(sizeSpinner, c);
 
 		okButton.addActionListener(e -> performOK());
 		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
 		cancelButton.addActionListener(e -> setVisible(false));
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(okButton);
-		buttonPanel.add(cancelButton);
+
+		JPanel restorePanel = new JPanel();
+		restorePanel.add(restoreDefaultsButton);
+		JPanel okCancelPanel = new JPanel();
+		okCancelPanel.add(okButton);
+		okCancelPanel.add(cancelButton);
+		JPanel buttonPanel = new JPanel(new BorderLayout());
+		buttonPanel.add(restorePanel, BorderLayout.WEST);
+		buttonPanel.add(okCancelPanel, BorderLayout.EAST);
 
 		getContentPane().setLayout(new BorderLayout(4, 4));
 		getContentPane().add(formPanel, BorderLayout.NORTH);
@@ -129,7 +157,7 @@ public final class TextFontDialog extends JDialog {
 
 	private boolean isNativeFontSelected() {
 		Object selected = fontComboBox.getSelectedItem();
-		return selected == null || Texts.TextFontDialog_NativeFont.equals(selected);
+		return selected == null || Texts.OptionsDialog_NativeFont.equals(selected);
 	}
 
 	private TextFont selectedTextFont() {
@@ -146,6 +174,16 @@ public final class TextFontDialog extends JDialog {
 		setVisible(false);
 	}
 
+	private void performRestoreDefaults() {
+		if (restoreDefaultsAction != null) {
+			restoreDefaultsAction.run();
+		}
+		fontComboBox.setSelectedItem(Texts.OptionsDialog_NativeFont);
+		sizeSpinner.setValue(DEFAULT_POINT_SIZE);
+		sizeSpinner.setEnabled(false);
+		preview.repaint();
+	}
+
 	/** {@code ""} for the native font, a real installed family name otherwise - only meaningful after {@link #show} returned {@code true}. */
 	public String getSelectedFontFamilyName() {
 		return selectedFontFamilyName;
@@ -159,21 +197,29 @@ public final class TextFontDialog extends JDialog {
 	/**
 	 * Opens the dialog pre-selecting {@code currentFontFamilyName} ({@code
 	 * ""} = native font) and {@code currentPointSize}; {@code nativeFont}
-	 * drives {@link #preview} while the native entry is selected. Returns
-	 * whether the user clicked OK - {@link #getSelectedFontFamilyName}/
+	 * drives {@link #preview} while the native entry is selected. {@code
+	 * restoreDefaultsAction} is the caller's own "delete every persisted
+	 * preference this dialog manages" logic, run immediately when {@link
+	 * #restoreDefaultsButton} is clicked (see its own javadoc for why that
+	 * is not gated by OK/Cancel).
+	 * <p>
+	 * Returns whether the user clicked OK - {@link #getSelectedFontFamilyName}/
 	 * {@link #getSelectedPointSize} then give the result; on Cancel/close,
 	 * neither getter is updated, so the caller's own already-current values
-	 * remain correct.
+	 * remain correct (unless Restore Defaults was clicked first, which
+	 * already applied and persisted its own defaults independent of this
+	 * return value).
 	 */
-	public boolean show(String currentFontFamilyName, int currentPointSize, ComputerFont nativeFont) {
+	public boolean show(String currentFontFamilyName, int currentPointSize, ComputerFont nativeFont, Runnable restoreDefaultsAction) {
 		this.nativeFont = nativeFont;
+		this.restoreDefaultsAction = restoreDefaultsAction;
 
 		fontComboBox.removeAllItems();
-		fontComboBox.addItem(Texts.TextFontDialog_NativeFont);
+		fontComboBox.addItem(Texts.OptionsDialog_NativeFont);
 		for (String familyName : PlainTextFont.getAvailableFontFamilyNames()) {
 			fontComboBox.addItem(familyName);
 		}
-		fontComboBox.setSelectedItem(currentFontFamilyName.isEmpty() ? Texts.TextFontDialog_NativeFont : currentFontFamilyName);
+		fontComboBox.setSelectedItem(currentFontFamilyName.isEmpty() ? Texts.OptionsDialog_NativeFont : currentFontFamilyName);
 		sizeSpinner.setValue(Math.max(MIN_POINT_SIZE, Math.min(MAX_POINT_SIZE, currentPointSize)));
 		sizeSpinner.setEnabled(!isNativeFontSelected());
 

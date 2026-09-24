@@ -146,7 +146,7 @@ public final class Actions extends NLS {
 	public static Action MainMenu_View_DoubleFontHeight;
 	public static Action MainMenu_View_DefaultFolders;
 	public static Action MainMenu_View_Profile;
-	public static Action MainMenu_View_TextFont;
+	public static Action MainMenu_View_Options;
 
 	// Actions: Main Menu - Help.
 	public static Action MainMenu_Help_About;
@@ -236,6 +236,7 @@ public final class Actions extends NLS {
 	public static Action DefaultFoldersDialog_Browse;
 	public static Action ProfileDialog_LoadProfile;
 	public static Action ProfileDialog_SaveProfile;
+	public static Action OptionsDialog_RestoreDefaults;
 	// DisassemblyPanel's inline find buttons: no mnemonic, like Browse... - they sit
 	// in the main window, where Alt+F/Alt+N would fight the menu bar's own mnemonics.
 	public static Action DisassemblyPanel_Find;

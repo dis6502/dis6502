@@ -80,6 +80,10 @@ be rediscovered:
   rendering instead of `ComputerFont`'s pixel-art-tuned one); the memory
   inspector's grid itself stays untouched, always the native font, hex
   and ASCII/ATASCII preview alike; picked, along with its point size, from
-  a new `View > Text Font...` dialog (status: done).
+  a new `View > Options...` dialog (`OptionsDialog`, named and structured
+  as a general options dialog rather than a single-purpose font picker,
+  since more unrelated preferences are expected to land there later; its
+  "Restore Defaults" button deletes every persisted preference it manages
+  immediately, independent of OK/Cancel) (status: done).
 
 New planning/guidance documents for future work should also go in `plans/`.

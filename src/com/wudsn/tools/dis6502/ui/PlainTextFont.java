@@ -76,7 +76,7 @@ public final class PlainTextFont implements TextFont {
 	 * Every installed font family whose advance width is the same for every
 	 * character (probed via {@code 'i'}/{@code 'W'}, the standard Java
 	 * idiom for detecting a mono-spaced font, since AWT has no direct
-	 * "isMonospaced" query) - {@link TextFontDialog}'s candidate list.
+	 * "isMonospaced" query) - {@link OptionsDialog}'s candidate list.
 	 */
 	public static List<String> getAvailableFontFamilyNames() {
 		List<String> result = new ArrayList<>();
