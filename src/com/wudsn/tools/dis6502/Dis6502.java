@@ -207,8 +207,17 @@ public final class Dis6502 {
 	 * cross-platform default, matching {@link javax.swing.UIManager}'s own
 	 * documented fallback behavior for a look and feel that cannot be
 	 * instantiated on the current platform.
+	 * <p>
+	 * Package-private, not {@code private}: {@code TestRunner} calls this
+	 * too, once, before running any test, so every real-display test's own
+	 * dialogs/panels - not just the ones a test happens to reach through
+	 * {@link #main} - render in the same look and feel a real user sees.
+	 * Without this, a test that builds Swing components directly (most of
+	 * them do, since going through {@link #main} means starting the whole
+	 * app) stayed on the cross-platform default, so its own screen captures
+	 * looked different from the real, native-look-and-feel application.
 	 */
-	private static void setNativeLookAndFeel() {
+	static void setNativeLookAndFeel() {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception ex) {

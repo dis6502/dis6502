@@ -52,8 +52,12 @@ public final class UITest {
 	/** Walks the component tree under {@code root} and checks every visible text on it. */
 	public static void checkTexts(String name, Container root) {
 		for (Component component : root.getComponents()) {
-			if (component.getClass().getName().startsWith("javax.swing.plaf")) {
-				continue; // Look-and-feel internals: a combo box's arrow button, a scroll bar's buttons.
+			if (component.getClass().getName().contains(".plaf.")) {
+				// Look-and-feel internals: a combo box's arrow button, a scroll bar's
+				// buttons - javax.swing.plaf.* under the cross-platform "Metal"
+				// default, com.sun.java.swing.plaf.<lf>.* under a native one (e.g.
+				// com.sun.java.swing.plaf.windows.WindowsScrollBarUI$WindowsArrowButton).
+				continue;
 			}
 			if (component instanceof AbstractButton) {
 				checkText(name + " " + component.getClass().getSimpleName(), ((AbstractButton) component).getText());

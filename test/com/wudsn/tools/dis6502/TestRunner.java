@@ -89,6 +89,12 @@ public final class TestRunner {
 	/** Runs the whole suite with its settings isolated and returns the number of failed tests - what {@code main} and {@link TestRunnerTest} share. */
 	public static int run() {
 		System.setProperty(Application.SETTINGS_NODE_PROPERTY, SETTINGS_NODE);
+		// Same native look and feel Dis6502#main switches to - so a real-display
+		// test's own dialogs/panels (most are built directly, not through #main)
+		// render exactly like the real application, and a screen capture of one
+		// actually looks like what a user sees. Harmless when headless: failures
+		// are swallowed, same as in Dis6502#setNativeLookAndFeel itself.
+		Dis6502.setNativeLookAndFeel();
 		TestRunner runner = new TestRunner();
 		try {
 			runner.execute();
