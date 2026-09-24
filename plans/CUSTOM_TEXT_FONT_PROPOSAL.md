@@ -10,11 +10,13 @@ has since been implemented too - applies immediately, no restart needed.
 renamed to a general `OptionsDialog`/`View > Options...`, since more
 (unrelated) preferences are expected to land there over time - the font
 picker is no longer assumed to be the dialog's only purpose. It also
-gained a "Restore Defaults" button, `ApplicationSettingsSection.clear()`,
-that deletes every key in the `"Display"` settings section immediately
-(not gated by OK/Cancel), so every coded default - including ones added
-later - applies from then on; the running app reflects the restored
-defaults right away too, even while the dialog stays open.
+gained a "Restore Defaults" button that resets the dialog's own controls
+to their coded defaults - a pending edit like any other control here, not
+an immediate action: only clicking OK afterward actually calls the new
+`ApplicationSettingsSection.clear()` to delete every key in the
+`"Display"` settings section (so a coded default added later also takes
+effect automatically), via `OptionsDialog.isRestoreDefaultsRequested()`;
+Cancel discards it exactly like any other pending edit.
 **Follow-up refinement:** `MemoryInspectorPanel`'s title-bar text moved
 from Group A to Group B - only its grid (raw byte values, including the
 ASCII/ATASCII preview column) needs to stay native; the plain title text

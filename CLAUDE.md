@@ -83,7 +83,8 @@ be rediscovered:
   a new `View > Options...` dialog (`OptionsDialog`, named and structured
   as a general options dialog rather than a single-purpose font picker,
   since more unrelated preferences are expected to land there later; its
-  "Restore Defaults" button deletes every persisted preference it manages
-  immediately, independent of OK/Cancel) (status: done).
+  "Restore Defaults" button only resets the dialog's own controls - a
+  pending edit like any other, discarded by Cancel - and only deletes the
+  persisted preferences once OK is clicked) (status: done).
 
 New planning/guidance documents for future work should also go in `plans/`.

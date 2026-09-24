@@ -52,16 +52,13 @@ import com.wudsn.tools.dis6502.Texts;
  * result, the same "boolean {@code show}, separate getters" shape {@link
  * DiskImageSectorsDialog}/{@link RawFileDialog} already use.
  * <p>
- * {@link #restoreDefaultsButton} applies immediately, independent of
- * OK/Cancel: it runs the caller-supplied {@code restoreDefaultsAction}
- * (which deletes every persisted preference this dialog manages, so the
- * coded defaults apply from then on and take effect right away, even
- * while this dialog stays open), then resets every control here back to
- * its own coded default so the dialog's own display matches. OK afterward
- * simply re-persists that already-applied default state; Cancel leaves
- * the already-applied restore in place, since "Restore Defaults" is a
- * direct action, not a pending edit gated by OK/Cancel like the other
- * controls.
+ * {@link #restoreDefaultsButton} only resets this dialog's own controls
+ * back to their coded defaults (native font, {@link #DEFAULT_POINT_SIZE}) -
+ * a pending edit like any other control here, not an immediate action: it
+ * takes a click on {@link #okButton} to actually delete the persisted
+ * preferences, via {@link #isRestoreDefaultsRequested}, exactly like every
+ * other field only takes effect once the caller sees {@link #show} return
+ * {@code true}. Cancel/close discards it, same as any other edit.
  *
  * @author Peter Dell
  */
@@ -93,8 +90,8 @@ public final class OptionsDialog extends JDialog {
 			com.wudsn.tools.dis6502.Actions.OptionsDialog_RestoreDefaults, true);
 
 	private ComputerFont nativeFont;
-	private Runnable restoreDefaultsAction;
 	private boolean confirmed;
+	private boolean restoreDefaultsRequested;
 	private String selectedFontFamilyName = "";
 	private int selectedPointSize;
 
@@ -175,9 +172,7 @@ public final class OptionsDialog extends JDialog {
 	}
 
 	private void performRestoreDefaults() {
-		if (restoreDefaultsAction != null) {
-			restoreDefaultsAction.run();
-		}
+		restoreDefaultsRequested = true;
 		fontComboBox.setSelectedItem(Texts.OptionsDialog_NativeFont);
 		sizeSpinner.setValue(DEFAULT_POINT_SIZE);
 		sizeSpinner.setEnabled(false);
@@ -195,24 +190,30 @@ public final class OptionsDialog extends JDialog {
 	}
 
 	/**
+	 * Whether {@link #restoreDefaultsButton} was clicked before OK - only
+	 * meaningful after {@link #show} returned {@code true}. When {@code
+	 * true}, the caller should delete its own persisted preferences (so a
+	 * coded default added later also takes effect) rather than write
+	 * {@link #getSelectedFontFamilyName}/{@link #getSelectedPointSize}'s
+	 * values, even though those already equal the current coded defaults
+	 * either way.
+	 */
+	public boolean isRestoreDefaultsRequested() {
+		return restoreDefaultsRequested;
+	}
+
+	/**
 	 * Opens the dialog pre-selecting {@code currentFontFamilyName} ({@code
 	 * ""} = native font) and {@code currentPointSize}; {@code nativeFont}
-	 * drives {@link #preview} while the native entry is selected. {@code
-	 * restoreDefaultsAction} is the caller's own "delete every persisted
-	 * preference this dialog manages" logic, run immediately when {@link
-	 * #restoreDefaultsButton} is clicked (see its own javadoc for why that
-	 * is not gated by OK/Cancel).
+	 * drives {@link #preview} while the native entry is selected.
 	 * <p>
 	 * Returns whether the user clicked OK - {@link #getSelectedFontFamilyName}/
-	 * {@link #getSelectedPointSize} then give the result; on Cancel/close,
-	 * neither getter is updated, so the caller's own already-current values
-	 * remain correct (unless Restore Defaults was clicked first, which
-	 * already applied and persisted its own defaults independent of this
-	 * return value).
+	 * {@link #getSelectedPointSize}/{@link #isRestoreDefaultsRequested} then
+	 * give the result; on Cancel/close, none of them are updated, so the
+	 * caller's own already-current values remain correct.
 	 */
-	public boolean show(String currentFontFamilyName, int currentPointSize, ComputerFont nativeFont, Runnable restoreDefaultsAction) {
+	public boolean show(String currentFontFamilyName, int currentPointSize, ComputerFont nativeFont) {
 		this.nativeFont = nativeFont;
-		this.restoreDefaultsAction = restoreDefaultsAction;
 
 		fontComboBox.removeAllItems();
 		fontComboBox.addItem(Texts.OptionsDialog_NativeFont);
@@ -230,6 +231,7 @@ public final class OptionsDialog extends JDialog {
 		setLocationRelativeTo(getOwner());
 
 		confirmed = false;
+		restoreDefaultsRequested = false;
 		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
 
 		return confirmed;

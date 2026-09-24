@@ -1646,14 +1646,13 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Opens {@link OptionsDialog} and, if the choice changed, persists it
-	 * and re-runs {@link #updateFonts}. Also passes the dialog a "restore
-	 * defaults" callback - {@link ApplicationSettingsSection#clear()} on
-	 * the same {@code DISPLAY_SETTINGS_SECTION} the dialog's own settings
-	 * live under, followed by {@link #updateFonts} so the running app
-	 * reflects the coded defaults immediately, even while the dialog stays
-	 * open - see {@code OptionsDialog.restoreDefaultsButton}'s own javadoc
-	 * for why that runs right away instead of waiting for OK.
+	 * Opens {@link OptionsDialog} and, if OK was clicked, either persists
+	 * the chosen font (if it changed) or - if {@link
+	 * OptionsDialog#isRestoreDefaultsRequested} - deletes every persisted
+	 * setting in {@code DISPLAY_SETTINGS_SECTION} via {@link
+	 * ApplicationSettingsSection#clear()} instead, so a coded default added
+	 * later also takes effect automatically; either way, {@link
+	 * #updateFonts} re-runs only when something actually changed.
 	 */
 	private void performShowOptions() {
 		ApplicationSettingsSection settings = application.getSettingsSection(DISPLAY_SETTINGS_SECTION);
@@ -1662,16 +1661,18 @@ public final class Dis6502 {
 		ComputerFont nativeFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
 
 		OptionsDialog dialog = new OptionsDialog(mainWindow.getFrame());
-		if (dialog.show(currentFontFamilyName, currentPointSize, nativeFont, () -> {
-			settings.clear();
-			updateFonts();
-		})) {
-			String newFontFamilyName = dialog.getSelectedFontFamilyName();
-			int newPointSize = dialog.getSelectedPointSize();
-			if (!newFontFamilyName.equals(currentFontFamilyName) || newPointSize != currentPointSize) {
-				settings.writeString(TEXT_FONT_FAMILY_KEY, newFontFamilyName);
-				settings.writeUnsignedInt(TEXT_FONT_SIZE_KEY, newPointSize);
+		if (dialog.show(currentFontFamilyName, currentPointSize, nativeFont)) {
+			if (dialog.isRestoreDefaultsRequested()) {
+				settings.clear();
 				updateFonts();
+			} else {
+				String newFontFamilyName = dialog.getSelectedFontFamilyName();
+				int newPointSize = dialog.getSelectedPointSize();
+				if (!newFontFamilyName.equals(currentFontFamilyName) || newPointSize != currentPointSize) {
+					settings.writeString(TEXT_FONT_FAMILY_KEY, newFontFamilyName);
+					settings.writeUnsignedInt(TEXT_FONT_SIZE_KEY, newPointSize);
+					updateFonts();
+				}
 			}
 		}
 	}
