@@ -95,10 +95,18 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
  * segment metadata, which is already-formatted text - titles, hex
  * addresses - not raw byte values, so it needs no {@link #codePointBase}
  * shift at all).
+ * <p>
+ * Implements {@link TextFont} - the "generated text" half of this class's
+ * job (everything but {@link #drawGlyph}) - so {@link HexGridPanel}/{@link
+ * MemoryInspectorPanel}/{@link DiskImageSectorsDialog} (which always need
+ * the workspace's authentic native font, glyphs included) can keep taking a
+ * concrete {@code ComputerFont}, while every other panel takes a
+ * {@link TextFont} and gets either this class (the default) or a
+ * user-chosen {@link PlainTextFont} instead, transparently.
  *
  * @author Peter Dell
  */
-public final class ComputerFont {
+public final class ComputerFont implements TextFont {
 
 	private static final int ZOOM = 1;
 	private static final int NATIVE_HEIGHT = 8; // Pixels, matching the original 8px raster cell height.
@@ -206,18 +214,26 @@ public final class ComputerFont {
 	}
 
 	/** Already scaled for on-screen legibility - see this class's javadoc. */
+	@Override
 	public int getGlyphWidth() {
 		return glyphWidth;
 	}
 
 	/** Already scaled for on-screen legibility - see this class's javadoc. */
+	@Override
 	public int getGlyphHeight() {
 		return glyphHeight;
 	}
 
 	/** The plain derived font, for components that draw normal Unicode text rather than byte-indexed glyphs (see this class's javadoc). */
+	@Override
 	public Font getAwtFont() {
 		return font;
+	}
+
+	@Override
+	public Object getTextAntialiasingHint() {
+		return RenderingHints.VALUE_TEXT_ANTIALIAS_OFF;
 	}
 
 	/**
@@ -252,6 +268,7 @@ public final class ComputerFont {
 	 * a byte run the disassembler classified as a STRING is by definition
 	 * mostly printable already.
 	 */
+	@Override
 	public void drawText(Graphics2D g2, String text, Color color, int x, int y) {
 		for (int i = 0; i < text.length(); i++) {
 			drawChar(g2, text.charAt(i), color, x + i * glyphWidth, y);

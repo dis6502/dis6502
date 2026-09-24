@@ -18,16 +18,17 @@ import javax.swing.ListCellRenderer;
 
 /**
  * Paints a {@link JList} cell's {@code value.toString()} via {@link
- * ComputerFont#drawText} instead of the default renderer's {@code
- * JLabel}/{@code g.drawString} - shared by every {@code JList}-based part
- * panel that shows already-formatted text (not raw byte values, so no
- * {@link ComputerFont}'s byte-indexed glyph lookup is needed) - {@link
- * XRefPanel}, {@link SegmentListPanel}. Real on-screen Windows ClearType/
- * subpixel antialiasing blurs this small pixel-art font under a plain
- * {@code list.setFont(...)}/default-renderer setup into illegible dots;
- * {@link ComputerFont#drawText} explicitly disables antialiasing before
- * drawing, which this class's own {@link #paintComponent} relies on instead
- * of the default renderer's painting.
+ * TextFont#drawText} instead of the default renderer's {@code JLabel}/
+ * {@code g.drawString} - shared by every {@code JList}-based part panel
+ * that shows already-formatted text (not raw byte values, so no
+ * byte-indexed glyph lookup is ever needed) - {@link XRefPanel}, {@link
+ * SegmentListPanel}. By default {@link #textFont} is a {@link
+ * ComputerFont}: real on-screen Windows ClearType/subpixel antialiasing
+ * blurs that small pixel-art font under a plain {@code list.setFont(...)}/
+ * default-renderer setup into illegible dots, which is why this class's own
+ * {@link #paintComponent} relies on {@link TextFont#drawText} instead of
+ * the default renderer's painting; a user-chosen {@link PlainTextFont}
+ * renders correctly the same way, via ordinary antialiasing.
  *
  * @author Peter Dell
  */
@@ -35,7 +36,7 @@ final class ComputerFontListCellRenderer<T> extends JComponent implements ListCe
 
 	private static final long serialVersionUID = 1L;
 
-	private ComputerFont computerFont;
+	private TextFont textFont;
 	private String text = "";
 	private Color foreground = Color.BLACK;
 	private Color background = Color.WHITE;
@@ -44,8 +45,8 @@ final class ComputerFontListCellRenderer<T> extends JComponent implements ListCe
 		setOpaque(true);
 	}
 
-	void setComputerFont(ComputerFont computerFont) {
-		this.computerFont = computerFont;
+	void setTextFont(TextFont textFont) {
+		this.textFont = textFont;
 	}
 
 	@Override
@@ -67,8 +68,8 @@ final class ComputerFontListCellRenderer<T> extends JComponent implements ListCe
 	protected void paintComponent(Graphics g) {
 		g.setColor(background);
 		g.fillRect(0, 0, getWidth(), getHeight());
-		if (computerFont != null) {
-			computerFont.drawText((Graphics2D) g, text, foreground, 2, 1);
+		if (textFont != null) {
+			textFont.drawText((Graphics2D) g, text, foreground, 2, 1);
 		} else {
 			g.setColor(foreground);
 			g.drawString(text, 2, g.getFontMetrics().getAscent() + 1);

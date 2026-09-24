@@ -64,7 +64,7 @@ public final class PopupStructureTest {
 	private static void testPopupStructure(Workspace workspace) throws Exception {
 		DisassemblyPanel panel = new DisassemblyPanel();
 		ComputerFont font = ComputerFont.get(ComputerSystemType.ATARI800, false);
-		panel.setComputerFont(font);
+		panel.setTextFont(font);
 		panel.setImmediateTypeProvider(line -> line.getLine().contains("#$") ? new DisassemblyPanel.ImmediateType(MemoryType.UNKNOWN, true) : null);
 		panel.refresh(workspace.getDisassemblyResult());
 

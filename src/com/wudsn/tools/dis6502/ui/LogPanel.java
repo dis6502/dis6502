@@ -38,19 +38,19 @@ import com.wudsn.tools.dis6502.Texts;
  * it - see {@link PartHeaderPanel}'s javadoc.
  * <p>
  * Log messages are already-formatted text, not raw byte values, so {@link
- * #setComputerFont}'s {@link ComputerFont#getAwtFont} needs no byte-index
- * shift, matching {@link SegmentListPanel}'s own {@code setComputerFont}.
- * Falls back to a plain monospace font until the first call, the same
- * placeholder every {@code ComputerFont}-driven panel uses before {@code
- * Dis6502} wires up real fonts. The {@code
- * RenderingHints.KEY_TEXT_ANTIALIASING} client property forces the same
- * antialiasing-off rendering {@link ComputerFont#drawText} uses explicitly
- * elsewhere - without it, on-screen antialiasing blurs this pixel-art font
- * illegible (see {@link SegmentListPanel}'s class comment); {@link
- * JTextPane}, like {@code JTextArea}, paints its own text directly rather
- * than delegating to a per-cell renderer component, so this client
- * property - which Swing's text painting reads from the component itself -
- * is enough on its own.
+ * #setTextFont}'s {@link TextFont#getAwtFont} needs no byte-index shift,
+ * matching {@link SegmentListPanel}'s own {@code setTextFont}. Falls back
+ * to a plain monospace font until the first call, the same placeholder
+ * every {@link TextFont}-driven panel uses before {@code Dis6502} wires up
+ * real fonts. The {@code RenderingHints.KEY_TEXT_ANTIALIASING} client
+ * property is kept in sync with {@link TextFont#getTextAntialiasingHint}
+ * on every {@link #setTextFont} call - {@link ComputerFont}'s pixel-art
+ * glyphs need it off (on-screen antialiasing otherwise blurs them
+ * illegible, see {@link SegmentListPanel}'s class comment), a user-chosen
+ * {@link PlainTextFont} needs it on; {@link JTextPane}, like {@code
+ * JTextArea}, paints its own text directly rather than delegating to a
+ * per-cell renderer component, so this client property - which Swing's
+ * text painting reads from the component itself - is enough on its own.
  *
  * @author Peter Dell
  */
@@ -80,10 +80,11 @@ public final class LogPanel extends JPanel {
 		add(scrollPane, BorderLayout.CENTER);
 	}
 
-	/** Call whenever the workspace's computer system or double-height setting changes. */
-	public void setComputerFont(ComputerFont computerFont) {
-		textPane.setFont(computerFont.getAwtFont());
-		header.setComputerFont(computerFont);
+	/** Call whenever the workspace's computer system, double-height setting, or chosen text font changes. */
+	public void setTextFont(TextFont textFont) {
+		textPane.setFont(textFont.getAwtFont());
+		textPane.putClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING, textFont.getTextAntialiasingHint());
+		header.setTextFont(textFont);
 	}
 
 	/** Appends an info-severity line. May be called from any thread. */

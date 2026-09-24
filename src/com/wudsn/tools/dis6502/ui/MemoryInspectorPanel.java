@@ -532,10 +532,17 @@ public final class MemoryInspectorPanel extends JPanel {
 		}
 	}
 
-	/** Call whenever the workspace's computer system or double-height setting changes. */
+	/**
+	 * Call whenever the workspace's computer system or double-height
+	 * setting changes. Always the workspace's native {@link ComputerFont},
+	 * never a user-chosen one - unlike every other part panel, this one
+	 * shows raw byte values via {@link #grid}'s ASCII/ATASCII preview
+	 * column, which must stay authentic (see
+	 * {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}).
+	 */
 	public void setComputerFont(ComputerFont computerFont) {
 		grid.setComputerFont(computerFont);
-		header.setComputerFont(computerFont);
+		header.setTextFont(computerFont);
 	}
 
 	/**

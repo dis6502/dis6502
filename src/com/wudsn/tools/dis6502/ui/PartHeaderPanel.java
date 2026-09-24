@@ -14,12 +14,13 @@ import javax.swing.JComponent;
 
 /**
  * The flat-colored title bar shown above each of the main window's five part
- * panels: a fixed background color and black text, drawn with the same
- * per-computer-system {@link ComputerFont} as the part window's own
- * content, not a plain system font. A small custom-painted component
- * rather than a {@link javax.swing.border.TitledBorder} (used elsewhere in
- * this port for a plain, uncolored title) since {@code TitledBorder} has
- * no way to fill its own background.
+ * panels: a fixed background color and black text, drawn via the same
+ * {@link TextFont} as the part window's own content (by default
+ * {@link ComputerFont}, but a user-chosen {@link PlainTextFont} works just
+ * as well here - this text is never a raw byte-indexed glyph). A small
+ * custom-painted component rather than a {@link javax.swing.border.TitledBorder}
+ * (used elsewhere in this port for a plain, uncolored title) since
+ * {@code TitledBorder} has no way to fill its own background.
  * <p>
  * The background fill is a plain {@link Graphics#fillRect}, filling the
  * whole rectangle with the background color before drawing the text - not
@@ -34,7 +35,7 @@ final class PartHeaderPanel extends JComponent {
 
 	private static final long serialVersionUID = 1L;
 
-	private ComputerFont computerFont;
+	private TextFont textFont;
 	private String text = "";
 
 	PartHeaderPanel(Color background) {
@@ -42,8 +43,8 @@ final class PartHeaderPanel extends JComponent {
 		setBackground(background);
 	}
 
-	void setComputerFont(ComputerFont computerFont) {
-		this.computerFont = computerFont;
+	void setTextFont(TextFont textFont) {
+		this.textFont = textFont;
 		revalidate();
 		repaint();
 	}
@@ -55,7 +56,7 @@ final class PartHeaderPanel extends JComponent {
 
 	@Override
 	public Dimension getPreferredSize() {
-		int height = computerFont == null ? 16 : computerFont.getGlyphHeight() + 2;
+		int height = textFont == null ? 16 : textFont.getGlyphHeight() + 2;
 		return new Dimension(10, height);
 	}
 
@@ -63,9 +64,9 @@ final class PartHeaderPanel extends JComponent {
 	protected void paintComponent(Graphics g) {
 		g.setColor(getBackground());
 		g.fillRect(0, 0, getWidth(), getHeight());
-		if (computerFont != null) {
+		if (textFont != null) {
 			// 1 pixel offset from the rectangle's origin.
-			computerFont.drawText((Graphics2D) g, text, Color.BLACK, 1, 1);
+			textFont.drawText((Graphics2D) g, text, Color.BLACK, 1, 1);
 		}
 	}
 }

@@ -28,9 +28,9 @@ import com.wudsn.tools.dis6502.Texts;
  * Dis6502.performXRefSelected}.
  * <p>
  * This list only ever shows already-formatted disassembly line text, not
- * raw byte values, so {@link #setComputerFont} needs none of {@link
+ * raw byte values, so {@link #setTextFont} needs none of {@link
  * ComputerFont}'s byte-indexed glyph lookup, matching {@link
- * SegmentListPanel}'s own {@code setComputerFont}. It uses the shared
+ * SegmentListPanel}'s own {@code setTextFont}. It uses the shared
  * {@link ComputerFontListCellRenderer} (also used by {@link
  * SegmentListPanel}) rather than plain {@code list.setFont(...)} - see
  * that class's own javadoc for why.
@@ -73,11 +73,11 @@ public final class XRefPanel extends JPanel {
 		this.selectionListener = selectionListener;
 	}
 
-	/** Call whenever the workspace's computer system or double-height setting changes. */
-	public void setComputerFont(ComputerFont computerFont) {
-		list.setFont(computerFont.getAwtFont());
-		cellRenderer.setComputerFont(computerFont);
-		header.setComputerFont(computerFont);
+	/** Call whenever the workspace's computer system, double-height setting, or chosen text font changes. */
+	public void setTextFont(TextFont textFont) {
+		list.setFont(textFont.getAwtFont());
+		cellRenderer.setTextFont(textFont);
+		header.setTextFont(textFont);
 	}
 
 	/**

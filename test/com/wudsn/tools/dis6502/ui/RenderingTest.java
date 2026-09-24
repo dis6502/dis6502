@@ -70,7 +70,7 @@ public final class RenderingTest {
 	private static void testDisassemblyGridPaint(Workspace workspace) {
 		DisassemblyGridPanel grid = new DisassemblyGridPanel();
 		ComputerFont font = ComputerFont.get(ComputerSystemType.ATARI800, false);
-		grid.setComputerFont(font);
+		grid.setTextFont(font);
 		List<DisassemblyLine> lines = new ArrayList<>();
 		for (Iterator<DisassemblyLine> i = workspace.getDisassemblyResult().createLineIterator(); i.hasNext();) {
 			lines.add(i.next());

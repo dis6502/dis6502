@@ -81,11 +81,13 @@ import com.wudsn.tools.dis6502.ui.MRUController;
 import com.wudsn.tools.dis6502.ui.MainMenu;
 import com.wudsn.tools.dis6502.ui.MainWindow;
 import com.wudsn.tools.dis6502.ui.MemoryInspectorFindStringDialog;
+import com.wudsn.tools.dis6502.ui.PlainTextFont;
 import com.wudsn.tools.dis6502.ui.ProfileDialog;
 import com.wudsn.tools.dis6502.ui.RawFileDialog;
 import com.wudsn.tools.dis6502.ui.SegmentPropertiesDialog;
 import com.wudsn.tools.dis6502.ui.SegmentWriteBootDiskDialog;
 import com.wudsn.tools.dis6502.ui.SelectGraphicsDialog;
+import com.wudsn.tools.dis6502.ui.TextFont;
 import com.wudsn.tools.dis6502.ui.UIApplication;
 import com.wudsn.tools.dis6502.ui.WorkspaceDialog;
 import com.wudsn.tools.dis6502.ui.XRefPanel;
@@ -472,18 +474,45 @@ public final class Dis6502 {
 		mainWindow.memoryInspectorPanel.segmentChanged(memoryInspectorState);
 	}
 
+	/** App-wide (not per-workspace), see {@link #getTextFont}. */
+	private static final String DISPLAY_SETTINGS_SECTION = "Display";
+	private static final String TEXT_FONT_FAMILY_KEY = "TextFontFamily";
+	private static final int TEXT_FONT_POINT_SIZE = 16; // An ordinary readable size - unrelated to ComputerFont's tiny native-pixel-height derivation.
+
 	/**
 	 * Reacts to a {@link WorkspaceProperty#COMPUTER_SYSTEM_TYPE}/{@link
 	 * WorkspaceProperty#FONT} change - every part window shares one font
-	 * set, matching {@link ComputerFont}'s javadoc.
+	 * set, matching {@link ComputerFont}'s javadoc. {@link
+	 * MemoryInspectorPanel} always gets the native {@code nativeFont}
+	 * (see its own {@code setComputerFont} javadoc for why); every other
+	 * part window gets {@code textFont}, the user's chosen font if one is
+	 * set, else {@code nativeFont} itself - see
+	 * {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}.
 	 */
 	private void updateFonts() {
-		ComputerFont computerFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
-		mainWindow.memoryInspectorPanel.setComputerFont(computerFont);
-		mainWindow.disassemblyPanel.setComputerFont(computerFont);
-		mainWindow.xrefPanel.setComputerFont(computerFont);
-		mainWindow.logPanel.setComputerFont(computerFont);
-		mainWindow.segmentListPanel.setComputerFont(computerFont);
+		ComputerFont nativeFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight());
+		TextFont textFont = getTextFont(nativeFont);
+
+		mainWindow.memoryInspectorPanel.setComputerFont(nativeFont);
+		mainWindow.disassemblyPanel.setTextFont(textFont);
+		mainWindow.xrefPanel.setTextFont(textFont);
+		mainWindow.logPanel.setTextFont(textFont);
+		mainWindow.segmentListPanel.setTextFont(textFont);
+	}
+
+	/**
+	 * The user's chosen "text font" preference, persisted under {@link
+	 * #DISPLAY_SETTINGS_SECTION}/{@link #TEXT_FONT_FAMILY_KEY} the same way
+	 * {@code ProfileLogic}'s {@code "LastProfile"} is - an empty (default)
+	 * family name means "use the native font", so {@code nativeFont} itself
+	 * is returned, not a separate lookup.
+	 */
+	private TextFont getTextFont(ComputerFont nativeFont) {
+		String fontFamilyName = application.getSettingsSection(DISPLAY_SETTINGS_SECTION).getString(TEXT_FONT_FAMILY_KEY, "");
+		if (fontFamilyName.isEmpty()) {
+			return nativeFont;
+		}
+		return PlainTextFont.get(fontFamilyName, TEXT_FONT_POINT_SIZE, workspace.isViewDoubleHeight());
 	}
 
 	/** Enables/disables the Equates menu's Clear/Save/Export items based on whether system/user equates exist. */

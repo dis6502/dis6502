@@ -66,18 +66,19 @@ import com.wudsn.tools.dis6502.model.WorkspaceProperty;
  * {@link MainMenu} uses - see that class's/{@code Actions}' own javadoc.
  * <p>
  * This list only ever shows already-formatted metadata text, not raw byte
- * values, so {@link #setComputerFont} needs none of {@link ComputerFont}'s
+ * values, so {@link #setTextFont} needs none of {@link ComputerFont}'s
  * byte-indexed glyph lookup - but it still cannot just be {@code
  * list.setFont(...)} plus {@link JList}'s default renderer: on real screen
  * output (unlike the offscreen renders used to develop this font support),
  * the desktop applies its own subpixel text antialiasing to ordinary Swing
- * text painting, which blurs this small pixel-art font into illegible
- * dots. Every other {@code ComputerFont}-driven panel avoids this because
- * {@link ComputerFont#drawText} explicitly disables antialiasing before
- * drawing; {@link ComputerFontListCellRenderer} (shared with {@link
- * XRefPanel}) gives this list the same explicit control by painting cell
- * text through {@code drawText} itself instead of relying on the default
- * renderer's {@code g.drawString}.
+ * text painting, which blurs {@link ComputerFont}'s pixel-art font into
+ * illegible dots. {@link ComputerFontListCellRenderer} (shared with {@link
+ * XRefPanel}) gives this list explicit control by painting cell text
+ * through {@link TextFont#drawText} itself instead of relying on the
+ * default renderer's {@code g.drawString} - each {@link TextFont}
+ * implementation renders itself correctly there, {@link ComputerFont}'s
+ * antialiasing-off included, so a user-chosen {@link PlainTextFont} needs
+ * no special handling here at all.
  *
  * @author Peter Dell
  */
@@ -144,11 +145,11 @@ public final class SegmentListPanel extends JPanel {
 		add(scrollPane, BorderLayout.CENTER);
 	}
 
-	/** Call whenever the workspace's computer system or double-height setting changes. */
-	public void setComputerFont(ComputerFont computerFont) {
-		list.setFont(computerFont.getAwtFont());
-		cellRenderer.setComputerFont(computerFont);
-		header.setComputerFont(computerFont);
+	/** Call whenever the workspace's computer system, double-height setting, or chosen text font changes. */
+	public void setTextFont(TextFont textFont) {
+		list.setFont(textFont.getAwtFont());
+		cellRenderer.setTextFont(textFont);
+		header.setTextFont(textFont);
 	}
 
 	/**

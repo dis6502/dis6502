@@ -54,11 +54,12 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * findNextButton} continues it.
  * <p>
  * The listing itself is {@link DisassemblyGridPanel}, a custom-painted,
- * read-only list using the real per-computer-system bitmap glyphs from
- * {@link ComputerFont} - see that class's javadoc for why - and {@link
- * DisassemblyGridPanel}'s own javadoc for exactly what it implements
- * (plain text layout, virtualized via Swing's clip-rect repaint) and what
- * it does not (inline editing, the full popup menu). {@link
+ * read-only list drawn via {@link TextFont} - by default the real
+ * per-computer-system bitmap glyphs from {@link ComputerFont}, or a
+ * user-chosen {@link PlainTextFont} - see that interface's javadoc for why,
+ * and {@link DisassemblyGridPanel}'s own javadoc for exactly what it
+ * implements (plain text layout, virtualized via Swing's clip-rect repaint)
+ * and what it does not (inline editing, the full popup menu). {@link
  * #navigateToLine} (scrolling to and highlighting a line, used by both
  * Find/XRef navigation and {@link #selectLineAt}) and {@link
  * #selectLineAt} itself (clicking or dragging in the listing to select a
@@ -70,8 +71,9 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * #setNavigateToDefinitionListener} (see {@code
  * Dis6502#performFindDisassemblyReferences}'s javadoc for a bug this port
  * used to have here: navigating on every plain click). {@link
- * #setComputerFont} must be called by {@code Dis6502} whenever the
- * workspace's computer system or double-font-height setting changes.
+ * #setTextFont} must be called by {@code Dis6502} whenever the workspace's
+ * computer system, double-font-height setting, or chosen text font
+ * changes.
  * <p>
  * The right-click popup menu ({@link #maybeShowPopup}) offers Add/Edit
  * Comment, Find/Find Next, and - since {@link #findLabelInLine} turned out
@@ -648,10 +650,10 @@ public final class DisassemblyPanel extends JPanel {
 		return rightClickedLabelReference;
 	}
 
-	/** Call whenever the workspace's computer system or double-height setting changes. */
-	public void setComputerFont(ComputerFont computerFont) {
-		grid.setComputerFont(computerFont);
-		header.setComputerFont(computerFont);
+	/** Call whenever the workspace's computer system, double-height setting, or chosen text font changes. */
+	public void setTextFont(TextFont textFont) {
+		grid.setTextFont(textFont);
+		header.setTextFont(textFont);
 	}
 
 	/** See {@link DisassemblyGridPanel#setLineNumbersActive} - call alongside every {@link #refresh}. */
