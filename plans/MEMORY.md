@@ -201,3 +201,32 @@ was picked without routing through a shared combo box or button at all.
 
 Reason: It is the orchestrator that uses both packages equally.
 
+## Testing conventions
+
+### Real-display tests must use the native Look & Feel, same as the real app
+
+The user stated this explicitly: "Tests shall also use the native Look &
+Feel. there were situations when the test's screen capture didn't look
+like the real screen." `Dis6502.main` already switches to the native L&F
+via `setNativeLookAndFeel()`, so a smoke test that starts the whole app
+that way gets this for free - but most of the repository's own
+real-display tests (`PanelTextsTest`, `RenderingTest`,
+`PopupStructureTest`, etc.) build their Swing components directly, so
+they silently stayed on Swing's cross-platform "Metal" default, and a
+screenshot taken during one of them did not look like what a real user
+actually sees. Fixed by widening `setNativeLookAndFeel()` to
+package-private and having `TestRunner.run()` call it once before
+running any test.
+
+This was not just cosmetic: switching to native L&F surfaced a real bug
+in `UITest.checkTexts`'s look-and-feel-internals skip filter, which
+matched only the `javax.swing.plaf` prefix (true for Metal's internals)
+and missed `com.sun.java.swing.plaf.<lf>` (true for Windows/GTK/etc.'s
+native internals, e.g. `WindowsScrollBarUI$WindowsArrowButton`) - fixed
+by matching the `.plaf.` substring instead of a fixed prefix. General
+lesson: a test environment that doesn't match the real runtime
+environment can hide real bugs, not just produce a cosmetically wrong
+screenshot - closing that gap is worth it even when it surfaces
+short-term test failures. Apply the same native-L&F setup to any future
+test that renders real Swing UI.
+
