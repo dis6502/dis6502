@@ -148,6 +148,19 @@ the C++ because the C++ itself looks wrong:
   real algorithm actually does (e.g. assuming a trace/search stops at a
   boundary it doesn't actually stop at). When a test fails, check whether
   the *test's* assumption is wrong before assuming the *port* is wrong.
+- Real-display tests and ad hoc smoke tests must use the native look and
+  feel, same as the real application (`Dis6502.setNativeLookAndFeel()`,
+  called once by `TestRunner.run()` before any test - a smoke test that
+  starts the app via `Dis6502.main` already gets this for free). Without
+  it, a test's own screen capture is taken under Swing's cross-platform
+  "Metal" default and does not look like what a user actually sees,
+  which has caused real confusion when comparing a captured screenshot
+  against the real screen. This also matters for correctness, not just
+  screenshots: switching to native L&F once surfaced a real gap in
+  `UITest.checkTexts`'s look-and-feel-internals skip check, which only
+  matched the `javax.swing.plaf` prefix (true under Metal) and missed
+  `com.sun.java.swing.plaf.<lf>` (true under Windows/GTK/etc.) - fixed by
+  matching the `.plaf.` substring instead of a fixed prefix.
 
 ## 6. Process lesson
 
