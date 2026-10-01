@@ -70,6 +70,16 @@ sets, not enums):
 | `PETSCII_UPPERCASE` | PETSCII Uppercase | `PETSCII-uppercase.chr` | PETSCII |
 | `PETSCII_LOWERCASE` | PETSCII Lowercase | `PETSCII-lowercase.chr` | PETSCII |
 
+A fifth set, `ORIC_ASCII` ("Oric ASCII", `Oric-ascii.chr`), was added on
+2026-10-02 and is the Oric's default. Its 96 glyphs (codes 32-127) come
+from the Oric ROM's character set at `$FC78` of BASIC 1.1 (`basic11b.rom`
+from Oricutron; BASIC 1.0 has the identical set at `$FC70`); codes 0-31
+are blank, since the Oric shows its attribute codes as a blank cell; codes
+128-255 are the inverse of 0-127 over the whole 8-pixel cell, so inverse
+text forms a solid bar. Its byte is its screen code. The C++ version's old
+`oric.fnt` was not used: it differs from the ROM in 11 of the 96 glyphs and
+has no proper inverse half.
+
 The names follow the byte encoding, not the computer (renamed from
 "Atari"/"C64" on 2026-10-01, since the sets are independent of the computer
 system and PETSCII is not C64-specific). The files themselves are still in

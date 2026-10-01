@@ -1,6 +1,7 @@
 # Proposal: x64 and ARM64 release builds, following RASTER-Music-Tracker
 
-**Status: implemented 2026-10-02, not yet proven by a workflow run.**
+**Status: done 2026-10-02.** A manual test build (run 36935301633) built
+all six images with the expected names.
 Icon decision: (b) below - new multi-size icons built from the existing
 PNGs, nothing redrawn.
 

@@ -23,14 +23,19 @@ import com.wudsn.tools.dis6502.ValueSets;
  * characters of 8 bytes each in a {@code .chr} file under {@code /fonts/} on
  * the classpath, one byte per pixel row with bit 7 the leftmost pixel,
  * ordered by screen code (the code the video hardware uses). The names
- * follow the byte encoding a set belongs to (ATASCII, PETSCII), not the
- * file order: in {@code ATASCII-standard.chr}, 'A' is at internal code
- * {@code 0x21}, not at ATASCII {@code 0x41}. Every
+ * follow the byte encoding a set belongs to (ATASCII, PETSCII, ASCII), not
+ * the file order: in {@code ATASCII-standard.chr}, 'A' is at internal code
+ * {@code 0x21}, not at ATASCII {@code 0x41}. {@code Oric-ascii.chr} holds
+ * the Oric ROM's 96 glyphs (codes 32-127, from {@code $FC78} of BASIC 1.1,
+ * identical in 1.0), codes 0-31 blank (attribute codes show as a blank
+ * cell), and codes 128-255 as the inverse of 0-127 over the whole 8-pixel
+ * cell, so inverse text forms a solid bar. Every
  * character set can be shown for every computer system; a system only names
  * its default (see {@link com.wudsn.tools.dis6502.model.system.ComputerSystem#getDefaultCharacterSet}).
  * <p>
  * Each set knows how a byte of its own computer maps to a screen code
- * (ATASCII to ANTIC internal code, PETSCII to C64 screen code) and how this
+ * (ATASCII to ANTIC internal code, PETSCII to C64 screen code, ASCII
+ * unchanged) and how this
  * port's own ASCII text (addresses, hex digits) maps to the screen code of
  * the glyph that looks like it.
  *
@@ -43,13 +48,14 @@ public final class CharacterSet extends ValueSet {
 	private static final int BYTES_PER_CHARACTER = 8;
 
 	private enum Kind {
-		ATASCII, PETSCII_UPPERCASE, PETSCII_LOWERCASE
+		ATASCII, PETSCII_UPPERCASE, PETSCII_LOWERCASE, ASCII
 	}
 
 	public static final CharacterSet ATASCII_STANDARD;
 	public static final CharacterSet ATASCII_INTERNATIONAL;
 	public static final CharacterSet PETSCII_UPPERCASE;
 	public static final CharacterSet PETSCII_LOWERCASE;
+	public static final CharacterSet ORIC_ASCII;
 
 	private static final Map<String, CharacterSet> values;
 
@@ -64,6 +70,7 @@ public final class CharacterSet extends ValueSet {
 		ATASCII_INTERNATIONAL = add("ATASCII_INTERNATIONAL", "ATASCII-international.chr", Kind.ATASCII);
 		PETSCII_UPPERCASE = add("PETSCII_UPPERCASE", "PETSCII-uppercase.chr", Kind.PETSCII_UPPERCASE);
 		PETSCII_LOWERCASE = add("PETSCII_LOWERCASE", "PETSCII-lowercase.chr", Kind.PETSCII_LOWERCASE);
+		ORIC_ASCII = add("ORIC_ASCII", "Oric-ascii.chr", Kind.ASCII);
 
 		initializeClass(CharacterSet.class, ValueSets.class);
 	}
@@ -120,10 +127,21 @@ public final class CharacterSet extends ValueSet {
 		}
 	}
 
-	/** The screen code of a byte of this set's computer: ATASCII to ANTIC internal code, or PETSCII to C64 screen code. */
+	/**
+	 * The screen code of a byte of this set's computer: ATASCII to ANTIC
+	 * internal code, PETSCII to C64 screen code; an ASCII set's screen code is
+	 * the byte itself (the Oric has no separate screen code).
+	 */
 	public int toScreenCode(int value) {
 		value &= 0xFF;
-		return kind == Kind.ATASCII ? atasciiToInternal(value) : petsciiToScreenCode(value);
+		switch (kind) {
+		case ATASCII:
+			return atasciiToInternal(value);
+		case ASCII:
+			return value;
+		default:
+			return petsciiToScreenCode(value);
+		}
 	}
 
 	/** The screen code of the glyph that looks like the ASCII character {@code ch}, for this port's own text. */
@@ -131,6 +149,8 @@ public final class CharacterSet extends ValueSet {
 		switch (kind) {
 		case ATASCII:
 			return atasciiToInternal(ch & 0x7F);
+		case ASCII:
+			return ch & 0x7F;
 		case PETSCII_UPPERCASE:
 			if (ch == '|') {
 				return 0x5D; // Vertical line graphic, PETSCII has no '|'.
@@ -156,7 +176,7 @@ public final class CharacterSet extends ValueSet {
 	}
 
 	/**
-	 * The byte of this set's encoding (ATASCII or PETSCII) that displays as
+	 * The byte of this set's encoding (ATASCII, PETSCII or ASCII) that displays as
 	 * the glyph of the ASCII character {@code ch} - the inverse of {@link
 	 * #toScreenCode} for typed text. Printable bytes ({@code 0x20-0xFF}) are
 	 * preferred over control bytes.
@@ -173,7 +193,7 @@ public final class CharacterSet extends ValueSet {
 		throw new IllegalStateException("No byte for screen code " + screenCode + ".");
 	}
 
-	/** The end-of-line byte of this set's encoding: {@code 0x9B} for ATASCII, {@code 0x0D} for PETSCII. */
+	/** The end-of-line byte of this set's encoding: {@code 0x9B} for ATASCII, {@code 0x0D} for PETSCII and ASCII. */
 	public int getReturnByte() {
 		return kind == Kind.ATASCII ? 0x9B : 0x0D;
 	}

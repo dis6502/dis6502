@@ -21,4 +21,4 @@ The standing documents are not numbered: `PORTING_GUIDE.md`, `MEMORY.md`,
 | 08 | [ELEMENTFACTORY_DATATYPE_BUTTONS_PROPOSAL](08_ELEMENTFACTORY_DATATYPE_BUTTONS_PROPOSAL.md) | `DataType`-keyed self-labeling helpers moved into `ElementFactory` | Done 2026-09-23 |
 | 09 | [CUSTOM_TEXT_FONT_PROPOSAL](09_CUSTOM_TEXT_FONT_PROPOSAL.md) | User-chosen text font and separate memory inspector font size in `View > Options...` | Done 2026-10-01 |
 | 10 | [CHARACTER_SET_FONTS_PROPOSAL](10_CHARACTER_SET_FONTS_PROPOSAL.md) | 8x8 `.chr` character sets instead of the TTF glyphs, selectable in the memory inspector header | Done 2026-10-01 |
-| 11 | [RELEASE_MATRIX_PROPOSAL](11_RELEASE_MATRIX_PROPOSAL.md) | x64 and ARM64 release builds for all three systems, following RASTER-Music-Tracker, plus application icons | Implemented, run pending |
+| 11 | [RELEASE_MATRIX_PROPOSAL](11_RELEASE_MATRIX_PROPOSAL.md) | x64 and ARM64 release builds for all three systems, following RASTER-Music-Tracker, plus application icons | Done 2026-10-02 |

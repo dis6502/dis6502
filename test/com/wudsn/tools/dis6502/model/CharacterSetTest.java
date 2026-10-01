@@ -21,7 +21,7 @@ public final class CharacterSetTest {
 	}
 
 	public static void testCharacterSet() {
-		Assert.longEquals(CharacterSet.getValues().size(), 4);
+		Assert.longEquals(CharacterSet.getValues().size(), 5);
 		for (CharacterSet characterSet : CharacterSet.getValues()) {
 			// Screen code 255 is the last of 256 glyphs - loading fails on any other file size.
 			Assert.longEquals(characterSet.getGlyph(255).length, 8);
@@ -30,6 +30,9 @@ public final class CharacterSetTest {
 		assertGlyph(CharacterSet.ATASCII_STANDARD, 0x21, 0x00, 0x18, 0x3C, 0x66, 0x66, 0x7E, 0x66, 0x00); // 'A'.
 		assertGlyph(CharacterSet.ATASCII_STANDARD, 0xA1, 0xFF, 0xE7, 0xC3, 0x99, 0x99, 0x81, 0x99, 0xFF); // Inverse 'A'.
 		assertGlyph(CharacterSet.PETSCII_UPPERCASE, 0x01, 0x18, 0x3C, 0x66, 0x7E, 0x66, 0x66, 0x66, 0x00); // 'A'.
+		assertGlyph(CharacterSet.ORIC_ASCII, 0x41, 0x08, 0x14, 0x22, 0x22, 0x3E, 0x22, 0x22, 0x00); // 'A', from the ROM.
+		assertGlyph(CharacterSet.ORIC_ASCII, 0xC1, 0xF7, 0xEB, 0xDD, 0xDD, 0xC1, 0xDD, 0xDD, 0xFF); // Inverse 'A', whole cell.
+		assertGlyph(CharacterSet.ORIC_ASCII, 0x01, 0, 0, 0, 0, 0, 0, 0, 0); // Attribute code: blank.
 		assertGlyph(CharacterSet.PETSCII_LOWERCASE, 0x41, 0x18, 0x3C, 0x66, 0x7E, 0x66, 0x66, 0x66, 0x00); // 'A'.
 
 		// ATASCII to ANTIC internal code, inverse bit kept.
@@ -47,6 +50,14 @@ public final class CharacterSetTest {
 		Assert.longEquals(c64.toScreenCode(0x61), 0x41);
 		Assert.longEquals(c64.toScreenCode(0xC1), 0x41);
 		Assert.longEquals(c64.toScreenCode(0xFF), 0x5E);
+
+		// ASCII: the byte is the screen code.
+		CharacterSet oric = CharacterSet.ORIC_ASCII;
+		Assert.longEquals(oric.toScreenCode(0x41), 0x41);
+		Assert.longEquals(oric.toScreenCode(0xC1), 0xC1);
+		Assert.longEquals(oric.textToScreenCode('|'), 0x7C);
+		Assert.longEquals(oric.textToByte('a'), 0x61);
+		Assert.longEquals(oric.getReturnByte(), 0x0D);
 
 		// This port's own text: the glyph that looks like the ASCII character.
 		Assert.longEquals(atari.textToScreenCode('A'), 0x21);
@@ -77,7 +88,7 @@ public final class CharacterSetTest {
 		Assert.boolEquals(factory.getComputerSystem(ComputerSystemType.ATARI800).getDefaultCharacterSet() == atari, true);
 		Assert.boolEquals(factory.getComputerSystem(ComputerSystemType.ATARI5200).getDefaultCharacterSet() == atari, true);
 		Assert.boolEquals(factory.getComputerSystem(ComputerSystemType.C64).getDefaultCharacterSet() == c64, true);
-		Assert.boolEquals(factory.getComputerSystem(ComputerSystemType.ORIC).getDefaultCharacterSet() == atari, true);
+		Assert.boolEquals(factory.getComputerSystem(ComputerSystemType.ORIC).getDefaultCharacterSet() == CharacterSet.ORIC_ASCII, true);
 		Assert.boolEquals(factory.getComputerSystem(ComputerSystemType.UNKNOWN).getDefaultCharacterSet() == atari, true);
 
 		// The workspace follows the computer system's default.
