@@ -62,6 +62,7 @@ public final class RenderingTest {
 				testDisassemblyGridPaint(workspace);
 				testHexGridPaint(workspace);
 				testComputerFontGlyphs();
+				testAddressOnlyOnItsOwnLine();
 			} catch (Exception ex) {
 				throw new RuntimeException(ex);
 			}
@@ -193,10 +194,44 @@ public final class RenderingTest {
 		}
 	}
 
+	/** A code line's operand address does not carry over to the data lines after it (they showed it as "; $D400"). */
+	private static void testAddressOnlyOnItsOwnLine() {
+		Workspace workspace = disassemble(new int[] { 0x8D, 0x00, 0xD4, // 2000 STA DMACTL
+				0x41, 0x42, 0x43 }, 3); // 2003 .BYTE
+		boolean storeFound = false;
+		boolean dataFound = false;
+		for (Iterator<DisassemblyLine> i = workspace.getDisassemblyResult().createLineIterator(); i.hasNext();) {
+			DisassemblyLine line = i.next();
+			if (line.getSection().getType() != DisassemblySectionType.CODE_LINES) {
+				continue;
+			}
+			String text = line.getLine().toLowerCase();
+			if (text.contains("sta ")) {
+				Assert.longEquals(line.address, 0xD400);
+				storeFound = true;
+			} else {
+				Assert.longEquals(line.address, 0);
+				dataFound |= text.contains(".byte");
+			}
+		}
+		Assert.boolEquals(storeFound, true);
+		Assert.boolEquals(dataFound, true);
+	}
+
 	// ------------------------------------------------------------------
 
 	/** A small Atari 800 program: an immediate load, a subroutine call and its target, with the real system equates. */
 	static Workspace disassembleSample() {
+		int[] program = { 0xA9, 0x0C, // 2000 LDA #$0C
+				0x20, 0x08, 0x20, // 2002 JSR L2008
+				0x8D, 0x1A, 0xD0, // 2005 STA COLBK
+				0x60, // 2008 RTS
+				0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA }; // NOPs
+		return disassemble(program, program.length);
+	}
+
+	/** Disassembles {@code program} at $2000: its first {@code codeLength} bytes as code, the rest as bytes. */
+	private static Workspace disassemble(int[] program, int codeLength) {
 		Workspace workspace = new Workspace(new ComputerSystemFactory());
 		workspace.setComputerSystemType(ComputerSystemType.ATARI800);
 		new com.wudsn.tools.dis6502.model.WorkspaceLogic(new Application()).loadSystemEquates(workspace);
@@ -204,17 +239,15 @@ public final class RenderingTest {
 		segment.setHeader(FileHeader.ATARI_BINARY);
 		segment.bBinary = true;
 		segment.wBegin = 0x2000;
-		segment.wEnd = 0x200F;
+		segment.wEnd = 0x2000 + program.length - 1;
 		segment.createMemoryBlockFromBeginToEnd();
-		int[] program = { 0xA9, 0x0C, // 2000 LDA #$0C
-				0x20, 0x08, 0x20, // 2002 JSR L2008
-				0x8D, 0x1A, 0xD0, // 2005 STA COLBK
-				0x60, // 2008 RTS
-				0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA }; // NOPs
 		for (int i = 0; i < program.length; i++) {
 			segment.setData(i, program[i]);
 		}
-		segment.setType(0, MemoryType.CODE, program.length);
+		segment.setType(0, MemoryType.CODE, codeLength);
+		if (codeLength < program.length) {
+			segment.setType(codeLength, MemoryType.BYTE, program.length - codeLength);
+		}
 
 		Disassembly disassembly = new Disassembly();
 		disassembly.setWorkspace(workspace);

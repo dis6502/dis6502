@@ -62,6 +62,8 @@ public final class DisassemblyWriter {
 		flushBytes();
 		disassembly.absoluteAddress = address;
 		disassembly.addLineWriter();
+		// The address belongs to this line only; data, label and comment lines added later have none.
+		disassembly.absoluteAddress = 0;
 	}
 
 	/** Adds a line of code to the disassembly listing but, first, flushes any pending .byte directive. */
