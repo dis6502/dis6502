@@ -255,7 +255,7 @@ public final class Messages extends NLS {
 	/** {@link com.wudsn.tools.dis6502.model.Xml#load}'s "mismatched root element" error. */
 	public static Message E065;
 
-	/** {@link com.wudsn.tools.dis6502.ui.ComputerFont}'s {@code loadFont}'s "font resource not found" error. */
+	/** {@link com.wudsn.tools.dis6502.model.CharacterSet}'s "font resource not found" error. */
 	public static Message E066;
 
 	/**

@@ -23,6 +23,7 @@
 # Always binary: test fixtures and resources git must never touch.
 *.png binary
 *.ttf binary
+*.chr binary
 *.xex binary
 *.atr binary
 *.exe binary

@@ -23,17 +23,18 @@ import javax.swing.SwingUtilities;
 
 import com.wudsn.tools.dis6502.Options;
 import com.wudsn.tools.dis6502.model.ByteRangeSelection;
+import com.wudsn.tools.dis6502.model.CharacterSet;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState.EditPane;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState;
 import com.wudsn.tools.dis6502.model.MemoryType;
-import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * A read-only, custom-painted hex/ASCII dump of a {@link #setByteSource}'s
- * bytes, drawn with the real per-computer-system font from {@link
+ * bytes, drawn with the selected 8x8 character set via {@link
  * ComputerFont} instead of a Java system font - so every byte value (not
  * just the ones that happen to coincide with printable ASCII) renders as
- * its actual Atari ATASCII/C64 PETSCII character.
+ * its actual Atari ATASCII/C64 PETSCII character, or as a screen code
+ * (see {@link #setDisplayAsScreenCode}).
  * <p>
  * This renders every line of the byte source as one plain (if tall)
  * component inside a {@link javax.swing.JScrollPane}, relying on Swing's
@@ -143,7 +144,7 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 	public HexGridPanel() {
 		setBackground(Color.WHITE);
 		setFocusable(true);
-		setComputerFont(ComputerFont.get(ComputerSystemType.ATARI800, Options.NATIVE_FONT_SIZE_DEFAULT));
+		setComputerFont(ComputerFont.get(CharacterSet.ATASCII_STANDARD, Options.NATIVE_FONT_SIZE_DEFAULT));
 
 		MouseAdapter dragHandler = new MouseAdapter() {
 			@Override
@@ -483,25 +484,6 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 		return type;
 	}
 
-	/**
-	 * The ASCII-to-"internal" (Atari screen code) DISPLAY-direction
-	 * transform, covering the full 0-255 byte range - see {@link
-	 * com.wudsn.tools.dis6502.model.MemoryType#toSbyteInternalCode}'s
-	 * javadoc for the WRITE-direction counterpart.
-	 */
-	private static int toInternalCode(int value) {
-		if (value < 64) {
-			return value + 32;
-		} else if (value < 96) {
-			return value - 64;
-		} else if (value >= 128 && value < 128 + 64) {
-			return value + 32;
-		} else if (value >= 128 + 64 && value < 128 + 96) {
-			return value - 64;
-		}
-		return value;
-	}
-
 	private int lineCount() {
 		if (byteSource == null) {
 			return 0;
@@ -595,14 +577,12 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 
 			int value = byteSource.getData(offset) & 0xFF;
 			String hex = String.format("%02X ", value);
-			int displayValue = displayAsScreenCode ? toInternalCode(value) : value;
-
 			if (editMode && offset == editCursorOffset) {
 				paintCursorHexCell(g2, hex, color, hexX, cellW, cellH, y);
-				paintCursorAsciiCell(g2, displayValue, charX, cellW, cellH, y);
+				paintCursorAsciiCell(g2, value, charX, cellW, cellH, y);
 			} else {
 				computerFont.drawText(g2, hex, color, hexX, y);
-				computerFont.drawGlyph(g2, displayValue, color, charX, y);
+				computerFont.drawGlyph(g2, value, displayAsScreenCode, color, charX, y);
 			}
 		}
 
@@ -647,12 +627,12 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 	 * blinkPhase == 0}) when the ASCII pane is the one actually being
 	 * edited - otherwise it is shown steadily.
 	 */
-	private void paintCursorAsciiCell(Graphics2D g2, int displayValue, int charX, int cellW, int cellH, int y) {
+	private void paintCursorAsciiCell(Graphics2D g2, int value, int charX, int cellW, int cellH, int y) {
 		g2.setColor(HIGHLIGHT_COLOR);
 		g2.fillRect(charX, y, cellW, cellH);
 		boolean blinking = getEditCursorPane() == EditPane.ASCII;
 		if (!(blinking && blinkPhase == 0)) {
-			computerFont.drawGlyph(g2, displayValue, Color.BLACK, charX, y);
+			computerFont.drawGlyph(g2, value, displayAsScreenCode, Color.BLACK, charX, y);
 		}
 	}
 

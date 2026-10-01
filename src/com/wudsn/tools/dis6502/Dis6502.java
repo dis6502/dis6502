@@ -284,6 +284,9 @@ public final class Dis6502 {
 			}
 			if (properties.contains(WorkspaceProperty.COMPUTER_SYSTEM_TYPE)) {
 				loadSystemEquatesIfEmpty();
+			}
+			if (properties.contains(WorkspaceProperty.CHARACTER_SET)) {
+				mainWindow.memoryInspectorPanel.characterSetField.setValue(workspace.getViewCharacterSet());
 				updateFonts();
 			}
 		});
@@ -363,6 +366,9 @@ public final class Dis6502 {
 
 		mainWindow.memoryInspectorPanel.displayAsScreenCodeButton.setSelected(workspace.isViewDisplayAsScreenCode());
 		mainWindow.memoryInspectorPanel.displayAsScreenCodeButton.addActionListener(e -> performToggleDisplayAsScreenCode());
+		mainWindow.memoryInspectorPanel.characterSetField.setValue(workspace.getViewCharacterSet());
+		mainWindow.memoryInspectorPanel.characterSetField
+				.addActionListener(e -> workspace.setViewCharacterSet(mainWindow.memoryInspectorPanel.characterSetField.getValue()));
 		mainWindow.memoryInspectorPanel.findMenuItem.addActionListener(e -> performShowMemoryInspectorFindDialog());
 		mainWindow.memoryInspectorPanel.findNextMenuItem.addActionListener(e -> performMemoryInspectorFindNext());
 		mainWindow.memoryInspectorPanel.splitAtSelectionMenuItem.addActionListener(e -> performSplitAtSelection());
@@ -482,17 +488,16 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Reacts to a {@link WorkspaceProperty#COMPUTER_SYSTEM_TYPE} change or
-	 * a changed font option - every part window shares one font set,
-	 * matching {@link ComputerFont}'s javadoc. {@link
-	 * MemoryInspectorPanel}'s grid always gets the native {@code
-	 * nativeFont} (see its own {@code setComputerFont} javadoc for why);
+	 * Reacts to a {@link WorkspaceProperty#CHARACTER_SET} change or a
+	 * changed font option. {@link MemoryInspectorPanel}'s grid gets {@code
+	 * nativeFont}, the workspace's character set at the chosen size (see
+	 * its own {@code setComputerFont} javadoc for why);
 	 * every part window's title bar - {@link MemoryInspectorPanel}'s
 	 * included - and every other panel's own content gets the user's chosen
 	 * {@code textFont} - see {@code plans/09_CUSTOM_TEXT_FONT_PROPOSAL.md}.
 	 */
 	private void updateFonts() {
-		ComputerFont nativeFont = ComputerFont.get(workspace.getComputerSystem().getType(), getNativeFontSize());
+		ComputerFont nativeFont = ComputerFont.get(workspace.getViewCharacterSet(), getNativeFontSize());
 		TextFont textFont = getTextFont();
 
 		mainWindow.memoryInspectorPanel.setComputerFont(nativeFont);
@@ -928,7 +933,7 @@ public final class Dis6502 {
 		}
 
 		DiskImageSectorsDialog dialog = new DiskImageSectorsDialog(mainWindow.getFrame());
-		dialog.setComputerFont(ComputerFont.get(workspace.getComputerSystem().getType(), getNativeFontSize()));
+		dialog.setComputerFont(ComputerFont.get(workspace.getViewCharacterSet(), getNativeFontSize()));
 		if (!dialog.show(file.getPath(), info)) {
 			return false;
 		}
@@ -1650,7 +1655,7 @@ public final class Dis6502 {
 
 		OptionsDialog dialog = new OptionsDialog(mainWindow.getFrame());
 		if (dialog.show(currentFontFamilyName, currentTextFontSize, currentNativeFontSize,
-				workspace.getComputerSystem().getType())) {
+				workspace.getViewCharacterSet())) {
 			if (dialog.isRestoreDefaultsRequested()) {
 				settings.clear();
 				updateFonts();

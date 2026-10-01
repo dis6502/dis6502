@@ -20,3 +20,4 @@ The standing documents are not numbered: `PORTING_GUIDE.md`, `MEMORY.md`,
 | 07 | [HEADLESS_ACTIONS_TEST_PROPOSAL](07_HEADLESS_ACTIONS_TEST_PROPOSAL.md) | Headless test coverage of `MainMenu` and every panel, including menu-mnemonic uniqueness | Done 2026-09-23 |
 | 08 | [ELEMENTFACTORY_DATATYPE_BUTTONS_PROPOSAL](08_ELEMENTFACTORY_DATATYPE_BUTTONS_PROPOSAL.md) | `DataType`-keyed self-labeling helpers moved into `ElementFactory` | Done 2026-09-23 |
 | 09 | [CUSTOM_TEXT_FONT_PROPOSAL](09_CUSTOM_TEXT_FONT_PROPOSAL.md) | User-chosen text font and separate memory inspector font size in `View > Options...` | Done 2026-10-01 |
+| 10 | [CHARACTER_SET_FONTS_PROPOSAL](10_CHARACTER_SET_FONTS_PROPOSAL.md) | 8x8 `.chr` character sets instead of the TTF glyphs, selectable in the memory inspector header | Done 2026-10-01 |

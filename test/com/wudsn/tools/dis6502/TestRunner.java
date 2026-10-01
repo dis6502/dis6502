@@ -10,6 +10,7 @@ import java.util.prefs.Preferences;
 
 import com.wudsn.tools.dis6502.model.AssemblerTest;
 import com.wudsn.tools.dis6502.model.ByteRangeSelectionTest;
+import com.wudsn.tools.dis6502.model.CharacterSetTest;
 import com.wudsn.tools.dis6502.model.DisassemblyResultFileTest;
 import com.wudsn.tools.dis6502.model.DisassemblyResultTest;
 import com.wudsn.tools.dis6502.model.EncodingTest;
@@ -139,6 +140,7 @@ public final class TestRunner {
 		runTest("AtariDiskImageTest", AtariDiskImageTest::testAtariDiskImage);
 		runTest("MemoryInspectorStateTest", MemoryInspectorStateTest::testMemoryInspectorState);
 		runTest("ByteRangeSelectionTest", ByteRangeSelectionTest::testByteRangeSelection);
+		runTest("CharacterSetTest", CharacterSetTest::testCharacterSet);
 		runTest("DataTypesTest", DataTypesTest::testDataTypes);
 		runTest("CommandLineArgumentsTest", CommandLineArgumentsTest::testCommandLineArguments);
 		runTest("LineNumberHistoryTest", LineNumberHistoryTest::testLineNumberHistory);

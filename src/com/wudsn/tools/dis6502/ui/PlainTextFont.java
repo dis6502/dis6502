@@ -17,21 +17,15 @@ import java.util.List;
 
 /**
  * A {@link TextFont} wrapping an arbitrary, user-chosen mono-spaced system
- * font - the counterpart to {@link ComputerFont} for every panel that does
- * not need the workspace's authentic native font (see
+ * font - the font of every panel except the memory inspector's grid, which
+ * uses {@link ComputerFont} (see
  * {@code plans/09_CUSTOM_TEXT_FONT_PROPOSAL.md}).
  * <p>
- * Deliberately much simpler than {@link ComputerFont}: no per-character
- * bitmap cache, no forced-off antialiasing. Those exist in
- * {@link ComputerFont} to keep the tiny pixel-art retro TTFs crisp at any
- * display scale - a concern that does not apply to an ordinary system font,
- * where plain antialiased {@link Graphics2D#drawString} is what actually
- * looks right. A single {@code drawString} call per {@link #drawText} is
- * also enough to keep every character at this font's own uniform advance
+ * Plain antialiased {@link Graphics2D#drawString} is what looks right for
+ * an ordinary system font. A single {@code drawString} call per {@link
+ * #drawText} keeps every character at this font's own uniform advance
  * width, since only genuinely mono-spaced fonts are ever offered as a
- * choice - unlike {@link ComputerFont}, which cannot assume that about the
- * retro TTFs' authentic byte-indexed glyphs and so places each character
- * itself.
+ * choice.
  *
  * @author Peter Dell
  */

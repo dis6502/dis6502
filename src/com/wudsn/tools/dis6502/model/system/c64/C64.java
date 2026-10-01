@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.wudsn.tools.dis6502.Messages;
+import com.wudsn.tools.dis6502.model.CharacterSet;
 import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentList;
@@ -68,6 +69,11 @@ public final class C64 extends ComputerSystem {
 		super(computerSystemType);
 		returnCharacter = 0x0d;
 		supportedFileTypes = List.of(FileType.RAW_FILE, FileType.EXECUTABLE_FILE);
+	}
+
+	@Override
+	public CharacterSet getDefaultCharacterSet() {
+		return CharacterSet.PETSCII_UPPERCASE;
 	}
 
 	@Override

@@ -10,17 +10,11 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 
 /**
- * Renders this port's own already-generated text (hex digits, addresses,
- * mnemonics, labels, comments, list entries, log lines) - the part of
- * {@link ComputerFont}'s job that is not computer-specific. Implemented by
- * {@link ComputerFont} itself (the workspace's native font, always used by
- * {@link HexGridPanel}/{@link MemoryInspectorPanel}/{@link
- * DiskImageSectorsDialog}) and by {@link PlainTextFont} (a user-chosen
- * mono-spaced font, for every other panel - see
- * {@code plans/09_CUSTOM_TEXT_FONT_PROPOSAL.md}). Deliberately excludes
- * {@link ComputerFont#drawGlyph}: no consumer of this interface ever draws
- * a raw byte's byte-indexed hardware glyph, and a plain chosen font has no
- * such range to shift into anyway.
+ * Renders this port's own already-generated text (mnemonics, labels,
+ * comments, list entries, log lines, part panel titles) in the user-chosen
+ * {@link PlainTextFont} - see {@code plans/09_CUSTOM_TEXT_FONT_PROPOSAL.md}.
+ * The memory inspector's grid uses {@link ComputerFont} instead, which
+ * renders an 8x8 character set and has no AWT {@link Font} behind it.
  *
  * @author Peter Dell
  */
@@ -42,12 +36,9 @@ public interface TextFont {
 	 * The {@code RenderingHints.KEY_TEXT_ANTIALIASING} value a plain Swing
 	 * text component (one that paints its own text directly instead of
 	 * going through {@link #drawText}, e.g. {@link LogPanel}'s {@code
-	 * JTextPane}) should be given for this font to look right -
-	 * {@code VALUE_TEXT_ANTIALIAS_OFF} for {@link ComputerFont}'s pixel-art
-	 * glyphs, {@code VALUE_TEXT_ANTIALIAS_ON} for an ordinary font like
-	 * {@link PlainTextFont}. {@link #drawText} callers/{@link
-	 * ComputerFontListCellRenderer} need no such hook - each implementation
-	 * already renders itself correctly there.
+	 * JTextPane}) should be given for this font to look right. {@link
+	 * #drawText} callers/{@link ComputerFontListCellRenderer} need no such
+	 * hook - each implementation already renders itself correctly there.
 	 */
 	Object getTextAntialiasingHint();
 }

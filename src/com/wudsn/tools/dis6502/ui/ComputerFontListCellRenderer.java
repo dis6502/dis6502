@@ -22,13 +22,8 @@ import javax.swing.ListCellRenderer;
  * {@code g.drawString} - shared by every {@code JList}-based part panel
  * that shows already-formatted text (not raw byte values, so no
  * byte-indexed glyph lookup is ever needed) - {@link XRefPanel}, {@link
- * SegmentListPanel}. By default {@link #textFont} is a {@link
- * ComputerFont}: real on-screen Windows ClearType/subpixel antialiasing
- * blurs that small pixel-art font under a plain {@code list.setFont(...)}/
- * default-renderer setup into illegible dots, which is why this class's own
- * {@link #paintComponent} relies on {@link TextFont#drawText} instead of
- * the default renderer's painting; a user-chosen {@link PlainTextFont}
- * renders correctly the same way, via ordinary antialiasing.
+ * SegmentListPanel}, so they render exactly like every other panel using
+ * the user-chosen {@link PlainTextFont}.
  *
  * @author Peter Dell
  */

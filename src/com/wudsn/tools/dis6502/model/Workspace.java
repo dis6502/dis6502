@@ -47,6 +47,7 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 
 	private boolean viewDisplayAsScreenCode; // MemoryInspector uses internal character set (ANTIC).
 	private boolean viewNoDisassembly; // No disassembly launched if byte type is changed.
+	private CharacterSet viewCharacterSet; // MemoryInspector glyphs, reset to the system's default.
 
 	private ComputerSystem computerSystem;
 
@@ -87,6 +88,7 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 
 		viewDisplayAsScreenCode = false;
 		viewNoDisassembly = false;
+		setViewCharacterSet(computerSystem.getDefaultCharacterSet());
 
 		memoryInspectorState.clear();
 		endUpdate();
@@ -110,6 +112,20 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 
 	public void setViewNoDisassembly(boolean value) {
 		viewNoDisassembly = value;
+	}
+
+	public CharacterSet getViewCharacterSet() {
+		return viewCharacterSet;
+	}
+
+	public void setViewCharacterSet(CharacterSet value) {
+		if (value == null) {
+			throw new IllegalArgumentException("Parameter 'value' must not be null.");
+		}
+		if (value != viewCharacterSet) {
+			viewCharacterSet = value;
+			notifyListeners(WorkspaceProperty.CHARACTER_SET);
+		}
 	}
 
 	public MutableMemoryInspectorState getMemoryInspectorState() {
@@ -137,6 +153,7 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 		if (computerSystem == null || computerSystem.getType() != computerSystemType) {
 			computerSystem = computerSystemFactory.getComputerSystem(computerSystemType);
 			notifyListeners(WorkspaceProperty.COMPUTER_SYSTEM_TYPE);
+			setViewCharacterSet(computerSystem.getDefaultCharacterSet());
 		}
 	}
 

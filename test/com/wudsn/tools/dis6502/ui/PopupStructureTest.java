@@ -26,7 +26,6 @@ import com.wudsn.tools.dis6502.model.DisassemblyResult;
 import com.wudsn.tools.dis6502.model.DisassemblySectionType;
 import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.Workspace;
-import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * The popup menu a right-click on a {@code jsr} line builds - its item
@@ -64,7 +63,7 @@ public final class PopupStructureTest {
 	/** The popup for a {@code jsr} line: Navigate to Definition offered, Back disabled (no history), the immediate submenu disabled. */
 	private static void testPopupStructure(Workspace workspace) throws Exception {
 		DisassemblyPanel panel = new DisassemblyPanel();
-		ComputerFont font = ComputerFont.get(ComputerSystemType.ATARI800, Options.NATIVE_FONT_SIZE_DEFAULT);
+		TextFont font = PlainTextFont.get(Options.TEXT_FONT_FAMILY_DEFAULT, Options.TEXT_FONT_SIZE_DEFAULT);
 		panel.setTextFont(font);
 		panel.setImmediateTypeProvider(line -> line.getLine().contains("#$") ? new DisassemblyPanel.ImmediateType(MemoryType.UNKNOWN, true) : null);
 		panel.refresh(workspace.getDisassemblyResult());

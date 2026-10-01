@@ -21,21 +21,12 @@ import javax.swing.SwingConstants;
 import com.wudsn.tools.dis6502.Options;
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblySectionType;
-import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
  * A read-only, custom-painted list of disassembly listing lines, drawn via
- * {@link TextFont} - by default {@link ComputerFont}, the workspace's real
- * per-computer-system font (so a literal ATASCII/PETSCII string from a
- * {@code STRING}/{@code SBYTE} directive's quoted text still renders in
- * that computer's own character shapes, not just hex digits/mnemonics/
- * labels), but a user-chosen {@link PlainTextFont} works exactly as well -
- * unlike {@link HexGridPanel}, this class never draws a raw byte-indexed
- * hardware glyph, so it has no reason to require the native font
- * specifically (see {@code plans/09_CUSTOM_TEXT_FONT_PROPOSAL.md}). Choosing a
- * custom font trades away that STRING-data authenticity for every panel
- * that uses one, in exchange for a font the user finds more readable - an
- * explicit, accepted trade-off, not an oversight.
+ * the user-chosen {@link TextFont} (see {@code
+ * plans/09_CUSTOM_TEXT_FONT_PROPOSAL.md}). Unlike {@link HexGridPanel}, this
+ * class never draws a raw byte-indexed hardware glyph.
  * <p>
  * Virtualized scrolling relies on Swing's clip-rect-based repaint the same
  * way {@link HexGridPanel} does. The popup menu is {@link
@@ -74,7 +65,7 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 
 	public DisassemblyGridPanel() {
 		setBackground(Color.WHITE);
-		setTextFont(ComputerFont.get(ComputerSystemType.ATARI800, Options.NATIVE_FONT_SIZE_DEFAULT));
+		setTextFont(PlainTextFont.get(Options.TEXT_FONT_FAMILY_DEFAULT, Options.TEXT_FONT_SIZE_DEFAULT));
 	}
 
 	public void setTextFont(TextFont textFont) {

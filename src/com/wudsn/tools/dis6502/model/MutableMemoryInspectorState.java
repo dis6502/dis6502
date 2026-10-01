@@ -321,6 +321,9 @@ public final class MutableMemoryInspectorState implements MemoryInspectorState {
 				return EditCharResult.HANDLED;
 			}
 			int toWrite;
+			// TODO: Typed characters are written as ASCII/ATASCII regardless of the computer system and of
+			// "Display as Screen Code". For C64 they should become PETSCII (lowercase ASCII is a graphics
+			// character there), and in screen-code mode the screen code of the workspace's CharacterSet.
 			if (c == '\r' || c == '\n') {
 				toWrite = 0x9B; // Atari end-of-line byte, written like any other typed character.
 			} else if (c >= ' ' && c < 128) {

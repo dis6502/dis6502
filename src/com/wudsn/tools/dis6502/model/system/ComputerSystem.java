@@ -15,6 +15,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.wudsn.tools.dis6502.model.CharacterSet;
 import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.Memory;
 import com.wudsn.tools.dis6502.model.SegmentList;
@@ -46,6 +47,11 @@ public abstract class ComputerSystem {
 
 	public ComputerSystemType getType() {
 		return computerSystemType;
+	}
+
+	/** The character set the memory inspector starts with for this system. */
+	public CharacterSet getDefaultCharacterSet() {
+		return CharacterSet.ATASCII_STANDARD;
 	}
 
 	/** Gets the return character used to indicate line ends in strings. */

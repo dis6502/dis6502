@@ -30,9 +30,11 @@ import javax.swing.Timer;
 import com.wudsn.tools.base.common.HexUtility;
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ValueSetField;
 import com.wudsn.tools.base.repository.Action;
 import com.wudsn.tools.dis6502.Actions;
 import com.wudsn.tools.dis6502.Texts;
+import com.wudsn.tools.dis6502.model.CharacterSet;
 import com.wudsn.tools.dis6502.model.FileHeader;
 import com.wudsn.tools.dis6502.model.GuessCodeLogic;
 import com.wudsn.tools.dis6502.model.MemoryInspectorState.EditCharResult;
@@ -199,6 +201,9 @@ public final class MemoryInspectorPanel extends JPanel {
 	public final JToggleButton displayAsScreenCodeButton = ElementFactory.createToggleButton(Actions.MemoryInspectorPanel_DisplayAsScreenCode,
 			true);
 
+	/** Selects the character set {@link #grid} renders with; wired by {@code Dis6502} like {@link #displayAsScreenCodeButton}. */
+	public final ValueSetField<CharacterSet> characterSetField = new ValueSetField<CharacterSet>(CharacterSet.getValues());
+
 	/**
 	 * Every popup menu item is a public field wired directly by {@code
 	 * Dis6502}, the same way {@link DisassemblyPanel}'s label-navigation popup
@@ -273,6 +278,7 @@ public final class MemoryInspectorPanel extends JPanel {
 
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		buttonPanel.add(displayAsScreenCodeButton);
+		buttonPanel.add(characterSetField);
 
 		JPanel topPanel = new JPanel(new BorderLayout());
 		topPanel.add(header, BorderLayout.NORTH);
@@ -535,7 +541,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Call whenever the workspace's computer system or the native font size
+	 * Call whenever the workspace's character set or the native font size
 	 * changes. Always the workspace's native {@link ComputerFont},
 	 * never a user-chosen one - unlike {@link #header} (see {@link
 	 * #setTextFont}), {@link #grid} shows raw byte values via its

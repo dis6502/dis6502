@@ -15,7 +15,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.util.function.Supplier;
+import java.util.function.IntSupplier;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -32,7 +32,7 @@ import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Options;
 import com.wudsn.tools.dis6502.Texts;
-import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
+import com.wudsn.tools.dis6502.model.CharacterSet;
 
 /**
  * A general application-options dialog, named and structured to gain
@@ -75,14 +75,17 @@ public final class OptionsDialog extends JDialog {
 			new SpinnerNumberModel(Options.TEXT_FONT_SIZE_DEFAULT, MIN_TEXT_FONT_SIZE, MAX_TEXT_FONT_SIZE, 1));
 	private final JSpinner nativeFontSizeSpinner = new JSpinner(new SpinnerNumberModel(Options.NATIVE_FONT_SIZE_DEFAULT,
 			ComputerFont.NATIVE_HEIGHT, MAX_NATIVE_FONT_SIZE, ComputerFont.NATIVE_HEIGHT));
-	private final SamplePanel textFontPreview = new SamplePanel(TEXT_FONT_SAMPLE, this::selectedTextFont);
-	private final SamplePanel nativeFontPreview = new SamplePanel(NATIVE_FONT_SAMPLE, this::selectedNativeFont);
+	private final SamplePanel textFontPreview = new SamplePanel(TEXT_FONT_SAMPLE, () -> selectedTextFont().getGlyphWidth(),
+			() -> selectedTextFont().getGlyphHeight(), (g2, text, x, y) -> selectedTextFont().drawText(g2, text, Color.BLACK, x, y));
+	private final SamplePanel nativeFontPreview = new SamplePanel(NATIVE_FONT_SAMPLE, () -> selectedNativeFont().getGlyphWidth(),
+			() -> selectedNativeFont().getGlyphHeight(),
+			(g2, text, x, y) -> selectedNativeFont().drawText(g2, text, Color.BLACK, x, y));
 	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 	// Fully qualified: com.wudsn.tools.base.Actions is already imported as "Actions" for ButtonBar_OK/Cancel above.
 	private final JButton restoreDefaultsButton = ElementFactory.createButton(
 			com.wudsn.tools.dis6502.Actions.OptionsDialog_RestoreDefaults, true);
 
-	private ComputerSystemType computerSystemType;
+	private CharacterSet characterSet;
 	private boolean confirmed;
 	private boolean restoreDefaultsRequested;
 	private String selectedFontFamilyName = "";
@@ -178,8 +181,8 @@ public final class OptionsDialog extends JDialog {
 		return PlainTextFont.get(selectedFontFamilyName(), (Integer) textFontSizeSpinner.getValue());
 	}
 
-	private TextFont selectedNativeFont() {
-		return ComputerFont.get(computerSystemType, (Integer) nativeFontSizeSpinner.getValue());
+	private ComputerFont selectedNativeFont() {
+		return ComputerFont.get(characterSet, (Integer) nativeFontSizeSpinner.getValue());
 	}
 
 	private void performOK() {
@@ -226,13 +229,13 @@ public final class OptionsDialog extends JDialog {
 
 	/**
 	 * Opens the dialog pre-selecting the current values; {@code
-	 * computerSystemType} lets {@link #nativeFontPreview} build the exact
-	 * native {@link ComputerFont} the memory inspector uses. Returns whether
-	 * the user clicked OK; on Cancel/close, none of the getters are updated.
+	 * characterSet} lets {@link #nativeFontPreview} build the exact {@link
+	 * ComputerFont} the memory inspector uses. Returns whether the user
+	 * clicked OK; on Cancel/close, none of the getters are updated.
 	 */
 	public boolean show(String currentFontFamilyName, int currentTextFontSize, int currentNativeFontSize,
-			ComputerSystemType computerSystemType) {
-		this.computerSystemType = computerSystemType;
+			CharacterSet characterSet) {
+		this.characterSet = characterSet;
 
 		fontComboBox.removeAllItems();
 		for (String familyName : PlainTextFont.getAvailableFontFamilyNames()) {
@@ -255,6 +258,10 @@ public final class OptionsDialog extends JDialog {
 		return confirmed;
 	}
 
+	private interface SamplePainter {
+		void drawText(Graphics2D g2, String text, int x, int y);
+	}
+
 	/** Draws a fixed sample text in the currently selected font, sized to it so the surrounding scroll pane can scroll a large one. */
 	private static final class SamplePanel extends JPanel {
 
@@ -262,11 +269,15 @@ public final class OptionsDialog extends JDialog {
 		private static final int MARGIN = 4;
 
 		private final String sampleText;
-		private final transient Supplier<TextFont> textFontSupplier;
+		private final transient IntSupplier glyphWidth;
+		private final transient IntSupplier glyphHeight;
+		private final transient SamplePainter painter;
 
-		SamplePanel(String sampleText, Supplier<TextFont> textFontSupplier) {
+		SamplePanel(String sampleText, IntSupplier glyphWidth, IntSupplier glyphHeight, SamplePainter painter) {
 			this.sampleText = sampleText;
-			this.textFontSupplier = textFontSupplier;
+			this.glyphWidth = glyphWidth;
+			this.glyphHeight = glyphHeight;
+			this.painter = painter;
 			setBackground(Color.WHITE);
 		}
 
@@ -277,15 +288,14 @@ public final class OptionsDialog extends JDialog {
 
 		@Override
 		public Dimension getPreferredSize() {
-			TextFont textFont = textFontSupplier.get();
-			return new Dimension(textFont.getGlyphWidth() * sampleText.length() + 2 * MARGIN,
-					textFont.getGlyphHeight() + 2 * MARGIN);
+			return new Dimension(glyphWidth.getAsInt() * sampleText.length() + 2 * MARGIN,
+					glyphHeight.getAsInt() + 2 * MARGIN);
 		}
 
 		@Override
 		protected void paintComponent(Graphics g) {
 			super.paintComponent(g);
-			textFontSupplier.get().drawText((Graphics2D) g, sampleText, Color.BLACK, MARGIN, MARGIN);
+			painter.drawText((Graphics2D) g, sampleText, MARGIN, MARGIN);
 		}
 	}
 }

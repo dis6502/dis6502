@@ -19,6 +19,7 @@ import javax.swing.SwingUtilities;
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.Options;
 import com.wudsn.tools.dis6502.model.Assert;
+import com.wudsn.tools.dis6502.model.CharacterSet;
 import com.wudsn.tools.dis6502.model.Disassembly;
 import com.wudsn.tools.dis6502.model.DisassemblyLine;
 import com.wudsn.tools.dis6502.model.DisassemblyProgressMonitor;
@@ -60,6 +61,7 @@ public final class RenderingTest {
 			try {
 				testDisassemblyGridPaint(workspace);
 				testHexGridPaint(workspace);
+				testComputerFontGlyphs();
 			} catch (Exception ex) {
 				throw new RuntimeException(ex);
 			}
@@ -70,7 +72,7 @@ public final class RenderingTest {
 	/** The highlighted line's row is painted yellow, an unreferenced equate's row grey, the rows in between neither. */
 	private static void testDisassemblyGridPaint(Workspace workspace) {
 		DisassemblyGridPanel grid = new DisassemblyGridPanel();
-		ComputerFont font = ComputerFont.get(ComputerSystemType.ATARI800, Options.NATIVE_FONT_SIZE_DEFAULT);
+		TextFont font = PlainTextFont.get(Options.TEXT_FONT_FAMILY_DEFAULT, Options.TEXT_FONT_SIZE_DEFAULT);
 		grid.setTextFont(font);
 		List<DisassemblyLine> lines = new ArrayList<>();
 		for (Iterator<DisassemblyLine> i = workspace.getDisassemblyResult().createLineIterator(); i.hasNext();) {
@@ -101,7 +103,7 @@ public final class RenderingTest {
 	/** The selected bytes' cells are painted yellow, the line after the selection is not. */
 	private static void testHexGridPaint(Workspace workspace) {
 		HexGridPanel grid = new HexGridPanel();
-		ComputerFont font = ComputerFont.get(ComputerSystemType.ATARI800, Options.NATIVE_FONT_SIZE_DEFAULT);
+		ComputerFont font = ComputerFont.get(CharacterSet.ATASCII_STANDARD, Options.NATIVE_FONT_SIZE_DEFAULT);
 		grid.setComputerFont(font);
 		Segment segment = workspace.getSegmentList().getSegment(0);
 		grid.setByteSource(new SegmentByteSource(segment));
@@ -119,6 +121,54 @@ public final class RenderingTest {
 		selection.clearSelection();
 		image = paint(grid);
 		Assert.boolEquals(rowContains(image, 0, cellH, HIGHLIGHT), false);
+	}
+
+	/**
+	 * Every pixel of a glyph matches the character set's bit pattern, at 8px
+	 * and at 16px (where every source pixel must become a 2x2 block); a byte
+	 * of the set's own computer and its screen code draw the same glyph.
+	 */
+	private static void testComputerFontGlyphs() {
+		int[] atariA = { 0x00, 0x18, 0x3C, 0x66, 0x66, 0x7E, 0x66, 0x00 };
+		int[] c64A = { 0x18, 0x3C, 0x66, 0x7E, 0x66, 0x66, 0x66, 0x00 };
+		for (int pixelHeight : new int[] { 8, 16 }) {
+			ComputerFont atari = ComputerFont.get(CharacterSet.ATASCII_STANDARD, pixelHeight);
+			assertGlyph(atari, 0x41, false, atariA); // ATASCII 'A'.
+			assertGlyph(atari, 0x21, true, atariA); // Internal code 'A'.
+			assertGlyph(atari, 0xC1, false, invert(atariA)); // Inverse 'A'.
+			ComputerFont c64 = ComputerFont.get(CharacterSet.PETSCII_UPPERCASE, pixelHeight);
+			assertGlyph(c64, 0x41, false, c64A); // PETSCII 'A'.
+			assertGlyph(c64, 0x01, true, c64A); // Screen code 'A'.
+		}
+	}
+
+	private static int[] invert(int[] rows) {
+		int[] result = new int[rows.length];
+		for (int i = 0; i < rows.length; i++) {
+			result[i] = ~rows[i] & 0xFF;
+		}
+		return result;
+	}
+
+	private static void assertGlyph(ComputerFont font, int value, boolean screenCode, int[] rows) {
+		int size = font.getGlyphHeight();
+		int zoom = size / ComputerFont.NATIVE_HEIGHT;
+		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_RGB);
+		Graphics2D g2 = image.createGraphics();
+		try {
+			g2.setColor(Color.WHITE);
+			g2.fillRect(0, 0, size, size);
+			font.drawGlyph(g2, value, screenCode, Color.BLACK, 0, 0);
+		} finally {
+			g2.dispose();
+		}
+		for (int y = 0; y < size; y++) {
+			for (int x = 0; x < size; x++) {
+				boolean expected = (rows[y / zoom] & (0x80 >> (x / zoom))) != 0;
+				boolean actual = (image.getRGB(x, y) & 0xFFFFFF) == 0;
+				Assert.boolEquals(actual, expected);
+			}
+		}
 	}
 
 	// ------------------------------------------------------------------
