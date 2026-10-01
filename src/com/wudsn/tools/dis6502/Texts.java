@@ -80,8 +80,9 @@ public final class Texts extends NLS {
 	public static String SelectGraphicsDialog_Title;
 	/** {@link com.wudsn.tools.dis6502.ui.OptionsDialog}'s window title. */
 	public static String OptionsDialog_Title;
-	/** {@link com.wudsn.tools.dis6502.ui.OptionsDialog}'s combo box entry for "use the computer's native font, not a custom one". */
-	public static String OptionsDialog_NativeFont;
+	/** {@link com.wudsn.tools.dis6502.ui.OptionsDialog}'s group titles. */
+	public static String OptionsDialog_TextFontGroupTitle;
+	public static String OptionsDialog_NativeFontGroupTitle;
 
 	/** {@link Dis6502#openRecentWorkspace}/{@link Dis6502#openWorkspaceFile}'s "could not open workspace" error dialog title. */
 	public static String Dis6502_OpenWorkspaceTitle;

@@ -78,8 +78,9 @@ be rediscovered:
   (`ComputerFont` implements it unchanged; a new, much simpler
   `PlainTextFont` handles a custom font with ordinary antialiased Swing
   rendering instead of `ComputerFont`'s pixel-art-tuned one); the memory
-  inspector's grid itself stays untouched, always the native font, hex
-  and ASCII/ATASCII preview alike; picked, along with its point size, from
+  inspector's grid itself always uses the native font, hex and
+  ASCII/ATASCII preview alike, at its own separately chosen pixel size;
+  both fonts are picked in separate groups, each with its own preview, in
   a new `View > Options...` dialog (`OptionsDialog`, named and structured
   as a general options dialog rather than a single-purpose font picker,
   since more unrelated preferences are expected to land there later; its

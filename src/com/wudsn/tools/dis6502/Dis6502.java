@@ -110,9 +110,9 @@ import com.wudsn.tools.dis6502.ui.XRefPanel;
  * DiskImageSectorsDialog}), loading/saving/clearing/exporting/editing
  * equates and defining a user equate address range (see {@link
  * EquateDialog}/{@link EquateRangeDialog}), the View menu's Display as
- * Screen Code/No Disassembly/Double Font Height toggles and Default
- * Folders/Profile dialogs (see {@link DefaultFoldersDialog}/{@link
- * ProfileDialog}), and Help &gt; About. Every way of opening a file -
+ * Screen Code/No Disassembly toggles and Default Folders/Profile/Options
+ * dialogs (see {@link DefaultFoldersDialog}/{@link ProfileDialog}/{@link
+ * OptionsDialog}), and Help &gt; About. Every way of opening a file -
  * menu, Recent Files/Workspaces, the command line (see {@link
  * CommandLineArguments}), drag and drop - goes through {@link
  * #openFile}; every file chooser through {@link FileChoosers}. {@link
@@ -284,8 +284,6 @@ public final class Dis6502 {
 			}
 			if (properties.contains(WorkspaceProperty.COMPUTER_SYSTEM_TYPE)) {
 				loadSystemEquatesIfEmpty();
-			}
-			if (properties.contains(WorkspaceProperty.FONT) || properties.contains(WorkspaceProperty.COMPUTER_SYSTEM_TYPE)) {
 				updateFonts();
 			}
 		});
@@ -332,8 +330,6 @@ public final class Dis6502 {
 
 		mainWindow.mainMenu.noDisassemblyMenuItem.setSelected(workspace.isViewNoDisassembly());
 		mainWindow.mainMenu.noDisassemblyMenuItem.addActionListener(e -> performToggleViewDisassembly());
-		mainWindow.mainMenu.doubleFontHeightMenuItem.setSelected(workspace.isViewDoubleHeight());
-		mainWindow.mainMenu.doubleFontHeightMenuItem.addActionListener(e -> performToggleViewDoubleFontHeight());
 		mainWindow.mainMenu.defaultFoldersMenuItem.addActionListener(e -> performShowDefaultFolders());
 		mainWindow.mainMenu.profileMenuItem.addActionListener(e -> performShowProfile());
 		mainWindow.mainMenu.optionsMenuItem.addActionListener(e -> performShowOptions());
@@ -486,19 +482,18 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * Reacts to a {@link WorkspaceProperty#COMPUTER_SYSTEM_TYPE}/{@link
-	 * WorkspaceProperty#FONT} change - every part window shares one font
-	 * set, matching {@link ComputerFont}'s javadoc. {@link
+	 * Reacts to a {@link WorkspaceProperty#COMPUTER_SYSTEM_TYPE} change or
+	 * a changed font option - every part window shares one font set,
+	 * matching {@link ComputerFont}'s javadoc. {@link
 	 * MemoryInspectorPanel}'s grid always gets the native {@code
 	 * nativeFont} (see its own {@code setComputerFont} javadoc for why);
 	 * every part window's title bar - {@link MemoryInspectorPanel}'s
-	 * included - and every other panel's own content gets {@code
-	 * textFont}, the user's chosen font if one is set, else {@code
-	 * nativeFont} itself - see {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}.
+	 * included - and every other panel's own content gets the user's chosen
+	 * {@code textFont} - see {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}.
 	 */
 	private void updateFonts() {
-		ComputerFont nativeFont = ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight(), getNativeFontZoom());
-		TextFont textFont = getTextFont(nativeFont);
+		ComputerFont nativeFont = ComputerFont.get(workspace.getComputerSystem().getType(), getNativeFontSize());
+		TextFont textFont = getTextFont();
 
 		mainWindow.memoryInspectorPanel.setComputerFont(nativeFont);
 		mainWindow.memoryInspectorPanel.setTextFont(textFont);
@@ -508,35 +503,23 @@ public final class Dis6502 {
 		mainWindow.segmentListPanel.setTextFont(textFont);
 	}
 
-	/**
-	 * The user's chosen "text font" preference, persisted under {@link
-	 * Options#SECTION}/{@link Options#TEXT_FONT_FAMILY_KEY}/{@link
-	 * Options#TEXT_FONT_SIZE_KEY} the same way {@code ProfileLogic}'s
-	 * {@code "LastProfile"} is - an empty (default) family name means "use
-	 * the native font", so {@code nativeFont} itself is returned, not a
-	 * separate lookup; the point-size preference is then irrelevant to it,
-	 * since {@code nativeFont} already has its own size baked in (see
-	 * {@link #getNativeFontZoom}) and follows "Double Font Height" too.
-	 */
-	private TextFont getTextFont(ComputerFont nativeFont) {
+	/** The user's chosen text font, persisted under {@link Options#SECTION}. */
+	private TextFont getTextFont() {
 		ApplicationSettingsSection settings = application.getSettingsSection(Options.SECTION);
-		String fontFamilyName = settings.getString(Options.TEXT_FONT_FAMILY_KEY, Options.TEXT_FONT_FAMILY_DEFAULT);
-		if (fontFamilyName.isEmpty()) {
-			return nativeFont;
-		}
 		int pointSize = settings.getUnsignedInt(Options.TEXT_FONT_SIZE_KEY, Options.TEXT_FONT_SIZE_DEFAULT);
-		return PlainTextFont.get(fontFamilyName, pointSize, workspace.isViewDoubleHeight());
+		return PlainTextFont.get(getTextFontFamilyName(settings), pointSize);
 	}
 
-	/**
-	 * The user's chosen native-font zoom preference (see {@link
-	 * Options#NATIVE_FONT_ZOOM_KEY}) - always relevant, since {@link
-	 * MemoryInspectorPanel}'s grid uses the native font regardless of
-	 * {@link #getTextFont}'s choice.
-	 */
-	private int getNativeFontZoom() {
+	private static String getTextFontFamilyName(ApplicationSettingsSection settings) {
+		String fontFamilyName = settings.getString(Options.TEXT_FONT_FAMILY_KEY, Options.TEXT_FONT_FAMILY_DEFAULT);
+		// Earlier versions stored "" for "use the native font", which is no longer offered.
+		return fontFamilyName.isEmpty() ? Options.TEXT_FONT_FAMILY_DEFAULT : fontFamilyName;
+	}
+
+	/** The memory inspector's native font height in pixels, persisted under {@link Options#SECTION}. */
+	private int getNativeFontSize() {
 		ApplicationSettingsSection settings = application.getSettingsSection(Options.SECTION);
-		return settings.getUnsignedInt(Options.NATIVE_FONT_ZOOM_KEY, Options.NATIVE_FONT_ZOOM_DEFAULT);
+		return settings.getUnsignedInt(Options.NATIVE_FONT_SIZE_KEY, Options.NATIVE_FONT_SIZE_DEFAULT);
 	}
 
 	/** Enables/disables the Equates menu's Clear/Save/Export items based on whether system/user equates exist. */
@@ -945,7 +928,7 @@ public final class Dis6502 {
 		}
 
 		DiskImageSectorsDialog dialog = new DiskImageSectorsDialog(mainWindow.getFrame());
-		dialog.setComputerFont(ComputerFont.get(workspace.getComputerSystem().getType(), workspace.isViewDoubleHeight(), getNativeFontZoom()));
+		dialog.setComputerFont(ComputerFont.get(workspace.getComputerSystem().getType(), getNativeFontSize()));
 		if (!dialog.show(file.getPath(), info)) {
 			return false;
 		}
@@ -1613,17 +1596,6 @@ public final class Dis6502 {
 	}
 
 	/**
-	 * {@link #updateFonts} reacts to this, switching both {@link
-	 * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel} and {@link
-	 * com.wudsn.tools.dis6502.ui.DisassemblyPanel} between {@link
-	 * ComputerFont#get}'s normal/double-height glyph atlases.
-	 */
-	private void performToggleViewDoubleFontHeight() {
-		workspace.setViewDoubleHeight(mainWindow.mainMenu.doubleFontHeightMenuItem.isSelected());
-		workspace.notifyFontChanged();
-	}
-
-	/**
 	 * What is edited here is where {@link FileChoosers} starts when it
 	 * knows no better place - see its javadoc.
 	 */
@@ -1672,24 +1644,25 @@ public final class Dis6502 {
 	 */
 	private void performShowOptions() {
 		ApplicationSettingsSection settings = application.getSettingsSection(Options.SECTION);
-		String currentFontFamilyName = settings.getString(Options.TEXT_FONT_FAMILY_KEY, Options.TEXT_FONT_FAMILY_DEFAULT);
-		int currentPointSize = settings.getUnsignedInt(Options.TEXT_FONT_SIZE_KEY, Options.TEXT_FONT_SIZE_DEFAULT);
-		int currentZoom = getNativeFontZoom();
+		String currentFontFamilyName = getTextFontFamilyName(settings);
+		int currentTextFontSize = settings.getUnsignedInt(Options.TEXT_FONT_SIZE_KEY, Options.TEXT_FONT_SIZE_DEFAULT);
+		int currentNativeFontSize = getNativeFontSize();
 
 		OptionsDialog dialog = new OptionsDialog(mainWindow.getFrame());
-		if (dialog.show(currentFontFamilyName, currentPointSize, currentZoom, workspace.getComputerSystem().getType(),
-				workspace.isViewDoubleHeight())) {
+		if (dialog.show(currentFontFamilyName, currentTextFontSize, currentNativeFontSize,
+				workspace.getComputerSystem().getType())) {
 			if (dialog.isRestoreDefaultsRequested()) {
 				settings.clear();
 				updateFonts();
 			} else {
 				String newFontFamilyName = dialog.getSelectedFontFamilyName();
-				int newPointSize = dialog.getSelectedPointSize();
-				int newZoom = dialog.getSelectedZoom();
-				if (!newFontFamilyName.equals(currentFontFamilyName) || newPointSize != currentPointSize || newZoom != currentZoom) {
+				int newTextFontSize = dialog.getSelectedTextFontSize();
+				int newNativeFontSize = dialog.getSelectedNativeFontSize();
+				if (!newFontFamilyName.equals(currentFontFamilyName) || newTextFontSize != currentTextFontSize
+						|| newNativeFontSize != currentNativeFontSize) {
 					settings.writeString(Options.TEXT_FONT_FAMILY_KEY, newFontFamilyName);
-					settings.writeUnsignedInt(Options.TEXT_FONT_SIZE_KEY, newPointSize);
-					settings.writeUnsignedInt(Options.NATIVE_FONT_ZOOM_KEY, newZoom);
+					settings.writeUnsignedInt(Options.TEXT_FONT_SIZE_KEY, newTextFontSize);
+					settings.writeUnsignedInt(Options.NATIVE_FONT_SIZE_KEY, newNativeFontSize);
 					updateFonts();
 				}
 			}

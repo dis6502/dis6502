@@ -650,7 +650,7 @@ public final class DisassemblyPanel extends JPanel {
 		return rightClickedLabelReference;
 	}
 
-	/** Call whenever the workspace's computer system, double-height setting, or chosen text font changes. */
+	/** Call whenever the workspace's computer system or chosen text font changes. */
 	public void setTextFont(TextFont textFont) {
 		grid.setTextFont(textFont);
 		header.setTextFont(textFont);

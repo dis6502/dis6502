@@ -11,7 +11,6 @@ import java.awt.FontMetrics;
 import java.awt.GraphicsEnvironment;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,16 +51,10 @@ public final class PlainTextFont implements TextFont {
 	 * Derives a {@link PlainTextFont} from an installed font family at
 	 * {@code pointSize} - an ordinary text size the caller chooses, not
 	 * {@link ComputerFont}'s tiny native-pixel-height derivation, since a
-	 * user-chosen readable font wants a normal point size. {@code
-	 * doubleHeight} applies the same Y-only {@link AffineTransform} scale
-	 * {@link ComputerFont#derive} uses, so double-height mode stretches a
-	 * custom font the same way it stretches the native one.
+	 * user-chosen readable font wants a normal point size.
 	 */
-	public static PlainTextFont get(String fontFamilyName, int pointSize, boolean doubleHeight) {
+	public static PlainTextFont get(String fontFamilyName, int pointSize) {
 		Font font = new Font(fontFamilyName, Font.PLAIN, pointSize);
-		if (doubleHeight) {
-			font = font.deriveFont(AffineTransform.getScaleInstance(1.0, 2.0));
-		}
 		BufferedImage probe = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2 = probe.createGraphics();
 		try {

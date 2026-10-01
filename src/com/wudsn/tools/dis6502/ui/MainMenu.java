@@ -27,7 +27,7 @@ import com.wudsn.tools.dis6502.Actions;
  * Clear/Display System Equates, Clear/Edit User Equates, Define Address
  * Range..., and Open/Save/Export User Equates (see {@link EquateDialog}/
  * {@link EquateRangeDialog}), View &gt; Display as Screen Code/No
- * Disassembly/Double Font Height/Default Folders.../Profile.../
+ * Disassembly/Default Folders.../Profile.../
  * Options... dialogs (see {@link MemoryInspectorPanel}/{@link
  * DefaultFoldersDialog}/{@link ProfileDialog}/{@link OptionsDialog}), and
  * Help &gt; About. Every item is wired to its action
@@ -128,7 +128,6 @@ public final class MainMenu {
 			"exportUserEquatesMenuItem");
 
 	public final JCheckBoxMenuItem noDisassemblyMenuItem = ElementFactory.createCheckBoxMenuItem(Actions.MainMenu_View_NoDisassembly);
-	public final JCheckBoxMenuItem doubleFontHeightMenuItem = ElementFactory.createCheckBoxMenuItem(Actions.MainMenu_View_DoubleFontHeight);
 	public final JMenuItem defaultFoldersMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_View_DefaultFolders, "defaultFoldersMenuItem");
 	public final JMenuItem profileMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_View_Profile, "profileMenuItem");
 	public final JMenuItem optionsMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_View_Options, "optionsMenuItem");
@@ -276,7 +275,6 @@ public final class MainMenu {
 		JMenu menu = ElementFactory.createMenu(Actions.MainMenu_View);
 
 		menu.add(noDisassemblyMenuItem);
-		menu.add(doubleFontHeightMenuItem);
 		menu.addSeparator();
 
 		menu.add(defaultFoldersMenuItem);

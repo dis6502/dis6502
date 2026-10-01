@@ -143,7 +143,6 @@ public final class Actions extends NLS {
 
 	// Actions: Main Menu - View.
 	public static Action MainMenu_View_NoDisassembly;
-	public static Action MainMenu_View_DoubleFontHeight;
 	public static Action MainMenu_View_DefaultFolders;
 	public static Action MainMenu_View_Profile;
 	public static Action MainMenu_View_Options;

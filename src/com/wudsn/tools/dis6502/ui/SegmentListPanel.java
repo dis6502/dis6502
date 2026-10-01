@@ -145,7 +145,7 @@ public final class SegmentListPanel extends JPanel {
 		add(scrollPane, BorderLayout.CENTER);
 	}
 
-	/** Call whenever the workspace's computer system, double-height setting, or chosen text font changes. */
+	/** Call whenever the workspace's computer system or chosen text font changes. */
 	public void setTextFont(TextFont textFont) {
 		list.setFont(textFont.getAwtFont());
 		cellRenderer.setTextFont(textFont);

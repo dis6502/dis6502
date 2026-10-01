@@ -44,6 +44,20 @@ via a new `ApplicationSettingsSection.writeUnsignedInt` (the existing
 full test suite plus an interactive smoke test confirming the spinner
 enables/disables correctly and the chosen size round-trips through
 Preferences.
+**Follow-up refinement (supersedes parts of the above):** the text font
+and the memory inspector font are now fully separate. `OptionsDialog` has
+two titled groups, each with its own live preview: "Text Font" (an
+installed mono-spaced family plus point size - the computer's native font
+is no longer offered there, so Group B panels always get a
+`PlainTextFont`; the default is the logical `Font.MONOSPACED` family, and a
+stored `""` from earlier versions maps to it) and "Memory Inspector Font"
+(the native font's pixel height, 8-64px in steps of 8, persisted as
+`"NativeFontSize"`, replacing the earlier `"NativeFontZoom"` factor).
+`ComputerFont.get` takes that pixel height and snaps it to a whole
+multiple of its native 8px cell. `View > Double Font Height` was removed
+as well (menu item, `Workspace.viewDoubleHeight`, `WorkspaceProperty.FONT`,
+and the double-height variants of `ComputerFont`/`PlainTextFont`) - the
+size options replace it; it was never persisted in workspace files.
 
 ## Request
 

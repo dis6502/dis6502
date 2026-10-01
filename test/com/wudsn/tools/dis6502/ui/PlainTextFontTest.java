@@ -24,17 +24,12 @@ public final class PlainTextFontTest {
 	}
 
 	public static void testPlainTextFont() {
-		PlainTextFont normal = PlainTextFont.get(Font.MONOSPACED, 16, false);
-		Assert.boolEquals(normal.getGlyphWidth() > 0, true);
-		Assert.boolEquals(normal.getGlyphHeight() > 0, true);
-		Assert.notNull(normal.getAwtFont());
-		Assert.longEquals(normal.getAwtFont().getSize(), 16);
-		Assert.boolEquals(normal.getTextAntialiasingHint() == RenderingHints.VALUE_TEXT_ANTIALIAS_ON, true);
-
-		// Double-height stretches height only, matching ComputerFont.derive's own AffineTransform scale.
-		PlainTextFont doubleHeight = PlainTextFont.get(Font.MONOSPACED, 16, true);
-		Assert.longEquals(doubleHeight.getGlyphWidth(), normal.getGlyphWidth());
-		Assert.boolEquals(doubleHeight.getGlyphHeight() > normal.getGlyphHeight(), true);
+		PlainTextFont font = PlainTextFont.get(Font.MONOSPACED, 16);
+		Assert.boolEquals(font.getGlyphWidth() > 0, true);
+		Assert.boolEquals(font.getGlyphHeight() > 0, true);
+		Assert.notNull(font.getAwtFont());
+		Assert.longEquals(font.getAwtFont().getSize(), 16);
+		Assert.boolEquals(font.getTextAntialiasingHint() == RenderingHints.VALUE_TEXT_ANTIALIAS_ON, true);
 
 		Assert.log("PlainTextFontTest completed");
 	}

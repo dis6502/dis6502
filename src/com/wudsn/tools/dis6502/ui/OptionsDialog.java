@@ -7,6 +7,7 @@ package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
@@ -14,11 +15,15 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.function.Supplier;
 
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
@@ -30,42 +35,28 @@ import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**
- * A general application-options dialog - today just the mono-spaced {@link
- * TextFont} used by every part panel except the memory inspector's grid
- * (see {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}), but named and
- * structured to gain further, unrelated preferences over time rather than
- * staying a single-purpose "text font" dialog. The font choice is either
- * the computer's own native font (the default, {@link
- * Texts#OptionsDialog_NativeFont} in {@link #fontComboBox}) or any
- * installed mono-spaced system font (see {@link
- * PlainTextFont#getAvailableFontFamilyNames}), at a chosen point size
- * ({@link #sizeSpinner}, disabled while the native font is selected - a
- * point size has no meaning for it). {@link #zoomSpinner} is a separate,
- * always-enabled control: how large the native font's own 8-pixel-tall
- * glyph cell renders, since {@link MemoryInspectorPanel}'s grid always
- * uses the native font regardless of {@link #fontComboBox}'s choice - see
- * {@link Options#NATIVE_FONT_ZOOM_KEY}.
- * <p>
- * {@link #preview} shows a fixed sample string in the currently selected
- * font/size, updated live as any control changes, via the exact same
- * {@link TextFont} a real panel would end up using - so a distorted or
- * missing glyph in an installed font is visible before committing to it.
+ * A general application-options dialog, named and structured to gain
+ * further, unrelated preferences over time. Today it has two independent
+ * groups, each with its own live preview drawn through the exact {@link
+ * TextFont} a real panel ends up using:
+ * <ul>
+ * <li>Text Font: an installed mono-spaced family (see {@link
+ * PlainTextFont#getAvailableFontFamilyNames}) and point size, for every
+ * panel except the memory inspector's grid.</li>
+ * <li>Memory Inspector Font: the pixel height of the computer's native
+ * {@link ComputerFont}, which the memory inspector's grid always uses -
+ * stepped in whole multiples of {@link ComputerFont#NATIVE_HEIGHT}.</li>
+ * </ul>
  * Persisting the choice and calling {@code Dis6502.updateFonts()} is the
  * caller's job, matching every other settings dialog in this project -
- * {@link #show} only reports whether the user clicked OK; {@link
- * #getSelectedFontFamilyName}/{@link #getSelectedPointSize}/{@link
- * #getSelectedZoom} then give the result, the same "boolean {@code show},
- * separate getters" shape {@link DiskImageSectorsDialog}/{@link
- * RawFileDialog} already use.
+ * {@link #show} only reports whether the user clicked OK; the {@code
+ * getSelected...} getters then give the result.
  * <p>
- * {@link #restoreDefaultsButton} only resets this dialog's own controls
- * back to their coded defaults (native font, {@link
- * Options#TEXT_FONT_SIZE_DEFAULT}, {@link Options#NATIVE_FONT_ZOOM_DEFAULT}) -
- * a pending edit like any other control here, not an immediate action: it
- * takes a click on {@link #okButton} to actually delete the persisted
- * preferences, via {@link #isRestoreDefaultsRequested}, exactly like every
- * other field only takes effect once the caller sees {@link #show} return
- * {@code true}. Cancel/close discards it, same as any other edit.
+ * {@link #restoreDefaultsButton} only resets this dialog's own controls to
+ * the {@link Options} defaults - a pending edit like any other control
+ * here: it takes a click on {@link #okButton} to actually delete the
+ * persisted preferences, via {@link #isRestoreDefaultsRequested}.
+ * Cancel/close discards it, same as any other edit.
  *
  * @author Peter Dell
  */
@@ -73,80 +64,57 @@ public final class OptionsDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
 
-	private static final String SAMPLE_TEXT = "ABCXYZ 0123 abcxyz";
-	private static final int MIN_POINT_SIZE = 6;
-	private static final int MAX_POINT_SIZE = 72;
-	private static final int MIN_ZOOM = 1;
-	private static final int MAX_ZOOM = 8;
+	private static final String TEXT_FONT_SAMPLE = "ABCXYZ 0123 abcxyz";
+	private static final String NATIVE_FONT_SAMPLE = "0000: 48 65 6C 6C 6F  Hello";
+	private static final int MIN_TEXT_FONT_SIZE = 6;
+	private static final int MAX_TEXT_FONT_SIZE = 72;
+	private static final int MAX_NATIVE_FONT_SIZE = 8 * ComputerFont.NATIVE_HEIGHT;
 
 	private final JComboBox<String> fontComboBox = new JComboBox<>();
-	private final JSpinner sizeSpinner = new JSpinner(
-			new SpinnerNumberModel(Options.TEXT_FONT_SIZE_DEFAULT, MIN_POINT_SIZE, MAX_POINT_SIZE, 1));
-	private final JSpinner zoomSpinner = new JSpinner(
-			new SpinnerNumberModel(Options.NATIVE_FONT_ZOOM_DEFAULT, MIN_ZOOM, MAX_ZOOM, 1));
-	private final JPanel preview = new JPanel() {
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		protected void paintComponent(Graphics g) {
-			super.paintComponent(g);
-			selectedTextFont().drawText((Graphics2D) g, SAMPLE_TEXT, Color.BLACK, 4, 4);
-		}
-	};
+	private final JSpinner textFontSizeSpinner = new JSpinner(
+			new SpinnerNumberModel(Options.TEXT_FONT_SIZE_DEFAULT, MIN_TEXT_FONT_SIZE, MAX_TEXT_FONT_SIZE, 1));
+	private final JSpinner nativeFontSizeSpinner = new JSpinner(new SpinnerNumberModel(Options.NATIVE_FONT_SIZE_DEFAULT,
+			ComputerFont.NATIVE_HEIGHT, MAX_NATIVE_FONT_SIZE, ComputerFont.NATIVE_HEIGHT));
+	private final SamplePanel textFontPreview = new SamplePanel(TEXT_FONT_SAMPLE, this::selectedTextFont);
+	private final SamplePanel nativeFontPreview = new SamplePanel(NATIVE_FONT_SAMPLE, this::selectedNativeFont);
 	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 	// Fully qualified: com.wudsn.tools.base.Actions is already imported as "Actions" for ButtonBar_OK/Cancel above.
 	private final JButton restoreDefaultsButton = ElementFactory.createButton(
 			com.wudsn.tools.dis6502.Actions.OptionsDialog_RestoreDefaults, true);
 
 	private ComputerSystemType computerSystemType;
-	private boolean doubleHeight;
 	private boolean confirmed;
 	private boolean restoreDefaultsRequested;
 	private String selectedFontFamilyName = "";
-	private int selectedPointSize;
-	private int selectedZoom;
+	private int selectedTextFontSize;
+	private int selectedNativeFontSize;
 
 	public OptionsDialog(Frame owner) {
 		super(owner, true);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setTitle(Texts.OptionsDialog_Title);
 
-		fontComboBox.addActionListener(e -> {
-			sizeSpinner.setEnabled(!isNativeFontSelected());
-			preview.repaint();
-		});
-		sizeSpinner.addChangeListener(e -> preview.repaint());
-		zoomSpinner.addChangeListener(e -> preview.repaint());
+		fontComboBox.addActionListener(e -> textFontPreview.refresh());
+		textFontSizeSpinner.addChangeListener(e -> textFontPreview.refresh());
+		nativeFontSizeSpinner.addChangeListener(e -> nativeFontPreview.refresh());
 		restoreDefaultsButton.addActionListener(e -> performRestoreDefaults());
 
-		preview.setBackground(Color.WHITE);
-		preview.setPreferredSize(new Dimension(320, 40));
+		JPanel textFontPanel = createGroupPanel(Texts.OptionsDialog_TextFontGroupTitle);
+		addRow(textFontPanel, 0, ElementFactory.createLabel(DataTypes.OptionsDialog_Font, fontComboBox), fontComboBox, true);
+		addRow(textFontPanel, 1, ElementFactory.createLabel(DataTypes.OptionsDialog_Size, textFontSizeSpinner),
+				textFontSizeSpinner, false);
+		addPreview(textFontPanel, 2, textFontPreview);
 
-		JPanel formPanel = new JPanel(new GridBagLayout());
-		GridBagConstraints c = new GridBagConstraints();
-		c.insets = new Insets(4, 4, 4, 4);
-		c.anchor = GridBagConstraints.WEST;
-		c.gridx = 0;
-		c.gridy = 0;
-		formPanel.add(ElementFactory.createLabel(DataTypes.OptionsDialog_Font, fontComboBox), c);
-		c.gridx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.weightx = 1;
-		formPanel.add(fontComboBox, c);
+		JPanel nativeFontPanel = createGroupPanel(Texts.OptionsDialog_NativeFontGroupTitle);
+		addRow(nativeFontPanel, 0, ElementFactory.createLabel(DataTypes.OptionsDialog_NativeFontSize, nativeFontSizeSpinner),
+				nativeFontSizeSpinner, false);
+		addPreview(nativeFontPanel, 1, nativeFontPreview);
 
-		c.gridx = 0;
-		c.gridy = 1;
-		c.fill = GridBagConstraints.NONE;
-		c.weightx = 0;
-		formPanel.add(ElementFactory.createLabel(DataTypes.OptionsDialog_Size, sizeSpinner), c);
-		c.gridx = 1;
-		formPanel.add(sizeSpinner, c);
-
-		c.gridx = 0;
-		c.gridy = 2;
-		formPanel.add(ElementFactory.createLabel(DataTypes.OptionsDialog_NativeFontZoom, zoomSpinner), c);
-		c.gridx = 1;
-		formPanel.add(zoomSpinner, c);
+		JPanel groupsPanel = new JPanel();
+		groupsPanel.setLayout(new BoxLayout(groupsPanel, BoxLayout.Y_AXIS));
+		groupsPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 0, 8));
+		groupsPanel.add(textFontPanel);
+		groupsPanel.add(nativeFontPanel);
 
 		okButton.addActionListener(e -> performOK());
 		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
@@ -162,104 +130,117 @@ public final class OptionsDialog extends JDialog {
 		buttonPanel.add(okCancelPanel, BorderLayout.EAST);
 
 		getContentPane().setLayout(new BorderLayout(4, 4));
-		getContentPane().add(formPanel, BorderLayout.NORTH);
-		getContentPane().add(preview, BorderLayout.CENTER);
+		getContentPane().add(groupsPanel, BorderLayout.CENTER);
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
 		getRootPane().setDefaultButton(okButton);
 		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
-	private boolean isNativeFontSelected() {
+	private static JPanel createGroupPanel(String title) {
+		JPanel panel = new JPanel(new GridBagLayout());
+		panel.setBorder(BorderFactory.createTitledBorder(title));
+		return panel;
+	}
+
+	private static void addRow(JPanel panel, int row, Component label, Component field, boolean fill) {
+		GridBagConstraints c = new GridBagConstraints();
+		c.insets = new Insets(4, 4, 4, 4);
+		c.anchor = GridBagConstraints.WEST;
+		c.gridx = 0;
+		c.gridy = row;
+		panel.add(label, c);
+		c.gridx = 1;
+		c.weightx = 1;
+		c.fill = fill ? GridBagConstraints.HORIZONTAL : GridBagConstraints.NONE;
+		panel.add(field, c);
+	}
+
+	private static void addPreview(JPanel panel, int row, SamplePanel preview) {
+		JScrollPane scrollPane = new JScrollPane(preview);
+		scrollPane.setPreferredSize(new Dimension(400, 72));
+		GridBagConstraints c = new GridBagConstraints();
+		c.insets = new Insets(4, 4, 4, 4);
+		c.gridx = 0;
+		c.gridy = row;
+		c.gridwidth = 2;
+		c.weightx = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		panel.add(scrollPane, c);
+	}
+
+	private String selectedFontFamilyName() {
 		Object selected = fontComboBox.getSelectedItem();
-		return selected == null || Texts.OptionsDialog_NativeFont.equals(selected);
+		return selected == null ? Options.TEXT_FONT_FAMILY_DEFAULT : (String) selected;
 	}
 
 	private TextFont selectedTextFont() {
-		if (isNativeFontSelected()) {
-			return ComputerFont.get(computerSystemType, doubleHeight, (Integer) zoomSpinner.getValue());
-		}
-		return PlainTextFont.get((String) fontComboBox.getSelectedItem(), (Integer) sizeSpinner.getValue(), false);
+		return PlainTextFont.get(selectedFontFamilyName(), (Integer) textFontSizeSpinner.getValue());
+	}
+
+	private TextFont selectedNativeFont() {
+		return ComputerFont.get(computerSystemType, (Integer) nativeFontSizeSpinner.getValue());
 	}
 
 	private void performOK() {
-		selectedFontFamilyName = isNativeFontSelected() ? "" : (String) fontComboBox.getSelectedItem();
-		selectedPointSize = (Integer) sizeSpinner.getValue();
-		selectedZoom = (Integer) zoomSpinner.getValue();
+		selectedFontFamilyName = selectedFontFamilyName();
+		selectedTextFontSize = (Integer) textFontSizeSpinner.getValue();
+		selectedNativeFontSize = (Integer) nativeFontSizeSpinner.getValue();
 		confirmed = true;
 		setVisible(false);
 	}
 
 	private void performRestoreDefaults() {
 		restoreDefaultsRequested = true;
-		fontComboBox.setSelectedItem(Texts.OptionsDialog_NativeFont);
-		sizeSpinner.setValue(Options.TEXT_FONT_SIZE_DEFAULT);
-		sizeSpinner.setEnabled(false);
-		zoomSpinner.setValue(Options.NATIVE_FONT_ZOOM_DEFAULT);
-		preview.repaint();
+		fontComboBox.setSelectedItem(Options.TEXT_FONT_FAMILY_DEFAULT);
+		textFontSizeSpinner.setValue(Options.TEXT_FONT_SIZE_DEFAULT);
+		nativeFontSizeSpinner.setValue(Options.NATIVE_FONT_SIZE_DEFAULT);
 	}
 
-	/** {@code ""} for the native font, a real installed family name otherwise - only meaningful after {@link #show} returned {@code true}. */
+	/** An installed font family name - only meaningful after {@link #show} returned {@code true}. */
 	public String getSelectedFontFamilyName() {
 		return selectedFontFamilyName;
 	}
 
-	/** Only meaningful after {@link #show} returned {@code true}; ignored by the native font, which follows {@link #getSelectedZoom} instead. */
-	public int getSelectedPointSize() {
-		return selectedPointSize;
+	/** Only meaningful after {@link #show} returned {@code true}. */
+	public int getSelectedTextFontSize() {
+		return selectedTextFontSize;
 	}
 
-	/**
-	 * How large the native font's glyph cell renders - only meaningful after
-	 * {@link #show} returned {@code true}. Applies regardless of {@link
-	 * #getSelectedFontFamilyName}, since the memory inspector's grid always
-	 * uses the native font.
-	 */
-	public int getSelectedZoom() {
-		return selectedZoom;
+	/** The native font's pixel height - only meaningful after {@link #show} returned {@code true}. */
+	public int getSelectedNativeFontSize() {
+		return selectedNativeFontSize;
 	}
 
 	/**
 	 * Whether {@link #restoreDefaultsButton} was clicked before OK - only
 	 * meaningful after {@link #show} returned {@code true}. When {@code
 	 * true}, the caller should delete its own persisted preferences (so a
-	 * coded default added later also takes effect) rather than write
-	 * {@link #getSelectedFontFamilyName}/{@link #getSelectedPointSize}/
-	 * {@link #getSelectedZoom}'s values, even though those already equal the
-	 * current coded defaults either way.
+	 * coded default added later also takes effect) rather than write the
+	 * selected values, even though those already equal the current coded
+	 * defaults either way.
 	 */
 	public boolean isRestoreDefaultsRequested() {
 		return restoreDefaultsRequested;
 	}
 
 	/**
-	 * Opens the dialog pre-selecting {@code currentFontFamilyName} ({@code
-	 * ""} = native font), {@code currentPointSize} and {@code currentZoom};
-	 * {@code computerSystemType}/{@code doubleHeight} let {@link #preview}
-	 * build the exact native {@link ComputerFont} a real panel would use,
-	 * at whatever zoom is currently dialed in, while the native entry is
-	 * selected.
-	 * <p>
-	 * Returns whether the user clicked OK - {@link #getSelectedFontFamilyName}/
-	 * {@link #getSelectedPointSize}/{@link #getSelectedZoom}/{@link
-	 * #isRestoreDefaultsRequested} then give the result; on Cancel/close,
-	 * none of them are updated, so the caller's own already-current values
-	 * remain correct.
+	 * Opens the dialog pre-selecting the current values; {@code
+	 * computerSystemType} lets {@link #nativeFontPreview} build the exact
+	 * native {@link ComputerFont} the memory inspector uses. Returns whether
+	 * the user clicked OK; on Cancel/close, none of the getters are updated.
 	 */
-	public boolean show(String currentFontFamilyName, int currentPointSize, int currentZoom, ComputerSystemType computerSystemType,
-			boolean doubleHeight) {
+	public boolean show(String currentFontFamilyName, int currentTextFontSize, int currentNativeFontSize,
+			ComputerSystemType computerSystemType) {
 		this.computerSystemType = computerSystemType;
-		this.doubleHeight = doubleHeight;
 
 		fontComboBox.removeAllItems();
-		fontComboBox.addItem(Texts.OptionsDialog_NativeFont);
 		for (String familyName : PlainTextFont.getAvailableFontFamilyNames()) {
 			fontComboBox.addItem(familyName);
 		}
-		fontComboBox.setSelectedItem(currentFontFamilyName.isEmpty() ? Texts.OptionsDialog_NativeFont : currentFontFamilyName);
-		sizeSpinner.setValue(Math.max(MIN_POINT_SIZE, Math.min(MAX_POINT_SIZE, currentPointSize)));
-		sizeSpinner.setEnabled(!isNativeFontSelected());
-		zoomSpinner.setValue(Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom)));
+		fontComboBox.setSelectedItem(currentFontFamilyName);
+		textFontSizeSpinner.setValue(Math.max(MIN_TEXT_FONT_SIZE, Math.min(MAX_TEXT_FONT_SIZE, currentTextFontSize)));
+		nativeFontSizeSpinner.setValue(Math.max(ComputerFont.NATIVE_HEIGHT, Math.min(MAX_NATIVE_FONT_SIZE, currentNativeFontSize)));
 
 		// Packed here, not in the constructor: the combo box is still empty at
 		// construction time, so packing then sized the dialog too narrow to
@@ -272,5 +253,39 @@ public final class OptionsDialog extends JDialog {
 		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
 
 		return confirmed;
+	}
+
+	/** Draws a fixed sample text in the currently selected font, sized to it so the surrounding scroll pane can scroll a large one. */
+	private static final class SamplePanel extends JPanel {
+
+		private static final long serialVersionUID = 1L;
+		private static final int MARGIN = 4;
+
+		private final String sampleText;
+		private final transient Supplier<TextFont> textFontSupplier;
+
+		SamplePanel(String sampleText, Supplier<TextFont> textFontSupplier) {
+			this.sampleText = sampleText;
+			this.textFontSupplier = textFontSupplier;
+			setBackground(Color.WHITE);
+		}
+
+		void refresh() {
+			revalidate();
+			repaint();
+		}
+
+		@Override
+		public Dimension getPreferredSize() {
+			TextFont textFont = textFontSupplier.get();
+			return new Dimension(textFont.getGlyphWidth() * sampleText.length() + 2 * MARGIN,
+					textFont.getGlyphHeight() + 2 * MARGIN);
+		}
+
+		@Override
+		protected void paintComponent(Graphics g) {
+			super.paintComponent(g);
+			textFontSupplier.get().drawText((Graphics2D) g, sampleText, Color.BLACK, MARGIN, MARGIN);
+		}
 	}
 }

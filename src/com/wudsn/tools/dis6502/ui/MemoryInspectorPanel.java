@@ -535,8 +535,8 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Call whenever the workspace's computer system or double-height
-	 * setting changes. Always the workspace's native {@link ComputerFont},
+	 * Call whenever the workspace's computer system or the native font size
+	 * changes. Always the workspace's native {@link ComputerFont},
 	 * never a user-chosen one - unlike {@link #header} (see {@link
 	 * #setTextFont}), {@link #grid} shows raw byte values via its
 	 * ASCII/ATASCII preview column, which must stay authentic (see
@@ -547,8 +547,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	}
 
 	/**
-	 * Call whenever the workspace's computer system, double-height
-	 * setting, or user-chosen text font preference changes. Unlike {@link
+	 * Call whenever the user-chosen text font preference changes. Unlike {@link
 	 * #grid} (see {@link #setComputerFont}), {@link #header} only ever
 	 * shows plain title text, not raw byte values, so it follows the same
 	 * user-chosen {@link TextFont} every other part panel's header does.

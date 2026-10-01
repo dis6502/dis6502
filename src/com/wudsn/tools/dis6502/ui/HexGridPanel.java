@@ -143,7 +143,7 @@ public final class HexGridPanel extends JPanel implements Scrollable {
 	public HexGridPanel() {
 		setBackground(Color.WHITE);
 		setFocusable(true);
-		setComputerFont(ComputerFont.get(ComputerSystemType.ATARI800, false, Options.NATIVE_FONT_ZOOM_DEFAULT));
+		setComputerFont(ComputerFont.get(ComputerSystemType.ATARI800, Options.NATIVE_FONT_SIZE_DEFAULT));
 
 		MouseAdapter dragHandler = new MouseAdapter() {
 			@Override

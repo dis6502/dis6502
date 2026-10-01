@@ -80,7 +80,7 @@ public final class LogPanel extends JPanel {
 		add(scrollPane, BorderLayout.CENTER);
 	}
 
-	/** Call whenever the workspace's computer system, double-height setting, or chosen text font changes. */
+	/** Call whenever the workspace's computer system or chosen text font changes. */
 	public void setTextFont(TextFont textFont) {
 		textPane.setFont(textFont.getAwtFont());
 		textPane.putClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING, textFont.getTextAntialiasingHint());

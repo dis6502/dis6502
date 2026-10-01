@@ -74,7 +74,7 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 
 	public DisassemblyGridPanel() {
 		setBackground(Color.WHITE);
-		setTextFont(ComputerFont.get(ComputerSystemType.ATARI800, false, Options.NATIVE_FONT_ZOOM_DEFAULT));
+		setTextFont(ComputerFont.get(ComputerSystemType.ATARI800, Options.NATIVE_FONT_SIZE_DEFAULT));
 	}
 
 	public void setTextFont(TextFont textFont) {

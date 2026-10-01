@@ -12,7 +12,6 @@ package com.wudsn.tools.dis6502.model;
  */
 public enum WorkspaceProperty {
 	COMPUTER_SYSTEM_TYPE,
-	FONT,
 	FILE_PATH,
 	PROFILE,
 	SEGMENTS,

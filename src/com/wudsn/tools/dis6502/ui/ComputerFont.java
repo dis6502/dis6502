@@ -11,7 +11,6 @@ import java.awt.FontFormatException;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -87,14 +86,11 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
  * keeping a second, bitmap-based code path alive for just two systems.
  * <p>
  * {@link #getGlyphWidth}/{@link #getGlyphHeight} already include the
- * caller-chosen {@code zoom} on-screen scale {@link HexGridPanel}/{@link
- * DisassemblyGridPanel} need for legibility (baked into the point size
- * passed to {@link Font#deriveFont}, not a separate scaling step those
- * callers used to do themselves) - see {@link
- * com.wudsn.tools.dis6502.Options#NATIVE_FONT_ZOOM_KEY}, the user's
- * persisted preference for it, unrelated to {@link
- * com.wudsn.tools.dis6502.Options#TEXT_FONT_SIZE_KEY} which only ever
- * applies to a chosen {@link PlainTextFont}. {@link #getAwtFont()} exposes the plain
+ * caller-chosen on-screen pixel height {@link HexGridPanel} needs for
+ * legibility (baked into the point size passed to {@link Font#deriveFont},
+ * not a separate scaling step callers do themselves) - see {@link
+ * com.wudsn.tools.dis6502.Options#NATIVE_FONT_SIZE_KEY}, the user's
+ * persisted preference for it. {@link #getAwtFont()} exposes the plain
  * derived {@link Font} for components that just need normal Unicode text
  * at the real system font's style (e.g. {@link SegmentListPanel}'s
  * segment metadata, which is already-formatted text - titles, hex
@@ -106,17 +102,17 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
  * MemoryInspectorPanel}/{@link DiskImageSectorsDialog} (which always need
  * the workspace's authentic native font, glyphs included) can keep taking a
  * concrete {@code ComputerFont}, while every other panel takes a
- * {@link TextFont} and gets either this class (the default) or a
- * user-chosen {@link PlainTextFont} instead, transparently.
+ * {@link TextFont} and gets the user-chosen {@link PlainTextFont}.
  *
  * @author Peter Dell
  */
 public final class ComputerFont implements TextFont {
 
-	private static final int NATIVE_HEIGHT = 8; // Pixels, matching the original 8px raster cell height.
+	/** Pixels, matching the original 8px raster cell height. */
+	public static final int NATIVE_HEIGHT = 8;
 
-	/** Caches one instance per (system, double height, zoom) combination - a value set, not an enum. */
-	private record InstanceKey(ComputerSystemType type, boolean doubleHeight, int zoom) {
+	/** Caches one instance per (system, pixel height) combination - a value set, not an enum. */
+	private record InstanceKey(ComputerSystemType type, int pixelHeight) {
 	}
 
 	private static final Map<InstanceKey, ComputerFont> INSTANCES = new HashMap<>();
@@ -143,50 +139,42 @@ public final class ComputerFont implements TextFont {
 		this.codePointBase = codePointBase;
 	}
 
-	/** Caches one instance per {@link InstanceKey}. {@code zoom} is the on-screen scale - see this class's own javadoc. */
-	public static synchronized ComputerFont get(ComputerSystemType type, boolean doubleHeight, int zoom) {
-		InstanceKey key = new InstanceKey(type, doubleHeight, zoom);
+	/**
+	 * Caches one instance per {@link InstanceKey}. {@code pixelHeight} is
+	 * rounded to the nearest whole multiple of {@link #NATIVE_HEIGHT} (at
+	 * least one): the pixel-art glyphs only stay crisp when each native
+	 * pixel maps to a whole number of screen pixels.
+	 */
+	public static synchronized ComputerFont get(ComputerSystemType type, int pixelHeight) {
+		int snappedPixelHeight = Math.max(1, Math.round((float) pixelHeight / NATIVE_HEIGHT)) * NATIVE_HEIGHT;
+		InstanceKey key = new InstanceKey(type, snappedPixelHeight);
 		ComputerFont existing = INSTANCES.get(key);
 		if (existing != null) {
 			return existing;
 		}
-		ComputerFont created = create(type, doubleHeight, zoom);
+		ComputerFont created = create(type, snappedPixelHeight);
 		INSTANCES.put(key, created);
 		return created;
 	}
 
-	private static ComputerFont create(ComputerSystemType type, boolean doubleHeight, int zoom) {
+	private static ComputerFont create(ComputerSystemType type, int pixelHeight) {
 		if (type == ComputerSystemType.ATARI5200 || type == ComputerSystemType.ATARI800) {
-			return derive(getAtariClassicBase(), doubleHeight, 0xE000, zoom);
+			return derive(getAtariClassicBase(), 0xE000, pixelHeight);
 		} else if (type == ComputerSystemType.C64) {
-			return derive(getC64ClassicBase(), doubleHeight, 0x100, zoom);
+			return derive(getC64ClassicBase(), 0x100, pixelHeight);
 		}
-		return derive(new Font(Font.MONOSPACED, Font.PLAIN, 1), doubleHeight, -1, zoom); // Oric, unknown.
+		return derive(new Font(Font.MONOSPACED, Font.PLAIN, 1), -1, pixelHeight); // Oric, unknown.
 	}
 
-	/**
-	 * Double-height text needs to come out taller but no wider, not simply a
-	 * bigger font. {@link Font#deriveFont(float)} alone cannot do that (it
-	 * scales a font uniformly), so double-height instead derives the normal-
-	 * size font first, then applies a Y-only {@link AffineTransform} scale
-	 * on top of it - {@link FontMetrics} correctly reflects the transform
-	 * when measuring, so {@link #glyphWidth} still comes out equal to the
-	 * normal instance's.
-	 */
-	private static ComputerFont derive(Font base, boolean doubleHeight, int codePointBase, int zoom) {
-		int pixelHeight = NATIVE_HEIGHT * zoom;
+	private static ComputerFont derive(Font base, int codePointBase, int pixelHeight) {
 		Font sized = base.deriveFont((float) pixelHeight);
-		if (doubleHeight) {
-			sized = sized.deriveFont(AffineTransform.getScaleInstance(1.0, 2.0));
-		}
 		BufferedImage probe = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2 = probe.createGraphics();
 		try {
 			FontMetrics metrics = g2.getFontMetrics(sized);
 			int probeCodePoint = codePointBase < 0 ? 'M' : codePointBase;
 			int width = metrics.charWidth(probeCodePoint);
-			int height = doubleHeight ? pixelHeight * 2 : pixelHeight;
-			return new ComputerFont(sized, width > 0 ? width : Math.max(1, pixelHeight / 2), height, codePointBase);
+			return new ComputerFont(sized, width > 0 ? width : Math.max(1, pixelHeight / 2), pixelHeight, codePointBase);
 		} finally {
 			g2.dispose();
 		}
@@ -296,11 +284,9 @@ public final class ComputerFont implements TextFont {
 	 * reported screenshot's raw pixels: most source rows appeared exactly
 	 * twice but some only once, an irregular duplication pattern, not a
 	 * clean doubling - the signature of a fractional scale factor being
-	 * rounded per-row rather than applied uniformly. Small at the smallest
-	 * zoom levels, where every row is a larger fraction of the glyph;
-	 * effectively invisible at double height, where genuine intentional
-	 * duplication already dominates. The unscaled overload has no scale
-	 * factor to round at all.
+	 * rounded per-row rather than applied uniformly - most visible at the
+	 * smallest sizes, where every row is a larger fraction of the glyph.
+	 * The unscaled overload has no scale factor to round at all.
 	 */
 	private void drawChar(Graphics2D g2, char ch, Color color, int x, int y) {
 		BufferedImage glyphImage = getGlyphImage(ch, color);

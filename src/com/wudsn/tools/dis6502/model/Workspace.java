@@ -47,7 +47,6 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 
 	private boolean viewDisplayAsScreenCode; // MemoryInspector uses internal character set (ANTIC).
 	private boolean viewNoDisassembly; // No disassembly launched if byte type is changed.
-	private boolean viewDoubleHeight; // Double the font height of the display.
 
 	private ComputerSystem computerSystem;
 
@@ -88,7 +87,6 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 
 		viewDisplayAsScreenCode = false;
 		viewNoDisassembly = false;
-		viewDoubleHeight = false;
 
 		memoryInspectorState.clear();
 		endUpdate();
@@ -112,14 +110,6 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 
 	public void setViewNoDisassembly(boolean value) {
 		viewNoDisassembly = value;
-	}
-
-	public boolean isViewDoubleHeight() {
-		return viewDoubleHeight;
-	}
-
-	public void setViewDoubleHeight(boolean value) {
-		viewDoubleHeight = value;
 	}
 
 	public MutableMemoryInspectorState getMemoryInspectorState() {
@@ -147,7 +137,6 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 		if (computerSystem == null || computerSystem.getType() != computerSystemType) {
 			computerSystem = computerSystemFactory.getComputerSystem(computerSystemType);
 			notifyListeners(WorkspaceProperty.COMPUTER_SYSTEM_TYPE);
-			notifyListeners(WorkspaceProperty.FONT);
 		}
 	}
 
@@ -218,10 +207,6 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 
 	public Segment getSegment(int segmentIndex) {
 		return segmentList.getSegment(segmentIndex);
-	}
-
-	public void notifyFontChanged() {
-		notifyListeners(WorkspaceProperty.FONT);
 	}
 
 	public void notifyProfileChanged() {
