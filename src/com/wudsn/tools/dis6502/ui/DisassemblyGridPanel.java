@@ -47,6 +47,15 @@ import com.wudsn.tools.dis6502.model.DisassemblySectionType;
  * instead of storing it directly (that field is the real settings source:
  * a Profile dialog checkbox, not a menu item - {@code Dis6502} pushes it
  * in on every disassembly refresh).
+ * <p>
+ * The selection is the model's own: every line whose {@link
+ * DisassemblyLine#selected} is set gets a yellow background - one line for a
+ * click or a navigation, several for a byte range selected in the memory
+ * inspector (see {@code DisassemblyResult#extendSelectionTo}). A selected
+ * line whose operand refers to an absolute address ({@link
+ * DisassemblyLine#address}) also shows that address as a comment, {@code ;
+ * $XXXX}, at column 35, or appended to the end when the line already
+ * reaches column 35 (see {@link #withAddressComment}).
  *
  * @author Peter Dell
  */
@@ -56,10 +65,12 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 
 	// "NNNN " - 4-digit zero-padded line number plus a space (more digits print as-is past 9999).
 	private static final int LINE_NUMBER_PREFIX_LENGTH = 5;
+	// The column (counted with the line number prefix, if shown) where a selected line's address comment starts.
+	private static final int ADDRESS_COMMENT_COLUMN = 35;
+	private static final int ADDRESS_COMMENT_LENGTH = "; $0000".length();
 
 	private List<DisassemblyLine> lines = Collections.emptyList();
 	private TextFont textFont;
-	private int highlightedLine = -1;
 	private int maxLineLength;
 	private boolean lineNumbersActive;
 
@@ -88,24 +99,36 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 
 	public void setLines(List<DisassemblyLine> lines) {
 		this.lines = lines;
-		this.highlightedLine = -1;
 		this.maxLineLength = 1;
 		for (DisassemblyLine line : lines) {
-			maxLineLength = Math.max(maxLineLength, line.getLine().length());
+			// Room for the address comment a selected line may get.
+			int length = line.getLine().length();
+			maxLineLength = Math.max(maxLineLength, Math.max(length + 1, ADDRESS_COMMENT_COLUMN) + ADDRESS_COMMENT_LENGTH);
 		}
 		revalidate();
 		repaint();
 	}
 
+	/** Makes the line at {@code index} the only selected line, then scrolls to it. */
 	public void highlightLine(int index) {
-		this.highlightedLine = index;
-		repaint();
-		scrollLineToVisible(index);
+		for (int i = 0; i < lines.size(); i++) {
+			lines.get(i).selected = i == index;
+		}
+		showSelection(index);
 	}
 
-	public void clearHighlight() {
-		this.highlightedLine = -1;
+	/**
+	 * Repaints the lines' current selection, already set in the model, and
+	 * scrolls the selected lines starting at {@code index} into view.
+	 */
+	public void showSelection(int index) {
 		repaint();
+		int last = index;
+		while (last + 1 < lines.size() && lines.get(last + 1).selected) {
+			last++;
+		}
+		int cellH = textFont.getGlyphHeight();
+		scrollRectToVisible(new Rectangle(0, index * cellH, 1, (last - index + 1) * cellH));
 	}
 
 	public void scrollLineToVisible(int index) {
@@ -146,14 +169,37 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 		int firstLine = clip == null ? 0 : Math.max(0, clip.y / cellH);
 		int lastLine = clip == null ? lines.size() - 1 : Math.min(lines.size() - 1, (clip.y + clip.height) / cellH);
 
+		int prefixLength = lineNumbersActive ? LINE_NUMBER_PREFIX_LENGTH : 0;
 		for (int index = firstLine; index <= lastLine; index++) {
 			int y = index * cellH;
-			if (index == highlightedLine) {
+			DisassemblyLine line = lines.get(index);
+			String text = line.getLine();
+			if (line.selected) {
 				g2.setColor(Color.YELLOW);
 				g2.fillRect(0, y, getWidth(), cellH);
+				if (line.address != 0) {
+					text = withAddressComment(text, line.address, ADDRESS_COMMENT_COLUMN - prefixLength);
+				}
 			}
-			paintLineInColor(g2, lines.get(index), 0, y);
+			paintLineInColor(g2, line, text, 0, y);
 		}
+	}
+
+	/**
+	 * {@code text} with {@code ; $XXXX} added: padded to start at {@code
+	 * column} if the text ends before it, otherwise appended after a space -
+	 * existing text is never overwritten. Package-private for tests.
+	 */
+	static String withAddressComment(String text, int address, int column) {
+		String comment = String.format("; $%04X", address);
+		if (text.length() <= column) {
+			StringBuilder result = new StringBuilder(text);
+			while (result.length() < column) {
+				result.append(' ');
+			}
+			return result.append(comment).toString();
+		}
+		return text + " " + comment;
 	}
 
 	// Colors for the different parts of a disassembly line.
@@ -186,11 +232,10 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 	 * {@code int} here.
 	 * <p>
 	 * The yellow selected-line background fill is not this method's
-	 * responsibility - this panel already paints that separately via
-	 * {@link #highlightedLine} before calling this method.
+	 * responsibility - {@link #paintComponent} paints it, and passes a
+	 * selected line's {@code text} with its address comment already added.
 	 */
-	private void paintLineInColor(Graphics2D g2, DisassemblyLine disassemblyLine, int xStart, int y) {
-		String text = disassemblyLine.getLine();
+	private void paintLineInColor(Graphics2D g2, DisassemblyLine disassemblyLine, String text, int xStart, int y) {
 		boolean referenced = isReferenced(disassemblyLine);
 		int[] index = { 0 };
 		int x = xStart;

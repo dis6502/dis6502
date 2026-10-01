@@ -98,6 +98,28 @@ public final class RenderingTest {
 			Assert.boolEquals(rowContains(image, unreferencedIndex * cellH, cellH, UNREFERENCED), true);
 		}
 		Assert.boolEquals(rowContains(image, highlightedIndex * cellH, cellH, UNREFERENCED), false);
+
+		// A range selected in the model (as from the memory inspector) paints every line in it.
+		for (int i = 0; i < lines.size(); i++) {
+			lines.get(i).selected = i >= 1 && i <= 3;
+		}
+		grid.showSelection(1);
+		image = paint(grid);
+		Assert.boolEquals(rowContains(image, 0, cellH, HIGHLIGHT), false);
+		for (int i = 1; i <= 3; i++) {
+			Assert.boolEquals(rowContains(image, i * cellH, cellH, HIGHLIGHT), true);
+		}
+		Assert.boolEquals(rowContains(image, 4 * cellH, cellH, HIGHLIGHT), false);
+
+		// A selected line's address comment starts at column 35 or is appended - never overwriting.
+		Assert.stringEquals(DisassemblyGridPanel.withAddressComment("  LDA #$00", 0x2000, 35),
+				"  LDA #$00                         ; $2000");
+		Assert.stringEquals(DisassemblyGridPanel.withAddressComment("  LDA #$00", 0x2000, 30),
+				"  LDA #$00                    ; $2000"); // Line numbers shown: 5 columns of prefix.
+		String atColumn = "L2000 LDA LABEL_WITH_A_LONG_NAME,X"; // 34 characters - column 35 still free.
+		Assert.stringEquals(DisassemblyGridPanel.withAddressComment(atColumn + "Y", 0x2000, 35), atColumn + "Y; $2000");
+		String withComment = "  LDA #$00                         ; Comment";
+		Assert.stringEquals(DisassemblyGridPanel.withAddressComment(withComment, 0x2000, 35), withComment + " ; $2000");
 	}
 
 	/** The selected bytes' cells are painted yellow, the line after the selection is not. */

@@ -1922,10 +1922,11 @@ public final class Dis6502 {
 	 * offset starts its own disassembly line (mid-instruction bytes don't),
 	 * so this walks backward from the selection's first byte, one offset
 	 * at a time, until {@link DisassemblyResult#selectLine(int, int)} finds
-	 * a line that actually starts there, then navigates to it. Highlighting
-	 * every disassembly line up to the selection's end offset is not
-	 * implemented, since {@code DisassemblyGridPanel} only ever tracks a
-	 * single highlighted line, not a range (see that class's javadoc).
+	 * a line that actually starts there. For a selection of more than one
+	 * byte outside edit mode, it then walks backward from the last byte the
+	 * same way until {@link DisassemblyResult#extendSelectionTo} finds a
+	 * line, which selects every line in between, and shows that selection
+	 * starting at the first line.
 	 */
 	private void performMemoryInspectorSelectionChanged() {
 		if (memoryInspectorState.isSelectionEmpty()) {
@@ -1936,13 +1937,22 @@ public final class Dis6502 {
 			return;
 		}
 		int segmentIndex = memoryInspectorState.getSegmentIndex();
+		int begin = memoryInspectorState.getBegin();
+		int end = memoryInspectorState.getEnd();
 		int lineNumber = 0;
-		for (int offset = memoryInspectorState.getBegin(); offset >= 0 && lineNumber == 0; offset--) {
+		for (int offset = begin; offset >= 0 && lineNumber == 0; offset--) {
 			lineNumber = disassemblyResult.selectLine(segmentIndex, offset);
 		}
-		if (lineNumber != 0) {
-			mainWindow.disassemblyPanel.navigateToLine(lineNumber);
+		if (lineNumber == 0) {
+			return;
 		}
+		if (end != begin && !memoryInspectorState.isEditMode()) {
+			boolean found = false;
+			for (int offset = end; offset >= begin && !found; offset--) {
+				found = disassemblyResult.extendSelectionTo(segmentIndex, offset);
+			}
+		}
+		mainWindow.disassemblyPanel.showSelection(lineNumber);
 	}
 
 	/** Saves any loaded {@link DefaultFolders} before exiting (the MRU lists are already saved incrementally, see {@link #mruController}). */

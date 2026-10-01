@@ -715,6 +715,21 @@ public final class DisassemblyPanel extends JPanel {
 		return true;
 	}
 
+	/**
+	 * Shows the lines' current selection, already set in the model (e.g. a
+	 * range by {@code DisassemblyResult#extendSelectionTo}), and scrolls to
+	 * the given line number. Returns {@code false} if {@code lineNumber} is
+	 * not part of the currently displayed disassembly.
+	 */
+	public boolean showSelection(int lineNumber) {
+		Integer index = lineNumberToIndex.get(lineNumber);
+		if (index == null) {
+			return false;
+		}
+		grid.showSelection(index);
+		return true;
+	}
+
 	/** Supplies what the "Change type of immediate byte to" submenu shows for a line - see the class javadoc. */
 	public void setImmediateTypeProvider(ImmediateTypeProvider immediateTypeProvider) {
 		this.immediateTypeProvider = immediateTypeProvider;
