@@ -12,9 +12,12 @@ import java.awt.Window;
 import java.util.regex.Pattern;
 
 import javax.swing.AbstractButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
+import javax.swing.JScrollBar;
+import javax.swing.JSpinner;
 import javax.swing.border.TitledBorder;
 
 import com.wudsn.tools.dis6502.model.Assert;
@@ -53,10 +56,8 @@ public final class UITest {
 	public static void checkTexts(String name, Container root) {
 		for (Component component : root.getComponents()) {
 			if (component.getClass().getName().contains(".plaf.")) {
-				// Look-and-feel internals: a combo box's arrow button, a scroll bar's
-				// buttons - javax.swing.plaf.* under the cross-platform "Metal"
-				// default, com.sun.java.swing.plaf.<lf>.* under a native one (e.g.
-				// com.sun.java.swing.plaf.windows.WindowsScrollBarUI$WindowsArrowButton).
+				// Look-and-feel internals: javax.swing.plaf.* under the cross-platform
+				// "Metal" default, com.sun.java.swing.plaf.<lf>.* under a native one.
 				continue;
 			}
 			if (component instanceof AbstractButton) {
@@ -73,7 +74,11 @@ public final class UITest {
 			if (component instanceof JMenu) {
 				checkTexts(name, ((JMenu) component).getPopupMenu());
 			}
-			if (component instanceof Container && !(component instanceof Window)) {
+			// The children of a combo box, scroll bar or spinner are look-and-feel chrome (arrow
+			// buttons, editors) under every look and feel, whatever their package - e.g. macOS
+			// Aqua's com.apple.laf.AquaComboBoxButton, which the name check above misses.
+			if (component instanceof Container && !(component instanceof Window) && !(component instanceof JComboBox)
+					&& !(component instanceof JScrollBar) && !(component instanceof JSpinner)) {
 				checkTexts(name, (Container) component);
 			}
 		}
