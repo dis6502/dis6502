@@ -24,6 +24,8 @@
 *.png binary
 *.ttf binary
 *.chr binary
+*.ico binary
+*.icns binary
 *.xex binary
 *.atr binary
 *.exe binary
