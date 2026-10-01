@@ -320,19 +320,21 @@ public final class MutableMemoryInspectorState implements MemoryInspectorState {
 				editCursorPane = EditPane.HEX_HIGH;
 				return EditCharResult.HANDLED;
 			}
+			// The typed character is written in the workspace's character set, so it shows as typed:
+			// as a screen code in screen-code mode and for SBYTE-typed bytes (which hold screen codes),
+			// otherwise as a byte of the set's encoding (ATASCII or PETSCII).
+			CharacterSet characterSet = workspace.getViewCharacterSet();
 			int toWrite;
-			// TODO: Typed characters are written as ASCII/ATASCII regardless of the computer system and of
-			// "Display as Screen Code". For C64 they should become PETSCII (lowercase ASCII is a graphics
-			// character there), and in screen-code mode the screen code of the workspace's CharacterSet.
 			if (c == '\r' || c == '\n') {
-				toWrite = 0x9B; // Atari end-of-line byte, written like any other typed character.
+				toWrite = characterSet.getReturnByte();
 			} else if (c >= ' ' && c < 128) {
 				// Deliberately NOT replicating MemoryInspectorControlImpl.cpp Char()'s
 				// exclusion of '~', '{', '}' from the printable range - see
 				// com.wudsn.tools.dis6502.ui.MemoryInspectorPanel's class javadoc.
-				toWrite = c;
-				if (segment.isType(offset, MemoryType.SBYTE)) {
-					toWrite = MemoryType.toSbyteInternalCode(toWrite);
+				if (workspace.isViewDisplayAsScreenCode() || segment.isType(offset, MemoryType.SBYTE)) {
+					toWrite = characterSet.textToScreenCode(c);
+				} else {
+					toWrite = characterSet.textToByte(c);
 				}
 			} else {
 				return EditCharResult.NOT_HANDLED;

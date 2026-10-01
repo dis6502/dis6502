@@ -13,8 +13,12 @@ implementation: `ComputerFont` no longer implements `TextFont` (it has no
 AWT font behind it; the disassembly grid's placeholder font is now a
 `PlainTextFont`), and the selection is `Workspace.getViewCharacterSet()`
 with a new `WorkspaceProperty.CHARACTER_SET` event, so the field and the
-fonts follow a system change. Typing into the text column in edit mode
-still writes the typed ASCII/ATASCII byte, as before.
+fonts follow a system change. Follow-up: typing into the text column in
+edit mode writes in the workspace's character set too - the encoding's
+byte (`CharacterSet.textToByte`, e.g. PETSCII for the PETSCII sets), the
+screen code in screen-code mode and for `.SBYTE`-typed bytes (replacing
+`MemoryType.toSbyteInternalCode`), and the encoding's end-of-line byte for
+Return (`0x9B` ATASCII, `0x0D` PETSCII).
 
 ## Request
 

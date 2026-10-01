@@ -58,6 +58,21 @@ public final class CharacterSetTest {
 		Assert.longEquals(CharacterSet.PETSCII_LOWERCASE.textToScreenCode('A'), 0x41);
 		Assert.longEquals(CharacterSet.PETSCII_LOWERCASE.textToScreenCode('a'), 0x01);
 
+		// Typed text: the encoding's byte that shows the character, and the encoding's end-of-line byte.
+		Assert.longEquals(atari.textToByte('A'), 0x41);
+		Assert.longEquals(atari.textToByte('~'), 0x7E);
+		Assert.longEquals(c64.textToByte('A'), 0x41);
+		Assert.longEquals(c64.textToByte('a'), 0x41);
+		Assert.longEquals(CharacterSet.PETSCII_LOWERCASE.textToByte('a'), 0x41);
+		Assert.longEquals(CharacterSet.PETSCII_LOWERCASE.textToByte('A'), 0x61);
+		for (char ch = ' '; ch < 0x7F; ch++) {
+			for (CharacterSet characterSet : CharacterSet.getValues()) {
+				Assert.longEquals(characterSet.toScreenCode(characterSet.textToByte(ch)), characterSet.textToScreenCode(ch));
+			}
+		}
+		Assert.longEquals(atari.getReturnByte(), 0x9B);
+		Assert.longEquals(c64.getReturnByte(), 0x0D);
+
 		ComputerSystemFactory factory = new ComputerSystemFactory();
 		Assert.boolEquals(factory.getComputerSystem(ComputerSystemType.ATARI800).getDefaultCharacterSet() == atari, true);
 		Assert.boolEquals(factory.getComputerSystem(ComputerSystemType.ATARI5200).getDefaultCharacterSet() == atari, true);

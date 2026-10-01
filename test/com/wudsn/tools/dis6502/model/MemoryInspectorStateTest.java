@@ -36,6 +36,7 @@ public final class MemoryInspectorStateTest {
 		testHexDigitWrite();
 		testAsciiWrite();
 		testPrintableRangeIncludesTildeBraces();
+		testCharacterSetWrite();
 		testNotHandledCases();
 
 		Assert.log("MemoryInspectorStateTest completed");
@@ -191,7 +192,7 @@ public final class MemoryInspectorStateTest {
 
 		segment.setType(1, MemoryType.SBYTE);
 		Assert.boolEquals(state.typeEditChar('A') == EditCharResult.HANDLED, true);
-		Assert.longEquals(segment.getData(1) & 0xFF, MemoryType.toSbyteInternalCode('A')); // SBYTE-typed - transformed.
+		Assert.longEquals(segment.getData(1) & 0xFF, 0x21); // SBYTE-typed - the ATASCII screen code of 'A'.
 		assertCursor(state, 2, EditPane.ASCII);
 
 		// Enter/Return writes the Atari end-of-line byte, at the segment's last offset, reporting HANDLED_AT_BUFFER_END.
@@ -225,6 +226,37 @@ public final class MemoryInspectorStateTest {
 		Assert.longEquals(segment.getData(1) & 0xFF, '{');
 		Assert.boolEquals(state.typeEditChar('}') == EditCharResult.HANDLED, true);
 		Assert.longEquals(segment.getData(2) & 0xFF, '}');
+	}
+
+	/** Typed text is written in the workspace's character set: PETSCII for C64, screen codes in screen-code mode. */
+	private static void testCharacterSetWrite() {
+		MutableMemoryInspectorState state = newStateWithSelectedSegment(8);
+		Workspace workspace = state.getWorkspace();
+		Segment segment = state.getSegment();
+
+		workspace.setViewDisplayAsScreenCode(true);
+		state.enterEditMode(0, EditPane.ASCII);
+		state.typeEditChar('A');
+		Assert.longEquals(segment.getData(0) & 0xFF, 0x21); // ATASCII Standard screen code.
+
+		workspace.setViewDisplayAsScreenCode(false);
+		workspace.setViewCharacterSet(CharacterSet.PETSCII_UPPERCASE);
+		state.typeEditChar('A');
+		Assert.longEquals(segment.getData(1) & 0xFF, 0x41);
+		state.typeEditChar('a'); // No lowercase in this set - shown as 'A'.
+		Assert.longEquals(segment.getData(2) & 0xFF, 0x41);
+		state.typeEditChar('\r');
+		Assert.longEquals(segment.getData(3) & 0xFF, 0x0D);
+
+		workspace.setViewCharacterSet(CharacterSet.PETSCII_LOWERCASE);
+		state.typeEditChar('a');
+		Assert.longEquals(segment.getData(4) & 0xFF, 0x41);
+		state.typeEditChar('A');
+		Assert.longEquals(segment.getData(5) & 0xFF, 0x61);
+
+		workspace.setViewDisplayAsScreenCode(true);
+		state.typeEditChar('a');
+		Assert.longEquals(segment.getData(6) & 0xFF, 0x01); // PETSCII Lowercase screen code.
 	}
 
 	private static void testNotHandledCases() {

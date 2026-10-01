@@ -155,6 +155,29 @@ public final class CharacterSet extends ValueSet {
 		}
 	}
 
+	/**
+	 * The byte of this set's encoding (ATASCII or PETSCII) that displays as
+	 * the glyph of the ASCII character {@code ch} - the inverse of {@link
+	 * #toScreenCode} for typed text. Printable bytes ({@code 0x20-0xFF}) are
+	 * preferred over control bytes.
+	 */
+	public int textToByte(char ch) {
+		int screenCode = textToScreenCode(ch);
+		for (int i = 0x20; i < 0x120; i++) {
+			int value = i & 0xFF;
+			if (toScreenCode(value) == screenCode) {
+				return value;
+			}
+		}
+		// Every screen code textToScreenCode returns is reachable from some byte of both encodings.
+		throw new IllegalStateException("No byte for screen code " + screenCode + ".");
+	}
+
+	/** The end-of-line byte of this set's encoding: {@code 0x9B} for ATASCII, {@code 0x0D} for PETSCII. */
+	public int getReturnByte() {
+		return kind == Kind.ATASCII ? 0x9B : 0x0D;
+	}
+
 	private static int asciiToC64ScreenCode(char ch) {
 		if (ch >= 0x20 && ch < 0x40) {
 			return ch;

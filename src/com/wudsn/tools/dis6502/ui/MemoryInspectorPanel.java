@@ -143,9 +143,8 @@ import com.wudsn.tools.dis6502.model.SegmentList;
  * navigation/writing logic - not just the on/off flag - live on {@link
  * #memoryInspectorState} ({@link
  * MutableMemoryInspectorState#moveEditCursor}/{@link
- * MutableMemoryInspectorState#typeEditChar}, applying the {@link
- * MemoryType#SBYTE} ASCII transform via {@link
- * MemoryType#toSbyteInternalCode}), not here or in {@link HexGridPanel} -
+ * MutableMemoryInspectorState#typeEditChar}, which writes typed text in
+ * the workspace's {@link CharacterSet}), not here or in {@link HexGridPanel} -
  * see {@link MutableMemoryInspectorState}'s own javadoc - so that logic
  * can be exercised by a plain, headless unit test. This class keeps only
  * the Swing-specific glue: {@link #handleEditKeyPressed}/{@link
