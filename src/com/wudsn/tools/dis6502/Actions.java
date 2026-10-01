@@ -52,7 +52,7 @@ import com.wudsn.tools.base.repository.NLS;
  * com.wudsn.tools.dis6502.ui.DisassemblyPanel}/{@link
  * com.wudsn.tools.dis6502.ui.MemoryInspectorPanel}'s right-click popup
  * menus, including every keystroke each popup item needs (see
- * POPUP_MENU_ACCELERATORS_PLAN.md for how each one was verified,
+ * 01_POPUP_MENU_ACCELERATORS_PLAN.md for how each one was verified,
  * including a bug found at {@link
  * #MemoryInspectorPopupMenu_ChangeType_Dlist}). Populating these fields'
  * accelerators is what makes them the single source of truth for the
@@ -90,7 +90,7 @@ import com.wudsn.tools.base.repository.NLS;
  * #MemoryInspectorPopupMenu_PasteSelection}/{@link
  * #MemoryInspectorPopupMenu_DeleteSelection} have no popup-menu-resource
  * counterpart at all (see gap #3's history in {@code
- * plans/REMAINING_GAPS_OVERVIEW.md}) - so their Ctrl+X/Ctrl+V/Delete
+ * plans/02_REMAINING_GAPS_OVERVIEW.md}) - so their Ctrl+X/Ctrl+V/Delete
  * accelerators are this port's own choice, following standard editor
  * convention.
  *

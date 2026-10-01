@@ -43,7 +43,7 @@ import com.wudsn.tools.dis6502.ui.ValueSetsTest;
  * A minimal aggregator: the "run everything once, report pass/fail" tool
  * a console mode would otherwise provide - repeated-relaunch soak-testing
  * has no equivalent here (see gap #5's history in {@code
- * plans/REMAINING_GAPS_OVERVIEW.md}). Its two most substantial checks are
+ * plans/02_REMAINING_GAPS_OVERVIEW.md}). Its two most substantial checks are
  * {@link WorkspaceLogicTest} (a real workspace-file load plus {@link
  * com.wudsn.tools.dis6502.model.Segment#splitAt}'s comment-rebasing) and
  * {@link ReassemblyRoundTripTest} (disassemble four real fixtures,

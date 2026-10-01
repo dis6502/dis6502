@@ -17,7 +17,7 @@ import java.awt.Graphics2D;
  * {@link HexGridPanel}/{@link MemoryInspectorPanel}/{@link
  * DiskImageSectorsDialog}) and by {@link PlainTextFont} (a user-chosen
  * mono-spaced font, for every other panel - see
- * {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}). Deliberately excludes
+ * {@code plans/09_CUSTOM_TEXT_FONT_PROPOSAL.md}). Deliberately excludes
  * {@link ComputerFont#drawGlyph}: no consumer of this interface ever draws
  * a raw byte's byte-indexed hardware glyph, and a plain chosen font has no
  * such range to shift into anyway.

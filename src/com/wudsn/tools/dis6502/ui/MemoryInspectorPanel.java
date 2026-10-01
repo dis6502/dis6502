@@ -354,7 +354,7 @@ public final class MemoryInspectorPanel extends JPanel {
 
 	/**
 	 * Binds the remaining popup-menu accelerators (see
-	 * POPUP_MENU_ACCELERATORS_PLAN.md) at the window level, the same {@code
+	 * 01_POPUP_MENU_ACCELERATORS_PLAN.md) at the window level, the same {@code
 	 * WHEN_IN_FOCUSED_WINDOW} scope as {@link #bindEditModeKeys}. Each
 	 * keystroke comes from the same {@link Action} in {@code
 	 * com.wudsn.tools.dis6502.Actions} that built the corresponding menu item
@@ -540,7 +540,7 @@ public final class MemoryInspectorPanel extends JPanel {
 	 * never a user-chosen one - unlike {@link #header} (see {@link
 	 * #setTextFont}), {@link #grid} shows raw byte values via its
 	 * ASCII/ATASCII preview column, which must stay authentic (see
-	 * {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}).
+	 * {@code plans/09_CUSTOM_TEXT_FONT_PROPOSAL.md}).
 	 */
 	public void setComputerFont(ComputerFont computerFont) {
 		grid.setComputerFont(computerFont);

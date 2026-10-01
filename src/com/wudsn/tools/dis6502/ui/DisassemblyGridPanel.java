@@ -32,7 +32,7 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
  * labels), but a user-chosen {@link PlainTextFont} works exactly as well -
  * unlike {@link HexGridPanel}, this class never draws a raw byte-indexed
  * hardware glyph, so it has no reason to require the native font
- * specifically (see {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}). Choosing a
+ * specifically (see {@code plans/09_CUSTOM_TEXT_FONT_PROPOSAL.md}). Choosing a
  * custom font trades away that STRING-data authenticity for every panel
  * that uses one, in exchange for a font the user finds more readable - an
  * explicit, accepted trade-off, not an oversight.

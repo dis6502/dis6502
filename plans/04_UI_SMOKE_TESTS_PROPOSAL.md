@@ -14,7 +14,7 @@ go. The text below is the proposal as written.
 
 **2026-09-23 update:** a later WUDSN Base fix (`KeyStroke.M1` no longer
 throws headless) made the "loads headless" premise true after all for
-everything except real dialogs - see `plans/HEADLESS_ACTIONS_TEST_PROPOSAL.md`.
+everything except real dialogs - see `plans/07_HEADLESS_ACTIONS_TEST_PROPOSAL.md`.
 `DialogTextsTest` was split accordingly: `PanelTextsTest` (the main menu
 and every panel, plus per-menu mnemonic-uniqueness checks) now always
 runs, headless or not; `DialogTextsTest` keeps only the real-dialog and

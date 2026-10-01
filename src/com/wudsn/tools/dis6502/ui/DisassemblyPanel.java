@@ -297,7 +297,7 @@ public final class DisassemblyPanel extends JPanel {
 		});
 
 		// Ctrl+Shift+F/Shift+F3, from Actions.DisassemblyPopupMenu_Find/_FindNext
-		// (see POPUP_MENU_ACCELERATORS_PLAN.md for how they were verified), bound
+		// (see 01_POPUP_MENU_ACCELERATORS_PLAN.md for how they were verified), bound
 		// WHEN_IN_FOCUSED_WINDOW like MemoryInspectorPanel's own popup-menu
 		// accelerators - unlike Return above, these carry no risk of stealing a
 		// common key from an unrelated focused component, so no such narrowing is

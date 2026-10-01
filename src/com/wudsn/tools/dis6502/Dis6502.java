@@ -489,7 +489,7 @@ public final class Dis6502 {
 	 * nativeFont} (see its own {@code setComputerFont} javadoc for why);
 	 * every part window's title bar - {@link MemoryInspectorPanel}'s
 	 * included - and every other panel's own content gets the user's chosen
-	 * {@code textFont} - see {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}.
+	 * {@code textFont} - see {@code plans/09_CUSTOM_TEXT_FONT_PROPOSAL.md}.
 	 */
 	private void updateFonts() {
 		ComputerFont nativeFont = ComputerFont.get(workspace.getComputerSystem().getType(), getNativeFontSize());

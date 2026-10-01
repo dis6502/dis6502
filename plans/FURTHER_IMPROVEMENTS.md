@@ -1,8 +1,8 @@
 # Further Improvements
 
 Every working C++ feature found in both audits
-([`REMAINING_GAPS_OVERVIEW.md`](REMAINING_GAPS_OVERVIEW.md),
-[`FINAL_GAP_ANALYSIS.md`](FINAL_GAP_ANALYSIS.md)) has a Java counterpart or a
+([`02_REMAINING_GAPS_OVERVIEW.md`](02_REMAINING_GAPS_OVERVIEW.md),
+[`03_FINAL_GAP_ANALYSIS.md`](03_FINAL_GAP_ANALYSIS.md)) has a Java counterpart or a
 recorded decision not to port it. This is what is left, roughly in the order
 it is worth doing. Items that get done are removed from this file; git
 history has their write-ups.

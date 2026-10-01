@@ -2,7 +2,7 @@
 
 Second and final audit of working C++ features that were missing in the
 Java port, done before retiring the C++ version. It complements
-[`REMAINING_GAPS_OVERVIEW.md`](REMAINING_GAPS_OVERVIEW.md) (the first audit).
+[`02_REMAINING_GAPS_OVERVIEW.md`](02_REMAINING_GAPS_OVERVIEW.md) (the first audit).
 
 **Status**: every gap this audit found is closed (2026-09-21/22) and, per
 this project's convention, removed from this file - git history has each
@@ -56,7 +56,7 @@ points inward:
 ## Not gaps - deliberate or shared with C++
 
 - **"Paste (insert after selection)"** - dead code in C++ (see gap #3's
-  history in `REMAINING_GAPS_OVERVIEW.md`).
+  history in `02_REMAINING_GAPS_OVERVIEW.md`).
 - **`Workspace1X.Load10`** (`DIS6502WRK10`) - deliberately not ported; the
   C++ author's own TODOs doubt it ever worked and no fixture exists.
 - **`Save14`, `AboutDialog`'s module version list, `/DEBUG`, the

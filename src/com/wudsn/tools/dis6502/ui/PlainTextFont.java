@@ -19,7 +19,7 @@ import java.util.List;
  * A {@link TextFont} wrapping an arbitrary, user-chosen mono-spaced system
  * font - the counterpart to {@link ComputerFont} for every panel that does
  * not need the workspace's authentic native font (see
- * {@code plans/CUSTOM_TEXT_FONT_PROPOSAL.md}).
+ * {@code plans/09_CUSTOM_TEXT_FONT_PROPOSAL.md}).
  * <p>
  * Deliberately much simpler than {@link ComputerFont}: no per-character
  * bitmap cache, no forced-off antialiasing. Those exist in

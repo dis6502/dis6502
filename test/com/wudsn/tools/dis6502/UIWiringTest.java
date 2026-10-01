@@ -45,7 +45,7 @@ import com.wudsn.tools.dis6502.ui.MemoryInspectorPanel;
 import com.wudsn.tools.dis6502.ui.UITest;
 
 /**
- * The third test of {@code plans/UI_SMOKE_TESTS_PROPOSAL.md}: the
+ * The third test of {@code plans/04_UI_SMOKE_TESTS_PROPOSAL.md}: the
  * application as the user gets it - started through {@link
  * Dis6502#main}, its real menu items clicked, its real dialogs answered -
  * with the workspace, the menus and the dialogs asserted on afterwards.

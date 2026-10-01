@@ -12,7 +12,7 @@ from it, per this project's convention - git history has each write-up
 their commits: `LogPanel` coloring, and `MainUITest.cpp` being a headless
 console suite rather than a UI driver). The "explicitly unverified" items of
 the first pass were all settled by the second audit
-([`FINAL_GAP_ANALYSIS.md`](FINAL_GAP_ANALYSIS.md), which also verified every
+([`03_FINAL_GAP_ANALYSIS.md`](03_FINAL_GAP_ANALYSIS.md), which also verified every
 menu command and icon one by one) or since: the legacy loaders are tested
 against real `WRK14`/`PRF17` fixtures, `ImgError`/`AtariError` match the C++
 enums one to one, `Application`'s settings and messages are exercised by the
@@ -161,7 +161,7 @@ field-by-field), `EquateDialog`, `EquateRangeDialog`, `LowHighByteDialog`,
 `SegmentPropertiesDialog`, `SegmentWriteBootDiskDialog`, `UIApplication`,
 `WorkspaceDialog`. The completed Actions/ElementFactory and popup-menu
 accelerator migrations (`plans/ACTIONS_ELEMENT_FACTORY_MIGRATION.md`,
-`plans/POPUP_MENU_ACCELERATORS_PLAN.md`) were spot-checked clean - no
+`plans/01_POPUP_MENU_ACCELERATORS_PLAN.md`) were spot-checked clean - no
 literal `JButton("OK")`-style stragglers, no direct `setAccelerator` calls
 bypassing the `InputMap`/`ActionMap` pattern.
 
