@@ -63,6 +63,7 @@ public final class RenderingTest {
 				testHexGridPaint(workspace);
 				testComputerFontGlyphs();
 				testAddressOnlyOnItsOwnLine();
+				testNoEndMarkerDrawn(workspace);
 			} catch (Exception ex) {
 				throw new RuntimeException(ex);
 			}
@@ -191,6 +192,56 @@ public final class RenderingTest {
 				boolean actual = (image.getRGB(x, y) & 0xFFFFFF) == 0;
 				Assert.boolEquals(actual, expected);
 			}
+		}
+	}
+
+	/**
+	 * No disassembly line draws the line scanner's '\0' end marker - it showed
+	 * as a missing-glyph box after lines ending right after the mnemonic
+	 * ("rts") or an immediate operand ("lda #$0C"). Records every string the
+	 * grid draws, so this does not depend on how a font renders '\0'.
+	 */
+	private static void testNoEndMarkerDrawn(Workspace workspace) {
+		TextFont font = PlainTextFont.get(Options.TEXT_FONT_FAMILY_DEFAULT, Options.TEXT_FONT_SIZE_DEFAULT);
+		List<String> drawn = new ArrayList<>();
+		TextFont recordingFont = new TextFont() {
+			@Override
+			public int getGlyphWidth() {
+				return font.getGlyphWidth();
+			}
+
+			@Override
+			public int getGlyphHeight() {
+				return font.getGlyphHeight();
+			}
+
+			@Override
+			public java.awt.Font getAwtFont() {
+				return font.getAwtFont();
+			}
+
+			@Override
+			public void drawText(Graphics2D g2, String text, Color color, int x, int y) {
+				drawn.add(text);
+				font.drawText(g2, text, color, x, y);
+			}
+
+			@Override
+			public Object getTextAntialiasingHint() {
+				return font.getTextAntialiasingHint();
+			}
+		};
+		DisassemblyGridPanel grid = new DisassemblyGridPanel();
+		grid.setTextFont(recordingFont);
+		List<DisassemblyLine> lines = new ArrayList<>();
+		for (Iterator<DisassemblyLine> i = workspace.getDisassemblyResult().createLineIterator(); i.hasNext();) {
+			lines.add(i.next());
+		}
+		grid.setLines(lines);
+		paint(grid);
+		Assert.boolEquals(drawn.isEmpty(), false);
+		for (String text : drawn) {
+			Assert.boolEquals(text.indexOf('\0') >= 0, false);
 		}
 	}
 

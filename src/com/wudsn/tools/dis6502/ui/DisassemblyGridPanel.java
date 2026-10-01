@@ -339,6 +339,9 @@ public final class DisassemblyGridPanel extends JPanel implements Scrollable {
 			flushPartOfLine(g2, x, y, referenced ? COLOR_COMMENT : COLOR_UNREFERENCED, restOfLine(text, index));
 			return;
 		}
+		if (c == '\0') {
+			return; // End of the line - charAt's end marker must not be drawn.
+		}
 		buf.append(c);
 		c = DisassemblyPanel.charAt(text, index);
 		while (c != '\0' && c != ';') {
