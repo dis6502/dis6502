@@ -36,11 +36,11 @@ acceptance bar for every batch.
 - `plans/*.md` - these are deliberately a historical record of the port
   (`02_REMAINING_GAPS_OVERVIEW.md`, `03_FINAL_GAP_ANALYSIS.md`,
   `ACTIONS_ELEMENT_FACTORY_MIGRATION.md`, `01_POPUP_MENU_ACCELERATORS_PLAN.md`,
-  `PORTING_GUIDE.md`, `MEMORY.md`, `RULES_LOCALIZATION.md`, `DIS6502_WIN32_TODOS.txt`)
+  `DEVELOPMENT_GUIDE.md`, `MEMORY.md`, `RULES_LOCALIZATION.md`, `DIS6502_WIN32_TODOS.txt`)
   - their entire point is documenting C++-vs-Java differences and decisions,
     for exactly the kind of future reader who'd ask "why does this Java code
     do X" and finds the answer in git history or these files. Stripping C++
-    mentions from them would gut their purpose. `plans/PORTING_GUIDE.md`
+    mentions from them would gut their purpose. `plans/DEVELOPMENT_GUIDE.md`
     shrinking to just build/test instructions is already a separate,
     already-tracked item in `FURTHER_IMPROVEMENTS.md`.
 - `README.md`/`CLAUDE.md` - one and four mentions respectively, all

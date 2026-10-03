@@ -23,8 +23,9 @@ mandate to keep matching C++. Concretely, going forward:
   decision; decide what's right for the Java codebase on its own terms.
 - Do not feel obliged to fix a bug in the C++ source when fixing it in
   Java, file a C++-side `TODO:`, or verify a C++-side build before
-  committing a Java-side fix - see `plans/PORTING_GUIDE.md`'s now-historical
-  section 4 for what the old policy required.
+  committing a Java-side fix - the git history of `plans/DEVELOPMENT_GUIDE.md` (formerly
+  `PORTING_GUIDE.md`) has
+  the bug-handling policy the old process required.
 - A "genuine scope fork" is still worth asking the user about explicitly
   (per the process lesson later in this file) - it's just no longer framed
   as "match C++ or diverge from it," since diverging is now the norm, not

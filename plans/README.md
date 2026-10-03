@@ -4,7 +4,7 @@ The plan files of this repository, one per batch of work, numbered in the
 order they were created. A new plan gets the next free number. Each plan
 carries its status in its first lines; this table is the overview.
 
-The standing documents are not numbered: `PORTING_GUIDE.md`, `MEMORY.md`,
+The standing documents are not numbered: `DEVELOPMENT_GUIDE.md`, `MEMORY.md`,
 `RULES_WUDSN_BASE.md`, `RULES_LOCALIZATION.md`,
 `RULES_SYSTEM_SUBPACKAGES_PLAN.md`, `FURTHER_IMPROVEMENTS.md` and
 `DIS6502_WIN32_TODOS.md` - see `CLAUDE.md` at the repository root.

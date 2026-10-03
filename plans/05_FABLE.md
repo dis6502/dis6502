@@ -22,4 +22,4 @@ The proposal is implemented in the suggested order. Six commits, 1289149 through
 - TestRunnerTest is a one-method JUnit 3 TestCase that runs TestRunner.run(). JUnit 3 is the only framework whose Surefire provider exists offline. mvn test and mvn package now run the suite and fail when a test does; I verified both directions.
 - Two guards for the CI build, which runs on three operating systems: the MADS round trip skips off Windows, and the UI tests skip with -Ddis6502.skipUITests=true, which the release workflow now passes. That is the one change to your CI; the Windows runner has a desktop but nobody watching, and I did not want a release to depend on it.
 
-plans/PORTING_GUIDE.md has the new build and test instructions; the proposal document records what came out differently. The scratch programs in C:\TEMP are no longer needed.
+plans/DEVELOPMENT_GUIDE.md has the new build and test instructions; the proposal document records what came out differently. The scratch programs in C:\TEMP are no longer needed.

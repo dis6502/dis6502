@@ -32,22 +32,15 @@ Not port gaps - identical in C++ - but limits a user will meet:
   can) - see `Workspace1X`'s javadoc for why.
 - C64 `.prg` detection is deliberately permissive: any load address from
   `$0200` that fits into memory counts.
-- 37 `TODO` comments remain in the source, mostly questions carried over
-  from the C++ author ("Why?" in `Disassembly`, "Are these really base
-  addresses on Oric?" in `Oric`).
+- 18 `TODO` comments remain in the source, analyzed and grouped in
+  [`12_SOURCE_TODOS.md`](12_SOURCE_TODOS.md); three of them are bugs.
 
 ## 4. Test coverage gaps
 
 - There is no Oric or Atari 5200 fixture with a reassembly check, and no
   test for the Default Folders save/reload per computer system.
 
-## 5. Housekeeping
-
-- `plans/PORTING_GUIDE.md` still describes the fidelity-era process. It
-  could shrink to build/test instructions plus the conventions that still
-  apply.
-
-## 6. Improvements to consider
+## 5. Improvements to consider
 
 - A review of `Oric.equ` (only 36 labels).
 - Persisting the window size and splitter positions (C++ does not do this

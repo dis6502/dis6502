@@ -21,7 +21,7 @@ test harness. Numbers are kept as originally assigned, so references
 elsewhere (commit messages, `plans/MEMORY.md`) stay valid.
 
 **Note (2026-09-21):** the porting phase itself is now over - see
-`plans/PORTING_GUIDE.md`'s status note and `plans/MEMORY.md`'s top section.
+`plans/MEMORY.md`'s top section.
 The Java codebase is the finished port and is expected to intentionally
 diverge from C++ going forward, so this document's framing ("what's
 missing relative to C++") no longer drives new work the way it did while

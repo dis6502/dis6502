@@ -11,7 +11,7 @@ immediately caught and fixed three real, previously-invisible mnemonic
 collisions (Equates menu's "Display System Equates" vs. "Save User
 Equates", Memory Inspector popup's "Cut" vs. "Start code Trace",
 Segment List popup's "Delete" vs. "Move down"). Also documented the
-WUDSN Base reinstall step in `plans/PORTING_GUIDE.md`'s section 2.
+WUDSN Base reinstall step in `plans/DEVELOPMENT_GUIDE.md`'s section 1.
 
 ## Background
 
@@ -52,7 +52,7 @@ constructing each class directly):
   SNAPSHOT jar - the one in the local Maven repository was built 2026-09-20,
   before this fix (`mvn -o install -DskipTests` from
   `WUDSN-Base/com.wudsn.tools.base` refreshes it). Worth a note in
-  `plans/PORTING_GUIDE.md`'s build instructions that a WUDSN Base source
+  `plans/DEVELOPMENT_GUIDE.md`'s build instructions that a WUDSN Base source
   change needs a reinstall before dis6502's own build picks it up - true
   before this fix too, just not yet written down anywhere.
 
@@ -95,4 +95,4 @@ constructing each class directly):
 
 1. Implement the `DialogTextsTest` split now?
 2. Add the new `ActionsTest`?
-3. Note the WUDSN Base reinstall step in `plans/PORTING_GUIDE.md`?
+3. Note the WUDSN Base reinstall step in `plans/DEVELOPMENT_GUIDE.md`?

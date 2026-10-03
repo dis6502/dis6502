@@ -20,11 +20,9 @@ reasoning behind past architectural decisions.
 
 The standing documents stay unnumbered:
 
-- [`plans/PORTING_GUIDE.md`](plans/PORTING_GUIDE.md) - the main one. Guidance
-  for redoing/continuing this port: strategy, environment/tooling setup
-  (build and test commands live here), coding conventions to carry forward,
-  the bug-handling policy for when the C++ source itself looks wrong, testing
-  strategy, and a process lesson on when to ask before deciding silently.
+- [`plans/DEVELOPMENT_GUIDE.md`](plans/DEVELOPMENT_GUIDE.md) - the main
+  one: build and test commands, testing practice, the code conventions that
+  apply to new work, and when to ask before deciding silently.
 - [`plans/MEMORY.md`](plans/MEMORY.md) - a plain-text export of the durable,
   project-specific lessons Claude has accumulated in its own memory while
   working on this port (state ownership, Swing UI conventions, porting
