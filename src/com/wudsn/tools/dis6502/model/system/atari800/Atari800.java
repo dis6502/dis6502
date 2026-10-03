@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import com.wudsn.tools.base.atari.CartridgeReader;
 import com.wudsn.tools.base.atari.CartridgeType;
 import com.wudsn.tools.base.atari.Platform;
 import com.wudsn.tools.dis6502.Messages;
@@ -26,9 +27,8 @@ import com.wudsn.tools.dis6502.model.SegmentList;
 import com.wudsn.tools.dis6502.model.SegmentListInserter;
 import com.wudsn.tools.dis6502.model.system.ComputerSystem;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
-import com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader;
 import com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader.CartridgeImport;
-import com.wudsn.tools.dis6502.model.system.atari.CartridgeReader;
+import com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader;
 
 /**
  * The Atari 800 computer system: the primary/default target of this tool.

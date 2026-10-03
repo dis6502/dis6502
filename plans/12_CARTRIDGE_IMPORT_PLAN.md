@@ -1,7 +1,6 @@
 # Importing every Atari 800 and Atari 5200 cartridge type
 
-Status: Done (2026-10-04) - steps 1 to 5; step 6, moving `CartridgeReader`
-to WUDSN Base, is left for later.
+Status: Done (2026-10-04) - all six steps.
 
 ## Goal
 
@@ -295,7 +294,7 @@ at most 512 segments of 8 KB or 256 of 16 KB.
 4. Add `CartridgeTypeDialog` and the `CartridgeType` parameter through
    `openFile`/`addFile`/`readFile`.
 5. Remove the cartridge limit from `FURTHER_IMPROVEMENTS.md`.
-6. Later: move `CartridgeReader` to WUDSN Base's `com.wudsn.tools.base.atari`.
+6. Move `CartridgeReader` to WUDSN Base's `com.wudsn.tools.base.atari`.
 
 ## Progress
 
@@ -385,6 +384,13 @@ dialog is where the user says so. Tested in `AtariCartridgeReaderTest`
 list, the three buttons); a live smoke test opened a raw 64 KB file in the
 application and imported it as the chosen XEGS 64 KB. The cartridge entry
 in `FURTHER_IMPROVEMENTS.md` now lists only the remaining limits.
+
+**Step 6 (2026-10-04):** `CartridgeReader` moved unchanged, apart from its
+package, to WUDSN Base's `com.wudsn.tools.base.atari`, with its own JUnit
+test `CartridgeReaderTest` there (detection, candidates, the banks of one
+type per layout, Atrax, every error including a truncated stream). dis6502
+imports it from there; its `AtariCartridgeReaderTest` keeps the segment
+level.
 
 ## Decisions (2026-10-03)
 

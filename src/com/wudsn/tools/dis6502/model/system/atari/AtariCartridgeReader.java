@@ -11,14 +11,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.wudsn.tools.base.atari.CartridgeReader.Bank;
+import com.wudsn.tools.base.atari.CartridgeReader.Cartridge;
+import com.wudsn.tools.base.atari.CartridgeReader;
 import com.wudsn.tools.base.atari.CartridgeType;
 import com.wudsn.tools.base.atari.Platform;
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentListInserter;
-import com.wudsn.tools.dis6502.model.system.atari.CartridgeReader.Bank;
-import com.wudsn.tools.dis6502.model.system.atari.CartridgeReader.Cartridge;
 
 /**
  * Imports an Atari 800 or Atari 5200 cartridge image read by {@link

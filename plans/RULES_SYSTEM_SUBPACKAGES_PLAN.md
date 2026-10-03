@@ -34,9 +34,9 @@ Code shared by a family of systems, but not by all of them, goes into one
 subpackage named after the family:
 
 - `com.wudsn.tools.dis6502.model.system.atari` - `AtariCartridgeReader`,
-  used by both `Atari800` and `Atari5200`, and `CartridgeReader`, which
-  depends only on WUDSN Base and is meant to move there (see
-  `12_CARTRIDGE_IMPORT_PLAN.md`)
+  used by both `Atari800` and `Atari5200` (see
+  `12_CARTRIDGE_IMPORT_PLAN.md`). Code that does not depend on dis6502 at
+  all, like the `CartridgeReader` it uses, belongs in WUDSN Base instead.
 
 `test/.../model/system/` and `test/.../model/system/<name>/` mirror this
 exactly: `ComputerSystemTest` in the shared package, `Atari800Test`/

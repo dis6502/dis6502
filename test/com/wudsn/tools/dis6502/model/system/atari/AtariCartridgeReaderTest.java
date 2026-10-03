@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.wudsn.tools.base.atari.CartridgeFileUtility;
+import com.wudsn.tools.base.atari.CartridgeReader;
 import com.wudsn.tools.base.atari.CartridgeType;
 import com.wudsn.tools.base.atari.Messages;
 import com.wudsn.tools.base.atari.Platform;
