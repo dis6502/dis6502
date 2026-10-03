@@ -1,6 +1,7 @@
 # Importing every Atari 800 and Atari 5200 cartridge type
 
-Status: In progress - step 1 done (2026-10-04), see "Progress".
+Status: In progress - step 1 done, redesign decided (2026-10-04); next is
+step 2.
 
 ## Goal
 
@@ -41,45 +42,96 @@ call to it.
   `CartridgeType` itself cites, and live in the new class (see "Bank
   layout").
 
-## Design
+## Redesign (2026-10-04): metadata in CartridgeType, logic in CartridgeReader
 
-### New class `AtariCartridgeReader`
+Step 1 put everything into `AtariCartridgeReader`: the window address of
+each type, the standard type for a raw size, header parsing, detection,
+the bank expansion, and the dis6502 segments. Only the last part is
+specific to dis6502. The rest is split off:
 
-Package: `com.wudsn.tools.dis6502.model.system.atari`, a new subpackage for
-code shared by the Atari systems.
+| Part | Where | Content |
+|---|---|---|
+| **Bank metadata** | `CartridgeType` (WUDSN Base) | For every type, where its banks appear in memory (see "Bank regions") and whether the image is Atrax-interleaved |
+| **Reading logic** | `CartridgeReader` (dis6502 for now, `com.wudsn.tools.base.atari` later) | Header parsing, detection, candidate types, Atrax decoding, expanding the bank regions into banks; depends only on the JDK and WUDSN Base |
+| **Error messages** | New `Messages` class in `com.wudsn.tools.base.atari` (WUDSN Base) | The reading errors, with German translations like the rest of WUDSN Base |
+| **dis6502 import** | `AtariCartridgeReader` (dis6502, keeps its name) | The 4 MB limit, one segment per bank with title and label prefix |
+
+### Bank regions in CartridgeType
+
+`CartridgeType` gets one new piece of data per type, a list of bank
+regions:
 
 ```java
-public final class AtariCartridgeReader {
+/** A part of the image whose banks of bankSize bytes appear at addresses, bank i at addresses[i % addresses.length]. */
+public record BankRegion(int offset, int size, int bankSize, int[] addresses, int[] mirrorAddresses) {
+}
 
-	/**
-	 * The cartridge type of a file: from its CART header if it has one,
-	 * otherwise from its size among the platform's standard types.
-	 * Returns CartridgeType.UNKNOWN if neither applies.
-	 */
+public List<BankRegion> getBankRegions(); // Empty: no known mapping (AST 32).
+public boolean isAtraxInterleaved();      // 48, 49, 68.
+```
+
+This one shape covers every layout in `cart.txt`:
+
+| Layout | Types | Regions (offset, size, bank size, addresses) |
+|---|---|---|
+| Single window | standard, Williams, Express, Diamond, SDX, Phoenix, Blizzard, Atarimax, Turbosoft, Ultracart, aDawliah, MegaCart, MegaMax, The!Cart, 5200 standard and Super Cart | One region over the whole image, one address |
+| SIC! | 54-56 | One region, 8 KB banks, addresses `$8000`, `$A000` alternating |
+| Fixed plus switchable | XEGS, switchable XEGS, XEGS 8F, DB 32 | Switchable banks at `$8000`, the last 8 KB bank at `$A000` |
+| OSS | 3, 45 / 15, 44 | 4 KB banks: bank 3 (3, 45) or bank 0 (15, 44) at `$B000`, the others at `$A000` |
+| Bounty Bob | 18 / 7 (5200) | Four 4 KB banks at `$8000` / `$4000`, four at `$9000` / `$5000`, the last 8 KB at `$A000` |
+| 5200 two chip | 6 | First 8 KB at `$4000`, second at `$A000` |
+| Mirrors | 20, 46 (4 KB), 19 (5200 8 KB), 16 (5200 16 KB), 6, 7 | Address `$B000` (or the one ending at `$BFFF`), the other mirrors in `mirrorAddresses` |
+
+- **Existing fields stay as they are.** `getInitialBankAddress()` is what
+  TheCartStudio's `CartridgeTypeSampleCreator` builds its sample images
+  from, so changing it for types 20 and 46 would change TheCartStudio's
+  output. The regions carry the corrected `$B000` instead; the TODOs at
+  types 20 and 46 decide whether `getInitialBankAddress()` follows.
+- **Mirrors are recorded, not yet used.** With `mirrorAddresses` in the
+  data, the importer can later resolve code reached through a mirror (the
+  `$A000` TODO in `AtariCartridgeReader`).
+
+### CartridgeReader
+
+```java
+public final class CartridgeReader {
+	public static boolean hasCartridgeHeader(long fileSize, byte[] header);
 	public static CartridgeType detectCartridgeType(Platform platform, long fileSize, byte[] header);
-
-	/**
-	 * The supported types of the platform whose size matches a raw file
-	 * (no CART header), for the user to choose from. Empty if none matches.
-	 */
 	public static List<CartridgeType> getCandidateTypes(Platform platform, long fileSize);
-
-	/** Whether a cartridge type can be imported for the platform. */
 	public static boolean isSupported(Platform platform, CartridgeType cartridgeType);
+	public static Cartridge readCartridge(Platform platform, CartridgeType cartridgeType, InputStream inputStream,
+			long fileSize, long maximumSize) throws IOException;
+}
 
-	/**
-	 * Reads a cartridge file (raw or with CART header) and inserts one
-	 * segment per bank. For a CART file, cartridgeType may be null (the
-	 * header decides); for a raw file, it is the type the user chose. Returns the result, which identifies the segment of
-	 * the bank visible after power-on, so the caller can type its trailer.
-	 */
-	public static CartridgeImport readCartridge(Platform platform, CartridgeType cartridgeType,
-			SegmentListInserter inserter, InputStream inputStream, long fileSize) throws IOException;
+/** The plain (header-less, decoded) image and its banks. */
+public record Cartridge(CartridgeType cartridgeType, byte[] content, List<Bank> banks, Bank initialBank) {
+}
+
+public record Bank(int number, int offset, int size, int address) {
 }
 ```
 
-`CartridgeImport` is a small result record: the `CartridgeType`, the list
-of inserted segments, and the initial bank's segment.
+- **Standard types for raw sizes** (Atari 800 2-16 KB, 5200 4-32 KB) move
+  here from `AtariCartridgeReader`: a reading policy, not dis6502's.
+- **The size limit is a parameter.** 4 MB is dis6502's choice, so the
+  importer passes it.
+- **Messages:** from the new `com.wudsn.tools.base.atari.Messages`
+  (`extends NLS`, like `com.wudsn.tools.base.Messages`), so
+  `CartridgeReader` has no dis6502 dependency from the start and moves to
+  WUDSN Base unchanged. Its numbers start at E700, clear of WUDSN Base's
+  own 200-304 and the applications' ranges (up to 503 in TheCartStudio).
+  The six reading errors (unsupported raw size, unknown header type, wrong
+  platform, unsupported type, size mismatch, too large) move there from
+  dis6502's E055 and E094-E098, which are removed.
+
+### AtariCartridgeReader (dis6502)
+
+What remains in dis6502: calls `readCartridge` with the 4 MB limit and
+turns each `Bank` into a segment with title and label prefix (see
+"Segments"), returning the initial bank's segment for `Atari800`/
+`Atari5200` to type their trailer.
+
+## Design
 
 ### Segments
 
@@ -97,24 +149,6 @@ of inserted segments, and the initial bank's segment.
 - **Single-bank types** (standard 2-16 KB, 5200 4-32 KB) still produce
   exactly one segment without a prefix, so today's behavior and
   workspaces stay as they are.
-
-### Bank layout
-
-A private table maps each supported type to a layout. Most layouts derive
-from `CartridgeType`; only the exceptions are spelled out.
-
-| Layout | Types | Mapping |
-|---|---|---|
-| Single window | standard, Williams, Express, Diamond, SDX, Phoenix, Blizzard, Atarimax, Turbosoft, Ultracart, aDawliah, MegaCart, MegaMax, The!Cart, 5200 Super Cart, 5200 standard | Every bank of `getBankSize()` at one window address |
-| SIC! | 54, 55, 56 | 16 KB banks of two 8 KB halves: even 8 KB blocks at `$8000`, odd ones at `$A000` |
-| Fixed plus switchable | XEGS, switchable XEGS, XEGS 8F, DB 32, OSS (3, 15, 44, 45) | The bank at `getInitialBankOffset()` fixed at `getInitialBankAddress()`, all other banks at the switchable window (`$8000` for XEGS/DB, `$A000` for OSS) |
-| Bounty Bob | 18 (Atari 800), 7 (5200) | Two windows of four 4 KB banks each plus the fixed 8 KB bank at `getInitialBankOffset()` |
-| 5200 two chip / mirrored | 6, 16 | Per `cart.txt`; mirrors are not imported as separate segments |
-| Interleaved | Atrax 48, 49, 68 | Descramble address and data bits first (see "Atrax descrambling"), then like their plain equivalents (11, 43, 17) |
-| Unsupported | AST 32 | Reported as unsupported, as before |
-
-Every mapping is checked against `cart.txt` while implementing. The test
-fixtures below verify it independently.
 
 ### Atrax descrambling
 
@@ -238,17 +272,22 @@ at most 512 segments of 8 KB or 256 of 16 KB.
 
 ## Steps
 
-1. Create `model.system.atari` and `AtariCartridgeReader` with the
-   single-window layout, detection and the 4 MB limit, and switch both
-   `readROMFile` methods over; fix the two existing bugs on the way.
-2. Add the fixed-plus-switchable and Bounty Bob layouts.
-3. Add `encodeAtraxContent`/`decodeAtraxContent` with their test to WUDSN
-   Base's `CartridgeFileUtility`, commit and reinstall it; then add the
-   5200 two-chip layouts and the Atrax descrambling in dis6502.
+1. Done: `AtariCartridgeReader` with the single-window layouts, detection
+   and the 4 MB limit, both `readROMFile` methods switched over.
+2. WUDSN Base: add `BankRegion`, `getBankRegions()` and
+   `isAtraxInterleaved()` to `CartridgeType` with the regions of all 75
+   types from `cart.txt`, plus `encodeAtraxContent`/`decodeAtraxContent`
+   in `CartridgeFileUtility`, and the new `com.wudsn.tools.base.atari.Messages`
+   with the reading errors (English and German), each with tests; commit
+   and reinstall.
+3. dis6502: split `CartridgeReader` off `AtariCartridgeReader`, using
+   the regions and the new WUDSN Base messages. That adds every layout of
+   the table at once (XEGS, OSS, Bounty Bob, SIC!, 5200 two chip, Atrax),
+   only AST 32 stays unsupported. Tests per layout row.
 4. Add `CartridgeTypeDialog` and the `CartridgeType` parameter through
    `openFile`/`addFile`/`readFile`.
-5. Remove the "Atari 5200 bank-switched cartridges and `.CAR` files" limit
-   from `FURTHER_IMPROVEMENTS.md`.
+5. Remove the cartridge limit from `FURTHER_IMPROVEMENTS.md`.
+6. Later: move `CartridgeReader` to WUDSN Base's `com.wudsn.tools.base.atari`.
 
 ## Progress
 
@@ -292,3 +331,14 @@ Findings while checking each layout against `cart.txt`:
 4. **Size limit:** 4 MB.
 5. **Atrax permutation:** both directions in WUDSN Base's
    `CartridgeFileUtility`, shared with TheCartStudio.
+
+## Decisions (2026-10-04)
+
+6. **Split:** the bank metadata goes into `CartridgeType`, the reading
+   logic into a separate `CartridgeReader`, to be moved to WUDSN Base
+   later.
+7. **Messages:** in a new `Messages` class of `com.wudsn.tools.base.atari`
+   now, not in dis6502.
+8. **Name:** the dis6502 part keeps the name `AtariCartridgeReader`, in
+   line with the `read...` methods of `ComputerSystem`; the `Atari` prefix
+   distinguishes it from `CartridgeReader`.
