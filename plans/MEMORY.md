@@ -230,3 +230,17 @@ screenshot - closing that gap is worth it even when it surfaces
 short-term test failures. Apply the same native-L&F setup to any future
 test that renders real Swing UI.
 
+## File conventions
+
+### Keep the working tree's CRLF line endings on every write
+
+The repository stores LF (`.gitattributes`: `* text=auto`); on Windows, the
+working tree has CRLF, which is also what Eclipse writes. Eclipse keeps a
+file's existing line endings when saving, so when an LF file appears, a
+script or tool wrote it. In 2026-10, 38 files had drifted to LF through
+bulk edits (Python/sed scripts, the Write tool). Git doesn't care, but the
+mixed working tree causes "LF will be replaced by CRLF" warnings and
+confusion. When editing, keep a file's existing line endings, and write new
+text files as CRLF. Check with `git ls-files --eol | grep w/lf`, which should
+print nothing. If git then shows files as modified only because of their
+line endings, `git add` them; the index content doesn't change.
