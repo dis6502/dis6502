@@ -365,7 +365,7 @@ public final class SegmentList implements Xml.Serializable {
 		if (type == MemoryType.SYMBOL) {
 			return false;
 		}
-		// TODO: Why not check system equates, too?
+		// System equates are checked below: after the fixups, and not for relative branches.
 		if (workspace.getUserEquateList().findEquateByAddress(address, labelAccess, true) != null) {
 			return false;
 		}

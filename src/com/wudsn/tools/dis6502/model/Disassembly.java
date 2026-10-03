@@ -214,14 +214,6 @@ public final class Disassembly {
 		addLabelWithAddress(label, address, disassemblySectionType, address, comment);
 	}
 
-	/** Adds a label which is defined as a value in the SYSTEM_EQUATES file. */
-	// TODO: Why is this unused?
-	private void addLabelValue(String label, int address, DisassemblySectionType disassemblySectionType,
-			String comment) {
-		int systemAddr = disassemblySectionType == DisassemblySectionType.SYSTEM_EQUATES ? 0xFFFF : DisassemblyLine.NO_SYSTEM_ADDRESS;
-		addLabelWithAddress(label, address, disassemblySectionType, systemAddr, comment);
-	}
-
 	private void addComment(String comment, DisassemblySectionType disassemblySectionType) {
 		lineWriter.clear().comment(comment);
 
@@ -577,7 +569,8 @@ public final class Disassembly {
 						disNewSegment = true;
 					}
 
-					setSegmentFirstLineNumber(segmentIndex); // TODO: Why is this called here/so often?
+					// Called once per binary segment the disassembly enters: here and in disInit().
+					setSegmentFirstLineNumber(segmentIndex);
 					markNextSegmentIndex = segmentIndex;
 				}
 			} while (memoryBlockIterator == null);

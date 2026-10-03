@@ -221,6 +221,12 @@ public final class Segment implements Xml.Serializable {
 		return false;
 	}
 
+	/**
+	 * Appends {@code nextSegment}'s data and comments to this segment. Fixups
+	 * and address labels are not merged, since they are rebuilt on every
+	 * disassembly pass. SDX symbols only exist in relocatable segments, which
+	 * cannot be merged, since {@link #isMergeable()} requires a fixed address.
+	 */
 	public void mergeWith(Segment nextSegment) {
 		int size = getSize();
 		int totalSize = size + nextSegment.getSize();
@@ -245,8 +251,6 @@ public final class Segment implements Xml.Serializable {
 			newComment.setOffset(size + comment.getOffset());
 			newComment.setText(comment.getText());
 		}
-
-		// TODO: Transfer additional data (symbols/fixups/labels)?
 	}
 
 	/**

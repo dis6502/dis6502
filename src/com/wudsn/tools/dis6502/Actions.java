@@ -196,9 +196,6 @@ public final class Actions extends NLS {
 	public static Action MemoryInspectorPopupMenu_ChangeType_Fixup = new Action(KeyEvent.VK_F, KeyStroke.M2);
 	public static Action MemoryInspectorPopupMenu_ChangeType_String = new Action(KeyEvent.VK_S, KeyStroke.M2);
 	public static Action MemoryInspectorPopupMenu_ChangeType_Sbyte = new Action(KeyEvent.VK_Y, KeyStroke.M2);
-	// The .rc's own displayed hint for Display List says Shift+A, but the
-	// ACCELERATORS table actually binds Shift+D to it (and Shift+A to Data
-	// Store) - see the TODO left at its MENUITEM line in dis6502.rc.
 	public static Action MemoryInspectorPopupMenu_ChangeType_Dlist = new Action(KeyEvent.VK_D, KeyStroke.M2);
 	public static Action MemoryInspectorPopupMenu_ChangeType_Store = new Action(KeyEvent.VK_A, KeyStroke.M2);
 	public static Action MemoryInspectorPopupMenu_ChangeType_Unknown = new Action(KeyEvent.VK_U, KeyStroke.M2);

@@ -31,9 +31,9 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
  * <li>The bytes-remaining-counter threading needed by several reads is
  * consolidated into a private {@link BoundedReader} nested class.</li>
  * <li>{@code ReadExecutableFile}'s segment-data read
- * ({@code Segment.createMemoryBlockFromFile}) is not bounds-checked against
- * the remaining byte budget before reading, unlike every other read in this
- * class - see the {@code TODO} at that call site.</li>
+ * ({@code Segment.createMemoryBlockFromFile}) bypasses {@link BoundedReader},
+ * so the segment size is checked against the remaining byte budget before
+ * reading instead.</li>
  * <li>{@code ReadCassetteFile} is careful about three things: the FUJI
  * chunk's title text is actually skipped, not just accounted for in the
  * byte budget; the 2 bytes of the title's own length field are subtracted
@@ -312,7 +312,7 @@ public final class Atari800 extends ComputerSystem {
 				segment.wEnd = end;
 				segment.bBinary = true;
 				segment.createMemoryBlockFromFile(size, inputStream);
-				reader.consumeUnchecked(size); // TODO: Introduce bounded InputStream.
+				reader.consumeUnchecked(size); // Bounds were checked above.
 
 				// Change the segment type if the segment is 02E0 or 02E2.
 				if ((begin == 0x2E0 && (size == 2 || size == 4)) || (begin == 0x2E2 && size == 2)) {
