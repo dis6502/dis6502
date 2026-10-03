@@ -42,5 +42,8 @@ The standing documents stay unnumbered:
   left now that porting is over: localization, known limits, test coverage
   gaps, housekeeping, possible improvements. Completed items are removed
   from it, not struck through.
+- [`plans/SOURCE_TODOS.md`](plans/SOURCE_TODOS.md) - the inventory of the
+  `TODO` comments left in the source, analyzed and grouped (bugs, partly
+  done, unchanged). Kept current as TODOs are resolved or added.
 - [`plans/DIS6502_WIN32_TODOS.md`](plans/DIS6502_WIN32_TODOS.md) - the
   README of the last Windows version, with its known issues and open bugs.

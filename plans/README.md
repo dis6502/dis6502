@@ -6,8 +6,8 @@ carries its status in its first lines; this table is the overview.
 
 The standing documents are not numbered: `DEVELOPMENT_GUIDE.md`, `MEMORY.md`,
 `RULES_WUDSN_BASE.md`, `RULES_LOCALIZATION.md`,
-`RULES_SYSTEM_SUBPACKAGES_PLAN.md`, `FURTHER_IMPROVEMENTS.md` and
-`DIS6502_WIN32_TODOS.md` - see `CLAUDE.md` at the repository root.
+`RULES_SYSTEM_SUBPACKAGES_PLAN.md`, `FURTHER_IMPROVEMENTS.md`,
+`SOURCE_TODOS.md` and `DIS6502_WIN32_TODOS.md` - see `CLAUDE.md` at the repository root.
 
 | No. | Plan | Purpose | Status |
 |---|---|---|---|
@@ -22,4 +22,4 @@ The standing documents are not numbered: `DEVELOPMENT_GUIDE.md`, `MEMORY.md`,
 | 09 | [CUSTOM_TEXT_FONT_PROPOSAL](09_CUSTOM_TEXT_FONT_PROPOSAL.md) | User-chosen text font and separate memory inspector font size in `View > Options...` | Done 2026-10-01 |
 | 10 | [CHARACTER_SET_FONTS_PROPOSAL](10_CHARACTER_SET_FONTS_PROPOSAL.md) | 8x8 `.chr` character sets instead of the TTF glyphs, selectable in the memory inspector header | Done 2026-10-01 |
 | 11 | [RELEASE_MATRIX_PROPOSAL](11_RELEASE_MATRIX_PROPOSAL.md) | x64 and ARM64 release builds for all three systems, following RASTER-Music-Tracker, plus application icons | Done 2026-10-02 |
-| 12 | [SOURCE_TODOS](12_SOURCE_TODOS.md) | Inventory of the `TODO` comments left in the source, grouped by topic | Open |
+| 12 | [CARTRIDGE_IMPORT_PLAN](12_CARTRIDGE_IMPORT_PLAN.md) | One shared class importing every Atari 800 and Atari 5200 cartridge type defined by WUDSN Base's `CartridgeType` | Planned |

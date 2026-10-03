@@ -434,6 +434,7 @@ public final class Atari800 extends ComputerSystem {
 		}
 
 		// Read only 4K, 8K, and 16K cartridges.
+		
 		int begin;
 		int end;
 		if (bytesRemaining == SIZE_4K) {
