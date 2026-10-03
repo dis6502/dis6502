@@ -28,6 +28,7 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystem;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader;
 import com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader.CartridgeImport;
+import com.wudsn.tools.dis6502.model.system.atari.CartridgeReader;
 
 /**
  * The Atari 800 computer system: the primary/default target of this tool.
@@ -109,8 +110,8 @@ public final class Atari800 extends ComputerSystem {
 		}
 
 		// Cartridge image? Any CART file counts, so that a wrong or unsupported type gets a specific error.
-		if (AtariCartridgeReader.hasCartridgeHeader(fileSize, content) || AtariCartridgeReader
-				.isSupported(Platform.ATARI_800, AtariCartridgeReader.detectCartridgeType(Platform.ATARI_800, fileSize, content))) {
+		if (CartridgeReader.hasCartridgeHeader(fileSize, content) || AtariCartridgeReader
+				.isSupported(Platform.ATARI_800, CartridgeReader.detectCartridgeType(Platform.ATARI_800, fileSize, content))) {
 			return FileType.ROM_IMAGE_FILE;
 		}
 

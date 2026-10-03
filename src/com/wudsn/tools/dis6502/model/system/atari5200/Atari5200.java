@@ -18,6 +18,7 @@ import com.wudsn.tools.dis6502.model.SegmentListInserter;
 import com.wudsn.tools.dis6502.model.system.ComputerSystem;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 import com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader;
+import com.wudsn.tools.dis6502.model.system.atari.CartridgeReader;
 
 /**
  * The Atari 5200 computer system.
@@ -63,8 +64,8 @@ public final class Atari5200 extends ComputerSystem {
 	@Override
 	public FileType guessFileType(long fileSize, byte[] content) {
 		// Cartridge image? Any CART file counts, so that a wrong or unsupported type gets a specific error.
-		if (AtariCartridgeReader.hasCartridgeHeader(fileSize, content) || AtariCartridgeReader
-				.isSupported(Platform.ATARI_5200, AtariCartridgeReader.detectCartridgeType(Platform.ATARI_5200, fileSize, content))) {
+		if (CartridgeReader.hasCartridgeHeader(fileSize, content) || AtariCartridgeReader
+				.isSupported(Platform.ATARI_5200, CartridgeReader.detectCartridgeType(Platform.ATARI_5200, fileSize, content))) {
 			return FileType.ROM_IMAGE_FILE;
 		}
 		return FileType.ANY_FILE;

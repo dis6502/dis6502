@@ -25,16 +25,17 @@ files, but there is no translated properties file at all yet (no
 
 Not port gaps - identical in C++ - but limits a user will meet:
 
-- Not every Atari 800 and Atari 5200 cartridge type can be imported yet;
-  [`12_CARTRIDGE_IMPORT_PLAN.md`](12_CARTRIDGE_IMPORT_PLAN.md) is in
-  progress.
+- Every Atari 800 and Atari 5200 cartridge type of WUDSN Base's
+  `CartridgeType` up to 4 MB can be imported except AST 32 KB; raw images
+  of ambiguous size are not offered as cartridges yet
+  ([`12_CARTRIDGE_IMPORT_PLAN.md`](12_CARTRIDGE_IMPORT_PLAN.md), step 4).
 - SpartaDOS X relocation with base address `$0000` does not work (test
   `unit005`, disabled in C++ as well).
 - The very old `DIS6502WRK10` workspace format cannot be loaded (`WRK14`
   can) - see `Workspace1X`'s javadoc for why.
 - C64 `.prg` detection is deliberately permissive: any load address from
   `$0200` that fits into memory counts.
-- 19 `TODO` comments remain in the source, analyzed and grouped in
+- 18 `TODO` comments remain in the source, analyzed and grouped in
   [`SOURCE_TODOS.md`](SOURCE_TODOS.md); three of them are bugs.
 
 ## 4. Test coverage gaps

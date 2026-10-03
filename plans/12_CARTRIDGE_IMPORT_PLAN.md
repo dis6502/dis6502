@@ -1,6 +1,6 @@
 # Importing every Atari 800 and Atari 5200 cartridge type
 
-Status: In progress - steps 1 and 2 done (2026-10-04); next is step 3.
+Status: In progress - steps 1 to 3 done (2026-10-04); next is step 4.
 
 ## Goal
 
@@ -351,6 +351,21 @@ the initial bank (`getInitialBankOffset() + getBankSize() - 1`), not the
 first. For the two chip 5200 cartridge (6), `CartridgeType` describes the
 initial bank as the whole 16 KB image at offset 0, but only the second
 chip ends at `$BFFF`. `CartridgeReader` uses the same rule in step 3.
+
+**Step 3 (2026-10-04), dis6502:** `CartridgeReader` split off
+`AtariCartridgeReader`, at the Java 8 source level (checked with `javac
+--release 8`), depending only on the JDK and WUDSN Base. It reads the
+header, detects the type, decodes Atrax images and expands the bank regions
+into `Bank`s, returning a `Cartridge`; its errors are WUDSN Base's E700-E705,
+and dis6502's E055 and E094-E098 are removed. `AtariCartridgeReader` keeps
+the 4 MB limit and creates the segments. Every layout is now supported:
+XEGS, switchable XEGS, DB 32, OSS, Bounty Bob (both platforms, a raw 40 KB
+5200 image is Bounty Bob again), SIC!, 5200 two chip and Atrax; only AST 32
+and the The!Cart types above 4 MB are not. The explicit window addresses
+and their TODO are gone. `AtariCartridgeReaderTest` checks each layout with
+images whose 4 KB pages carry their page number, so every segment's file
+offset is checked exactly. The smoke test imports all 63 sample `.rom`
+files of a supported type, Atrax included, with plausible vectors.
 
 ## Decisions (2026-10-03)
 

@@ -20,8 +20,7 @@ Not counted: the `; $XXXX` format text in `DisassemblyGridPanel`.
 
 | Location | TODO and finding |
 |---|---|
-| [`AtariCartridgeReader.java`](../src/com/wudsn/tools/dis6502/model/system/atari/AtariCartridgeReader.java) (Blizzard 4 KB) | Blizzard 4 KB (46) and 5200 4 KB (20) appear at two mirrors; the segment is at `$B000`, where the vectors are. Code reached through the `$A000` mirror - e.g. the init vector of the sample images points to `$A000` - is not traced. |
-| [`AtariCartridgeReader.java`](../src/com/wudsn/tools/dis6502/model/system/atari/AtariCartridgeReader.java) (Atari 5200 layouts) | The window address of every single-window type is listed explicitly, only because WUDSN Base's `CartridgeType` has `$A000` instead of `$B000` for types 20 and 46 (TODO there). Once fixed, take it from `getInitialBankAddress()`. |
+| [`AtariCartridgeReader.java`](../src/com/wudsn/tools/dis6502/model/system/atari/AtariCartridgeReader.java) (`readCartridge`) | Some cartridges appear at several mirrors, e.g. Blizzard 4 KB (46) and 5200 4 KB (20) at `$A000` and `$B000`; each bank becomes a segment at one address only, the one with the vectors. Code reached through another mirror - e.g. the init vector of the sample images points to `$A000` - is not traced. The mirrors are in `CartridgeType.BankRegion.getMirrorAddresses()`. |
 
 ## Open - partly done, or now easy to finish
 

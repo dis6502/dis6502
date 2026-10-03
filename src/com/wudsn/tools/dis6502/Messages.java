@@ -205,9 +205,6 @@ public final class Messages extends NLS {
 	/** {@link com.wudsn.tools.dis6502.model.Atari800#readExecutableFile}'s "stream too short for segment" error. */
 	public static Message E053;
 
-	/** {@link com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader#readCartridge}'s "no standard cartridge type of this size" error for a raw image. */
-	public static Message E055;
-
 	/** {@link com.wudsn.tools.dis6502.model.Atari800#readCassetteFile}'s "not a FUJI stream" error. */
 	public static Message E056;
 
@@ -308,17 +305,6 @@ public final class Messages extends NLS {
 	/** {@link Dis6502#openDiskImageExecutableFile}'s "disk image could not be read" log line: the file, and the {@link com.wudsn.tools.dis6502.model.AtariError}'s text. */
 	public static Message E092;
 	public static Message E093;
-
-	/** {@link com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader#readCartridge}'s "cartridge type not supported" error: the type's number and text. */
-	public static Message E094;
-	/** {@link com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader#readCartridge}'s "cartridge of the other Atari platform" error: the type's number and text, its platform, the expected platform. */
-	public static Message E095;
-	/** {@link com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader#readCartridge}'s "image size does not match the type" error: the image size, the type's number and text, the type's size. */
-	public static Message E096;
-	/** {@link com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader#readCartridge}'s "cartridge too large" error: the size, the maximum. */
-	public static Message E097;
-	/** {@link com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader#readCartridge}'s "unknown type number in the CART header" error. */
-	public static Message E098;
 
 	static {
 		initializeClass(Messages.class, null);
