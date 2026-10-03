@@ -72,6 +72,8 @@ public final class AtariCartridgeReader {
 		singleWindow(CartridgeType.CARTRIDGE_LOW_BANK_8, 0x8000);
 		singleWindow(CartridgeType.CARTRIDGE_PHOENIX_8, 0xA000);
 		// Mirrored at $A000 and $B000; $B000 holds the cartridge header at $BFFA.
+		// TODO: Code reached through the $A000 mirror (e.g. an init vector to $A000)
+		// is not traced, since the segment is only at $B000. Same for 5200 4 KB.
 		singleWindow(CartridgeType.CARTRIDGE_BLIZZARD_4, 0xB000);
 		singleWindow(CartridgeType.CARTRIDGE_BLIZZARD_16, 0x8000);
 		singleWindow(CartridgeType.CARTRIDGE_MEGA_16, 0x8000);
@@ -106,6 +108,9 @@ public final class AtariCartridgeReader {
 		singleWindow(CartridgeType.CARTRIDGE_MEGAMAX_2048, 0x8000);
 
 		// Atari 5200: the mirror that ends at $BFFF, which holds the title and vectors.
+		// TODO: Take the address from CartridgeType.getInitialBankAddress() for every
+		// single-window type, once WUDSN Base has $B000 for types 20 and 46 instead of
+		// $A000 - the explicit addresses here only exist because of those two.
 		singleWindow(CartridgeType.CARTRIDGE_5200_4, 0xB000);
 		singleWindow(CartridgeType.CARTRIDGE_5200_8, 0xA000);
 		singleWindow(CartridgeType.CARTRIDGE_5200_NS_16, 0x8000);

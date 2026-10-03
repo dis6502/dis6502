@@ -16,6 +16,13 @@ Not counted: the `; $XXXX` format text in `DisassemblyGridPanel`.
 | [`Disassembly.java:1119`](../src/com/wudsn/tools/dis6502/model/Disassembly.java) | "Why was this getOpcodeLength(by)?" The user-comment offset is computed from the *current* segment's `wBegin`. If the byte just read was a segment's last and another binary segment follows, `segmentIndex` has already advanced, the offset is negative, and that byte's comment is silently dropped. Fix: use `opcodeSegment.wBegin`. |
 | [`Dis6502.java:1761`](../src/com/wudsn/tools/dis6502/Dis6502.java) | "This is Atari specific." Wider than this line: the whole File > Write Boot Disk feature is Atari DOS-only, but it is enabled for every computer system (`Dis6502.java:584` checks only `notEditing && hasSegments`). |
 
+## Open - found during the cartridge import (2026-10-04)
+
+| Location | TODO and finding |
+|---|---|
+| [`AtariCartridgeReader.java`](../src/com/wudsn/tools/dis6502/model/system/atari/AtariCartridgeReader.java) (Blizzard 4 KB) | Blizzard 4 KB (46) and 5200 4 KB (20) appear at two mirrors; the segment is at `$B000`, where the vectors are. Code reached through the `$A000` mirror - e.g. the init vector of the sample images points to `$A000` - is not traced. |
+| [`AtariCartridgeReader.java`](../src/com/wudsn/tools/dis6502/model/system/atari/AtariCartridgeReader.java) (Atari 5200 layouts) | The window address of every single-window type is listed explicitly, only because WUDSN Base's `CartridgeType` has `$A000` instead of `$B000` for types 20 and 46 (TODO there). Once fixed, take it from `getInitialBankAddress()`. |
+
 ## Open - partly done, or now easy to finish
 
 | Location | TODO and finding |

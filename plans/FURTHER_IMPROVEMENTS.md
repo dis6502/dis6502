@@ -34,7 +34,7 @@ Not port gaps - identical in C++ - but limits a user will meet:
   can) - see `Workspace1X`'s javadoc for why.
 - C64 `.prg` detection is deliberately permissive: any load address from
   `$0200` that fits into memory counts.
-- 18 `TODO` comments remain in the source, analyzed and grouped in
+- 19 `TODO` comments remain in the source, analyzed and grouped in
   [`SOURCE_TODOS.md`](SOURCE_TODOS.md); three of them are bugs.
 
 ## 4. Test coverage gaps
