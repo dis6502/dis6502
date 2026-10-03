@@ -50,6 +50,10 @@ public final class Texts extends NLS {
 	public static String AssembleDialog_Title;
 	/** {@link com.wudsn.tools.dis6502.ui.AssembleDialog}'s result line before anything was assembled. */
 	public static String AssembleDialog_Hint;
+	/** The title of one bank's segment of a cartridge imported by {@link com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader}: the cartridge type and the bank number. */
+	public static String AtariCartridgeReader_BankTitle;
+	/** Same as {@link #AtariCartridgeReader_BankTitle}, for the bank visible after power-on. */
+	public static String AtariCartridgeReader_InitialBankTitle;
 	/** {@link com.wudsn.tools.dis6502.ui.CommentDialog}'s window title. */
 	public static String CommentDialog_Title;
 	/** {@link com.wudsn.tools.dis6502.ui.DiskImageExecutableFileDialog}'s window title. */

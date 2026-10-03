@@ -13,6 +13,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import com.wudsn.tools.base.atari.CartridgeType;
+import com.wudsn.tools.base.atari.Platform;
 import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.model.FileHeader;
 import com.wudsn.tools.dis6502.model.FileType;
@@ -24,6 +26,8 @@ import com.wudsn.tools.dis6502.model.SegmentList;
 import com.wudsn.tools.dis6502.model.SegmentListInserter;
 import com.wudsn.tools.dis6502.model.system.ComputerSystem;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
+import com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader;
+import com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader.CartridgeImport;
 
 /**
  * The Atari 800 computer system: the primary/default target of this tool.
@@ -45,14 +49,6 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
  * @author Peter Dell
  */
 public final class Atari800 extends ComputerSystem {
-
-	private static final int CAR_HEADER_SIZE = 16;
-	private static final int SIZE_4K = 0x1000;
-	private static final int SIZE_8K = 0x2000;
-	private static final int SIZE_16K = 0x4000;
-	private static final int SIZE_4K_CAR = SIZE_4K + CAR_HEADER_SIZE;
-	private static final int SIZE_8K_CAR = SIZE_8K + CAR_HEADER_SIZE;
-	private static final int SIZE_16K_CAR = SIZE_16K + CAR_HEADER_SIZE;
 
 	private static final int SDX_SYMBOL_LEN = 8;
 
@@ -112,11 +108,9 @@ public final class Atari800 extends ComputerSystem {
 			return FileType.EXECUTABLE_FILE;
 		}
 
-		// 4k, 8k or 16k ROM image?
-		if (fileSize == SIZE_4K || fileSize == SIZE_8K || fileSize == SIZE_16K) {
-			return FileType.ROM_IMAGE_FILE;
-		}
-		if (fileSize == SIZE_4K_CAR || fileSize == SIZE_8K_CAR || fileSize == SIZE_16K_CAR) {
+		// Cartridge image? Any CART file counts, so that a wrong or unsupported type gets a specific error.
+		if (AtariCartridgeReader.hasCartridgeHeader(fileSize, content) || AtariCartridgeReader
+				.isSupported(Platform.ATARI_800, AtariCartridgeReader.detectCartridgeType(Platform.ATARI_800, fileSize, content))) {
 			return FileType.ROM_IMAGE_FILE;
 		}
 
@@ -411,64 +405,27 @@ public final class Atari800 extends ComputerSystem {
 		}
 	}
 
+	/**
+	 * Reads a cartridge image via {@link AtariCartridgeReader} and types the
+	 * cartridge header in the last 6 bytes of the bank visible after power-on:
+	 * run address, cartridge present flag, option byte and init address - at
+	 * $BFFA for the left slot, $9FFA for the right slot.
+	 */
 	@Override
 	protected void readROMFile(SegmentListInserter segmentListInserter, InputStream inputStream, long fileSize)
 			throws IOException {
-		int base4K = 0xB000;
-		int end4K = 0xBFFF;
-		int base8K = 0xA000;
-		int end8K = 0xBFFF;
-		int base16K = 0x8000;
-		int end16K = 0xBFFF;
-
-		long bytesRemaining = fileSize;
-
-		if (bytesRemaining == SIZE_8K_CAR || bytesRemaining == SIZE_16K_CAR) {
-			byte[] carHeader = new byte[CAR_HEADER_SIZE];
-			readFully(inputStream, carHeader);
-			if (carHeader[0] != 'C' || carHeader[1] != 'A' || carHeader[2] != 'R' || carHeader[3] != 'T') {
-				// ERROR: Invalid stream header. Stream is not a CART stream.
-				throw new IOException(Messages.E054.format());
-			}
-			bytesRemaining -= CAR_HEADER_SIZE;
+		CartridgeImport cartridgeImport = AtariCartridgeReader.readCartridge(Platform.ATARI_800, null,
+				segmentListInserter, inputStream, fileSize);
+		CartridgeType cartridgeType = cartridgeImport.cartridgeType();
+		boolean rightSlot = cartridgeType == CartridgeType.CARTRIDGE_RIGHT_4
+				|| cartridgeType == CartridgeType.CARTRIDGE_RIGHT_8;
+		Segment segment = cartridgeImport.initialSegment();
+		if (segment != null && segment.wEnd == (rightSlot ? 0x9FFF : 0xBFFF)) {
+			int offset = segment.getSize() - 6;
+			segment.setType(offset, MemoryType.LABEL, 2);
+			segment.setType(offset + 2, MemoryType.BYTE, 2);
+			segment.setType(offset + 4, MemoryType.LABEL, 2);
 		}
-
-		// Read only 4K, 8K, and 16K cartridges.
-		
-		int begin;
-		int end;
-		if (bytesRemaining == SIZE_4K) {
-			begin = base4K;
-			end = end4K;
-		} else if (bytesRemaining == SIZE_8K) {
-			begin = base8K;
-			end = end8K;
-		} else if (bytesRemaining == SIZE_16K) {
-			begin = base16K;
-			end = end16K;
-		} else {
-			// ERROR: Unsupported cartridge size {0}.
-			throw new IOException(Messages.E055.format(String.valueOf(bytesRemaining)));
-		}
-
-		// Read segment data.
-		Segment segment = segmentListInserter.insertSegment();
-
-		segment.wBegin = begin;
-		segment.wEnd = end;
-		segment.bBinary = true;
-		int size = segment.wEnd - segment.wBegin + 1;
-		segment.createMemoryBlockFromFile(size, inputStream);
-
-		// Change the type of the last 6 bytes.
-		// TODO: Put this into a method for all Atari ROMs.
-		int offset = (int) bytesRemaining - 6;
-		segment.setType(offset++, MemoryType.LABEL);
-		segment.setType(offset++, MemoryType.LABEL);
-		segment.setType(offset++, MemoryType.BYTE);
-		segment.setType(offset++, MemoryType.BYTE);
-		segment.setType(offset++, MemoryType.LABEL);
-		segment.setType(offset++, MemoryType.LABEL);
 	}
 
 	/**

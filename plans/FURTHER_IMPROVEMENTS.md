@@ -25,7 +25,9 @@ files, but there is no translated properties file at all yet (no
 
 Not port gaps - identical in C++ - but limits a user will meet:
 
-- Atari 5200 bank-switched cartridges and `.CAR` files are not supported.
+- Not every Atari 800 and Atari 5200 cartridge type can be imported yet;
+  [`12_CARTRIDGE_IMPORT_PLAN.md`](12_CARTRIDGE_IMPORT_PLAN.md) is in
+  progress.
 - SpartaDOS X relocation with base address `$0000` does not work (test
   `unit005`, disabled in C++ as well).
 - The very old `DIS6502WRK10` workspace format cannot be loaded (`WRK14`

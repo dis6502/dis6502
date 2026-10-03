@@ -29,6 +29,7 @@ import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogicTest;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemTest;
+import com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReaderTest;
 import com.wudsn.tools.dis6502.model.system.atari800.AtariDiskImageTest;
 import com.wudsn.tools.dis6502.ui.DialogTextsTest;
 import com.wudsn.tools.dis6502.ui.FileChoosersTest;
@@ -138,6 +139,7 @@ public final class TestRunner {
 		runTest("WorkspaceLogicTest", WorkspaceLogicTest::testWorkspaceLogic);
 		runTest("MemoryInspectorTest", MemoryInspectorTest::testMemoryInspectorType);
 		runTest("AtariDiskImageTest", AtariDiskImageTest::testAtariDiskImage);
+		runTest("AtariCartridgeReaderTest", AtariCartridgeReaderTest::testAtariCartridgeReader);
 		runTest("MemoryInspectorStateTest", MemoryInspectorStateTest::testMemoryInspectorState);
 		runTest("ByteRangeSelectionTest", ByteRangeSelectionTest::testByteRangeSelection);
 		runTest("CharacterSetTest", CharacterSetTest::testCharacterSet);

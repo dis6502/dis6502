@@ -1,7 +1,6 @@
 # Importing every Atari 800 and Atari 5200 cartridge type
 
-Status: Planned (2026-10-03) - every design question is decided, see
-"Decisions".
+Status: In progress - step 1 done (2026-10-04), see "Progress".
 
 ## Goal
 
@@ -106,7 +105,8 @@ from `CartridgeType`; only the exceptions are spelled out.
 
 | Layout | Types | Mapping |
 |---|---|---|
-| Single window | standard, Williams, Express, Diamond, SDX, Phoenix, Blizzard, Atarimax, Turbosoft, Ultracart, aDawliah, MegaCart, MegaMax, SIC, The!Cart, 5200 Super Cart, 5200 standard | Every bank of `getBankSize()` at `getInitialBankAddress()` |
+| Single window | standard, Williams, Express, Diamond, SDX, Phoenix, Blizzard, Atarimax, Turbosoft, Ultracart, aDawliah, MegaCart, MegaMax, The!Cart, 5200 Super Cart, 5200 standard | Every bank of `getBankSize()` at one window address |
+| SIC! | 54, 55, 56 | 16 KB banks of two 8 KB halves: even 8 KB blocks at `$8000`, odd ones at `$A000` |
 | Fixed plus switchable | XEGS, switchable XEGS, XEGS 8F, DB 32, OSS (3, 15, 44, 45) | The bank at `getInitialBankOffset()` fixed at `getInitialBankAddress()`, all other banks at the switchable window (`$8000` for XEGS/DB, `$A000` for OSS) |
 | Bounty Bob | 18 (Atari 800), 7 (5200) | Two windows of four 4 KB banks each plus the fixed 8 KB bank at `getInitialBankOffset()` |
 | 5200 two chip / mirrored | 6, 16 | Per `cart.txt`; mirrors are not imported as separate segments |
@@ -247,10 +247,39 @@ at most 512 segments of 8 KB or 256 of 16 KB.
    5200 two-chip layouts and the Atrax descrambling in dis6502.
 4. Add `CartridgeTypeDialog` and the `CartridgeType` parameter through
    `openFile`/`addFile`/`readFile`.
-5. Update `plans/RULES_SYSTEM_SUBPACKAGES_PLAN.md` for the new shared
-   subpackage, `FURTHER_IMPROVEMENTS.md` ("Atari 5200 bank-switched
-   cartridges and `.CAR` files are not supported"), and remove the
-   `Atari800.java:463` row from `SOURCE_TODOS.md`.
+5. Remove the "Atari 5200 bank-switched cartridges and `.CAR` files" limit
+   from `FURTHER_IMPROVEMENTS.md`.
+
+## Progress
+
+**Step 1 (2026-10-04):** `model.system.atari.AtariCartridgeReader` with
+the single-window layouts of 44 types (36 Atari 800, 8 Atari 5200),
+detection from the CART header or the raw size, the 4 MB limit, and both
+`readROMFile` methods switched over. Both existing bugs are fixed: a 4 KB
+`.car` file is read, and a raw 40 KB 5200 image is no longer detected as a
+ROM image until Bounty Bob is supported. `ComputerSystem.guessFileType`
+reads 16 bytes. Messages E050 and E054 were removed, E094-E098 added.
+`AtariCartridgeReaderTest` covers detection, both platforms and every
+error. `RULES_SYSTEM_SUBPACKAGES_PLAN.md` has the rule for the shared
+subpackage, and the `Atari800.java:463` TODO is resolved.
+
+Findings while checking each layout against `cart.txt`:
+
+- **Wrong addresses in `CartridgeType`:** types 20 (5200 4 KB) and 46
+  (Blizzard 4 KB) appear at both `$A000` and `$B000`. `CartridgeType` says
+  `$A000`, but only `$B000` contains the vectors at the end, so the import
+  uses `$B000`. The window addresses are listed per type in the reader
+  instead of taken from `getInitialBankAddress()`.
+- **SIC! (54-56)** got its own layout row above; it is not a single window.
+- **Mirrors:** the smoke test's sample images of types 20 and 46 have their
+  init vector at `$A000`, the other mirror. Code reached through it is not
+  traced, since the segment is at `$B000`. Real cartridges may use either
+  mirror; not changed for now.
+- **Test data:** the `.car` files in the Atari ROM Maker test folder have
+  header type numbers that do not match their names (e.g. "Blizzard 16 KB
+  (40).car" has type 6), so the smoke test used the raw `.rom` files with
+  the type from their names instead: all 37 of them with a supported type
+  import, with plausible vectors.
 
 ## Decisions (2026-10-03)
 

@@ -30,9 +30,17 @@ nothing else:
 - `com.wudsn.tools.dis6502.model.system.unknown` - `Unknown` (no `.equ`:
   the unknown system has no equates)
 
+Code shared by a family of systems, but not by all of them, goes into one
+subpackage named after the family:
+
+- `com.wudsn.tools.dis6502.model.system.atari` - `AtariCartridgeReader`,
+  used by both `Atari800` and `Atari5200` (see
+  `12_CARTRIDGE_IMPORT_PLAN.md`)
+
 `test/.../model/system/` and `test/.../model/system/<name>/` mirror this
 exactly: `ComputerSystemTest` in the shared package, `Atari800Test`/
-`AtariDiskImageTest` inside `atari800`.
+`AtariDiskImageTest` inside `atari800`, `AtariCartridgeReaderTest` inside
+`atari`.
 
 ## What stays in `model/`, not in a system subpackage
 

@@ -90,9 +90,10 @@ public abstract class ComputerSystem {
 		if (fileSize < 4) {
 			return FileType.ANY_FILE;
 		}
-		byte[] header = new byte[4];
+		// 16 bytes: enough for an Atari CART header; a shorter file leaves the rest 0.
+		byte[] header = new byte[16];
 		try (DataInputStream in = new DataInputStream(new FileInputStream(filePath))) {
-			in.readFully(header);
+			in.readNBytes(header, 0, header.length);
 		}
 		return guessFileType(fileSize, header);
 	}

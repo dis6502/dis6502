@@ -10,13 +10,14 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
-import com.wudsn.tools.dis6502.Messages;
+import com.wudsn.tools.base.atari.Platform;
 import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentListInserter;
 import com.wudsn.tools.dis6502.model.system.ComputerSystem;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
+import com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader;
 
 /**
  * The Atari 5200 computer system.
@@ -61,34 +62,27 @@ public final class Atari5200 extends ComputerSystem {
 
 	@Override
 	public FileType guessFileType(long fileSize, byte[] content) {
-		// See https://github.com/atari800/atari800/blob/master/DOC/cart.txt
-		// Bank-switched cartridges and .CAR files are currently not yet supported.
-		// 4k, 8k, 16k, 32k or 40k ROM?
-		if (fileSize == 0x1000L || fileSize == 0x2000L || fileSize == 0x4000L || fileSize == 0x8000L
-				|| fileSize == 0xa000L) {
+		// Cartridge image? Any CART file counts, so that a wrong or unsupported type gets a specific error.
+		if (AtariCartridgeReader.hasCartridgeHeader(fileSize, content) || AtariCartridgeReader
+				.isSupported(Platform.ATARI_5200, AtariCartridgeReader.detectCartridgeType(Platform.ATARI_5200, fileSize, content))) {
 			return FileType.ROM_IMAGE_FILE;
 		}
 		return FileType.ANY_FILE;
 	}
 
+	/**
+	 * Reads a cartridge image via {@link AtariCartridgeReader} and, in the bank
+	 * visible after power-on, types the title and vectors at its end and
+	 * takes the segment title from it.
+	 */
 	@Override
 	protected void readROMFile(SegmentListInserter segmentListInserter, InputStream inputStream, long fileSize)
 			throws IOException {
-		// Check that the file length is less than 32K.
-		if (fileSize > 32768L) {
-			// ERROR: Only 32k ROMs are supported.
-			throw new IOException(Messages.E050.format());
+		Segment segment = AtariCartridgeReader
+				.readCartridge(Platform.ATARI_5200, null, segmentListInserter, inputStream, fileSize).initialSegment();
+		if (segment == null || segment.wEnd != 0xBFFF) {
+			return;
 		}
-
-		int memorySize = (int) fileSize;
-
-		// Read segment data.
-		Segment segment = segmentListInserter.insertSegment();
-
-		segment.wBegin = 0xC000 - memorySize;
-		segment.wEnd = 0xBFFF;
-		segment.bBinary = true;
-		segment.createMemoryBlockFromFile(memorySize, inputStream);
 
 		// Extract title from data and convert it to ASCII.
 		// There are 20 bytes at the end of the ROM, followed by two 16-bit vectors.
