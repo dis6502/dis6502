@@ -25,10 +25,11 @@ files, but there is no translated properties file at all yet (no
 
 Not port gaps - identical in C++ - but limits a user will meet:
 
-- Every Atari 800 and Atari 5200 cartridge type of WUDSN Base's
-  `CartridgeType` up to 4 MB can be imported except AST 32 KB; raw images
-  of ambiguous size are not offered as cartridges yet
-  ([`12_CARTRIDGE_IMPORT_PLAN.md`](12_CARTRIDGE_IMPORT_PLAN.md), step 4).
+- Cartridge images: AST 32 KB and the The!Cart types above 4 MB are not
+  imported, and WUDSN Base's `CartridgeType` lacks the types after 75 of
+  the current atari800 `cart.txt` (TODO there). Every other Atari 800 and
+  Atari 5200 type is, see
+  [`12_CARTRIDGE_IMPORT_PLAN.md`](12_CARTRIDGE_IMPORT_PLAN.md).
 - SpartaDOS X relocation with base address `$0000` does not work (test
   `unit005`, disabled in C++ as well).
 - The very old `DIS6502WRK10` workspace format cannot be loaded (`WRK14`

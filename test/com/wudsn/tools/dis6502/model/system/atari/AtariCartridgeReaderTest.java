@@ -40,12 +40,14 @@ public final class AtariCartridgeReaderTest {
 	private static final ComputerSystemFactory FACTORY = new ComputerSystemFactory();
 	private static final ComputerSystem ATARI800 = FACTORY.getComputerSystem(ComputerSystemType.ATARI800);
 	private static final ComputerSystem ATARI5200 = FACTORY.getComputerSystem(ComputerSystemType.ATARI5200);
+	private static final ComputerSystem C64 = FACTORY.getComputerSystem(ComputerSystemType.C64);
 
 	private AtariCartridgeReaderTest() {
 	}
 
 	public static void testAtariCartridgeReader() throws IOException {
 		testDetection();
+		testCandidates();
 		testAtari800();
 		testAtari800BankSwitching();
 		testAtari5200();
@@ -71,7 +73,9 @@ public final class AtariCartridgeReaderTest {
 
 		// File types.
 		Assert.boolEquals(ATARI800.guessFileType(0x0800, new byte[16]) == FileType.ROM_IMAGE_FILE, true);
-		Assert.boolEquals(ATARI800.guessFileType(0x8000, new byte[16]) == FileType.ANY_FILE, true);
+		Assert.boolEquals(ATARI800.guessFileType(0x3000, new byte[16]) == FileType.ANY_FILE, true);
+		// A raw image of a size that cartridge types have is a ROM image; the user chooses the type.
+		Assert.boolEquals(ATARI800.guessFileType(0x8000, new byte[16]) == FileType.ROM_IMAGE_FILE, true);
 		// A 4 KB CART file was detected before step 1, but could not be read.
 		byte[] std4 = createCartridgeFile(CartridgeType.CARTRIDGE_STD_4);
 		Assert.boolEquals(ATARI800.guessFileType(std4.length, std4) == FileType.ROM_IMAGE_FILE, true);
@@ -81,7 +85,7 @@ public final class AtariCartridgeReaderTest {
 		// A raw 40 KB 5200 image is Bounty Bob.
 		Assert.boolEquals(ATARI5200.guessFileType(0xA000, new byte[16]) == FileType.ROM_IMAGE_FILE, true);
 
-		// Candidates for a raw 64 KB image, sorted by text.
+		// Candidates for a raw 64 KB image, sorted by text ignoring case ("aDawliah" first).
 		List<CartridgeType> candidates = CartridgeReader.getCandidateTypes(Platform.ATARI_800, 0x10000);
 		List<CartridgeType> expected = Arrays.asList(CartridgeType.CARTRIDGE_WILL_64, CartridgeType.CARTRIDGE_EXP_64,
 				CartridgeType.CARTRIDGE_DIAMOND_64, CartridgeType.CARTRIDGE_SDX_64,
@@ -90,11 +94,45 @@ public final class AtariCartridgeReaderTest {
 				CartridgeType.CARTRIDGE_XEGS_8F_64, CartridgeType.CARTRIDGE_ATRAX_SDX_64);
 		Assert.longEquals(candidates.size(), expected.size());
 		Assert.boolEquals(candidates.containsAll(expected), true);
+		Assert.boolEquals(candidates.get(0) == CartridgeType.CARTRIDGE_ADAWLIAH_64, true);
 		for (int i = 1; i < candidates.size(); i++) {
-			Assert.boolEquals(candidates.get(i - 1).getText().compareTo(candidates.get(i).getText()) <= 0, true);
+			Assert.boolEquals(candidates.get(i - 1).getText().compareToIgnoreCase(candidates.get(i).getText()) <= 0, true);
 		}
 		Assert.boolEquals(CartridgeReader.getCandidateTypes(Platform.ATARI_5200, 0x10000)
 				.equals(List.of(CartridgeType.CARTRIDGE_5200_SUPER_64)), true);
+	}
+
+	/** The types offered in the cartridge type dialog, and reading a raw image as the chosen type. */
+	private static void testCandidates() throws IOException {
+		// Raw 64 KB: every importable 64 KB type of the platform.
+		List<CartridgeType> candidates = ATARI800.getCartridgeTypeCandidates(0x10000, new byte[16]);
+		Assert.boolEquals(candidates.equals(CartridgeReader.getCandidateTypes(Platform.ATARI_800, 0x10000)), true);
+		Assert.longEquals(candidates.size(), 11);
+		Assert.boolEquals(ATARI5200.getCartridgeTypeCandidates(0x10000, new byte[16])
+				.equals(List.of(CartridgeType.CARTRIDGE_5200_SUPER_64)), true);
+		// One candidate is still a choice: the image may be plain data.
+		Assert.boolEquals(ATARI800.getCartridgeTypeCandidates(0xA000, new byte[16])
+				.equals(List.of(CartridgeType.CARTRIDGE_BBSB_40)), true);
+
+		// No choice: the type is known from a CART header or a standard size, or no type has the size.
+		byte[] file = createCartridgeFile(CartridgeType.CARTRIDGE_WILL_64);
+		Assert.boolEquals(ATARI800.getCartridgeTypeCandidates(file.length, file).isEmpty(), true);
+		Assert.boolEquals(ATARI800.getCartridgeTypeCandidates(0x2000, new byte[16]).isEmpty(), true);
+		Assert.boolEquals(ATARI800.getCartridgeTypeCandidates(0x3000, new byte[16]).isEmpty(), true);
+		// The!Cart 32 MB is larger than the import limit.
+		Assert.boolEquals(ATARI800.getCartridgeTypeCandidates(0x2000000, new byte[16]).isEmpty(), true);
+		// Systems without cartridges.
+		Assert.boolEquals(C64.getCartridgeTypeCandidates(0x10000, new byte[16]).isEmpty(), true);
+
+		// Raw 64 KB read as the chosen XEGS 64 KB: banks 0-6 at $8000, bank 7 at $A000.
+		SegmentList segmentList = read(ATARI800, createContent(0x10000), CartridgeType.CARTRIDGE_XEGS_64);
+		Assert.longEquals(segmentList.getCount(), 8);
+		assertSegment(segmentList.getSegment(6), 0x8000, 0x9FFF, 0xC000);
+		assertSegment(segmentList.getSegment(7), 0xA000, 0xBFFF, 0xE000);
+		assertCartridgeHeaderTyped(segmentList.getSegment(7));
+		// The same image read as the chosen Williams 64 KB: 8 banks at $A000.
+		segmentList = read(ATARI800, createContent(0x10000), CartridgeType.CARTRIDGE_WILL_64);
+		assertSegment(segmentList.getSegment(6), 0xA000, 0xBFFF, 0xC000);
 	}
 
 	private static void testAtari800() throws IOException {
@@ -323,10 +361,15 @@ public final class AtariCartridgeReaderTest {
 	}
 
 	private static SegmentList read(ComputerSystem computerSystem, byte[] file) throws IOException {
+		return read(computerSystem, file, null);
+	}
+
+	private static SegmentList read(ComputerSystem computerSystem, byte[] file, CartridgeType cartridgeType)
+			throws IOException {
 		SegmentList segmentList = new SegmentList(null);
 		SegmentListInserter segmentListInserter = segmentList.createInserter();
 		computerSystem.readFile(FileType.ROM_IMAGE_FILE, new ByteArrayInputStream(file), file.length,
-				segmentListInserter);
+				segmentListInserter, cartridgeType);
 		segmentListInserter.apply();
 		return segmentList;
 	}

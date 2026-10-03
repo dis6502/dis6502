@@ -100,6 +100,11 @@ public final class Atari800 extends ComputerSystem {
 	}
 
 	@Override
+	public List<CartridgeType> getCartridgeTypeCandidates(long fileSize, byte[] header) {
+		return AtariCartridgeReader.getCandidateTypes(Platform.ATARI_800, fileSize, header);
+	}
+
+	@Override
 	public FileType guessFileType(long fileSize, byte[] content) {
 		// DOS 2.5 ($ffff) or SDX header ($fffa, $fffe)?
 		int headerValue = (content[0] & 0xFF) | ((content[1] & 0xFF) << 8);
@@ -124,6 +129,11 @@ public final class Atari800 extends ComputerSystem {
 		if (fileSize == 92160L || fileSize == 133120L || fileSize == 92176L || fileSize == 133136L
 				|| ((content[0] & 0xFF) == 0x96 && (content[1] & 0xFF) == 0x02 && fileSize <= 133136L)) {
 			return FileType.DISK_IMAGE_BOOT_SECTORS;
+		}
+
+		// Raw image of a size that a cartridge type has? The user chooses.
+		if (!getCartridgeTypeCandidates(fileSize, content).isEmpty()) {
+			return FileType.ROM_IMAGE_FILE;
 		}
 
 		return FileType.ANY_FILE;
@@ -413,13 +423,12 @@ public final class Atari800 extends ComputerSystem {
 	 * $BFFA for the left slot, $9FFA for the right slot.
 	 */
 	@Override
-	protected void readROMFile(SegmentListInserter segmentListInserter, InputStream inputStream, long fileSize)
-			throws IOException {
-		CartridgeImport cartridgeImport = AtariCartridgeReader.readCartridge(Platform.ATARI_800, null,
+	protected void readROMFile(SegmentListInserter segmentListInserter, InputStream inputStream, long fileSize,
+			CartridgeType cartridgeType) throws IOException {
+		CartridgeImport cartridgeImport = AtariCartridgeReader.readCartridge(Platform.ATARI_800, cartridgeType,
 				segmentListInserter, inputStream, fileSize);
-		CartridgeType cartridgeType = cartridgeImport.cartridgeType();
-		boolean rightSlot = cartridgeType == CartridgeType.CARTRIDGE_RIGHT_4
-				|| cartridgeType == CartridgeType.CARTRIDGE_RIGHT_8;
+		boolean rightSlot = cartridgeImport.cartridgeType() == CartridgeType.CARTRIDGE_RIGHT_4
+				|| cartridgeImport.cartridgeType() == CartridgeType.CARTRIDGE_RIGHT_8;
 		Segment segment = cartridgeImport.initialSegment();
 		if (segment != null && segment.wEnd == (rightSlot ? 0x9FFF : 0xBFFF)) {
 			int offset = segment.getSize() - 6;

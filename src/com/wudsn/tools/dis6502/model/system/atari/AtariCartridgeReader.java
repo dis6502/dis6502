@@ -52,6 +52,23 @@ public final class AtariCartridgeReader {
 	}
 
 	/**
+	 * The cartridge types of {@code platform} a file could be, for the user to
+	 * choose from: empty if its type is known - from a CART header, or a raw
+	 * image of a standard size - or no importable type has its size.
+	 *
+	 * @param header the file's first 16 bytes
+	 */
+	public static List<CartridgeType> getCandidateTypes(Platform platform, long fileSize, byte[] header) {
+		if (CartridgeReader.hasCartridgeHeader(fileSize, header)
+				|| CartridgeReader.detectCartridgeType(platform, fileSize, header) != CartridgeType.UNKNOWN) {
+			return List.of();
+		}
+		List<CartridgeType> result = CartridgeReader.getCandidateTypes(platform, fileSize);
+		result.removeIf(cartridgeType -> !isSupported(platform, cartridgeType));
+		return result;
+	}
+
+	/**
 	 * Reads a cartridge image of {@code fileSize} bytes, raw or with CART
 	 * header, and inserts one segment per bank.
 	 *

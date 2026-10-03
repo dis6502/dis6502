@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
+import com.wudsn.tools.base.atari.CartridgeType;
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.model.system.ComputerSystem;
@@ -152,9 +153,14 @@ public final class WorkspaceLogic {
 	}
 
 	public boolean addFile(Workspace workspace, FileType fileType, String filePath) {
+		return addFile(workspace, fileType, filePath, null);
+	}
+
+	/** @param cartridgeType for a ROM image, the cartridge type the user chose; otherwise {@code null} */
+	public boolean addFile(Workspace workspace, FileType fileType, String filePath, CartridgeType cartridgeType) {
 		File file = new File(filePath);
 		try (InputStream inputStream = new FileInputStream(file)) {
-			return addFile(workspace, fileType, inputStream, file.length());
+			return addFile(workspace, fileType, inputStream, file.length(), cartridgeType);
 		} catch (IOException ex) {
 			application.sendErrorMessage(ex);
 			return false;
@@ -162,10 +168,15 @@ public final class WorkspaceLogic {
 	}
 
 	public boolean addFile(Workspace workspace, FileType fileType, InputStream inputStream, long fileSize) {
+		return addFile(workspace, fileType, inputStream, fileSize, null);
+	}
+
+	private boolean addFile(Workspace workspace, FileType fileType, InputStream inputStream, long fileSize,
+			CartridgeType cartridgeType) {
 		SegmentListInserter segmentListInserter = workspace.getSegmentList().createInserter();
 		ComputerSystem computerSystem = workspace.getComputerSystem();
 		try {
-			computerSystem.readFile(fileType, inputStream, fileSize, segmentListInserter);
+			computerSystem.readFile(fileType, inputStream, fileSize, segmentListInserter, cartridgeType);
 		} catch (IOException ex) {
 			segmentListInserter.cancel();
 			application.sendErrorMessage(ex);

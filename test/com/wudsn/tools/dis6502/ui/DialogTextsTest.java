@@ -5,14 +5,21 @@
  */
 package com.wudsn.tools.dis6502.ui;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.SwingUtilities;
 
+import com.wudsn.tools.base.atari.CartridgeType;
 import com.wudsn.tools.base.gui.ValueSetField;
 import com.wudsn.tools.base.repository.ValueSet;
 import com.wudsn.tools.dis6502.Application;
@@ -49,6 +56,7 @@ public final class DialogTextsTest {
 			try {
 				testDialogs();
 				testValueSetFields();
+				testCartridgeTypeDialog();
 			} catch (Exception ex) {
 				throw new RuntimeException(ex);
 			}
@@ -60,6 +68,7 @@ public final class DialogTextsTest {
 		Application application = new Application();
 		checkDialog("AboutDialog", () -> new AboutDialog(null));
 		checkDialog("AssembleDialog", () -> new AssembleDialog(null));
+		checkDialog("CartridgeTypeDialog", () -> new CartridgeTypeDialog(null));
 		checkDialog("CommentDialog", () -> new CommentDialog(null));
 		checkDialog("DefaultFoldersDialog", () -> new DefaultFoldersDialog(null));
 		checkDialog("DisassemblyProgressDialog", () -> new DisassemblyProgressDialog(null, application));
@@ -96,6 +105,50 @@ public final class DialogTextsTest {
 				+ "ANTIC D (160 x  96 Pixels, 4 Colors) | ANTIC E (160 x 192 Pixels, 4 Colors) | ANTIC F (320 x 192 Pixels, 2 Colors)",
 				GraphicMode.ANTIC_D);
 		selectGraphicsDialog.dispose();
+	}
+
+	/**
+	 * The candidates are listed in the given order with their text and type
+	 * number, the first one selected; OK confirms the selected type, "Open as
+	 * Raw File" confirms without a type, Cancel does not confirm.
+	 */
+	private static void testCartridgeTypeDialog() throws IOException {
+		File file = File.createTempFile("CartridgeTypeDialogTest", ".rom");
+		try {
+			Files.write(file.toPath(), new byte[0x10000]);
+			List<CartridgeType> candidates = List.of(CartridgeType.CARTRIDGE_XEGS_64, CartridgeType.CARTRIDGE_WILL_64);
+			CartridgeTypeDialog dialog = new CartridgeTypeDialog(null);
+			try {
+				dialog.setInput(file, candidates);
+				JList<CartridgeType> list = dialog.getCartridgeTypeList();
+				Assert.longEquals(list.getModel().getSize(), 2);
+				Assert.boolEquals(list.getModel().getElementAt(1) == CartridgeType.CARTRIDGE_WILL_64, true);
+				Assert.longEquals(list.getSelectedIndex(), 0);
+				JLabel renderer = (JLabel) list.getCellRenderer().getListCellRendererComponent(list,
+						CartridgeType.CARTRIDGE_WILL_64, 1, false, false);
+				Assert.stringEquals(renderer.getText(), CartridgeType.CARTRIDGE_WILL_64.getText() + " (8)");
+				UITest.checkTexts("CartridgeTypeDialog (filled)", dialog);
+
+				JButton[] buttons = dialog.getButtons();
+				list.setSelectedIndex(1);
+				buttons[0].doClick();
+				Assert.boolEquals(dialog.isConfirmed(), true);
+				Assert.boolEquals(dialog.getCartridgeType() == CartridgeType.CARTRIDGE_WILL_64, true);
+
+				dialog.setInput(file, candidates);
+				buttons[1].doClick();
+				Assert.boolEquals(dialog.isConfirmed(), true);
+				Assert.isNull(dialog.getCartridgeType());
+
+				dialog.setInput(file, candidates);
+				buttons[2].doClick();
+				Assert.boolEquals(dialog.isConfirmed(), false);
+			} finally {
+				dialog.dispose();
+			}
+		} finally {
+			Files.delete(file.toPath());
+		}
 	}
 
 	private static void checkDialog(String name, Supplier<JDialog> constructor) {

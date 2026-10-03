@@ -94,6 +94,10 @@ public final class DataTypes extends NLS {
 	public static DataType DisassemblyProgressDialog_Pass = new DataType(String.class);
 	public static DataType DisassemblyProgressDialog_Segment = new DataType(String.class);
 
+	// CartridgeTypeDialog.
+	public static DataType CartridgeTypeDialog_File = new DataType(String.class);
+	public static DataType CartridgeTypeDialog_CartridgeType = new DataType(String.class);
+
 	// DiskImageExecutableFileDialog.
 	public static DataType DiskImageExecutableFileDialog_DiskImageFile = new DataType(String.class);
 	public static DataType DiskImageExecutableFileDialog_ExecutableFileName = new DataType(String.class);

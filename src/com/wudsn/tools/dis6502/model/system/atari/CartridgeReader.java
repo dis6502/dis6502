@@ -178,7 +178,7 @@ public final class CartridgeReader {
 	 *
 	 * @param platform The platform, not <code>null</code>.
 	 * @param fileSize The size of the raw image in bytes.
-	 * @return The modifiable list of types, sorted by their text, may be empty.
+	 * @return The modifiable list of types, sorted by their text ignoring case, may be empty.
 	 */
 	public static List<CartridgeType> getCandidateTypes(Platform platform, long fileSize) {
 		List<CartridgeType> result = new ArrayList<CartridgeType>();
@@ -190,7 +190,7 @@ public final class CartridgeReader {
 		Collections.sort(result, new Comparator<CartridgeType>() {
 			@Override
 			public int compare(CartridgeType a, CartridgeType b) {
-				return a.getText().compareTo(b.getText());
+				return a.getText().compareToIgnoreCase(b.getText());
 			}
 		});
 		return result;

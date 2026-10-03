@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
+import com.wudsn.tools.base.atari.CartridgeType;
 import com.wudsn.tools.base.atari.Platform;
 import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.MemoryType;
@@ -62,10 +63,19 @@ public final class Atari5200 extends ComputerSystem {
 	}
 
 	@Override
+	public List<CartridgeType> getCartridgeTypeCandidates(long fileSize, byte[] header) {
+		return AtariCartridgeReader.getCandidateTypes(Platform.ATARI_5200, fileSize, header);
+	}
+
+	@Override
 	public FileType guessFileType(long fileSize, byte[] content) {
 		// Cartridge image? Any CART file counts, so that a wrong or unsupported type gets a specific error.
 		if (CartridgeReader.hasCartridgeHeader(fileSize, content) || AtariCartridgeReader
 				.isSupported(Platform.ATARI_5200, CartridgeReader.detectCartridgeType(Platform.ATARI_5200, fileSize, content))) {
+			return FileType.ROM_IMAGE_FILE;
+		}
+		// Raw image of a size that a cartridge type has? The user chooses.
+		if (!getCartridgeTypeCandidates(fileSize, content).isEmpty()) {
 			return FileType.ROM_IMAGE_FILE;
 		}
 		return FileType.ANY_FILE;
@@ -77,10 +87,10 @@ public final class Atari5200 extends ComputerSystem {
 	 * takes the segment title from it.
 	 */
 	@Override
-	protected void readROMFile(SegmentListInserter segmentListInserter, InputStream inputStream, long fileSize)
-			throws IOException {
-		Segment segment = AtariCartridgeReader
-				.readCartridge(Platform.ATARI_5200, null, segmentListInserter, inputStream, fileSize).initialSegment();
+	protected void readROMFile(SegmentListInserter segmentListInserter, InputStream inputStream, long fileSize,
+			CartridgeType cartridgeType) throws IOException {
+		Segment segment = AtariCartridgeReader.readCartridge(Platform.ATARI_5200, cartridgeType, segmentListInserter,
+				inputStream, fileSize).initialSegment();
 		if (segment == null || segment.wEnd != 0xBFFF) {
 			return;
 		}

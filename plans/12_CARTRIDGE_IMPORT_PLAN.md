@@ -1,6 +1,7 @@
 # Importing every Atari 800 and Atari 5200 cartridge type
 
-Status: In progress - steps 1 to 3 done (2026-10-04); next is step 4.
+Status: Done (2026-10-04) - steps 1 to 5; step 6, moving `CartridgeReader`
+to WUDSN Base, is left for later.
 
 ## Goal
 
@@ -366,6 +367,24 @@ and their TODO are gone. `AtariCartridgeReaderTest` checks each layout with
 images whose 4 KB pages carry their page number, so every segment's file
 offset is checked exactly. The smoke test imports all 63 sample `.rom`
 files of a supported type, Atrax included, with plausible vectors.
+
+**Steps 4 and 5 (2026-10-04), dis6502:** `ComputerSystem.getCartridgeTypeCandidates`
+(empty by default; the Atari systems return the importable types of the
+size of a raw image without a standard size), and a `CartridgeType`
+parameter through `WorkspaceLogic.addFile`, `ComputerSystem.readFile` and
+`readROMFile`, the old overloads passing `null`. Both Atari systems'
+`guessFileType` return `ROM_IMAGE_FILE` for such an image - the Atari 800
+only after the cassette and disk image checks. `Dis6502.openReadableFile`
+shows the new `CartridgeTypeDialog` (`ui/`): the candidates with text and
+type number, sorted by text ignoring case, the first selected; OK, "Open as
+Raw File" (continues in `openRawFile`) and Cancel. Unlike planned, the
+dialog also appears for a single candidate (e.g. a raw 40 KB Atari 800
+image, only Bounty Bob): the image may just as well be plain data, and the
+dialog is where the user says so. Tested in `AtariCartridgeReaderTest`
+(candidates, reading as the chosen type) and `DialogTextsTest` (texts,
+list, the three buttons); a live smoke test opened a raw 64 KB file in the
+application and imported it as the chosen XEGS 64 KB. The cartridge entry
+in `FURTHER_IMPROVEMENTS.md` now lists only the remaining limits.
 
 ## Decisions (2026-10-03)
 

@@ -54,6 +54,12 @@ public final class Texts extends NLS {
 	public static String AtariCartridgeReader_BankTitle;
 	/** Same as {@link #AtariCartridgeReader_BankTitle}, for the bank visible after power-on. */
 	public static String AtariCartridgeReader_InitialBankTitle;
+	/** {@link com.wudsn.tools.dis6502.ui.CartridgeTypeDialog}'s window title. */
+	public static String CartridgeTypeDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.CartridgeTypeDialog}'s file field: the path and the size in bytes. */
+	public static String CartridgeTypeDialog_FileText;
+	/** {@link com.wudsn.tools.dis6502.ui.CartridgeTypeDialog}'s list entries: the type's text and number. */
+	public static String CartridgeTypeDialog_CartridgeTypeText;
 	/** {@link com.wudsn.tools.dis6502.ui.CommentDialog}'s window title. */
 	public static String CommentDialog_Title;
 	/** {@link com.wudsn.tools.dis6502.ui.DiskImageExecutableFileDialog}'s window title. */

@@ -28,6 +28,7 @@ import javax.swing.UIManager;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
+import com.wudsn.tools.base.atari.CartridgeType;
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.repository.Message;
 import com.wudsn.tools.dis6502.model.DefaultFolders;
@@ -66,6 +67,7 @@ import com.wudsn.tools.dis6502.model.system.atari800.ImgInfo;
 import com.wudsn.tools.dis6502.model.system.atari800.ImgRWPacket;
 import com.wudsn.tools.dis6502.ui.AboutDialog;
 import com.wudsn.tools.dis6502.ui.AssembleDialog;
+import com.wudsn.tools.dis6502.ui.CartridgeTypeDialog;
 import com.wudsn.tools.dis6502.ui.CommentDialog;
 import com.wudsn.tools.dis6502.ui.ComputerFont;
 import com.wudsn.tools.dis6502.ui.DefaultFoldersDialog;
@@ -749,13 +751,41 @@ public final class Dis6502 {
 	 * dedicated selection dialog of its own - {@link
 	 * FileType#EXECUTABLE_FILE}, {@link FileType#ROM_IMAGE_FILE}, {@link
 	 * FileType#CASSETTE_IMAGE_FILE}.
+	 * <p>
+	 * A ROM image whose cartridge type the computer system cannot tell - a raw
+	 * image of a size that one or more cartridge types share - goes through
+	 * {@link CartridgeTypeDialog} first: the user picks the type, or opens the
+	 * file as raw file via {@link #openRawFile} instead.
 	 */
 	private boolean openReadableFile(File file, FileType fileType, boolean add) {
+		CartridgeType cartridgeType = null;
+		if (fileType == FileType.ROM_IMAGE_FILE) {
+			List<CartridgeType> candidates;
+			try {
+				candidates = workspace.getComputerSystem().getCartridgeTypeCandidates(file);
+			} catch (IOException ex) {
+				application.sendErrorMessage(ex);
+				return false;
+			}
+			if (!candidates.isEmpty()) {
+				CartridgeTypeDialog dialog = new CartridgeTypeDialog(mainWindow.getFrame());
+				boolean confirmed = dialog.show(file, candidates);
+				cartridgeType = dialog.getCartridgeType();
+				dialog.dispose();
+				if (!confirmed) {
+					return false;
+				}
+				if (cartridgeType == null) {
+					return openRawFile(file, add);
+				}
+			}
+		}
+
 		application.sendMessage(getFileTypeOpenMessage(fileType), file.getPath());
 
 		clearWorkspaceUnlessAdding(add);
 
-		if (!workspaceLogic.addFile(workspace, fileType, file.getPath())) {
+		if (!workspaceLogic.addFile(workspace, fileType, file.getPath(), cartridgeType)) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
 					// ERROR: Could not add file "{0}". See the log for details. / Could not open file "{0}". See the log for details.
 					(add ? Messages.E040 : Messages.E049).format(file.getPath()),
