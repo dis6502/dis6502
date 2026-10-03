@@ -1,7 +1,6 @@
 # Importing every Atari 800 and Atari 5200 cartridge type
 
-Status: In progress - step 1 done, redesign decided (2026-10-04); next is
-step 2.
+Status: In progress - steps 1 and 2 done (2026-10-04); next is step 3.
 
 ## Goal
 
@@ -62,8 +61,8 @@ specific to dis6502. The rest is split off:
 regions:
 
 ```java
-/** A part of the image whose banks of bankSize bytes appear at addresses, bank i at addresses[i % addresses.length]. */
-public record BankRegion(int offset, int size, int bankSize, int[] addresses, int[] mirrorAddresses) {
+/** A part of the image whose banks of bankSize bytes appear at addresses, bank i at addresses.get(i % addresses.size()). */
+public static final class BankRegion { // getOffset(), getSize(), getBankSize(), getAddresses(), getMirrorAddresses()
 }
 
 public List<BankRegion> getBankRegions(); // Empty: no known mapping (AST 32).
@@ -104,12 +103,20 @@ public final class CartridgeReader {
 }
 
 /** The plain (header-less, decoded) image and its banks. */
-public record Cartridge(CartridgeType cartridgeType, byte[] content, List<Bank> banks, Bank initialBank) {
+public final class Cartridge { // getCartridgeType(), getContent(), getBanks(), getInitialBank()
 }
 
-public record Bank(int number, int offset, int size, int address) {
+public final class Bank { // getNumber(), getOffset(), getSize(), getAddress()
 }
 ```
+
+- **Java 8 source level.** Like all of WUDSN Base, `CartridgeReader` must
+  compile at Java 8: the Eclipse projects of WUDSN Base and of its
+  dependents (TheCartStudio, AtariROMMaker, AtariROMChecker at 1.8, older
+  ones below) still use that level, even though Maven compiles at
+  `--release 21`. So no records, `List.of`, `InputStream.readNBytes` or
+  other API after Java 8 - although dis6502 itself is at 21. `Cartridge` and
+  `Bank` are plain final classes with getters.
 
 - **Standard types for raw sizes** (Atari 800 2-16 KB, 5200 4-32 KB) move
   here from `AtariCartridgeReader`: a reading policy, not dis6502's.
@@ -320,6 +327,31 @@ Findings while checking each layout against `cart.txt`:
   the type from their names instead: all 37 of them with a supported type
   import, with plausible vectors.
 
+**Step 2 (2026-10-04), WUDSN Base:** `CartridgeType.BankRegion`,
+`getBankRegions()` for every type (empty for AST 32 and `UNKNOWN`),
+`isAtraxInterleaved()` and `getSize()`;
+`CartridgeFileUtility.encodeAtraxContent`/`decodeAtraxContent`, table-driven;
+the new `com.wudsn.tools.base.atari.Messages` (E700-E705, English and
+German). The `base.atari` module got a JUnit 5 test setup (`test/` folder,
+surefire 3.2.5, Eclipse `.classpath`): `CartridgeTypeTest` checks that the
+regions of every type cover its image and that the bank with the vectors
+ends at `$BFFF`, plus the exact regions of one type per layout;
+`CartridgeFileUtilityTest` compares the encoding with TheCartStudio's
+original loops and checks the decoding as their inverse; `MessagesTest`
+checks the English and German keys.
+
+`BankRegion` was first a record, which broke the Eclipse build: the WUDSN
+Base Eclipse projects compile at Java 1.8, and Maven, at 21, did not notice.
+It is now a plain final class, and `List.of`/`Set.of` were replaced with
+Java 8 API; the whole module and its tests compile with `javac --release 8`
+(decision 10).
+
+Finding: the bank holding the vectors is the one with the *last* byte of
+the initial bank (`getInitialBankOffset() + getBankSize() - 1`), not the
+first. For the two chip 5200 cartridge (6), `CartridgeType` describes the
+initial bank as the whole 16 KB image at offset 0, but only the second
+chip ends at `$BFFF`. `CartridgeReader` uses the same rule in step 3.
+
 ## Decisions (2026-10-03)
 
 1. **Package:** a new subpackage `model.system.atari` for code shared by
@@ -342,3 +374,9 @@ Findings while checking each layout against `cart.txt`:
 8. **Name:** the dis6502 part keeps the name `AtariCartridgeReader`, in
    line with the `read...` methods of `ComputerSystem`; the `Atari` prefix
    distinguishes it from `CartridgeReader`.
+9. **Tests of WUDSN Base:** in WUDSN Base itself, with a new JUnit 5 test
+   setup in the `base.atari` module.
+10. **Java level of WUDSN Base:** the sources stay compilable at Java 8, the
+   level of the Eclipse projects of WUDSN Base and its dependents; no
+   records or newer API. This applies to `CartridgeReader` as well, since it
+   moves to WUDSN Base.
