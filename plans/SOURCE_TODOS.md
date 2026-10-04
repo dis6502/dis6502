@@ -23,7 +23,6 @@ Not counted: the `; $XXXX` format text in `DisassemblyGridPanel`.
 
 | Location | TODO and finding |
 |---|---|
-| [`Disassembly.java`](../src/com/wudsn/tools/dis6502/model/Disassembly.java) (user comments) | Comments on an instruction's operand bytes are written before the instruction now, but not yet for display list instructions: the second address byte of an LMS or jump instruction is read without the comment lookup, so its comment is missing from the listing. |
 | [`Oric.java:68`](../src/com/wudsn/tools/dis6502/model/system/oric/Oric.java) | Are all zero-page addresses really base addresses on the Oric? Needs research. |
 | [`Oric.java:78`](../src/com/wudsn/tools/dis6502/model/system/oric/Oric.java) | File type detection should support the Orix header format (https://orix.oric.org/orix-header/) and the tape header format (https://forum.defence-force.org/viewtopic.php?t=201). |
 | [`DisassemblyResultFile.java:191`](../src/com/wudsn/tools/dis6502/model/DisassemblyResultFile.java) | `saveListing` should return the include files it wrote. No caller would use the list yet (e.g. for a success message). |

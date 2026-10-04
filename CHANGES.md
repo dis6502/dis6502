@@ -60,6 +60,9 @@ what is new, changed or fixed compared with it. Known limits are in
 - Fixed: **Find Next** stuck at the first match instead of moving on.
 - Fixed: a user comment on the last byte of a segment was missing from the
   listing when another segment followed.
+- Fixed: user comments on the operand bytes of an instruction, and on the
+  two address bytes of a display list LMS or jump instruction, were missing
+  from the listing. They are written before the instruction now.
 - Fixed: a user equate at the address of an instruction was also defined
   as that instruction's label, so the listing did not assemble ("Label
   declared twice").

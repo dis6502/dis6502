@@ -17,7 +17,8 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
  * - also on the last byte of a segment that another binary segment follows,
  * where the disassembler has already moved on to the next segment when it
  * looks the comment up, and on an instruction's operand bytes, which are
- * written before the instruction together with its opcode byte's comment.
+ * written before the instruction together with its opcode byte's comment -
+ * for CPU instructions and for the address of a display list instruction.
  *
  * @author Peter Dell
  */
@@ -29,6 +30,7 @@ public final class DisassemblyUserCommentTest {
 	public static void testUserComments() {
 		testSegmentEnd();
 		testOperandBytes();
+		testDisplayListAddress();
 	}
 
 	private static void testSegmentEnd() {
@@ -65,6 +67,35 @@ public final class DisassemblyUserCommentTest {
 		Assert.longEquals(indexOf(lines, "On the high byte"), opcode + 2);
 		Assert.boolEquals(lines.get(opcode + 3).toUpperCase().contains("LDA"), true);
 		Assert.longEquals(indexOf(lines, "On the RTS"), opcode + 4);
+	}
+
+	/**
+	 * A display list - 8 blank lines, LMS mode 2 at $3000, jump and wait for
+	 * VBLANK to $2000: each address is one word line, with the comments of
+	 * both its bytes directly before it.
+	 */
+	private static void testDisplayListAddress() {
+		Workspace workspace = new Workspace(new ComputerSystemFactory());
+		workspace.setComputerSystemType(ComputerSystemType.ATARI800);
+		int[] displayList = { 0x70, 0x42, 0x00, 0x30, 0x41, 0x00, 0x20 };
+		Segment segment = addCodeSegment(workspace, 0, 0x2000, displayList, "On the blank lines", null);
+		segment.setType(0, MemoryType.DLIST, displayList.length);
+		addComment(segment, 1, "On the LMS");
+		addComment(segment, 2, "On the LMS low byte");
+		addComment(segment, 3, "On the LMS high byte");
+		addComment(segment, 5, "On the jump low byte");
+		addComment(segment, 6, "On the jump high byte");
+
+		List<String> lines = disassemble(workspace);
+		int lms = indexOf(lines, "On the LMS low byte");
+		Assert.boolEquals(lms > indexOf(lines, "On the LMS"), true);
+		Assert.longEquals(indexOf(lines, "On the LMS high byte"), lms + 1);
+		Assert.boolEquals(lines.get(lms + 2).contains("3000"), true);
+
+		int jump = indexOf(lines, "On the jump low byte");
+		Assert.boolEquals(jump > lms, true);
+		Assert.longEquals(indexOf(lines, "On the jump high byte"), jump + 1);
+		Assert.boolEquals(lines.get(jump + 2).contains("2000"), true);
 	}
 
 	private static List<String> disassemble(Workspace workspace) {

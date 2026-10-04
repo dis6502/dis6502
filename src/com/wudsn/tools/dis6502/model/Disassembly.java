@@ -1144,17 +1144,18 @@ public final class Disassembly {
 		getNextByte();
 		int by = lastByte;
 		// The comments of all bytes of an instruction come before it: its operand bytes are read below
-		// without passing here. An unsupported opcode written as a single .byte is one byte. The offset is
-		// relative to the opcode's own segment: if its byte was the segment's last, getNextByte() has
-		// already moved on to the next segment.
-		// TODO: The same for display list instructions: the second address byte of an LMS or jump
-		// instruction is read without passing here, so its comment is not written.
+		// without passing here. An unsupported opcode written as a single .byte is one byte. The address
+		// of a display list LMS or jump instruction is written as one word, whose high byte is read
+		// below without passing here too. The offset is relative to the opcode's own segment: if its
+		// byte was the segment's last, getNextByte() has already moved on to the next segment.
 		int commentSize = 1;
 		if (byteType == MemoryType.CODE) {
 			Instruction instruction = instructionSet.getInstruction(by);
 			if (!instruction.isUnsupportedInstruction() || profile.useIllegalOpcodes) {
 				commentSize = instruction.getLength();
 			}
+		} else if (byteType == MemoryType.DLIST && disAnticLabel && !profile.directiveBYTEOnlyNumbersAllowed) {
+			commentSize = 2;
 		}
 		generateUserComment(oldSegmentIndex, oldPC - opcodeSegment.wBegin, commentSize);
 
