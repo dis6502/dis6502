@@ -7,7 +7,7 @@ Starting with version 4.0, development continues in Java/Swing instead of C++/Wi
 
 This will enable:
 - Usage on all modern platforms (Windows, Linux, macOS)
-- Usage of TrueType fonts
+- Free choice of the installed fonts for text, and the computers' authentic character sets
 - Support for high and dynamic screen resolutions
 - Better testing
 
