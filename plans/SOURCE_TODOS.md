@@ -18,7 +18,6 @@ Not counted: the `; $XXXX` format text in `DisassemblyGridPanel`.
 
 | Location | TODO and finding |
 |---|---|
-| [`DisassemblyWriter.java:51`](../src/com/wudsn/tools/dis6502/model/DisassemblyWriter.java) | Which bytes `showNonASCIIChararactersAsBytes` treats as non-ASCII depends on the character set. Now possible through `CharacterSet`; the ranges are still hardcoded. |
 | [`EquateList.java:256`](../src/com/wudsn/tools/dis6502/model/EquateList.java) | Consider the parent equate list and recursion. One level was added since (the `IOCB0+ICCOM` offset label, lines 267-272); the parent list and deeper recursion are missing. |
 
 ## Open - unchanged

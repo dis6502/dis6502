@@ -193,6 +193,38 @@ public final class CharacterSet extends ValueSet {
 		throw new IllegalStateException("No byte for screen code " + screenCode + ".");
 	}
 
+	/**
+	 * Whether the byte {@code value} displays in this set as the ASCII character
+	 * of the same code - so that it can stand in a string constant of a listing
+	 * and still look the same. Printable ASCII ({@code 0x20-0x7E}) minus the
+	 * codes whose glyph differs:
+	 * <ul>
+	 * <li>ATASCII: {@code 0x60} and {@code 0x7B} (graphics), {@code 0x7D} and
+	 * {@code 0x7E} (cursor control glyphs).</li>
+	 * <li>PETSCII Uppercase: everything above {@code 0x5B} except {@code 0x5D}:
+	 * {@code 0x5C} is a pound sign, {@code 0x5E}/{@code 0x5F} are arrows, and
+	 * {@code 0x60-0x7E} are graphics, so no lowercase letters.</li>
+	 * <li>PETSCII Lowercase: also no letters, since {@code 0x41-0x5A} show the
+	 * lowercase letters of other ASCII codes.</li>
+	 * <li>Oric ASCII (from its ROM): {@code 0x5E} is an up arrow, {@code 0x5F} a
+	 * pound sign, {@code 0x60} a copyright sign, {@code 0x7E} a checkerboard.</li>
+	 * </ul>
+	 */
+	public boolean isASCIICharacter(int value) {
+		switch (kind) {
+		case ATASCII:
+			return value >= 0x20 && value <= 0x7C && value != 0x60 && value != 0x7B;
+		case PETSCII_UPPERCASE:
+			return (value >= 0x20 && value <= 0x5B) || value == 0x5D;
+		case PETSCII_LOWERCASE:
+			return (value >= 0x20 && value <= 0x40) || value == 0x5B || value == 0x5D;
+		case ASCII:
+			return (value >= 0x20 && value <= 0x5D) || (value >= 0x61 && value <= 0x7D);
+		default:
+			throw new IllegalStateException("Unknown kind " + kind + ".");
+		}
+	}
+
 	/** The end-of-line byte of this set's encoding: {@code 0x9B} for ATASCII, {@code 0x0D} for PETSCII and ASCII. */
 	public int getReturnByte() {
 		return kind == Kind.ATASCII ? 0x9B : 0x0D;

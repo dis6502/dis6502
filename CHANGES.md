@@ -53,6 +53,10 @@ what is new, changed or fixed compared with it. Known limits are in
 - A byte range selected in the memory inspector selects every listing line
   it covers. The address comment of a selected line (`; $XXXX`) no longer
   overwrites text from column 35 on; it is appended to the end instead.
+- String constants (`.byte "..."`) only contain characters that look the
+  same in the computer's character set as in ASCII: for the C64, e.g., no
+  lowercase letters and no `\`, `^` or `_` (shown as graphics, a pound sign
+  and arrows in PETSCII). All other bytes are written as numbers.
 - Fixed: **Find Next** stuck at the first match instead of moving on.
 - Fixed: a user comment on the last byte of a segment was missing from the
   listing when another segment followed.

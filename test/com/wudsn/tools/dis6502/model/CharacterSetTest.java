@@ -21,6 +21,8 @@ public final class CharacterSetTest {
 	}
 
 	public static void testCharacterSet() {
+		testASCIICharacters();
+		testStringBytesPerSystem();
 		Assert.longEquals(CharacterSet.getValues().size(), 5);
 		for (CharacterSet characterSet : CharacterSet.getValues()) {
 			// Screen code 255 is the last of 256 glyphs - loading fails on any other file size.
@@ -102,6 +104,57 @@ public final class CharacterSetTest {
 		Assert.boolEquals(workspace.getViewCharacterSet() == atari, true);
 
 		Assert.log("CharacterSetTest completed");
+	}
+
+	/** The bytes that look like their ASCII character, hand-counted per set. */
+	private static void testASCIICharacters() {
+		Assert.longEquals(countASCIICharacters(CharacterSet.ATASCII_STANDARD), 91); // $20-$7C without $60, $7B.
+		Assert.longEquals(countASCIICharacters(CharacterSet.ATASCII_INTERNATIONAL), 91);
+		Assert.longEquals(countASCIICharacters(CharacterSet.PETSCII_UPPERCASE), 61); // $20-$5B, $5D.
+		Assert.longEquals(countASCIICharacters(CharacterSet.PETSCII_LOWERCASE), 35); // $20-$40, $5B, $5D.
+		Assert.longEquals(countASCIICharacters(CharacterSet.ORIC_ASCII), 91); // $20-$5D, $61-$7D.
+
+		Assert.boolEquals(CharacterSet.ATASCII_STANDARD.isASCIICharacter('a'), true);
+		Assert.boolEquals(CharacterSet.ATASCII_STANDARD.isASCIICharacter('~'), false);
+		Assert.boolEquals(CharacterSet.PETSCII_UPPERCASE.isASCIICharacter('A'), true);
+		Assert.boolEquals(CharacterSet.PETSCII_UPPERCASE.isASCIICharacter('\\'), false); // Pound sign.
+		Assert.boolEquals(CharacterSet.PETSCII_UPPERCASE.isASCIICharacter('a'), false); // Graphics.
+		Assert.boolEquals(CharacterSet.PETSCII_LOWERCASE.isASCIICharacter('A'), false); // Shows "a".
+		Assert.boolEquals(CharacterSet.PETSCII_LOWERCASE.isASCIICharacter('9'), true);
+		Assert.boolEquals(CharacterSet.ORIC_ASCII.isASCIICharacter('_'), false); // Pound sign.
+		Assert.boolEquals(CharacterSet.ORIC_ASCII.isASCIICharacter('{'), true);
+	}
+
+	private static int countASCIICharacters(CharacterSet characterSet) {
+		int count = 0;
+		for (int value = 0; value < 256; value++) {
+			if (characterSet.isASCIICharacter(value)) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/** String constants in listings follow the computer system's default character set. */
+	private static void testStringBytesPerSystem() {
+		DisassemblyWriter atari = createWriter(ComputerSystemType.ATARI800);
+		DisassemblyWriter c64 = createWriter(ComputerSystemType.C64);
+		DisassemblyWriter oric = createWriter(ComputerSystemType.ORIC);
+
+		Assert.boolEquals(atari.isByteAllowedInString('a'), true);
+		Assert.boolEquals(c64.isByteAllowedInString('a'), false);
+		Assert.boolEquals(c64.isByteAllowedInString('A'), true);
+		Assert.boolEquals(atari.isByteAllowedInString('\\'), true);
+		Assert.boolEquals(c64.isByteAllowedInString('\\'), false);
+		Assert.boolEquals(oric.isByteAllowedInString('_'), false);
+		Assert.boolEquals(oric.isByteAllowedInString('{'), true);
+		Assert.boolEquals(atari.isByteAllowedInString('{'), false);
+	}
+
+	private static DisassemblyWriter createWriter(ComputerSystemType computerSystemType) {
+		Workspace workspace = new Workspace(new ComputerSystemFactory());
+		workspace.setComputerSystemType(computerSystemType);
+		return new DisassemblyWriter(new Disassembly(), workspace);
 	}
 
 	private static void assertGlyph(CharacterSet characterSet, int screenCode, int... rows) {

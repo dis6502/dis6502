@@ -26,6 +26,7 @@ public final class DisassemblyWriter {
 	private final Profile profile;
 	private final int returnCharacter;
 	private final char quoteCharacter;
+	private final CharacterSet characterSet;
 
 	private int disNbBytes;
 	private MemoryType memoryType = MemoryType.UNKNOWN;
@@ -36,6 +37,8 @@ public final class DisassemblyWriter {
 		this.returnCharacter = workspace.getComputerSystem().getReturnCharacter();
 		this.profile = workspace.getProfile();
 		this.quoteCharacter = profile.quoteForASCIIStrings.charAt(0);
+		// The system's default, not the memory inspector's current one: switching the view never changes a listing.
+		this.characterSet = workspace.getComputerSystem().getDefaultCharacterSet();
 	}
 
 	private String getLineBuffer() {
@@ -48,9 +51,7 @@ public final class DisassemblyWriter {
 			return false;
 		}
 
-		// TODO: This actually depends on the character set of the computer system.
-		if (profile.showNonASCIIChararactersAsBytes
-				&& (value < 0x20 || value >= 0x7D || value == 0x60 || value == 0x7B)) {
+		if (profile.showNonASCIIChararactersAsBytes && !characterSet.isASCIICharacter(value)) {
 			return false;
 		}
 
