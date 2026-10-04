@@ -48,22 +48,22 @@ public final class EquateTest {
 
 		// Error cases.
 		assertEquateEquals(" = 123", EquateType.UNKNOWN, "", LabelAccess.UNKNOWN, 0, "",
-				"Character '=' at position 1 is not a valid start character for a label name.");
+				"Character \"=\" at position 2 is not a valid start character for a label name.");
 
 		assertEquateEquals("DECIMAL", EquateType.LABEL, "DECIMAL", LabelAccess.UNKNOWN, 0, "",
 				"No access qualifier specified.");
 		assertEquateEquals("DECIMAL * ", EquateType.LABEL, "DECIMAL", LabelAccess.UNKNOWN, 0, "",
-				"Character '*' at position 9 is not an access qualifier. Use '=', '<', '>' or '#'.");
+				"Character \"*\" at position 9 is not an access qualifier. Use \"=\", \"<\", \">\" or \"#\".");
 		assertEquateEquals("DECIMAL = ", EquateType.LABEL, "DECIMAL", LabelAccess.READ_WRITE, 0, "",
 				"No value specified.");
 		assertEquateEquals("DECIMAL = ; Comment", EquateType.LABEL, "DECIMAL", LabelAccess.READ_WRITE, 0, "",
-				"Characters '; Comment' at position 11 cannot be interpreted as a decimal number.");
+				"Characters \"; Comment\" at position 11 cannot be interpreted as a decimal number.");
 		assertEquateEquals("DECIMAL = abc", EquateType.LABEL, "DECIMAL", LabelAccess.READ_WRITE, 0, "",
-				"Characters 'abc' at position 11 cannot be interpreted as a decimal number.");
+				"Characters \"abc\" at position 11 cannot be interpreted as a decimal number.");
 		assertEquateEquals("HEX = $; Comment", EquateType.LABEL, "HEX", LabelAccess.READ_WRITE, 0, "",
-				"Characters '; Comment' at position 8 cannot be interpreted as a hexadecimal number.");
+				"Characters \"; Comment\" at position 8 cannot be interpreted as a hexadecimal number.");
 		assertEquateEquals("HEX = $xyz", EquateType.LABEL, "HEX", LabelAccess.READ_WRITE, 0, "",
-				"Characters 'xyz' at position 8 cannot be interpreted as a hexadecimal number.");
+				"Characters \"xyz\" at position 8 cannot be interpreted as a hexadecimal number.");
 	}
 
 	private static void assertEquateEquals(String actualLine, EquateType expectedEquateType, String expectedLabel,

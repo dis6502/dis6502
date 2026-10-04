@@ -306,6 +306,19 @@ public final class Messages extends NLS {
 	public static Message E092;
 	public static Message E093;
 
+	/**
+	 * {@link com.wudsn.tools.dis6502.model.Equate#readFrom}'s parse errors - shown
+	 * inside {@link #E004} for an equates file line, and in the equates dialog.
+	 * Positions count from 1.
+	 */
+	public static Message E094; // Invalid label start character: the character, its position.
+	public static Message E095; // No access qualifier.
+	public static Message E096; // Invalid access qualifier: the character, its position.
+	public static Message E097; // No value.
+	public static Message E098; // Invalid hexadecimal number: the characters, their position.
+	public static Message E099; // Invalid decimal number: the characters, their position.
+	public static Message E100; // Invalid character after the value: the character.
+
 	static {
 		initializeClass(Messages.class, null);
 	}

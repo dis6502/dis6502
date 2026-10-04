@@ -8,6 +8,7 @@ package com.wudsn.tools.dis6502.model;
 import org.w3c.dom.Element;
 
 import com.wudsn.tools.base.common.HexUtility;
+import com.wudsn.tools.dis6502.Messages;
 
 /**
  * One entry read from (or to be written to) an equates file: an empty line,
@@ -341,8 +342,8 @@ public final class Equate implements Xml.Serializable {
 		// We must have a label name starting with a letter or "_".
 		char c = line.charAt(index[0]);
 		if (!Character.isLetter(c) && c != '_') {
-			String error = "Character '" + c + "' at position " + index[0]
-					+ " is not a valid start character for a label name.";
+			// ERROR: Character "{0}" at position {1} is not a valid start character for a label name.
+			String error = Messages.E094.format(String.valueOf(c), String.valueOf(index[0] + 1));
 			return new ReadResult(equateType, "", labelAccess, address, comment, error);
 		}
 		equateType = EquateType.LABEL;
@@ -357,8 +358,9 @@ public final class Equate implements Xml.Serializable {
 		}
 
 		if (skipBlanks(line, index)) {
+			// ERROR: No access qualifier specified.
 			return new ReadResult(equateType, label.toString(), labelAccess, address, comment,
-					"No access qualifier specified.");
+					Messages.E095.format());
 		}
 
 		c = line.charAt(index[0]);
@@ -377,14 +379,15 @@ public final class Equate implements Xml.Serializable {
 			labelAccess = LabelAccess.IMMEDIATE;
 			break;
 		default:
-			String error = "Character '" + c + "' at position " + (index[0] + 1)
-					+ " is not an access qualifier. Use '=', '<', '>' or '#'.";
+			// ERROR: Character "{0}" at position {1} is not an access qualifier. Use "=", "<", ">" or "#".
+			String error = Messages.E096.format(String.valueOf(c), String.valueOf(index[0] + 1));
 			return new ReadResult(equateType, label.toString(), labelAccess, address, comment, error);
 		}
 		index[0]++;
 
 		if (skipBlanks(line, index)) {
-			return new ReadResult(equateType, label.toString(), labelAccess, address, comment, "No value specified.");
+			// ERROR: No value specified.
+			return new ReadResult(equateType, label.toString(), labelAccess, address, comment, Messages.E097.format());
 		}
 
 		// Now we must have an address (hex or decimal).
@@ -393,16 +396,16 @@ public final class Equate implements Xml.Serializable {
 			int start = index[0];
 			address = parseUnsignedInt(line, index, 16);
 			if (address < 0) {
-				String error = "Characters '" + line.substring(start) + "' at position " + (start + 1)
-						+ " cannot be interpreted as a hexadecimal number.";
+				// ERROR: Characters "{0}" at position {1} cannot be interpreted as a hexadecimal number.
+				String error = Messages.E098.format(line.substring(start), String.valueOf(start + 1));
 				return new ReadResult(equateType, label.toString(), labelAccess, 0, comment, error);
 			}
 		} else {
 			int start = index[0];
 			address = parseUnsignedInt(line, index, 10);
 			if (address < 0) {
-				String error = "Characters '" + line.substring(start) + "' at position " + (start + 1)
-						+ " cannot be interpreted as a decimal number.";
+				// ERROR: Characters "{0}" at position {1} cannot be interpreted as a decimal number.
+				String error = Messages.E099.format(line.substring(start), String.valueOf(start + 1));
 				return new ReadResult(equateType, label.toString(), labelAccess, 0, comment, error);
 			}
 		}
@@ -421,7 +424,8 @@ public final class Equate implements Xml.Serializable {
 			return new ReadResult(equateType, label.toString(), labelAccess, address, comment, "");
 		}
 
-		String error = "Invalid character '" + c + "' after value found. Line end or comment expected.";
+		// ERROR: Invalid character "{0}" after value found. Line end or comment expected.
+		String error = Messages.E100.format(String.valueOf(c));
 		return new ReadResult(equateType, label.toString(), labelAccess, address, comment, error);
 	}
 
