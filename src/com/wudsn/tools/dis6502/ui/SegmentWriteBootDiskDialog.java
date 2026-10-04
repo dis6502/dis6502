@@ -34,6 +34,7 @@ import com.wudsn.tools.dis6502.model.system.atari800.AtariDisk;
 import com.wudsn.tools.dis6502.model.system.atari800.AtariError;
 import com.wudsn.tools.dis6502.model.system.atari800.AtariFile;
 import com.wudsn.tools.dis6502.model.system.atari800.DiskImage;
+import com.wudsn.tools.dis6502.model.system.atari800.ImgError;
 
 /**
  * Turns a segment into a bootable Atari DOS disk: overwrites an existing disk
@@ -46,11 +47,9 @@ import com.wudsn.tools.dis6502.model.system.atari800.DiskImage;
  * etc. do. {@code writeBootDisk} stays here rather than moving to the model
  * layer. Like {@link AssembleDialog}, {@link #performOK} only closes the dialog
  * once a target file has actually been written or a real error occurred -
- * cancelling the save-file chooser leaves the dialog open.
- * <p>
- * TODO: {@link DiskImage#writeAbsoluteSector} never reports a write failure
- * (e.g. a write-protected target disk image) back to {@link #writeBootDisk}.
- * This dialog can therefore report success while having written nothing.
+ * cancelling the save-file chooser leaves the dialog open. A sector that
+ * cannot be written (e.g. to a write-protected disk image) stops the writing
+ * with an error.
  *
  * @author Peter Dell
  */
@@ -185,7 +184,11 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 				Arrays.fill(sector, headerSize, 128, (byte) 0);
 				System.arraycopy(segment.memoryBlock.getData(), segmentOffset, sector, headerSize, sectorSize);
 
-				DiskImage.writeAbsoluteSector(filePath, sectorNumber, sector);
+				ImgError result = DiskImage.writeAbsoluteSector(filePath, sectorNumber, sector);
+				if (DiskImage.isError(result)) {
+					// ERROR: Could not write disk image "{0}": {1}
+					throw new IOException(Messages.E093.format(filePath, DiskImage.getErrorText(result)));
+				}
 
 				headerSize = 0;
 				segmentOffset += sectorSize;

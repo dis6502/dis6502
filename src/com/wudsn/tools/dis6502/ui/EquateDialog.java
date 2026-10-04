@@ -12,6 +12,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
@@ -22,6 +23,7 @@ import javax.swing.event.DocumentListener;
 import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
 import com.wudsn.tools.dis6502.DataTypes;
+import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.Equate;
 import com.wudsn.tools.dis6502.model.EquateList;
@@ -147,11 +149,17 @@ public final class EquateDialog extends JDialog {
 		if (text.isEmpty()) {
 			return;
 		}
-		EquateList scratch = new EquateList(WorkspaceProperty.USER_EQUATES);
-		Equate equate = scratch.addEquate(text).equate;
-		if (equate == null) {
-			return; // TODO Error handling: report why the equate failed to parse.
+		EquateList.EquateResult result = parse(text);
+		if (result.equate == null) {
+			if (!result.error.isEmpty()) {
+				JOptionPane.showMessageDialog(this,
+						// ERROR: Cannot parse equate line "{0}". Error: {1}
+						Messages.E004.format(text, result.error), Texts.EquateDialog_EditTitle,
+						JOptionPane.ERROR_MESSAGE);
+			}
+			return;
 		}
+		Equate equate = result.equate;
 		int[] selectedIndices = equateJList.getSelectedIndices();
 		int newIndex;
 		if (selectedIndices.length == 1) {
@@ -164,6 +172,14 @@ public final class EquateDialog extends JDialog {
 		equateJList.setSelectedIndex(newIndex);
 		equateJList.ensureIndexIsVisible(newIndex);
 		deleteButton.setEnabled(true);
+	}
+
+	/**
+	 * Parses one equate line on its own: the equate, or the reason it cannot be
+	 * parsed. Package-private for tests.
+	 */
+	static EquateList.EquateResult parse(String text) {
+		return new EquateList(WorkspaceProperty.USER_EQUATES).addEquate(text);
 	}
 
 	/** Removes the currently selected lines from the list. */

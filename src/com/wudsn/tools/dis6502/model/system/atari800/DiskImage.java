@@ -155,16 +155,17 @@ public final class DiskImage {
 	 * to sector {@code sectorNumber} of {@code filePath}, merged into {@link
 	 * DiskImage} the same way {@link #readAbsoluteSector} already is - see this
 	 * class's javadoc.
-	 * <p>
-	 * A failure to determine the disk image's info (a missing/corrupt file) is
-	 * silently ignored rather than reported back to the caller: this method
-	 * returns {@code void}.
+	 *
+	 * @return the disk image type ({@link ImgError#ATR}/{@link ImgError#XFD})
+	 *         on success, otherwise the error, e.g. {@link
+	 *         ImgError#WRITE_PROTECT} - see {@link #isError} and {@link
+	 *         #getErrorText}
 	 */
-	public static void writeAbsoluteSector(String filePath, int sectorNumber, byte[] sectorData) {
+	public static ImgError writeAbsoluteSector(String filePath, int sectorNumber, byte[] sectorData) {
 		ImgInfo info = new ImgInfo();
 		getInfo(filePath, info);
 		if (isError(info.result)) {
-			return;
+			return info.result;
 		}
 
 		ImgRWPacket sector = new ImgRWPacket();
@@ -174,6 +175,7 @@ public final class DiskImage {
 		System.arraycopy(sectorData, 0, sector.sectorData, 0, Math.min(sectorData.length, sector.sectorData.length));
 
 		writeSector(sector);
+		return sector.result;
 	}
 
 	private static ImgError write(ImgInfo info, ImgRWPacket sector) {
@@ -235,6 +237,33 @@ public final class DiskImage {
 
 	public static boolean isError(ImgError error) {
 		return error != ImgError.XFD && error != ImgError.ATR;
+	}
+
+	/**
+	 * The text of a disk image read/write error, the same as {@link
+	 * #displayError} logs; empty for {@link ImgError#XFD}/{@link ImgError#ATR},
+	 * which are no errors.
+	 */
+	public static String getErrorText(ImgError error) {
+		switch (error) {
+		case BAD_MAGIC:
+			// ERROR: ATR file does not have a "NICKATARI" signature.
+			return Messages.E026.format();
+		case FILE_NOT_FOUND:
+			// ERROR: File does not exist.
+			return Messages.E028.format();
+		case OUT_OF_RANGE:
+			// ERROR: Sector out of range.
+			return Messages.E029.format();
+		case DISK_ERROR:
+			// ERROR: Disk error occurred.
+			return Messages.E027.format();
+		case WRITE_PROTECT:
+			// ERROR: Disk image is write protected.
+			return Messages.E030.format();
+		default:
+			return "";
+		}
 	}
 
 	/**
