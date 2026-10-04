@@ -25,8 +25,16 @@ public final class SegmentTest {
 		segment.wEnd = 0x3fff;
 		Assert.longEquals(segment.getSize(), 0);
 
+		Assert.boolEquals(segment.canMoveTo(0x2000), false); // Empty.
+
 		segment.createMemoryBlockFromBeginToEnd();
 		Assert.longEquals(segment.getSize(), 0x2000);
+
+		// An 8 KB segment fits up to $E000-$FFFF.
+		Assert.boolEquals(segment.canMoveTo(0x0000), true);
+		Assert.boolEquals(segment.canMoveTo(0xE000), true);
+		Assert.boolEquals(segment.canMoveTo(0xE001), false);
+		Assert.boolEquals(segment.canMoveTo(0xFFFF), false);
 
 		int offset = 0;
 		segment.setData(offset++, 0x020);

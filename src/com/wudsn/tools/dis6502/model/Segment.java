@@ -288,6 +288,15 @@ public final class Segment implements Xml.Serializable {
 		}
 	}
 
+	/**
+	 * Returns whether the segment, with its current size, fits into memory when
+	 * it starts at {@code begin}: its last byte must not be above $FFFF. An empty
+	 * segment cannot be moved.
+	 */
+	public boolean canMoveTo(int begin) {
+		return getSize() > 0 && begin >= 0 && begin + getSize() - 1 <= 0xFFFF;
+	}
+
 	/** Returns whether inserting {@code additionalSize} more bytes would keep the segment within {@link #MAX_SEGMENT_SIZE}. */
 	public boolean canInsertRange(int additionalSize) {
 		return getSize() + additionalSize <= MAX_SEGMENT_SIZE;

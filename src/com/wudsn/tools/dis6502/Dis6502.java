@@ -583,7 +583,9 @@ public final class Dis6502 {
 		mainMenu.saveWorkspaceMenuItem.setEnabled(notEditing && hasSegments);
 		mainMenu.saveWorkspaceAsMenuItem.setEnabled(notEditing && hasSegments);
 		mainMenu.saveDisassemblyFilesMenuItem.setEnabled(notEditing && hasSegments);
-		mainMenu.writeBootDiskMenuItem.setEnabled(notEditing && hasSegments);
+		// Writes an Atari DOS boot disk: only for the systems that read such disks.
+		mainMenu.writeBootDiskMenuItem.setEnabled(
+				notEditing && hasSegments && computerSystem.isSupportedFileType(FileType.DISK_IMAGE_BOOT_SECTORS));
 	}
 
 	private static void setOpenAndAddEnabled(JMenuItem openMenuItem, JMenuItem addMenuItem, boolean enabled) {
@@ -1783,18 +1785,8 @@ public final class Dis6502 {
 			return;
 		}
 
-		boolean withRunAddress = false;
-		int runAddress = 0;
-		SegmentList segmentList = workspace.getSegmentList();
-		for (int segmentIndex = 0; segmentIndex < segmentList.getCount(); segmentIndex++) {
-			Segment candidate = segmentList.getSegment(segmentIndex);
-			if (candidate.wBegin == 0x02E0) { // TODO: This is Atari specific.
-				withRunAddress = true;
-				runAddress = candidate.getWord(0);
-			}
-		}
-
-		new SegmentWriteBootDiskDialog(mainWindow.getFrame()).show(segment, withRunAddress, runAddress);
+		int runAddress = workspace.getComputerSystem().getRunAddress(workspace.getSegmentList());
+		new SegmentWriteBootDiskDialog(mainWindow.getFrame()).show(segment, runAddress >= 0, Math.max(runAddress, 0));
 	}
 
 	/**

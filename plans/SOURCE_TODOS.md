@@ -8,14 +8,6 @@ add it here.
 
 Not counted: the `; $XXXX` format text in `DisassemblyGridPanel`.
 
-## Open - bugs found during the analysis
-
-| Location | TODO and finding |
-|---|---|
-| [`SegmentPropertiesDialog.java:119`](../src/com/wudsn/tools/dis6502/ui/SegmentPropertiesDialog.java) | "Will not work with >64K." The overflow check is dead: `begin` is masked to 16 bits, but `begin + size - 1` is a Java `int` that never wraps, so `begin > end` is never true, E037 is never shown, and a `wEnd` above `$FFFF` can be stored. Fix: check `end > 0xFFFF`. |
-| [`Disassembly.java:1119`](../src/com/wudsn/tools/dis6502/model/Disassembly.java) | "Why was this getOpcodeLength(by)?" The user-comment offset is computed from the *current* segment's `wBegin`. If the byte just read was a segment's last and another binary segment follows, `segmentIndex` has already advanced, the offset is negative, and that byte's comment is silently dropped. Fix: use `opcodeSegment.wBegin`. |
-| [`Dis6502.java:1761`](../src/com/wudsn/tools/dis6502/Dis6502.java) | "This is Atari specific." Wider than this line: the whole File > Write Boot Disk feature is Atari DOS-only, but it is enabled for every computer system (`Dis6502.java:584` checks only `notEditing && hasSegments`). |
-
 ## Open - found during the cartridge import (2026-10-04)
 
 | Location | TODO and finding |
@@ -35,6 +27,7 @@ Not counted: the `; $XXXX` format text in `DisassemblyGridPanel`.
 
 | Location | TODO and finding |
 |---|---|
+| [`Disassembly.java:1119`](../src/com/wudsn/tools/dis6502/model/Disassembly.java) | Comments on an instruction's operand bytes never appear in the listing: only the opcode byte is looked up (size 1, once `getOpcodeLength(by)`). A comment placed on an operand byte, e.g. through a memory inspector selection, is lost. Writing them would change listings, so it needs a decision: before the instruction, or not allowed at all. |
 | [`SegmentWriteBootDiskDialog.java:51`](../src/com/wudsn/tools/dis6502/ui/SegmentWriteBootDiskDialog.java) | `DiskImage.writeAbsoluteSector` stores the write result (e.g. `WRITE_PROTECT`, `OUT_OF_RANGE`) in `sector.result` and discards it, so the dialog can report success after writing nothing. Fix: return the `ImgError` and throw on failure. |
 | [`SegmentList.java:426`](../src/com/wudsn/tools/dis6502/model/SegmentList.java) | Redundant code for addresses and address labels. The two branches also differ: the second returns a user equate's label without setting `defined[0] = true`, which looks unintended. |
 | [`EquateList.java:181`](../src/com/wudsn/tools/dis6502/model/EquateList.java) | `findEquateByAddress` hardcodes SDX page 7 (`$0700-$07FF`). System equates should be marked instead. |

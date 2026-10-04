@@ -197,6 +197,13 @@ public final class UIWiringTest {
 		Assert.boolEquals(menu.openCassetteImageFileMenuItem.isEnabled(), true);
 		Assert.boolEquals(menu.saveWorkspaceMenuItem.isEnabled(), true);
 		Assert.boolEquals(menu.saveDisassemblyFilesMenuItem.isEnabled(), true);
+		// Write Boot Disk writes an Atari DOS boot disk: only for the Atari 800.
+		Assert.boolEquals(menu.writeBootDiskMenuItem.isEnabled(), true);
+		edt(() -> workspace.setComputerSystemTypeID("C64"));
+		Assert.boolEquals(menu.writeBootDiskMenuItem.isEnabled(), false);
+		Assert.boolEquals(menu.saveDisassemblyFilesMenuItem.isEnabled(), true);
+		edt(() -> workspace.setComputerSystemTypeID("ATARI800"));
+		Assert.boolEquals(menu.writeBootDiskMenuItem.isEnabled(), true);
 
 		MemoryInspectorPanel inspector = mainWindow.memoryInspectorPanel;
 		edt(() -> {

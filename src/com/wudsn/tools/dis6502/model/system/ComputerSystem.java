@@ -167,6 +167,17 @@ public abstract class ComputerSystem {
 		}
 	}
 
+	/**
+	 * The run address that an executable loaded into {@code segmentList}
+	 * declares - offered as init address when writing a boot disk.
+	 *
+	 * @return the run address, or -1 if there is none or this system has no
+	 *         such notion
+	 */
+	public int getRunAddress(SegmentList segmentList) {
+		return -1;
+	}
+
 	/** Writes a segment, or all segments if {@code firstSegmentIndex} is {@link SegmentList#NO_SEGMENT_INDEX}, to an executable file. */
 	public void writeExecutableFile(SegmentList segmentList, int firstSegmentIndex, boolean writeHeader,
 			OutputStream outputStream) throws IOException {

@@ -100,6 +100,19 @@ public final class Atari800 extends ComputerSystem {
 		return address == 0x0230 || address == 0xD402;
 	}
 
+	/** RUNAD ($02E0): the word of the last segment loaded there. */
+	@Override
+	public int getRunAddress(SegmentList segmentList) {
+		int runAddress = -1;
+		for (int segmentIndex = 0; segmentIndex < segmentList.getCount(); segmentIndex++) {
+			Segment segment = segmentList.getSegment(segmentIndex);
+			if (segment.wBegin == 0x02E0 && segment.getSize() >= 2) {
+				runAddress = segment.getWord(0);
+			}
+		}
+		return runAddress;
+	}
+
 	@Override
 	public List<ROMType> getROMTypes(long fileSize, byte[] header) {
 		return AtariCartridgeReader.getROMTypes(getType(), Platform.ATARI_800, fileSize, header);

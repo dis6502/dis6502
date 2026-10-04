@@ -1114,9 +1114,11 @@ public final class Disassembly {
 
 		getNextByte();
 		int by = lastByte;
-		// Uses the *current* (possibly already-advanced) segmentIndex's wBegin, not oldSegmentIndex's -
-		// quirky as that looks. TODO: Why was this getOpcodeLength(by)?
-		generateUserComment(oldSegmentIndex, oldPC - segmentList.getSegment(segmentIndex).wBegin, 1);
+		// The opcode's own segment: if its byte was the segment's last, getNextByte() has already moved on
+		// to the next segment.
+		// TODO: Comments on an instruction's operand bytes are never written, since only the opcode byte is
+		// looked up (size 1). It once was getOpcodeLength(by).
+		generateUserComment(oldSegmentIndex, oldPC - opcodeSegment.wBegin, 1);
 
 		if (byteType != MemoryType.DLIST) {
 			disAnticLabel = false;

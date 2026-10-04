@@ -116,13 +116,12 @@ public final class SegmentPropertiesDialog extends JDialog {
 	/** Validates the address and, if it checks out, commits every field to the segment and closes the dialog. */
 	private void performOK() {
 		int begin = getAddress(addressField);
-		int end = begin + segment.getSize() - 1; // TODO Will not work with >64K.
-
-		if (begin > end) { // In case of 64K overflow.
+		if (!segment.canMoveTo(begin)) {
 			// ERROR: Start address too high.\nThe segment would overlap in memory.
 			JOptionPane.showMessageDialog(this, Messages.E037.format(), Texts.SegmentPropertiesDialog_Title, JOptionPane.ERROR_MESSAGE);
 			return;
 		}
+		int end = begin + segment.getSize() - 1;
 
 		segment.wBegin = begin;
 		segment.wEnd = end;

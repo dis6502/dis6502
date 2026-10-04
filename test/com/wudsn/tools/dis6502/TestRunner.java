@@ -13,6 +13,7 @@ import com.wudsn.tools.dis6502.model.ByteRangeSelectionTest;
 import com.wudsn.tools.dis6502.model.CharacterSetTest;
 import com.wudsn.tools.dis6502.model.DisassemblyResultFileTest;
 import com.wudsn.tools.dis6502.model.DisassemblyResultTest;
+import com.wudsn.tools.dis6502.model.DisassemblyUserCommentTest;
 import com.wudsn.tools.dis6502.model.EncodingTest;
 import com.wudsn.tools.dis6502.model.EquateListLogicTest;
 import com.wudsn.tools.dis6502.model.EquateTest;
@@ -134,6 +135,7 @@ public final class TestRunner {
 		runTest("SegmentTest.testSegmentRangeEdit", SegmentTest::testSegmentRangeEdit);
 		runTest("DisassemblyResultTest", DisassemblyResultTest::testDisassemblyResult);
 		runTest("DisassemblyResultTest.testFindAndSelectLines", DisassemblyResultTest::testFindAndSelectLines);
+		runTest("DisassemblyUserCommentTest", DisassemblyUserCommentTest::testUserComments);
 		runTest("DisassemblyResultFileTest", DisassemblyResultFileTest::testDisassemblyResultFile);
 		runTest("ComputerSystemTest", () -> ComputerSystemTest.testSystems(new ComputerSystemFactory()));
 		runTest("ROMTypeTest", ROMTypeTest::testROMType);

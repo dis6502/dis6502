@@ -54,6 +54,8 @@ what is new, changed or fixed compared with it. Known limits are in
   it covers. The address comment of a selected line (`; $XXXX`) no longer
   overwrites text from column 35 on; it is appended to the end instead.
 - Fixed: **Find Next** stuck at the first match instead of moving on.
+- Fixed: a user comment on the last byte of a segment was missing from the
+  listing when another segment followed.
 - Fixed: clicking the XRef entry of a label's own definition line did
   nothing for lines without a segment, e.g. system equates.
 - Fixed: "Show ZP Absolute as Byte" wrote its bytes with four hex digits

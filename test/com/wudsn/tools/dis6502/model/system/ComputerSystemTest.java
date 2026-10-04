@@ -6,7 +6,9 @@
 package com.wudsn.tools.dis6502.model.system;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 
 import com.wudsn.tools.dis6502.model.Assert;
@@ -14,6 +16,8 @@ import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.GuessCodeLogic;
 import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.Segment;
+import com.wudsn.tools.dis6502.model.SegmentList;
+import com.wudsn.tools.dis6502.model.SegmentListInserter;
 import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogic;
 import com.wudsn.tools.dis6502.model.system.atari800.Atari800Test;
@@ -40,6 +44,30 @@ public final class ComputerSystemTest {
 	private static void testAtari800(ComputerSystem computerSystem) throws IOException {
 		testReadFile(computerSystem, "system/atari800", "Segments-RUNAD.xex");
 		testReadFile(computerSystem, "system/atari800", "Segments-SillyThings.xex");
+		testRunAddress(computerSystem);
+	}
+
+	/**
+	 * RUNAD: Segments-SillyThings.xex loads $B852 into $02E0-$02E1;
+	 * Segments-RUNAD.xex only sets INITAD ($02E2), so it has no run address.
+	 * Systems without the notion have none either.
+	 */
+	private static void testRunAddress(ComputerSystem atari800) throws IOException {
+		Assert.longEquals(atari800.getRunAddress(read(atari800, "system/atari800", "Segments-SillyThings.xex")), 0xB852);
+		Assert.longEquals(atari800.getRunAddress(read(atari800, "system/atari800", "Segments-RUNAD.xex")), -1);
+		ComputerSystem c64 = new ComputerSystemFactory().getComputerSystem(ComputerSystemType.C64);
+		Assert.longEquals(c64.getRunAddress(read(atari800, "system/atari800", "Segments-SillyThings.xex")), -1);
+	}
+
+	private static SegmentList read(ComputerSystem computerSystem, String areaPath, String fileName) throws IOException {
+		File file = new File(TEST_RESOURCES_DIR + "/" + areaPath + "/" + fileName);
+		SegmentList segmentList = new SegmentList(null);
+		SegmentListInserter segmentListInserter = segmentList.createInserter();
+		try (InputStream inputStream = new FileInputStream(file)) {
+			computerSystem.readFile(FileType.EXECUTABLE_FILE, inputStream, file.length(), segmentListInserter);
+		}
+		segmentListInserter.apply();
+		return segmentList;
 	}
 
 	private static void testC64(ComputerSystem computerSystem) throws IOException {
