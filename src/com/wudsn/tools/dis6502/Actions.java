@@ -233,7 +233,7 @@ public final class Actions extends NLS {
 	public static Action ProfileDialog_LoadProfile;
 	public static Action ProfileDialog_SaveProfile;
 	public static Action OptionsDialog_RestoreDefaults;
-	public static Action CartridgeTypeDialog_OpenAsRawFile;
+	public static Action ROMTypeDialog_OpenAsRawFile;
 	// DisassemblyPanel's inline find buttons: no mnemonic, like Browse... - they sit
 	// in the main window, where Alt+F/Alt+N would fight the menu bar's own mnemonics.
 	public static Action DisassemblyPanel_Find;

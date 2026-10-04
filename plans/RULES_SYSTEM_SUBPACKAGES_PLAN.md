@@ -56,6 +56,18 @@ value sets every system's `supportedFileTypes` draws from) and everything
 else - `Segment*`, `Workspace*`, `Disassembly*`, `Equate*`,
 `MemoryBlock`/`MemoryType`, etc. - follow the same rule.
 
+## System-specific types stay inside the system packages
+
+No system-specific type appears in a signature of `ComputerSystem` or
+anywhere else outside the system's own packages. Where the rest of dis6502
+needs a system-specific choice, it works with a system-independent type
+from `model.system` that the subclass creates and resolves back itself -
+`ROMType` for the type of a ROM image, instead of WUDSN Base's Atari
+`CartridgeType` (see `13_ROM_TYPE_PROPOSAL.md`). For the Atari systems,
+`SystemIsolationTest` enforces this: no source outside
+`model.system.atari`, `atari800` and `atari5200` may refer to
+`com.wudsn.tools.base.atari`.
+
 ## `ui/` stays flat
 
 No computer system gets its own `ui` subpackage, even where a dialog is

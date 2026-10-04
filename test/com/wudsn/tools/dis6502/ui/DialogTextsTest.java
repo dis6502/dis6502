@@ -19,7 +19,6 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.SwingUtilities;
 
-import com.wudsn.tools.base.atari.CartridgeType;
 import com.wudsn.tools.base.gui.ValueSetField;
 import com.wudsn.tools.base.repository.ValueSet;
 import com.wudsn.tools.dis6502.Application;
@@ -28,6 +27,7 @@ import com.wudsn.tools.dis6502.model.Encoding;
 import com.wudsn.tools.dis6502.model.ProcessorType;
 import com.wudsn.tools.dis6502.model.ProfileLogic;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
+import com.wudsn.tools.dis6502.model.system.ROMType;
 
 /**
  * Every dialog constructs, and every text it shows is a real text (see
@@ -56,7 +56,7 @@ public final class DialogTextsTest {
 			try {
 				testDialogs();
 				testValueSetFields();
-				testCartridgeTypeDialog();
+				testROMTypeDialog();
 			} catch (Exception ex) {
 				throw new RuntimeException(ex);
 			}
@@ -68,7 +68,7 @@ public final class DialogTextsTest {
 		Application application = new Application();
 		checkDialog("AboutDialog", () -> new AboutDialog(null));
 		checkDialog("AssembleDialog", () -> new AssembleDialog(null));
-		checkDialog("CartridgeTypeDialog", () -> new CartridgeTypeDialog(null));
+		checkDialog("ROMTypeDialog", () -> new ROMTypeDialog(null));
 		checkDialog("CommentDialog", () -> new CommentDialog(null));
 		checkDialog("DefaultFoldersDialog", () -> new DefaultFoldersDialog(null));
 		checkDialog("DisassemblyProgressDialog", () -> new DisassemblyProgressDialog(null, application));
@@ -108,37 +108,40 @@ public final class DialogTextsTest {
 	}
 
 	/**
-	 * The candidates are listed in the given order with their text and type
-	 * number, the first one selected; OK confirms the selected type, "Open as
-	 * Raw File" confirms without a type, Cancel does not confirm.
+	 * The ROM types are listed in the given order with their text, the first
+	 * one selected; OK confirms the selected type, "Open as Raw File" confirms
+	 * without a type, Cancel does not confirm. The dialog needs nothing from
+	 * any computer system.
 	 */
-	private static void testCartridgeTypeDialog() throws IOException {
-		File file = File.createTempFile("CartridgeTypeDialogTest", ".rom");
+	private static void testROMTypeDialog() throws IOException {
+		File file = File.createTempFile("ROMTypeDialogTest", ".rom");
 		try {
 			Files.write(file.toPath(), new byte[0x10000]);
-			List<CartridgeType> candidates = List.of(CartridgeType.CARTRIDGE_XEGS_64, CartridgeType.CARTRIDGE_WILL_64);
-			CartridgeTypeDialog dialog = new CartridgeTypeDialog(null);
+			ROMType first = new ROMType(ComputerSystemType.ATARI800, "FIRST", "First Type (1)");
+			ROMType second = new ROMType(ComputerSystemType.ATARI800, "SECOND", "Second Type (2)");
+			List<ROMType> candidates = List.of(first, second);
+			ROMTypeDialog dialog = new ROMTypeDialog(null);
 			try {
 				dialog.setInput(file, candidates);
-				JList<CartridgeType> list = dialog.getCartridgeTypeList();
+				JList<ROMType> list = dialog.getROMTypeList();
 				Assert.longEquals(list.getModel().getSize(), 2);
-				Assert.boolEquals(list.getModel().getElementAt(1) == CartridgeType.CARTRIDGE_WILL_64, true);
+				Assert.boolEquals(list.getModel().getElementAt(1) == second, true);
 				Assert.longEquals(list.getSelectedIndex(), 0);
-				JLabel renderer = (JLabel) list.getCellRenderer().getListCellRendererComponent(list,
-						CartridgeType.CARTRIDGE_WILL_64, 1, false, false);
-				Assert.stringEquals(renderer.getText(), CartridgeType.CARTRIDGE_WILL_64.getText() + " (8)");
-				UITest.checkTexts("CartridgeTypeDialog (filled)", dialog);
+				JLabel renderer = (JLabel) list.getCellRenderer().getListCellRendererComponent(list, second, 1, false,
+						false);
+				Assert.stringEquals(renderer.getText(), "Second Type (2)");
+				UITest.checkTexts("ROMTypeDialog (filled)", dialog);
 
 				JButton[] buttons = dialog.getButtons();
 				list.setSelectedIndex(1);
 				buttons[0].doClick();
 				Assert.boolEquals(dialog.isConfirmed(), true);
-				Assert.boolEquals(dialog.getCartridgeType() == CartridgeType.CARTRIDGE_WILL_64, true);
+				Assert.boolEquals(dialog.getROMType() == second, true);
 
 				dialog.setInput(file, candidates);
 				buttons[1].doClick();
 				Assert.boolEquals(dialog.isConfirmed(), true);
-				Assert.isNull(dialog.getCartridgeType());
+				Assert.isNull(dialog.getROMType());
 
 				dialog.setInput(file, candidates);
 				buttons[2].doClick();

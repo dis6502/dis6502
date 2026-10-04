@@ -24,6 +24,7 @@ import com.wudsn.tools.dis6502.model.SegmentListInserter;
 import com.wudsn.tools.dis6502.model.system.ComputerSystem;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
+import com.wudsn.tools.dis6502.model.system.ROMType;
 
 /**
  * Imports synthetic cartridge images through {@link ComputerSystem#readFile}
@@ -103,27 +104,36 @@ public final class AtariCartridgeReaderTest {
 				.equals(List.of(CartridgeType.CARTRIDGE_5200_SUPER_64)), true);
 	}
 
-	/** The types offered in the cartridge type dialog, and reading a raw image as the chosen type. */
+	/** The ROM types offered in the ROM type dialog, and reading a raw image as the chosen type. */
 	private static void testCandidates() throws IOException {
-		// Raw 64 KB: every importable 64 KB type of the platform.
-		List<CartridgeType> candidates = ATARI800.getCartridgeTypeCandidates(0x10000, new byte[16]);
-		Assert.boolEquals(candidates.equals(CartridgeReader.getCandidateTypes(Platform.ATARI_800, 0x10000)), true);
-		Assert.longEquals(candidates.size(), 11);
-		Assert.boolEquals(ATARI5200.getCartridgeTypeCandidates(0x10000, new byte[16])
-				.equals(List.of(CartridgeType.CARTRIDGE_5200_SUPER_64)), true);
+		// Raw 64 KB: every importable 64 KB cartridge type of the platform, as ROM type of the system.
+		List<ROMType> romTypes = ATARI800.getROMTypes(0x10000, new byte[16]);
+		List<CartridgeType> cartridgeTypes = CartridgeReader.getCandidateTypes(Platform.ATARI_800, 0x10000);
+		Assert.longEquals(romTypes.size(), 11);
+		Assert.longEquals(cartridgeTypes.size(), 11);
+		for (int i = 0; i < romTypes.size(); i++) {
+			ROMType romType = romTypes.get(i);
+			CartridgeType cartridgeType = cartridgeTypes.get(i);
+			Assert.boolEquals(romType.getComputerSystemType() == ComputerSystemType.ATARI800, true);
+			Assert.stringEquals(romType.getId(), cartridgeType.getId());
+			Assert.stringEquals(romType.getText(),
+					cartridgeType.getText() + " (" + cartridgeType.getNumericId() + ")");
+		}
+		Assert.boolEquals(ATARI5200.getROMTypes(0x10000, new byte[16]).equals(List.of(
+				new ROMType(ComputerSystemType.ATARI5200, CartridgeType.CARTRIDGE_5200_SUPER_64.getId(), ""))), true);
 		// One candidate is still a choice: the image may be plain data.
-		Assert.boolEquals(ATARI800.getCartridgeTypeCandidates(0xA000, new byte[16])
-				.equals(List.of(CartridgeType.CARTRIDGE_BBSB_40)), true);
+		Assert.boolEquals(ATARI800.getROMTypes(0xA000, new byte[16]).equals(
+				List.of(new ROMType(ComputerSystemType.ATARI800, CartridgeType.CARTRIDGE_BBSB_40.getId(), ""))), true);
 
 		// No choice: the type is known from a CART header or a standard size, or no type has the size.
 		byte[] file = createCartridgeFile(CartridgeType.CARTRIDGE_WILL_64);
-		Assert.boolEquals(ATARI800.getCartridgeTypeCandidates(file.length, file).isEmpty(), true);
-		Assert.boolEquals(ATARI800.getCartridgeTypeCandidates(0x2000, new byte[16]).isEmpty(), true);
-		Assert.boolEquals(ATARI800.getCartridgeTypeCandidates(0x3000, new byte[16]).isEmpty(), true);
+		Assert.boolEquals(ATARI800.getROMTypes(file.length, file).isEmpty(), true);
+		Assert.boolEquals(ATARI800.getROMTypes(0x2000, new byte[16]).isEmpty(), true);
+		Assert.boolEquals(ATARI800.getROMTypes(0x3000, new byte[16]).isEmpty(), true);
 		// The!Cart 32 MB is larger than the import limit.
-		Assert.boolEquals(ATARI800.getCartridgeTypeCandidates(0x2000000, new byte[16]).isEmpty(), true);
-		// Systems without cartridges.
-		Assert.boolEquals(C64.getCartridgeTypeCandidates(0x10000, new byte[16]).isEmpty(), true);
+		Assert.boolEquals(ATARI800.getROMTypes(0x2000000, new byte[16]).isEmpty(), true);
+		// Systems without ROM types.
+		Assert.boolEquals(C64.getROMTypes(0x10000, new byte[16]).isEmpty(), true);
 
 		// Raw 64 KB read as the chosen XEGS 64 KB: banks 0-6 at $8000, bank 7 at $A000.
 		SegmentList segmentList = read(ATARI800, createContent(0x10000), CartridgeType.CARTRIDGE_XEGS_64);
@@ -134,6 +144,20 @@ public final class AtariCartridgeReaderTest {
 		// The same image read as the chosen Williams 64 KB: 8 banks at $A000.
 		segmentList = read(ATARI800, createContent(0x10000), CartridgeType.CARTRIDGE_WILL_64);
 		assertSegment(segmentList.getSegment(6), 0xA000, 0xBFFF, 0xC000);
+
+		// A ROM type of the other Atari system, or of a type of the other platform, is a programming error.
+		assertRejected(new ROMType(ComputerSystemType.ATARI5200, CartridgeType.CARTRIDGE_XEGS_64.getId(), ""));
+		assertRejected(new ROMType(ComputerSystemType.ATARI800, CartridgeType.CARTRIDGE_5200_32.getId(), ""));
+		assertRejected(new ROMType(ComputerSystemType.ATARI800, "NO_SUCH_TYPE", ""));
+	}
+
+	private static void assertRejected(ROMType romType) throws IOException {
+		try {
+			read(ATARI800, createContent(0x10000), romType);
+			Assert.fail("Expected the ROM type " + romType.getId() + " to be rejected.");
+		} catch (IllegalArgumentException ex) {
+			// Expected.
+		}
 	}
 
 	private static void testAtari800() throws IOException {
@@ -362,15 +386,21 @@ public final class AtariCartridgeReaderTest {
 	}
 
 	private static SegmentList read(ComputerSystem computerSystem, byte[] file) throws IOException {
-		return read(computerSystem, file, null);
+		return read(computerSystem, file, (ROMType) null);
 	}
 
+	/** Reads {@code file} as the ROM type of {@code cartridgeType}, as if the user had chosen it in the dialog. */
 	private static SegmentList read(ComputerSystem computerSystem, byte[] file, CartridgeType cartridgeType)
+			throws IOException {
+		return read(computerSystem, file, new ROMType(computerSystem.getType(), cartridgeType.getId(), ""));
+	}
+
+	private static SegmentList read(ComputerSystem computerSystem, byte[] file, ROMType romType)
 			throws IOException {
 		SegmentList segmentList = new SegmentList(null);
 		SegmentListInserter segmentListInserter = segmentList.createInserter();
 		computerSystem.readFile(FileType.ROM_IMAGE_FILE, new ByteArrayInputStream(file), file.length,
-				segmentListInserter, cartridgeType);
+				segmentListInserter, romType);
 		segmentListInserter.apply();
 		return segmentList;
 	}

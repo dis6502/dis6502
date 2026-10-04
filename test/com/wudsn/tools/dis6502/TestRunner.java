@@ -29,6 +29,8 @@ import com.wudsn.tools.dis6502.model.Workspace;
 import com.wudsn.tools.dis6502.model.WorkspaceLogicTest;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemTest;
+import com.wudsn.tools.dis6502.model.system.ROMTypeTest;
+import com.wudsn.tools.dis6502.model.system.SystemIsolationTest;
 import com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReaderTest;
 import com.wudsn.tools.dis6502.model.system.atari800.AtariDiskImageTest;
 import com.wudsn.tools.dis6502.ui.DialogTextsTest;
@@ -134,6 +136,8 @@ public final class TestRunner {
 		runTest("DisassemblyResultTest.testFindAndSelectLines", DisassemblyResultTest::testFindAndSelectLines);
 		runTest("DisassemblyResultFileTest", DisassemblyResultFileTest::testDisassemblyResultFile);
 		runTest("ComputerSystemTest", () -> ComputerSystemTest.testSystems(new ComputerSystemFactory()));
+		runTest("ROMTypeTest", ROMTypeTest::testROMType);
+		runTest("SystemIsolationTest", SystemIsolationTest::testSystemIsolation);
 		runTest("Profile1XTest", Profile1XTest::testProfile1X);
 		runTest("EquateListLogicTest", EquateListLogicTest::testEquateListLogic);
 		runTest("WorkspaceLogicTest", WorkspaceLogicTest::testWorkspaceLogic);

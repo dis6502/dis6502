@@ -28,7 +28,6 @@ import javax.swing.UIManager;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
-import com.wudsn.tools.base.atari.CartridgeType;
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.repository.Message;
 import com.wudsn.tools.dis6502.model.DefaultFolders;
@@ -59,6 +58,7 @@ import com.wudsn.tools.dis6502.model.WorkspaceProperty;
 import com.wudsn.tools.dis6502.model.system.ComputerSystem;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemFactory;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
+import com.wudsn.tools.dis6502.model.system.ROMType;
 import com.wudsn.tools.dis6502.model.system.atari800.AtariDisk;
 import com.wudsn.tools.dis6502.model.system.atari800.AtariError;
 import com.wudsn.tools.dis6502.model.system.atari800.AtariFile;
@@ -67,7 +67,6 @@ import com.wudsn.tools.dis6502.model.system.atari800.ImgInfo;
 import com.wudsn.tools.dis6502.model.system.atari800.ImgRWPacket;
 import com.wudsn.tools.dis6502.ui.AboutDialog;
 import com.wudsn.tools.dis6502.ui.AssembleDialog;
-import com.wudsn.tools.dis6502.ui.CartridgeTypeDialog;
 import com.wudsn.tools.dis6502.ui.CommentDialog;
 import com.wudsn.tools.dis6502.ui.ComputerFont;
 import com.wudsn.tools.dis6502.ui.DefaultFoldersDialog;
@@ -86,6 +85,7 @@ import com.wudsn.tools.dis6502.ui.MemoryInspectorFindStringDialog;
 import com.wudsn.tools.dis6502.ui.OptionsDialog;
 import com.wudsn.tools.dis6502.ui.PlainTextFont;
 import com.wudsn.tools.dis6502.ui.ProfileDialog;
+import com.wudsn.tools.dis6502.ui.ROMTypeDialog;
 import com.wudsn.tools.dis6502.ui.RawFileDialog;
 import com.wudsn.tools.dis6502.ui.SegmentPropertiesDialog;
 import com.wudsn.tools.dis6502.ui.SegmentWriteBootDiskDialog;
@@ -752,30 +752,30 @@ public final class Dis6502 {
 	 * FileType#EXECUTABLE_FILE}, {@link FileType#ROM_IMAGE_FILE}, {@link
 	 * FileType#CASSETTE_IMAGE_FILE}.
 	 * <p>
-	 * A ROM image whose cartridge type the computer system cannot tell - a raw
+	 * A ROM image whose type the computer system cannot tell - e.g. a raw
 	 * image of a size that one or more cartridge types share - goes through
-	 * {@link CartridgeTypeDialog} first: the user picks the type, or opens the
+	 * {@link ROMTypeDialog} first: the user picks the ROM type, or opens the
 	 * file as raw file via {@link #openRawFile} instead.
 	 */
 	private boolean openReadableFile(File file, FileType fileType, boolean add) {
-		CartridgeType cartridgeType = null;
+		ROMType romType = null;
 		if (fileType == FileType.ROM_IMAGE_FILE) {
-			List<CartridgeType> candidates;
+			List<ROMType> romTypes;
 			try {
-				candidates = workspace.getComputerSystem().getCartridgeTypeCandidates(file);
+				romTypes = workspace.getComputerSystem().getROMTypes(file);
 			} catch (IOException ex) {
 				application.sendErrorMessage(ex);
 				return false;
 			}
-			if (!candidates.isEmpty()) {
-				CartridgeTypeDialog dialog = new CartridgeTypeDialog(mainWindow.getFrame());
-				boolean confirmed = dialog.show(file, candidates);
-				cartridgeType = dialog.getCartridgeType();
+			if (!romTypes.isEmpty()) {
+				ROMTypeDialog dialog = new ROMTypeDialog(mainWindow.getFrame());
+				boolean confirmed = dialog.show(file, romTypes);
+				romType = dialog.getROMType();
 				dialog.dispose();
 				if (!confirmed) {
 					return false;
 				}
-				if (cartridgeType == null) {
+				if (romType == null) {
 					return openRawFile(file, add);
 				}
 			}
@@ -785,7 +785,7 @@ public final class Dis6502 {
 
 		clearWorkspaceUnlessAdding(add);
 
-		if (!workspaceLogic.addFile(workspace, fileType, file.getPath(), cartridgeType)) {
+		if (!workspaceLogic.addFile(workspace, fileType, file.getPath(), romType)) {
 			JOptionPane.showMessageDialog(mainWindow.getFrame(),
 					// ERROR: Could not add file "{0}". See the log for details. / Could not open file "{0}". See the log for details.
 					(add ? Messages.E040 : Messages.E049).format(file.getPath()),

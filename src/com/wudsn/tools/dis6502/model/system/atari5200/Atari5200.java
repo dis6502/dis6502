@@ -19,6 +19,7 @@ import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentListInserter;
 import com.wudsn.tools.dis6502.model.system.ComputerSystem;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
+import com.wudsn.tools.dis6502.model.system.ROMType;
 import com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader;
 
 /**
@@ -63,8 +64,8 @@ public final class Atari5200 extends ComputerSystem {
 	}
 
 	@Override
-	public List<CartridgeType> getCartridgeTypeCandidates(long fileSize, byte[] header) {
-		return AtariCartridgeReader.getCandidateTypes(Platform.ATARI_5200, fileSize, header);
+	public List<ROMType> getROMTypes(long fileSize, byte[] header) {
+		return AtariCartridgeReader.getROMTypes(getType(), Platform.ATARI_5200, fileSize, header);
 	}
 
 	@Override
@@ -75,7 +76,7 @@ public final class Atari5200 extends ComputerSystem {
 			return FileType.ROM_IMAGE_FILE;
 		}
 		// Raw image of a size that a cartridge type has? The user chooses.
-		if (!getCartridgeTypeCandidates(fileSize, content).isEmpty()) {
+		if (!getROMTypes(fileSize, content).isEmpty()) {
 			return FileType.ROM_IMAGE_FILE;
 		}
 		return FileType.ANY_FILE;
@@ -88,7 +89,8 @@ public final class Atari5200 extends ComputerSystem {
 	 */
 	@Override
 	protected void readROMFile(SegmentListInserter segmentListInserter, InputStream inputStream, long fileSize,
-			CartridgeType cartridgeType) throws IOException {
+			ROMType romType) throws IOException {
+		CartridgeType cartridgeType = AtariCartridgeReader.toCartridgeType(getType(), Platform.ATARI_5200, romType);
 		Segment segment = AtariCartridgeReader.readCartridge(Platform.ATARI_5200, cartridgeType, segmentListInserter,
 				inputStream, fileSize).initialSegment();
 		if (segment == null || segment.wEnd != 0xBFFF) {

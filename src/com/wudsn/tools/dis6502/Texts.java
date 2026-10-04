@@ -50,16 +50,12 @@ public final class Texts extends NLS {
 	public static String AssembleDialog_Title;
 	/** {@link com.wudsn.tools.dis6502.ui.AssembleDialog}'s result line before anything was assembled. */
 	public static String AssembleDialog_Hint;
+	/** The text of an Atari cartridge type offered as {@link com.wudsn.tools.dis6502.model.system.ROMType}: the type's text and number. */
+	public static String AtariCartridgeReader_ROMTypeText;
 	/** The title of one bank's segment of a cartridge imported by {@link com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader}: the cartridge type and the bank number. */
 	public static String AtariCartridgeReader_BankTitle;
 	/** Same as {@link #AtariCartridgeReader_BankTitle}, for the bank visible after power-on. */
 	public static String AtariCartridgeReader_InitialBankTitle;
-	/** {@link com.wudsn.tools.dis6502.ui.CartridgeTypeDialog}'s window title. */
-	public static String CartridgeTypeDialog_Title;
-	/** {@link com.wudsn.tools.dis6502.ui.CartridgeTypeDialog}'s file field: the path and the size in bytes. */
-	public static String CartridgeTypeDialog_FileText;
-	/** {@link com.wudsn.tools.dis6502.ui.CartridgeTypeDialog}'s list entries: the type's text and number. */
-	public static String CartridgeTypeDialog_CartridgeTypeText;
 	/** {@link com.wudsn.tools.dis6502.ui.CommentDialog}'s window title. */
 	public static String CommentDialog_Title;
 	/** {@link com.wudsn.tools.dis6502.ui.DiskImageExecutableFileDialog}'s window title. */
@@ -80,6 +76,10 @@ public final class Texts extends NLS {
 	public static String MemoryInspectorFindStringDialog_Title;
 	/** {@link com.wudsn.tools.dis6502.ui.ProfileDialog}'s window title. */
 	public static String ProfileDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.ROMTypeDialog}'s window title. */
+	public static String ROMTypeDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.ROMTypeDialog}'s file field: the path and the size in bytes. */
+	public static String ROMTypeDialog_FileText;
 	/** {@link com.wudsn.tools.dis6502.ui.RawFileDialog}'s window title. */
 	public static String RawFileDialog_Title;
 	/** {@link com.wudsn.tools.dis6502.ui.SegmentPropertiesDialog}'s window title. */

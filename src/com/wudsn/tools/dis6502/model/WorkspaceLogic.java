@@ -13,10 +13,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
-import com.wudsn.tools.base.atari.CartridgeType;
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.model.system.ComputerSystem;
+import com.wudsn.tools.dis6502.model.system.ROMType;
 import com.wudsn.tools.dis6502.model.system.atari800.DiskImage;
 import com.wudsn.tools.dis6502.model.system.atari800.ImgRWPacket;
 
@@ -156,11 +156,11 @@ public final class WorkspaceLogic {
 		return addFile(workspace, fileType, filePath, null);
 	}
 
-	/** @param cartridgeType for a ROM image, the cartridge type the user chose; otherwise {@code null} */
-	public boolean addFile(Workspace workspace, FileType fileType, String filePath, CartridgeType cartridgeType) {
+	/** @param romType for a ROM image, the ROM type the user chose; otherwise {@code null} */
+	public boolean addFile(Workspace workspace, FileType fileType, String filePath, ROMType romType) {
 		File file = new File(filePath);
 		try (InputStream inputStream = new FileInputStream(file)) {
-			return addFile(workspace, fileType, inputStream, file.length(), cartridgeType);
+			return addFile(workspace, fileType, inputStream, file.length(), romType);
 		} catch (IOException ex) {
 			application.sendErrorMessage(ex);
 			return false;
@@ -172,11 +172,11 @@ public final class WorkspaceLogic {
 	}
 
 	private boolean addFile(Workspace workspace, FileType fileType, InputStream inputStream, long fileSize,
-			CartridgeType cartridgeType) {
+			ROMType romType) {
 		SegmentListInserter segmentListInserter = workspace.getSegmentList().createInserter();
 		ComputerSystem computerSystem = workspace.getComputerSystem();
 		try {
-			computerSystem.readFile(fileType, inputStream, fileSize, segmentListInserter, cartridgeType);
+			computerSystem.readFile(fileType, inputStream, fileSize, segmentListInserter, romType);
 		} catch (IOException ex) {
 			segmentListInserter.cancel();
 			application.sendErrorMessage(ex);

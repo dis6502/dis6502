@@ -15,8 +15,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.wudsn.tools.base.atari.CartridgeType;
-
 import com.wudsn.tools.dis6502.model.CharacterSet;
 import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.Memory;
@@ -96,16 +94,16 @@ public abstract class ComputerSystem {
 	}
 
 	/**
-	 * The cartridge types a ROM image file could be, for the user to choose
-	 * from: empty if its type is known (e.g. from a CART header) or this
-	 * system has no cartridge types to choose from.
+	 * The ROM types a ROM image file could be, for the user to choose from:
+	 * empty if its type is known (e.g. from an Atari CART header) or this
+	 * system has no ROM types to choose from.
 	 */
-	public List<CartridgeType> getCartridgeTypeCandidates(File filePath) throws IOException {
-		return getCartridgeTypeCandidates(filePath.length(), readHeader(filePath));
+	public List<ROMType> getROMTypes(File filePath) throws IOException {
+		return getROMTypes(filePath.length(), readHeader(filePath));
 	}
 
-	/** See {@link #getCartridgeTypeCandidates(File)}; {@code header}: the file's first 16 bytes. */
-	public List<CartridgeType> getCartridgeTypeCandidates(long fileSize, byte[] header) {
+	/** See {@link #getROMTypes(File)}; {@code header}: the file's first 16 bytes. */
+	public List<ROMType> getROMTypes(long fileSize, byte[] header) {
 		return List.of();
 	}
 
@@ -148,12 +146,11 @@ public abstract class ComputerSystem {
 	/**
 	 * Reads a file and adds one or more segments to the segment list.
 	 *
-	 * @param cartridgeType for a ROM image, the cartridge type the user chose
-	 *                      from {@link #getCartridgeTypeCandidates}; otherwise
-	 *                      {@code null}
+	 * @param romType for a ROM image, the ROM type the user chose from {@link
+	 *                #getROMTypes}; otherwise {@code null}
 	 */
 	public void readFile(FileType fileType, InputStream inputStream, long fileSize,
-			SegmentListInserter segmentListInserter, CartridgeType cartridgeType) throws IOException {
+			SegmentListInserter segmentListInserter, ROMType romType) throws IOException {
 		if (!isSupportedFileType(fileType)) {
 			throw new UnsupportedOperationException("File type is not supported.");
 		}
@@ -164,7 +161,7 @@ public abstract class ComputerSystem {
 		} else if (fileType == FileType.EXECUTABLE_FILE) {
 			readExecutableFile(segmentListInserter, inputStream, fileSize);
 		} else if (fileType == FileType.ROM_IMAGE_FILE) {
-			readROMFile(segmentListInserter, inputStream, fileSize, cartridgeType);
+			readROMFile(segmentListInserter, inputStream, fileSize, romType);
 		} else {
 			throw new UnsupportedOperationException("File type is not supported.");
 		}
@@ -186,9 +183,9 @@ public abstract class ComputerSystem {
 		throw new UnsupportedOperationException("Operation is not supported.");
 	}
 
-	/** @param cartridgeType the cartridge type the user chose, or {@code null} to detect it */
+	/** @param romType the ROM type the user chose, or {@code null} to detect it */
 	protected void readROMFile(SegmentListInserter segmentListInserter, InputStream inputStream, long fileSize,
-			CartridgeType cartridgeType) throws IOException {
+			ROMType romType) throws IOException {
 		throw new UnsupportedOperationException("Operation is not supported.");
 	}
 

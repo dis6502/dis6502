@@ -20,6 +20,8 @@ import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentListInserter;
+import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
+import com.wudsn.tools.dis6502.model.system.ROMType;
 
 /**
  * Imports an Atari 800 or Atari 5200 cartridge image read by {@link
@@ -50,6 +52,51 @@ public final class AtariCartridgeReader {
 	/** Whether {@code cartridgeType} can be imported for {@code platform}: readable, and not larger than {@link #MAX_CARTRIDGE_SIZE}. */
 	public static boolean isSupported(Platform platform, CartridgeType cartridgeType) {
 		return CartridgeReader.isSupported(platform, cartridgeType) && cartridgeType.getSize() <= MAX_CARTRIDGE_SIZE;
+	}
+
+	/**
+	 * The ROM types of {@code computerSystemType} a file could be, for the user
+	 * to choose from - the {@link #getCandidateTypes cartridge type candidates}
+	 * of {@code platform}, each as a {@link ROMType} with the {@link
+	 * CartridgeType} id and its text and type number as text.
+	 *
+	 * @param header the file's first 16 bytes
+	 */
+	public static List<ROMType> getROMTypes(ComputerSystemType computerSystemType, Platform platform, long fileSize,
+			byte[] header) {
+		List<ROMType> result = new ArrayList<>();
+		for (CartridgeType cartridgeType : getCandidateTypes(platform, fileSize, header)) {
+			result.add(new ROMType(computerSystemType, cartridgeType.getId(),
+					TextUtility.format(Texts.AtariCartridgeReader_ROMTypeText, cartridgeType.getText(),
+							String.valueOf(cartridgeType.getNumericId()))));
+		}
+		return result;
+	}
+
+	/**
+	 * The cartridge type of a {@link ROMType} from {@link #getROMTypes}.
+	 *
+	 * @return the cartridge type, or {@code null} if {@code romType} is
+	 *         {@code null}
+	 * @throws IllegalArgumentException if {@code romType} belongs to another
+	 *                                  computer system or is no cartridge type
+	 *                                  of {@code platform}
+	 */
+	public static CartridgeType toCartridgeType(ComputerSystemType computerSystemType, Platform platform,
+			ROMType romType) {
+		if (romType == null) {
+			return null;
+		}
+		if (romType.getComputerSystemType() != computerSystemType) {
+			throw new IllegalArgumentException("ROM type " + romType.getId() + " belongs to "
+					+ romType.getComputerSystemType().getId() + ", not to " + computerSystemType.getId() + ".");
+		}
+		CartridgeType cartridgeType = CartridgeType.getInstance(romType.getId());
+		if (cartridgeType == null || cartridgeType.getPlatform() != platform) {
+			throw new IllegalArgumentException("ROM type " + romType.getId() + " is no cartridge type of "
+					+ platform.getId() + ".");
+		}
+		return cartridgeType;
 	}
 
 	/**

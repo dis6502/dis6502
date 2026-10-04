@@ -27,6 +27,7 @@ import com.wudsn.tools.dis6502.model.SegmentList;
 import com.wudsn.tools.dis6502.model.SegmentListInserter;
 import com.wudsn.tools.dis6502.model.system.ComputerSystem;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
+import com.wudsn.tools.dis6502.model.system.ROMType;
 import com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader.CartridgeImport;
 import com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader;
 
@@ -100,8 +101,8 @@ public final class Atari800 extends ComputerSystem {
 	}
 
 	@Override
-	public List<CartridgeType> getCartridgeTypeCandidates(long fileSize, byte[] header) {
-		return AtariCartridgeReader.getCandidateTypes(Platform.ATARI_800, fileSize, header);
+	public List<ROMType> getROMTypes(long fileSize, byte[] header) {
+		return AtariCartridgeReader.getROMTypes(getType(), Platform.ATARI_800, fileSize, header);
 	}
 
 	@Override
@@ -132,7 +133,7 @@ public final class Atari800 extends ComputerSystem {
 		}
 
 		// Raw image of a size that a cartridge type has? The user chooses.
-		if (!getCartridgeTypeCandidates(fileSize, content).isEmpty()) {
+		if (!getROMTypes(fileSize, content).isEmpty()) {
 			return FileType.ROM_IMAGE_FILE;
 		}
 
@@ -424,7 +425,8 @@ public final class Atari800 extends ComputerSystem {
 	 */
 	@Override
 	protected void readROMFile(SegmentListInserter segmentListInserter, InputStream inputStream, long fileSize,
-			CartridgeType cartridgeType) throws IOException {
+			ROMType romType) throws IOException {
+		CartridgeType cartridgeType = AtariCartridgeReader.toCartridgeType(getType(), Platform.ATARI_800, romType);
 		CartridgeImport cartridgeImport = AtariCartridgeReader.readCartridge(Platform.ATARI_800, cartridgeType,
 				segmentListInserter, inputStream, fileSize);
 		boolean rightSlot = cartridgeImport.cartridgeType() == CartridgeType.CARTRIDGE_RIGHT_4

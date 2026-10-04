@@ -1,6 +1,6 @@
 # A system-independent ROMType instead of CartridgeType
 
-Status: Planned (2026-10-04) - the open questions are decided, see "Decisions".
+Status: Done (2026-10-04), see "Result".
 
 ## Problem
 
@@ -120,3 +120,25 @@ public final class ROMType {
    outside `model.system.atari*` imports `com.wudsn.tools.base.atari`.
 3. **Identity:** a `ROMType` is identified by its computer system type
    (leading) and its id, so it lives in `model.system`.
+
+## Result (2026-10-04)
+
+Implemented as planned:
+
+- `model.system.ROMType`, identified by computer system type and id.
+- `ComputerSystem.getROMTypes(File)`/`getROMTypes(long, byte[])` and the
+  `ROMType` parameter of `readFile`/`readROMFile`; `ComputerSystem`,
+  `WorkspaceLogic` and `Dis6502` no longer refer to WUDSN Base's Atari
+  package.
+- `AtariCartridgeReader.getROMTypes` and `toCartridgeType` convert in both
+  directions; `toCartridgeType` rejects a `ROMType` of another system or
+  platform with an `IllegalArgumentException`. The list text "{0} ({1})"
+  is now `Texts.AtariCartridgeReader_ROMTypeText`.
+- `CartridgeTypeDialog` became `ROMTypeDialog` (title "Choose ROM Type",
+  label "ROM &Type:"), showing `ROMType.getText()`.
+- Tests: `ROMTypeTest`, `SystemIsolationTest` (fails when a source outside
+  the Atari system packages refers to `com.wudsn.tools.base.atari` -
+  checked by adding such an import), `AtariCartridgeReaderTest` (ROM types
+  of both systems, reading with a `ROMType`, rejection of foreign ones),
+  `DialogTextsTest` (the dialog with plain `ROMType`s).
+- `RULES_SYSTEM_SUBPACKAGES_PLAN.md` has the rule.

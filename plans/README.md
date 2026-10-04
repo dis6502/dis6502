@@ -23,4 +23,4 @@ The standing documents are not numbered: `DEVELOPMENT_GUIDE.md`, `MEMORY.md`,
 | 10 | [CHARACTER_SET_FONTS_PROPOSAL](10_CHARACTER_SET_FONTS_PROPOSAL.md) | 8x8 `.chr` character sets instead of the TTF glyphs, selectable in the memory inspector header | Done 2026-10-01 |
 | 11 | [RELEASE_MATRIX_PROPOSAL](11_RELEASE_MATRIX_PROPOSAL.md) | x64 and ARM64 release builds for all three systems, following RASTER-Music-Tracker, plus application icons | Done 2026-10-02 |
 | 12 | [CARTRIDGE_IMPORT_PLAN](12_CARTRIDGE_IMPORT_PLAN.md) | One shared class importing every Atari 800 and Atari 5200 cartridge type defined by WUDSN Base's `CartridgeType` | Done 2026-10-04 |
-| 13 | [ROM_TYPE_PROPOSAL](13_ROM_TYPE_PROPOSAL.md) | A system-independent `ROMType` instead of WUDSN Base's Atari `CartridgeType` outside the Atari `ComputerSystem` subclasses | Planned |
+| 13 | [ROM_TYPE_PROPOSAL](13_ROM_TYPE_PROPOSAL.md) | A system-independent `ROMType` instead of WUDSN Base's Atari `CartridgeType` outside the Atari `ComputerSystem` subclasses | Done 2026-10-04 |
