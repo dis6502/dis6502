@@ -28,6 +28,8 @@ import javax.swing.UIManager;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
+import com.wudsn.tools.base.common.ApplicationSettingsSection;
+import com.wudsn.tools.base.common.MRUEntry;
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.repository.Message;
 import com.wudsn.tools.dis6502.model.DefaultFolders;
@@ -44,7 +46,6 @@ import com.wudsn.tools.dis6502.model.EquateListLogic;
 import com.wudsn.tools.dis6502.model.FileHeader;
 import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.InstructionSet;
-import com.wudsn.tools.dis6502.model.MRUEntry;
 import com.wudsn.tools.dis6502.model.MemoryType;
 import com.wudsn.tools.dis6502.model.MutableMemoryInspectorState;
 import com.wudsn.tools.dis6502.model.OperandMode;
@@ -602,7 +603,7 @@ public final class Dis6502 {
 	}
 
 	/** A "Recent Workspaces" selection - routed through {@link #openFile} like every other way of opening a file. */
-	private void openRecentWorkspace(MRUEntry entry) {
+	private void openRecentWorkspace(MRUEntry<FileType> entry) {
 		openFile(new File(entry.getFilePath()), FileType.WORKSPACE_FILE, false);
 	}
 
@@ -612,7 +613,7 @@ public final class Dis6502 {
 	 * file-within-the-image, sectors) the menu item that first opened it
 	 * uses.
 	 */
-	void openRecentFile(MRUEntry entry) {
+	void openRecentFile(MRUEntry<FileType> entry) {
 		openFile(new File(entry.getFilePath()), entry.getFileType(), false);
 	}
 

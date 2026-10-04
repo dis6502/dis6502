@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 
+import com.wudsn.tools.base.common.ApplicationSettingsSection;
 import com.wudsn.tools.dis6502.Application;
-import com.wudsn.tools.dis6502.ApplicationSettingsSection;
 import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 

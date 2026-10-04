@@ -5,24 +5,17 @@
  */
 package com.wudsn.tools.dis6502.ui;
 
-import java.util.List;
-
 import javax.swing.JMenu;
-import javax.swing.JMenuItem;
 
+import com.wudsn.tools.base.common.MRUList;
+import com.wudsn.tools.base.gui.MRUMenu;
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.model.FileType;
-import com.wudsn.tools.dis6502.model.MRUEntry;
-import com.wudsn.tools.dis6502.model.MRUList;
 
 /**
- * Tracks recently used workspace and non-workspace files, and populates the
- * "Recent Workspaces"/"Recent Files" menus.
- * <p>
- * Filling the menu with up to 5 numbered items and mapping a chosen item
- * back to its {@link MRUEntry} is simple enough in Swing, where each
- * {@link JMenuItem} can just carry its own {@link
- * java.awt.event.ActionListener}, not to need a separate class.
+ * Tracks recently used workspace and non-workspace files in two WUDSN Base
+ * {@link MRUList}s, and populates the "Recent Workspaces"/"Recent Files"
+ * menus with {@link MRUMenu}.
  *
  * @author Peter Dell
  */
@@ -30,12 +23,13 @@ public final class MRUController {
 
 	private static final int MRU_MAX_ENTRIES = 5;
 
-	private final MRUList workspaceList;
-	private final MRUList fileList;
+	private final MRUList<FileType> workspaceList;
+	private final MRUList<FileType> fileList;
 
 	public MRUController(Application application) {
-		workspaceList = new MRUList(application, "RecentWorkspaces", MRU_MAX_ENTRIES);
-		fileList = new MRUList(application, "RecentFiles", MRU_MAX_ENTRIES);
+		workspaceList = new MRUList<>(FileType.class, application.getSettingsSection("RecentWorkspaces"),
+				MRU_MAX_ENTRIES);
+		fileList = new MRUList<>(FileType.class, application.getSettingsSection("RecentFiles"), MRU_MAX_ENTRIES);
 	}
 
 	public void load() {
@@ -48,8 +42,9 @@ public final class MRUController {
 		fileList.save();
 	}
 
+	/** Adds a file to the workspace or the file list - not one opened as {@link FileType#ANY_FILE}, which cannot be reopened as such. */
 	public void addFile(String filePath, FileType fileType) {
-		if (filePath.isEmpty()) {
+		if (filePath.isEmpty() || fileType == FileType.ANY_FILE) {
 			return;
 		}
 		if (fileType == FileType.WORKSPACE_FILE) {
@@ -81,25 +76,10 @@ public final class MRUController {
 
 	/**
 	 * Repopulates {@code menu} with the workspace or non-workspace recent
-	 * entries (up to {@value #MRU_MAX_ENTRIES}, numbered "1 ...", "2 ..."),
-	 * disabling it if there are none. Selecting an item invokes
-	 * {@code onSelect} with its entry.
+	 * entries (up to {@value #MRU_MAX_ENTRIES}) - see {@link MRUMenu#fill}.
+	 * Selecting an item invokes {@code onSelect} with its entry.
 	 */
-	public void fillMenu(JMenu menu, boolean workspaces, MRUEntrySelectionListener onSelect) {
-		menu.removeAll();
-		List<MRUEntry> entries = (workspaces ? workspaceList : fileList).getEntries();
-		menu.setEnabled(!entries.isEmpty());
-
-		int index = 1;
-		for (MRUEntry entry : entries) {
-			JMenuItem item = new JMenuItem(index + " " + entry.getFilePath());
-			item.addActionListener(e -> onSelect.onSelect(entry));
-			menu.add(item);
-			index++;
-		}
-	}
-
-	public interface MRUEntrySelectionListener {
-		void onSelect(MRUEntry entry);
+	public void fillMenu(JMenu menu, boolean workspaces, MRUMenu.SelectionListener<FileType> onSelect) {
+		MRUMenu.fill(menu, workspaces ? workspaceList : fileList, onSelect);
 	}
 }

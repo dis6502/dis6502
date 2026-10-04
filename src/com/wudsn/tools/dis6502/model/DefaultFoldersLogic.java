@@ -7,8 +7,8 @@ package com.wudsn.tools.dis6502.model;
 
 import java.util.List;
 
+import com.wudsn.tools.base.common.ApplicationSettingsSection;
 import com.wudsn.tools.dis6502.Application;
-import com.wudsn.tools.dis6502.ApplicationSettingsSection;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 
 /**

@@ -21,14 +21,14 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystem;
  * its content - and what a file chooser needs to know about it.
  * <p>
  * A WUDSN Base {@link ValueSet} rather than a Java {@code enum} - like
- * {@link Encoding}/{@link FolderType}: {@link #getId()} is the key {@link
- * MRUList}'s persistence uses; {@link #getText()} is the localizable
- * display text from {@code ValueSets.properties}; the default extension,
- * filter extensions and folder type are additional attributes of each
- * value, the way a value set is meant to carry them. A separate filter
- * text ("Disk Image Files") needs no entry of its own: for every type that
- * has a filter, it is the text of its {@link FolderType} - see
- * {@link #getFilterText()}.
+ * {@link Encoding}/{@link FolderType}: {@link #getId()} is the key WUDSN
+ * Base's {@code MRUList} stores an entry's type under; {@link #getText()}
+ * is the localizable display text from {@code ValueSets.properties}; the
+ * default extension, filter extensions and folder type are additional
+ * attributes of each value, the way a value set is meant to carry them. A
+ * separate filter text ("Disk Image Files") needs no entry of its own: for
+ * every type that has a filter, it is the text of its {@link FolderType} -
+ * see {@link #getFilterText()}.
  *
  * @author Peter Dell
  */

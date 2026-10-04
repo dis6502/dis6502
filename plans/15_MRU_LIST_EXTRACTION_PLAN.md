@@ -1,7 +1,6 @@
 # Plan 15: Move the settings sections, the MRU list and its menu to WUDSN Base
 
-Status: Planned (2026-10-04) - every design question is decided, see
-"Decisions".
+Status: Done (2026-10-04), see "Progress".
 
 ## Goal
 
@@ -204,6 +203,31 @@ file on first start - to be decided in its own plan.
 3. **Docs:** this plan's status, `plans/README.md`, `plans/MEMORY.md` where
    it names `ApplicationSettingsSection`'s package. No `CHANGES.md` entry -
    nothing changes for the user.
+
+## Progress
+
+**Step 1 (2026-10-04), WUDSN Base `9e98e16`:** `ApplicationSettings`,
+`ApplicationSettingsSection`, `MRUEntry`, `MRUList` (`common`) and
+`MRUMenu` (`gui`) as designed; `com.wudsn.tools.base` has the JUnit 5 setup
+for Maven and Eclipse. 7 tests (`ApplicationSettingsTest`, `MRUListTest`,
+`MRUMenuTest`) on throw-away `Preferences` nodes; the sources compile with
+`javac --release 8`. Undoing the ignore-case comparison or the emptying of
+old slots fails `MRUListTest` - after the test was made to catch both: its
+first version re-added a path the limit dropped anyway.
+
+**Step 2 (2026-10-04):** DIS6502 uses the WUDSN Base classes; its
+`ApplicationSettingsSection`, `MRUEntry` and `MRUList` are deleted.
+`Application` keeps its root node and delegates `getSettingsSection` to an
+`ApplicationSettings`. `MRUController` keeps the two lists and calls
+`MRUMenu.fill`; it leaves out files opened as `FileType.ANY_FILE`. Both
+test modes pass (41 tests). Read through the new `MRUList` without writing,
+the real settings' recent workspace and five recent files load unchanged.
+
+Deviation from the design: `FileType.getKey()`/`fromKey()` stay. Every
+value set of DIS6502 (`Encoding`, `FolderType`, `ProcessorType`) has this
+pair, `FolderType`'s is used for the default folders, and
+`FileChoosersTest` tests `FileType`'s; removing it from `FileType` alone
+would break that pattern. Only `FileType`'s javadoc changed.
 
 ## Decisions (2026-10-04)
 

@@ -7,6 +7,8 @@ package com.wudsn.tools.dis6502;
 
 import java.awt.Font;
 
+import com.wudsn.tools.base.common.ApplicationSettingsSection;
+
 /**
  * The persisted-preference section/key names and coded default values for
  * every option {@link com.wudsn.tools.dis6502.ui.OptionsDialog} manages -

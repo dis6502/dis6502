@@ -7,8 +7,8 @@ package com.wudsn.tools.dis6502.model;
 
 import java.nio.charset.StandardCharsets;
 
+import com.wudsn.tools.base.common.ApplicationSettingsSection;
 import com.wudsn.tools.dis6502.Application;
-import com.wudsn.tools.dis6502.ApplicationSettingsSection;
 
 /**
  * Reads the pre-3.0, pre-XML binary profile format ({@code

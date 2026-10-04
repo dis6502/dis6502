@@ -8,10 +8,10 @@ package com.wudsn.tools.dis6502;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.prefs.Preferences;
 
+import com.wudsn.tools.base.common.ApplicationSettings;
+import com.wudsn.tools.base.common.ApplicationSettingsSection;
 import com.wudsn.tools.base.common.Log;
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.repository.Message;
@@ -51,8 +51,7 @@ public class Application {
 	 */
 	public static final String SETTINGS_NODE_PROPERTY = "dis6502.settingsNode";
 
-	private final Preferences settingsRoot;
-	private final Map<String, ApplicationSettingsSection> settingsSections = new HashMap<>();
+	private final ApplicationSettings settings;
 
 	/** Keeps its settings under {@link #getDefaultSettingsRoot()}. */
 	public Application() {
@@ -64,7 +63,7 @@ public class Application {
 		if (settingsRoot == null) {
 			throw new IllegalArgumentException("Parameter 'settingsRoot' must not be null.");
 		}
-		this.settingsRoot = settingsRoot;
+		settings = new ApplicationSettings(settingsRoot);
 	}
 
 	/** The user's node for this application, or the child of it that {@link #SETTINGS_NODE_PROPERTY} names. */
@@ -117,7 +116,7 @@ public class Application {
 	}
 
 	public ApplicationSettingsSection getSettingsSection(String name) {
-		return settingsSections.computeIfAbsent(name, key -> new ApplicationSettingsSection(settingsRoot.node(key)));
+		return settings.getSection(name);
 	}
 
 	/** Resolves {@code relativeFilePath} against the directory containing this application's own jar/classes. */

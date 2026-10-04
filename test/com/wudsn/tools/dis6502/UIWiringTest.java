@@ -173,7 +173,7 @@ public final class UIWiringTest {
 
 		// Recent Files goes through the same dispatcher.
 		reset();
-		edt(() -> app.openRecentFile(new com.wudsn.tools.dis6502.model.MRUEntry(AUTORUN_XEX.getPath(), FileType.EXECUTABLE_FILE)));
+		edt(() -> app.openRecentFile(new com.wudsn.tools.base.common.MRUEntry<>(AUTORUN_XEX.getPath(), FileType.EXECUTABLE_FILE)));
 		Assert.longEquals(workspace.getSegmentList().getCount(), 2);
 	}
 
