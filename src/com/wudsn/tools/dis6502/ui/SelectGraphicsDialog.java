@@ -11,16 +11,14 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
-import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
 import com.wudsn.tools.base.gui.ValueSetField;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Texts;
@@ -37,8 +35,8 @@ import com.wudsn.tools.dis6502.model.Segment;
  * terminology doesn't fit what this feature actually does (browsing raw
  * memory as an ANTIC-mode picture, not moving game sprites around).
  * <p>
- * Folded into one blocking {@link #show} call, as is idiomatic for a Swing
- * modal {@link JDialog}. {@link GridBagLayout}/{@link #pack} handle the
+ * Shown by one blocking {@link #show} call - a WUDSN Base {@link
+ * ModalDialog}. {@link GridBagLayout}/{@link #pack} handle the
  * layout. The vertical scroll position and bytes-per-line are plain
  * {@link JScrollBar}/{@link JSpinner} controls pushed into {@link
  * GraphicPanel} directly, rather than being owned by the picture control
@@ -46,7 +44,7 @@ import com.wudsn.tools.dis6502.model.Segment;
  *
  * @author Peter Dell
  */
-public final class SelectGraphicsDialog extends JDialog {
+public final class SelectGraphicsDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
 
@@ -59,12 +57,9 @@ public final class SelectGraphicsDialog extends JDialog {
 	private Segment segment;
 	private int resultBegin;
 	private int resultEnd;
-	private boolean confirmed;
 
 	public SelectGraphicsDialog(Frame owner) {
-		super(owner, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle(Texts.SelectGraphicsDialog_Title);
+		super(owner, Texts.SelectGraphicsDialog_Title);
 
 		modeField.addActionListener(e -> performModeChanged());
 		indexScrollBar.getModel().addChangeListener(e -> {
@@ -104,30 +99,11 @@ public final class SelectGraphicsDialog extends JDialog {
 		c.gridx = 1;
 		southPanel.add(addressLabel, c);
 
-		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
-		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
-		cancelButton.addActionListener(e -> {
-			confirmed = false;
-			setVisible(false);
-		});
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(okButton);
-		buttonPanel.add(cancelButton);
-
-		JPanel bottomPanel = new JPanel(new BorderLayout());
-		bottomPanel.add(southPanel, BorderLayout.NORTH);
-		bottomPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-		getContentPane().setLayout(new BorderLayout());
-		getContentPane().add(graphicPanel, BorderLayout.CENTER);
-		getContentPane().add(indexScrollBar, BorderLayout.EAST);
-		getContentPane().add(bottomPanel, BorderLayout.SOUTH);
-		pack();
-		setLocationRelativeTo(owner);
-
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
+		JPanel mainPanel = new JPanel(new BorderLayout());
+		mainPanel.add(graphicPanel, BorderLayout.CENTER);
+		mainPanel.add(indexScrollBar, BorderLayout.EAST);
+		mainPanel.add(southPanel, BorderLayout.SOUTH);
+		getContentPane().add(mainPanel, BorderLayout.CENTER);
 	}
 
 	/** Reconfigures the bytes-per-line spinner and graphic panel for the newly selected mode. */
@@ -153,8 +129,9 @@ public final class SelectGraphicsDialog extends JDialog {
 		}
 	}
 
-	/** Commits the current selection (or lack of one) as the result and closes the dialog. */
-	private void performOK() {
+	/** Commits the current selection (or lack of one) as the result. */
+	@Override
+	protected boolean validateOK() {
 		int begin = graphicPanel.getIndex();
 		int end = graphicPanel.getSelection();
 
@@ -165,8 +142,7 @@ public final class SelectGraphicsDialog extends JDialog {
 			resultBegin = resultEnd = GraphicPanel.NO_SELECTION;
 		}
 
-		confirmed = true;
-		setVisible(false);
+		return true;
 	}
 
 	/** Opens the dialog on {@code memoryInspectorState}'s segment, pre-selecting its current byte range if any. */
@@ -190,10 +166,8 @@ public final class SelectGraphicsDialog extends JDialog {
 		modeField.setValue(GraphicMode.ANTIC_F); // Default mode.
 		performModeChanged();
 
-		confirmed = false;
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
-
-		return confirmed;
+		showModal(modeField);
+		return okPressed;
 	}
 
 	public int getBegin() {

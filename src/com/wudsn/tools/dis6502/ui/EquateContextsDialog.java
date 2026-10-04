@@ -14,14 +14,11 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import com.wudsn.tools.base.Actions;
-import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
 import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.Workspace;
 
@@ -33,7 +30,7 @@ import com.wudsn.tools.dis6502.model.Workspace;
  *
  * @author Peter Dell
  */
-public final class EquateContextsDialog extends JDialog {
+public final class EquateContextsDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
 
@@ -42,48 +39,31 @@ public final class EquateContextsDialog extends JDialog {
 	private final List<JCheckBox> checkBoxes = new ArrayList<>();
 
 	private Workspace workspace;
-	private boolean confirmed;
+	private boolean changed;
 
 	public EquateContextsDialog(Frame owner) {
-		super(owner, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle(Texts.EquateContextsDialog_Title);
+		super(owner, Texts.EquateContextsDialog_Title);
 
 		JPanel formPanel = new JPanel(new BorderLayout(0, 8));
 		formPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 		formPanel.add(new JLabel(Texts.EquateContextsDialog_Description), BorderLayout.NORTH);
 		formPanel.add(checkBoxPanel, BorderLayout.CENTER);
 
-		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
-		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
-		cancelButton.addActionListener(e -> {
-			confirmed = false;
-			setVisible(false);
-		});
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(okButton);
-		buttonPanel.add(cancelButton);
-
-		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(formPanel, BorderLayout.CENTER);
-		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
-	/** Commits the checked contexts to the workspace and closes the dialog. */
-	private void performOK() {
+	/** Commits the checked contexts to the workspace. */
+	@Override
+	protected boolean validateOK() {
 		Set<String> activeContexts = new TreeSet<>();
 		for (JCheckBox checkBox : checkBoxes) {
 			if (checkBox.isSelected()) {
 				activeContexts.add(checkBox.getText());
 			}
 		}
-		confirmed = !activeContexts.equals(workspace.getActiveContexts());
+		changed = !activeContexts.equals(workspace.getActiveContexts());
 		workspace.setActiveContexts(activeContexts);
-		setVisible(false);
+		return true;
 	}
 
 	/**
@@ -107,12 +87,8 @@ public final class EquateContextsDialog extends JDialog {
 			checkBoxPanel.add(noContextsLabel);
 		}
 
-		pack();
-		setLocationRelativeTo(getOwner());
-
-		confirmed = false;
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
-
-		return confirmed;
+		changed = false;
+		showModal(checkBoxes.isEmpty() ? getOKButton() : checkBoxes.get(0));
+		return okPressed && changed;
 	}
 }

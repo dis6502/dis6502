@@ -6,6 +6,7 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.event.MouseAdapter;
@@ -13,16 +14,14 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 
 import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.system.atari800.AtariDisk;
@@ -44,7 +43,7 @@ import com.wudsn.tools.dis6502.model.system.atari800.AtariFile;
  *
  * @author Peter Dell
  */
-public final class DiskImageExecutableFileDialog extends JDialog {
+public final class DiskImageExecutableFileDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
 
@@ -52,15 +51,11 @@ public final class DiskImageExecutableFileDialog extends JDialog {
 	private final DefaultListModel<Entry> listModel = new DefaultListModel<>();
 	private final JList<Entry> filesList = new JList<>(listModel);
 	private final JLabel fileNameLabel = new JLabel(" ");
-	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 
 	private String executableFileName = "";
-	private boolean confirmed;
 
 	public DiskImageExecutableFileDialog(Frame owner) {
-		super(owner, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle(Texts.DiskImageExecutableFileDialog_Title);
+		super(owner, Texts.DiskImageExecutableFileDialog_Title);
 
 		diskImageFilePathField.setEditable(false);
 		filesList.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
@@ -69,25 +64,19 @@ public final class DiskImageExecutableFileDialog extends JDialog {
 			if (!e.getValueIsAdjusting()) {
 				Entry selected = filesList.getSelectedValue();
 				fileNameLabel.setText(selected != null ? selected.fileName : "");
-				okButton.setEnabled(selected != null);
+				getOKButton().setEnabled(selected != null);
 			}
 		});
 		filesList.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2 && okButton.isEnabled()) {
-					okButton.doClick();
+				if (e.getClickCount() == 2 && getOKButton().isEnabled()) {
+					getOKButton().doClick();
 				}
 			}
 		});
 
-		okButton.setEnabled(false);
-		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
-		cancelButton.addActionListener(e -> {
-			confirmed = false;
-			setVisible(false);
-		});
+		getOKButton().setEnabled(false);
 
 		JPanel topPanel = new JPanel(new BorderLayout(4, 4));
 		topPanel.add(ElementFactory.createLabel(DataTypes.DiskImageExecutableFileDialog_DiskImageFile, diskImageFilePathField), BorderLayout.WEST);
@@ -97,39 +86,30 @@ public final class DiskImageExecutableFileDialog extends JDialog {
 		fileNamePanel.add(ElementFactory.createLabel(DataTypes.DiskImageExecutableFileDialog_ExecutableFileName, fileNameLabel), BorderLayout.WEST);
 		fileNamePanel.add(fileNameLabel, BorderLayout.CENTER);
 
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(okButton);
-		buttonPanel.add(cancelButton);
+		JScrollPane filesScrollPane = new JScrollPane(filesList);
+		filesScrollPane.setPreferredSize(new Dimension(400, 300)); // Room for most of a DOS 2 directory.
 
-		JPanel southPanel = new JPanel(new BorderLayout());
-		southPanel.add(fileNamePanel, BorderLayout.NORTH);
-		southPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-		getContentPane().setLayout(new BorderLayout(4, 4));
-		getContentPane().add(topPanel, BorderLayout.NORTH);
-		getContentPane().add(new JScrollPane(filesList), BorderLayout.CENTER);
-		getContentPane().add(southPanel, BorderLayout.SOUTH);
-		setSize(420, 420);
-		setLocationRelativeTo(owner);
-
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
+		JPanel mainPanel = new JPanel(new BorderLayout(4, 4));
+		mainPanel.add(topPanel, BorderLayout.NORTH);
+		mainPanel.add(filesScrollPane, BorderLayout.CENTER);
+		mainPanel.add(fileNamePanel, BorderLayout.SOUTH);
+		getContentPane().add(mainPanel, BorderLayout.CENTER);
 	}
 
-	/** Confirms the selected file and closes the dialog. */
-	private void performOK() {
+	/** Confirms the selected file. */
+	@Override
+	protected boolean validateOK() {
 		Entry selected = filesList.getSelectedValue();
 		if (selected == null) {
-			return;
+			return false;
 		}
 		executableFileName = selected.fileName;
-		confirmed = true;
-		setVisible(false);
+		return true;
 	}
 
 	/**
-	 * Opens the dialog as one blocking call, idiomatic for a Swing modal
-	 * {@link JDialog}. Returns {@code true} if the user picked a file and
+	 * Opens the dialog as one blocking call - a WUDSN Base
+	 * {@link ModalDialog}. Returns {@code true} if the user picked a file and
 	 * clicked OK (or double-clicked it); {@link #getExecutableFileName} then
 	 * gives its name.
 	 */
@@ -137,7 +117,7 @@ public final class DiskImageExecutableFileDialog extends JDialog {
 		diskImageFilePathField.setText(atariDisk.getDiskImageFilePath());
 		listModel.clear();
 		fileNameLabel.setText("");
-		okButton.setEnabled(false);
+		getOKButton().setEnabled(false);
 
 		AtariFile info = new AtariFile();
 		AtariError error = atariDisk.findFirst(info);
@@ -146,10 +126,8 @@ public final class DiskImageExecutableFileDialog extends JDialog {
 			error = atariDisk.findNext(info);
 		}
 
-		confirmed = false;
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
-
-		return confirmed;
+		showModal(filesList);
+		return okPressed;
 	}
 
 	public String getExecutableFileName() {

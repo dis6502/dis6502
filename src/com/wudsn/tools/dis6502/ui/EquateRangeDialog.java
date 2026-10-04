@@ -13,16 +13,14 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 
 import javax.swing.DefaultListCellRenderer;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JDialog;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Texts;
@@ -40,7 +38,7 @@ import com.wudsn.tools.dis6502.model.EquateList;
  *
  * @author Peter Dell
  */
-public final class EquateRangeDialog extends JDialog {
+public final class EquateRangeDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
 
@@ -49,12 +47,9 @@ public final class EquateRangeDialog extends JDialog {
 	private final JComboBox<Equate> baseEquateComboBox = new JComboBox<>();
 
 	private EquateList userEquateList;
-	private boolean confirmed;
 
 	public EquateRangeDialog(Frame owner) {
-		super(owner, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle(Texts.EquateRangeDialog_Title);
+		super(owner, Texts.EquateRangeDialog_Title);
 
 		baseEquateComboBox.setRenderer(new DefaultListCellRenderer() {
 			private static final long serialVersionUID = 1L;
@@ -104,27 +99,12 @@ public final class EquateRangeDialog extends JDialog {
 		c.weightx = 1;
 		formPanel.add(baseEquateComboBox, c);
 
-		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
-		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
-		cancelButton.addActionListener(e -> {
-			confirmed = false;
-			setVisible(false);
-		});
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(okButton);
-		buttonPanel.add(cancelButton);
-
-		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(formPanel, BorderLayout.CENTER);
-		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** Validates the fields and, if they check out, applies the range and closes the dialog; a validation failure just shows the error and leaves the dialog open. */
-	private void performOK() {
+	@Override
+	protected boolean validateOK() {
 		int startAddress = getAddress(startAddressField);
 		int endAddress = getAddress(endAddressField);
 		Equate selectedEquate = (Equate) baseEquateComboBox.getSelectedItem();
@@ -150,10 +130,10 @@ public final class EquateRangeDialog extends JDialog {
 			} else {
 				userEquateList.setRange(selectedEquate.getLabel(), baseAddress, selectedEquate.getLabelAccess(),
 						startAddress, endAddress);
-				confirmed = true;
-				setVisible(false);
+				return true;
 			}
 		}
+		return false;
 	}
 
 	/** Parses a plain hexadecimal address field; an unparseable value is silently treated as 0. */
@@ -178,8 +158,8 @@ public final class EquateRangeDialog extends JDialog {
 	}
 
 	/**
-	 * Opens the dialog as one blocking call, idiomatic for a Swing modal
-	 * {@link JDialog}. {@code address}, if non-empty, is a plain (no "$"
+	 * Opens the dialog as one blocking call - a WUDSN Base
+	 * {@link ModalDialog}. {@code address}, if non-empty, is a plain (no "$"
 	 * prefix) hexadecimal address used to pre-select a matching base equate -
 	 * not exercised by any current caller (see {@code Dis6502}).
 	 */
@@ -203,15 +183,7 @@ public final class EquateRangeDialog extends JDialog {
 		fillComboBox(systemEquateList, addressSpecified, parsedAddress);
 		fillComboBox(userEquateList, addressSpecified, parsedAddress);
 
-		// Packed here, not in the constructor: the combo box is still empty at
-		// construction time, so packing then sized the dialog too narrow to
-		// show the populated item text once items were added afterwards.
-		pack();
-		setLocationRelativeTo(getOwner());
-
-		confirmed = false;
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
-
-		return confirmed;
+		showModal(startAddressField);
+		return okPressed;
 	}
 }

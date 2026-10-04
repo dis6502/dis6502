@@ -11,15 +11,13 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
 import com.wudsn.tools.base.gui.ValueSetField;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Messages;
@@ -32,16 +30,15 @@ import com.wudsn.tools.dis6502.model.Workspace;
  * A dialog for editing a segment's begin address, binary flag, label
  * prefix, and processor type.
  * <p>
- * Folded into one blocking {@link #show} call, as is idiomatic for a Swing
- * modal {@link JDialog}. {@link #performOK} mutates {@code segment}
+ * Shown by one blocking {@link #show} call - a WUDSN Base {@link
+ * ModalDialog}. {@link #validateOK} mutates {@code segment}
  * directly.
  *
  * @author Peter Dell
  */
-public final class SegmentPropertiesDialog extends JDialog {
+public final class SegmentPropertiesDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
-
 
 	private final JTextField addressField = new JTextField(6);
 	private final JCheckBox binaryCheckBox = ElementFactory.createCheckBox(DataTypes.SegmentPropertiesDialog_Binary);
@@ -49,12 +46,9 @@ public final class SegmentPropertiesDialog extends JDialog {
 	private final ValueSetField<ProcessorType> processorField = new ValueSetField<ProcessorType>(ProcessorType.getSelectableValues());
 
 	private Segment segment;
-	private boolean confirmed;
 
 	public SegmentPropertiesDialog(Frame owner) {
-		super(owner, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle(Texts.SegmentPropertiesDialog_Title);
+		super(owner, Texts.SegmentPropertiesDialog_Title);
 
 		JPanel formPanel = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
@@ -94,32 +88,17 @@ public final class SegmentPropertiesDialog extends JDialog {
 		c.fill = GridBagConstraints.NONE;
 		formPanel.add(binaryCheckBox, c);
 
-		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
-		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
-		cancelButton.addActionListener(e -> {
-			confirmed = false;
-			setVisible(false);
-		});
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(okButton);
-		buttonPanel.add(cancelButton);
-
-		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(formPanel, BorderLayout.CENTER);
-		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
-	/** Validates the address and, if it checks out, commits every field to the segment and closes the dialog. */
-	private void performOK() {
+	/** Validates the address and, if it checks out, commits every field to the segment. */
+	@Override
+	protected boolean validateOK() {
 		int begin = getAddress(addressField);
 		if (!segment.canMoveTo(begin)) {
 			// ERROR: Start address too high.\nThe segment would overlap in memory.
 			JOptionPane.showMessageDialog(this, Messages.E037.format(), Texts.SegmentPropertiesDialog_Title, JOptionPane.ERROR_MESSAGE);
-			return;
+			return false;
 		}
 		int end = begin + segment.getSize() - 1;
 
@@ -129,8 +108,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 		segment.labelPrefix = labelPrefixField.getText();
 		segment.processorType = processorField.getValue();
 
-		confirmed = true;
-		setVisible(false);
+		return true;
 	}
 
 	/** Parses a plain hexadecimal address field; an unparseable value is silently treated as 0. */
@@ -152,15 +130,7 @@ public final class SegmentPropertiesDialog extends JDialog {
 
 		processorField.setValue(segment.processorType);
 
-		// Packed here, not in the constructor: the combo box is still empty at
-		// construction time, so packing then sized the dialog too narrow to
-		// show the populated item text once items were added afterwards.
-		pack();
-		setLocationRelativeTo(getOwner());
-
-		confirmed = false;
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
-
-		return confirmed;
+		showModal(addressField);
+		return okPressed;
 	}
 }

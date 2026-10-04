@@ -6,6 +6,7 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -15,8 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -25,8 +24,8 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Texts;
@@ -44,7 +43,7 @@ import com.wudsn.tools.dis6502.Texts;
  *
  * @author Peter Dell
  */
-public final class RawFileDialog extends JDialog {
+public final class RawFileDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
 
@@ -55,18 +54,14 @@ public final class RawFileDialog extends JDialog {
 	private final JTextField startOffsetField = new JTextField(8);
 	private final JTextField endOffsetField = new JTextField(8);
 	private final JTextField addressField = new JTextField(6);
-	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 
 	private byte[] fileBuffer = new byte[0];
 	private int resultBegin;
 	private int resultSize;
 	private int resultAddress;
-	private boolean confirmed;
 
 	public RawFileDialog(Frame owner) {
-		super(owner, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle(Texts.RawFileDialog_Title);
+		super(owner, Texts.RawFileDialog_Title);
 
 		filePathField.setEditable(false);
 
@@ -91,13 +86,7 @@ public final class RawFileDialog extends JDialog {
 		};
 		addressField.getDocument().addDocumentListener(addressListener);
 
-		okButton.setEnabled(false);
-		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
-		cancelButton.addActionListener(e -> {
-			confirmed = false;
-			setVisible(false);
-		});
+		getOKButton().setEnabled(false);
 
 		JPanel topPanel = new JPanel(new BorderLayout(4, 4));
 		topPanel.add(ElementFactory.createLabel(DataTypes.RawFileDialog_FilePath, filePathField), BorderLayout.WEST);
@@ -122,31 +111,23 @@ public final class RawFileDialog extends JDialog {
 		c.gridx = 5;
 		fieldsPanel.add(addressField, c);
 
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(okButton);
-		buttonPanel.add(cancelButton);
+		JScrollPane hexDumpScrollPane = new JScrollPane(hexDumpArea);
+		hexDumpScrollPane.setPreferredSize(new Dimension(680, 380)); // The hex dump's full width.
 
-		JPanel southPanel = new JPanel(new BorderLayout());
-		southPanel.add(fieldsPanel, BorderLayout.NORTH);
-		southPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-		getContentPane().setLayout(new BorderLayout(4, 4));
-		getContentPane().add(topPanel, BorderLayout.NORTH);
-		getContentPane().add(new JScrollPane(hexDumpArea), BorderLayout.CENTER);
-		getContentPane().add(southPanel, BorderLayout.SOUTH);
-		setSize(700, 500);
-		setLocationRelativeTo(owner);
-
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
+		JPanel mainPanel = new JPanel(new BorderLayout(4, 4));
+		mainPanel.add(topPanel, BorderLayout.NORTH);
+		mainPanel.add(hexDumpScrollPane, BorderLayout.CENTER);
+		mainPanel.add(fieldsPanel, BorderLayout.SOUTH);
+		getContentPane().add(mainPanel, BorderLayout.CENTER);
 	}
 
 	private void updateOkButtonEnabled() {
-		okButton.setEnabled(!addressField.getText().trim().isEmpty());
+		getOKButton().setEnabled(!addressField.getText().trim().isEmpty());
 	}
 
 	/** Swaps begin/end if reversed and clamps both to the buffer's bounds before committing the result. */
-	private void performOK() {
+	@Override
+	protected boolean validateOK() {
 		int begin = getOffset(startOffsetField, 0);
 		int end = getOffset(endOffsetField, fileBuffer.length - 1);
 		if (begin > end) {
@@ -164,8 +145,7 @@ public final class RawFileDialog extends JDialog {
 		resultBegin = begin;
 		resultSize = end - begin + 1;
 		resultAddress = getAddress(addressField);
-		confirmed = true;
-		setVisible(false);
+		return true;
 	}
 
 	/** An unparseable value falls back to {@code defaultValue} rather than 0, since 0 is not a sensible default for an end offset. */
@@ -205,8 +185,8 @@ public final class RawFileDialog extends JDialog {
 	}
 
 	/**
-	 * Opens the dialog as one blocking call, idiomatic for a Swing modal
-	 * {@link JDialog}. Returns {@code true} if the user clicked OK; {@link
+	 * Opens the dialog as one blocking call - a WUDSN Base
+	 * {@link ModalDialog}. Returns {@code true} if the user clicked OK; {@link
 	 * #getFileBuffer}/{@link #getBegin}/{@link #getResultSize}/{@link
 	 * #getAddress} then give the result.
 	 */
@@ -224,12 +204,10 @@ public final class RawFileDialog extends JDialog {
 		startOffsetField.setText("0");
 		endOffsetField.setText(String.valueOf(fileBuffer.length - 1));
 		addressField.setText("");
-		okButton.setEnabled(false);
+		getOKButton().setEnabled(false);
 
-		confirmed = false;
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
-
-		return confirmed;
+		showModal(addressField);
+		return okPressed;
 	}
 
 	public byte[] getFileBuffer() {

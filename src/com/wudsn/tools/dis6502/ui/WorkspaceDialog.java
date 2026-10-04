@@ -11,12 +11,10 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
-import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JPanel;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
 import com.wudsn.tools.base.gui.ValueSetField;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Texts;
@@ -26,12 +24,12 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
 /**
  * A dialog for choosing the computer system a new workspace targets.
  * <p>
- * Folded into one blocking {@link #show} call, as is idiomatic for a Swing
- * modal {@link JDialog}.
+ * Shown by one blocking {@link #show} call - a WUDSN Base {@link
+ * ModalDialog}.
  *
  * @author Peter Dell
  */
-public final class WorkspaceDialog extends JDialog {
+public final class WorkspaceDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
 
@@ -39,12 +37,9 @@ public final class WorkspaceDialog extends JDialog {
 			ComputerSystemType.getSelectableValues());
 
 	private Workspace workspace;
-	private boolean confirmed;
 
 	public WorkspaceDialog(Frame owner) {
-		super(owner, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle(Texts.WorkspaceDialog_Title);
+		super(owner, Texts.WorkspaceDialog_Title);
 
 		JPanel formPanel = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
@@ -59,33 +54,17 @@ public final class WorkspaceDialog extends JDialog {
 		c.weightx = 1;
 		formPanel.add(computerSystemField, c);
 
-		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
-		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
-		cancelButton.addActionListener(e -> {
-			confirmed = false;
-			setVisible(false);
-		});
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(okButton);
-		buttonPanel.add(cancelButton);
-
-		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(formPanel, BorderLayout.CENTER);
-		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** Commits the selected computer system to the workspace and closes the dialog. */
-	private void performOK() {
+	@Override
+	protected boolean validateOK() {
 		ComputerSystemType selected = computerSystemField.getValue();
 		if (selected != null) {
 			workspace.setComputerSystemType(selected);
 		}
-		confirmed = true;
-		setVisible(false);
+		return true;
 	}
 
 	/** Opens the dialog pre-selecting the workspace's current computer system, if selectable. */
@@ -98,12 +77,7 @@ public final class WorkspaceDialog extends JDialog {
 			computerSystemField.setValue(computerSystemType);
 		}
 
-		pack();
-		setLocationRelativeTo(getOwner());
-
-		confirmed = false;
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
-
-		return confirmed;
+		showModal(computerSystemField);
+		return okPressed;
 	}
 }

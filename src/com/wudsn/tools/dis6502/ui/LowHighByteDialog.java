@@ -11,16 +11,14 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
-import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.MemoryType;
@@ -31,12 +29,12 @@ import com.wudsn.tools.dis6502.model.MemoryType;
  * MemoryType#LOBYTE}/{@link MemoryType#HIBYTE}, to supply the other,
  * unknown half's value.
  * <p>
- * Folded into one blocking {@link #show} call, as is idiomatic for a Swing
- * modal {@link JDialog}.
+ * Shown by one blocking {@link #show} call - a WUDSN Base {@link
+ * ModalDialog}.
  *
  * @author Peter Dell
  */
-public final class LowHighByteDialog extends JDialog {
+public final class LowHighByteDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
 
@@ -44,15 +42,11 @@ public final class LowHighByteDialog extends JDialog {
 	private final JTextField knownByteField = new JTextField(4);
 	private final JLabel unknownByteLabel = new JLabel();
 	private final JTextField unknownByteField = new JTextField(4);
-	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 
 	private int unknownByte;
-	private boolean confirmed;
 
 	public LowHighByteDialog(Frame owner) {
-		super(owner, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle(Texts.LowHighByteDialog_Title);
+		super(owner, Texts.LowHighByteDialog_Title);
 
 		knownByteField.setEditable(false);
 		unknownByteField.getDocument().addDocumentListener(new DocumentListener() {
@@ -72,7 +66,7 @@ public final class LowHighByteDialog extends JDialog {
 			}
 
 			private void update() {
-				okButton.setEnabled(!unknownByteField.getText().isEmpty());
+				getOKButton().setEnabled(!unknownByteField.getText().isEmpty());
 			}
 		});
 
@@ -93,35 +87,18 @@ public final class LowHighByteDialog extends JDialog {
 		c.gridx = 1;
 		formPanel.add(unknownByteField, c);
 
-		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
-		cancelButton.addActionListener(e -> {
-			confirmed = false;
-			setVisible(false);
-		});
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(okButton);
-		buttonPanel.add(cancelButton);
-
-		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(formPanel, BorderLayout.CENTER);
-		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-		pack();
-		setLocationRelativeTo(owner);
-
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** Parses and commits {@link #unknownByte}. */
-	private void performOK() {
+	@Override
+	protected boolean validateOK() {
 		try {
 			unknownByte = Integer.parseInt(unknownByteField.getText().trim(), 16) & 0xFF;
 		} catch (NumberFormatException ex) {
-			return; // The OK button is disabled while the field is empty; an invalid value just leaves the dialog open.
+			return false; // The OK button is disabled while the field is empty; an invalid value just leaves the dialog open.
 		}
-		confirmed = true;
-		setVisible(false);
+		return true;
 	}
 
 	public int getUnknownByte() {
@@ -137,12 +114,9 @@ public final class LowHighByteDialog extends JDialog {
 				unknownByteField);
 		knownByteField.setText(String.format("%02X", knownByte));
 		unknownByteField.setText("");
-		okButton.setEnabled(false);
-		pack();
+		getOKButton().setEnabled(false);
 
-		confirmed = false;
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
-
-		return confirmed;
+		showModal(unknownByteField);
+		return okPressed;
 	}
 }

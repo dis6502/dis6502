@@ -13,8 +13,6 @@ import java.awt.Insets;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -22,9 +20,9 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Texts;
 
@@ -33,15 +31,15 @@ import com.wudsn.tools.dis6502.Texts;
  * as either ASCII text or hexadecimal bytes - the two fields stay in sync
  * via {@link FindStringDialog}.
  * <p>
- * Folded into one blocking {@link #show} call, as is idiomatic for a Swing
- * modal {@link JDialog}. {@link #performOK}: on a successful search it
+ * Shown by one blocking {@link #show} call - a WUDSN Base {@link
+ * ModalDialog}. {@link #validateOK}: on a successful search it
  * closes the dialog, on a failed one it shows a "not found" alert and
  * stays open - shown here rather than by the caller, since {@link
  * MemoryInspectorPanel} stays free of popups - see its javadoc.
  *
  * @author Peter Dell
  */
-public final class MemoryInspectorFindStringDialog extends JDialog {
+public final class MemoryInspectorFindStringDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
 
@@ -50,16 +48,12 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 	private final JTextField hexField = new JTextField(20);
 	private final JRadioButton allSegmentsRadioButton = ElementFactory.createRadioButton(DataTypes.MemoryInspectorFindStringDialog_AllSegments);
 	private final JRadioButton selectedSegmentRadioButton = ElementFactory.createRadioButton(DataTypes.MemoryInspectorFindStringDialog_SelectedSegment);
-	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 
 	private MemoryInspectorPanel memoryInspectorPanel;
 	private boolean updatingFields;
-	private boolean confirmed;
 
 	public MemoryInspectorFindStringDialog(Frame owner) {
-		super(owner, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle(Texts.MemoryInspectorFindStringDialog_Title);
+		super(owner, Texts.MemoryInspectorFindStringDialog_Title);
 
 		ButtonGroup scopeGroup = new ButtonGroup();
 		scopeGroup.add(allSegmentsRadioButton);
@@ -137,24 +131,7 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		formPanel.add(scopePanel, c);
 
-		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
-		cancelButton.addActionListener(e -> {
-			confirmed = false;
-			setVisible(false);
-		});
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(okButton);
-		buttonPanel.add(cancelButton);
-
-		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(formPanel, BorderLayout.CENTER);
-		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-		pack();
-		setLocationRelativeTo(owner);
-
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** Keeps {@link #hexField} in sync as the user types in {@link #asciiField}. */
@@ -166,7 +143,7 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 		updatingFields = true;
 		hexField.setText(findStringDialog.getHexString());
 		updatingFields = false;
-		okButton.setEnabled(find);
+		getOKButton().setEnabled(find);
 	}
 
 	/** Keeps {@link #asciiField} in sync as the user types in {@link #hexField}. */
@@ -178,26 +155,25 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 		updatingFields = true;
 		asciiField.setText(findStringDialog.getAsciiString());
 		updatingFields = false;
-		okButton.setEnabled(find);
+		getOKButton().setEnabled(find);
 	}
 
 	/** Runs the search; closes the dialog on a match, otherwise shows a "not found" alert. */
-	private void performOK() {
+	@Override
+	protected boolean validateOK() {
 		boolean find = findStringDialog.hexStringToAsciiString(hexField.getText());
 		if (!find) {
-			return;
+			return false;
 		}
 
 		boolean allSegments = allSegmentsRadioButton.isSelected();
 		boolean found = memoryInspectorPanel.findString(findStringDialog.getAsciiString(), allSegments);
-		if (found) {
-			confirmed = true;
-			setVisible(false);
-		} else {
+		if (!found) {
 			JOptionPane.showMessageDialog(this,
 					TextUtility.format(Texts.MemoryInspectorFindStringDialog_StringNotFoundMessage, findStringDialog.getAsciiString()),
 					Texts.MemoryInspectorFindStringDialog_NotFoundTitle, JOptionPane.INFORMATION_MESSAGE);
 		}
+		return found;
 	}
 
 	/** Opens the dialog pre-filled with the current search state; returns whether the user found a match. */
@@ -218,11 +194,9 @@ public final class MemoryInspectorFindStringDialog extends JDialog {
 		} else {
 			selectedSegmentRadioButton.setSelected(true);
 		}
-		okButton.setEnabled(!findStringDialog.getHexString().isEmpty());
+		getOKButton().setEnabled(!findStringDialog.getHexString().isEmpty());
 
-		confirmed = false;
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
-
-		return confirmed;
+		showModal(asciiField);
+		return okPressed;
 	}
 }

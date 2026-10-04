@@ -1,7 +1,6 @@
 # Plan 16: DIS6502's dialogs on WUDSN Base's `ModalDialog`
 
-Status: Planned (2026-10-05) - every design question is decided, see
-"Decisions".
+Status: In progress - steps 1 and 2 done (2026-10-05), see "Progress".
 
 ## Goal
 
@@ -210,6 +209,46 @@ public final class WorkspaceDialog extends ModalDialog {
    users; `plans/README.md`. No `CHANGES.md` entry: DIS6502's dialogs
    look and behave as before. RMT's and The!Cart Studio's OK/Cancel
    buttons gain mnemonics - a note for their own change logs.
+
+## Progress
+
+**Step 1 (2026-10-05), WUDSN Base `7e88ea5`:** `ModalDialog` takes a
+`Window`, gives OK and Cancel their mnemonics, disposes itself after
+`showModal`, and has `close()`. Fixed on the way: after OK with a failing
+check, the close box reported OK. `ModalDialogTest` (6 tests, with a
+display) drives a shown dialog through every way of closing it; undoing the
+disposal, the close-box fix or the OK mnemonic fails it. RMT (666 tests)
+and The!Cart Studio build unchanged against it.
+
+**Step 2 (2026-10-05):** the 10 dialogs of group A extend `ModalDialog`.
+Their `performOK` became `validateOK`, returning false where the dialog
+stays open (`EquateRangeDialog`, `SegmentPropertiesDialog`,
+`MemoryInspectorFindStringDialog` with their messages); `show` calls
+`showModal` and returns `okPressed`.
+
+- A gap the plan missed: four dialogs enable OK only for complete input,
+  and `DiskImageExecutableFileDialog` clicks it on a double click.
+  `ModalDialog` got `getOKButton()` for that (with a test).
+- `DiskImageExecutableFileDialog` and `RawFileDialog` had a fixed size,
+  which `showModal`'s `pack()` would override; their scroll panes got a
+  preferred size instead (the raw file dialog is 694x497 instead of
+  700x500).
+- `SelectGraphicsDialog`, `DiskImageExecutableFileDialog` and
+  `RawFileDialog` had fields below their main area next to the buttons;
+  these now sit in one panel at `CENTER`, above `ModalDialog`'s button bar.
+- Visible difference: OK/Cancel are at the right instead of centered.
+  Two layout details of WUDSN Base were fixed on the way, for all projects:
+  the button bar's border is 5 pixels on all sides (was 5, 5, 0, 5 - the
+  buttons nearly touched the bottom edge), and neighboring buttons are
+  `ModalDialog.BUTTON_GAP` (5) pixels apart instead of touching (checked
+  by `ModalDialogTest`).
+
+Both test modes pass. `UIWiringTest` failed twice with "cannot open system
+clipboard" in the first three full runs, then passed in five; the
+committed code passed three of three. None of the changed dialogs uses the
+clipboard - most likely another program held it - but it is noted here in
+case it returns. Screenshots of the workspace, low/high byte, address range
+and raw file dialogs checked the layout.
 
 ## Decisions (2026-10-05)
 
