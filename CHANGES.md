@@ -106,6 +106,9 @@ what is new, changed or fixed compared with it. Known limits are in
   (read, write, read/write or immediate): a range based on a constant no
   longer turns memory accesses into labels. Ranges in existing workspaces
   keep their access.
+- Of several system equates at one address, only the referenced one is
+  written when unreferenced system labels are omitted: `sta $02` defines
+  `CASINI`, no longer also the constant `ICCOM`.
 - Fixed: a user range based on a system equate (e.g. `COLPF0+1` based on
   `COLPF0`) left its base undefined when unreferenced system labels were
   omitted, so the listing did not assemble.

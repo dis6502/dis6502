@@ -101,6 +101,7 @@ public final class DisassemblySection {
 		line.referenced = templateLine.referenced;
 		line.address = templateLine.address;
 		line.systemAddress = templateLine.systemAddress;
+		line.equate = templateLine.equate;
 		line.setLine(text);
 		lines.add(line);
 		return line;

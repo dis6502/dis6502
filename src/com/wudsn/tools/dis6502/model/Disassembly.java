@@ -87,6 +87,7 @@ public final class Disassembly {
 	// Initialized in disInit() and used in addLine().
 	int absoluteAddress; // Package-private: see markSize.
 	private int systemAddress = 0x1234;
+	private Equate lineEquate; // The equate the next line defines, set only while generating equates.
 
 	// Current disassembly position and the type of the byte last read; see the class-level "Design deviations" note.
 	private int segmentIndex;
@@ -293,21 +294,31 @@ public final class Disassembly {
 		}
 	}
 
-	/** Sets the referenced flag on lines for SYSTEM_EQUATES without offset (sta LABEL). */
+	/**
+	 * Sets the referenced flag on lines for SYSTEM_EQUATES without offset (sta
+	 * LABEL): an equate line is referenced if its own equate is - not merely
+	 * another equate at the same address, so of {@code CASINI} and {@code
+	 * ICCOM}, both at $02, only the one in use is written. Other lines (the
+	 * section's comments) keep the address rule.
+	 */
 	private void setSystemEquateLinesReferencedBySystemAddress() {
-		// TODO: Currently the referenced check does not distinguish the type of access.
-		// Therefore if $80 is referenced, ZP and DL constants are equally referenced.
 		int anyAccess = LabelAccess.IMMEDIATE | LabelAccess.READ_WRITE;
 
 		EquateList systemEquateList = workspace.getSystemEquateList();
 		for (Iterator<DisassemblyLine> i = result.createLineIterator(DisassemblySectionType.SYSTEM_EQUATES); i
 				.hasNext();) {
 			DisassemblyLine line = i.next();
-			line.referenced = systemEquateList.isEquateAddressReferenced(line.systemAddress, anyAccess);
+			line.referenced = line.equate != null ? line.equate.hasReferences()
+					: systemEquateList.isEquateAddressReferenced(line.systemAddress, anyAccess);
 		}
 	}
 
-	/** Sets the referenced flag on the nearest SYSTEM_EQUATES line with address (sta LABEL+n). */
+	/**
+	 * Sets the referenced flag on the nearest SYSTEM_EQUATES line with address
+	 * (sta LABEL+n). Of several lines at the nearest address, one already
+	 * referenced is preferred, so a shared address does not drag in an unused
+	 * equate.
+	 */
 	private void setNearestSystemEquateLineReferencedByAddress(int address) {
 		DisassemblyLine nearestLine = null;
 
@@ -316,7 +327,9 @@ public final class Disassembly {
 			DisassemblyLine line = i.next();
 
 			if (line.systemAddress != DisassemblyLine.NO_SYSTEM_ADDRESS && line.systemAddress <= address
-					&& (nearestLine == null || nearestLine.systemAddress < line.systemAddress)) {
+					&& (nearestLine == null || nearestLine.systemAddress < line.systemAddress
+							|| (nearestLine.systemAddress == line.systemAddress && !nearestLine.referenced
+									&& line.referenced))) {
 				nearestLine = line;
 			}
 		}
@@ -439,6 +452,7 @@ public final class Disassembly {
 		templateLine.size = markSize;
 		templateLine.address = absoluteAddress;
 		templateLine.systemAddress = systemAddress;
+		templateLine.equate = lineEquate;
 
 		if (markSegmentIndex != SegmentList.NO_SEGMENT_INDEX) {
 			Segment markSegment = workspace.getSegmentList().getSegment(markSegmentIndex);
@@ -1038,7 +1052,9 @@ public final class Disassembly {
 			case LABEL:
 				// Ignoring those relative to a base label.
 				if (!equate.isRange()) {
+					lineEquate = equate;
 					addLabel(equate.getLabel(), equate.getLabelValue(), disassemblySectionType, equate.getComment());
+					lineEquate = null;
 				}
 				break;
 			}

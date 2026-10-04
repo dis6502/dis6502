@@ -1,6 +1,6 @@
 # Equates and label access
 
-Status: In progress - step 1 done (2026-10-04), see "Progress".
+Status: In progress - steps 1 and 2 done (2026-10-04), see "Progress".
 
 Four of the source TODOs ([`SOURCE_TODOS.md`](SOURCE_TODOS.md)) concern which
 equates a listing uses and writes. They overlap, so they are planned
@@ -211,6 +211,13 @@ Found on the way: an immediate operand only becomes a label once its byte
 is typed so (the memory inspector's immediate type); by default
 `ldx #$03` stays a number, so a range's immediate access only matters for
 typed operands.
+
+**Step 2 (2026-10-04):** finding 2. A `DisassemblyLine` knows the equate it
+defines (`equate`, set by `generateEquates`), and a system equate line is
+referenced only if its own equate is; comment lines keep the address rule.
+For `LABEL+n` the nearest line prefers one already referenced at the same
+address. `EquateRangeTest` checks that `sta $02` writes `CASINI` but not
+`ICCOM` and assembles with MADS; it fails when the address rule is put back.
 
 ## Decisions (2026-10-04)
 

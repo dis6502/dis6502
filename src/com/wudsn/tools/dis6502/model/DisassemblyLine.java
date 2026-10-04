@@ -37,6 +37,7 @@ public final class DisassemblyLine {
 	public static final int NO_SYSTEM_ADDRESS = -1;
 
 	public int systemAddress = NO_SYSTEM_ADDRESS; // Address is filled only for system equates.
+	public Equate equate; // The equate an equate line defines; null for every other line.
 
 	private String line = "";
 	private int lineNumber;

@@ -24,6 +24,8 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
  * <li>A range takes its base equate's access: a range based on the {@code #}
  * constant ICCOM matches immediate values, but not memory accesses, so {@code
  * sta $03} stays {@code CASINI+1}.</li>
+ * <li>Of several equates at one address only the referenced one is written:
+ * {@code sta $02} defines {@code CASINI}, not the constant {@code ICCOM}.</li>
  * </ul>
  *
  * @author Peter Dell
@@ -41,6 +43,7 @@ public final class EquateRangeTest {
 	public static void testEquateRanges() throws IOException, InterruptedException {
 		testRangeOnSystemEquate();
 		testRangeAccess();
+		testSharedAddress();
 	}
 
 	private static void testRangeOnSystemEquate() throws IOException, InterruptedException {
@@ -73,6 +76,18 @@ public final class EquateRangeTest {
 		EquateList userEquates = workspace.getUserEquateList();
 		Assert.stringEquals(userEquates.findEquateByAddress(0x03, LabelAccess.IMMEDIATE, true).getLabel(), "ICCOM+1");
 		Assert.isNull(userEquates.findEquateByAddress(0x03, LabelAccess.WRITE, true));
+	}
+
+	private static void testSharedAddress() throws IOException, InterruptedException {
+		int[] code = { 0x85, 0x02, 0x60 }; // STA $02, RTS
+		Workspace workspace = createWorkspace(code);
+		Assert.notNull(workspace.getSystemEquateList().getEquateByLabel("ICCOM"));
+
+		String listing = disassemble(workspace, "shared");
+		Assert.boolEquals(listing.contains("sta CASINI"), true);
+		Assert.boolEquals(listing.contains("CASINI equ $0002"), true);
+		Assert.boolEquals(listing.contains("ICCOM equ"), false);
+		assembleWithMADS(code);
 	}
 
 	private static Workspace createWorkspace(int[] code) {
