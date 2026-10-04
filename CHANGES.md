@@ -56,6 +56,9 @@ what is new, changed or fixed compared with it. Known limits are in
 - Fixed: **Find Next** stuck at the first match instead of moving on.
 - Fixed: a user comment on the last byte of a segment was missing from the
   listing when another segment followed.
+- Fixed: a user equate at the address of an instruction was also defined
+  as that instruction's label, so the listing did not assemble ("Label
+  declared twice").
 - Fixed: clicking the XRef entry of a label's own definition line did
   nothing for lines without a segment, e.g. system equates.
 - Fixed: "Show ZP Absolute as Byte" wrote its bytes with four hex digits

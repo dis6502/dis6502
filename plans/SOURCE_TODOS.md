@@ -26,8 +26,7 @@ Not counted: the `; $XXXX` format text in `DisassemblyGridPanel`.
 
 | Location | TODO and finding |
 |---|---|
-| [`Disassembly.java:1119`](../src/com/wudsn/tools/dis6502/model/Disassembly.java) | Comments on an instruction's operand bytes never appear in the listing: only the opcode byte is looked up (size 1, once `getOpcodeLength(by)`). A comment placed on an operand byte, e.g. through a memory inspector selection, is lost. Writing them would change listings, so it needs a decision: before the instruction, or not allowed at all. |
-| [`SegmentList.java:426`](../src/com/wudsn/tools/dis6502/model/SegmentList.java) | Redundant code for addresses and address labels. The two branches also differ: the second returns a user equate's label without setting `defined[0] = true`, which looks unintended. |
+| [`Disassembly.java`](../src/com/wudsn/tools/dis6502/model/Disassembly.java) (user comments) | Comments on an instruction's operand bytes are written before the instruction now, but not yet for display list instructions: the second address byte of an LMS or jump instruction is read without the comment lookup, so its comment is missing from the listing. |
 | [`EquateList.java:181`](../src/com/wudsn/tools/dis6502/model/EquateList.java) | `findEquateByAddress` hardcodes SDX page 7 (`$0700-$07FF`). System equates should be marked instead. |
 | [`EquateList.java:223`](../src/com/wudsn/tools/dis6502/model/EquateList.java) | `addRange` should take a label access; ranges are always `READ_WRITE`. |
 | [`Disassembly.java:298`](../src/com/wudsn/tools/dis6502/model/Disassembly.java) | The referenced check does not distinguish the access type, so if `$80` is referenced, the zero-page and display-list constants count as referenced alike. |

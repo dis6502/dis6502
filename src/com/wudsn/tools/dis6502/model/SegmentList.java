@@ -412,47 +412,41 @@ public final class SegmentList implements Xml.Serializable {
 	}
 
 	/**
-	 * @param defined single-element out parameter (index 0), set to whether a label was found/defined.
+	 * The label of {@code address} in the segment: a user equate at the address,
+	 * else the segment's address label there - a fix-up address label first, an
+	 * address label referenced by code otherwise - or the user equate at that
+	 * label's address.
+	 *
+	 * @param defined single-element out parameter (index 0), set to whether the
+	 *                label must be defined at this address. Never for a user
+	 *                equate: its line in the user equates section defines it,
+	 *                and a second definition would not assemble ("Label declared
+	 *                twice").
+	 * @return the label, or an empty string if there is none
 	 */
 	public String defineLabelAtAddress(int segmentIndex, int address, boolean[] defined) {
 		defined[0] = false;
 		Equate equate = workspace.getUserEquateList().findAndMarkEquateByAddress(address, LabelAccess.READ);
 		if (equate != null) {
-			defined[0] = true;
 			return equate.getLabel();
 		}
 
 		Segment segment = segmentList.get(segmentIndex);
-		// TODO: This is redundant code for addresses/address labels.
 		AddressLabel addressLabel = segment.getFixupAddressLabels().findNearestAddressLabel(address);
-		boolean found = false;
-		if (addressLabel != null) {
-			address = addressLabel.isAligned() ? addressLabel.getAddress() : addressLabel.getNearestAddress();
-			equate = workspace.getUserEquateList().findAndMarkEquateByAddress(address, LabelAccess.READ);
-			if (equate != null) {
-				defined[0] = true;
-				return equate.getLabel();
-			}
-			found = true;
-		} else {
-			AddressLabel nearest = segment.getAddressLabels().findNearestAddressLabel(address);
-			if (nearest != null) {
-				address = nearest.isAligned() ? nearest.getAddress() : nearest.getNearestAddress();
-				equate = workspace.getUserEquateList().findAndMarkEquateByAddress(address, LabelAccess.READ);
-				if (equate != null) {
-					return equate.getLabel();
-				}
-				found = true;
-			}
+		if (addressLabel == null) {
+			addressLabel = segment.getAddressLabels().findNearestAddressLabel(address);
 		}
-		if (found) {
-			String label = (segment.labelPrefix.isEmpty() && segment.isSDX())
-					? Segment.formatDefaultLabel(segmentIndex, address)
-					: Segment.formatLabel(segment.labelPrefix, address);
-			defined[0] = true;
-			return label;
+		if (addressLabel == null) {
+			return "";
 		}
-		return "";
+		address = addressLabel.isAligned() ? addressLabel.getAddress() : addressLabel.getNearestAddress();
+		equate = workspace.getUserEquateList().findAndMarkEquateByAddress(address, LabelAccess.READ);
+		if (equate != null) {
+			return equate.getLabel();
+		}
+		defined[0] = true;
+		return (segment.labelPrefix.isEmpty() && segment.isSDX()) ? Segment.formatDefaultLabel(segmentIndex, address)
+				: Segment.formatLabel(segment.labelPrefix, address);
 	}
 
 	private String buildAddress(int segmentIndex, int address, int labelAccess, boolean noNearest) {
