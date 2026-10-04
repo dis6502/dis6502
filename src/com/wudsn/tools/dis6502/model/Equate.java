@@ -5,6 +5,12 @@
  */
 package com.wudsn.tools.dis6502.model;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 import org.w3c.dom.Element;
 
 import com.wudsn.tools.base.common.HexUtility;
@@ -13,6 +19,11 @@ import com.wudsn.tools.dis6502.Messages;
 /**
  * One entry read from (or to be written to) an equates file: an empty line,
  * a comment line, or a label definition line ("LABEL = $1234 ; comment").
+ * <p>
+ * A label can belong to <em>contexts</em>, namespaces given in brackets after
+ * the value ("S_FLAG = $0700 [SDX]", "CASINI = $02 [OS-AB, OS-XL]"). A label
+ * without contexts is global and always applies; one with contexts applies
+ * only where one of them is active - see {@link #isActive}.
  * <p>
  * Reading the workspace-version-1X binary format is {@link
  * EquateList#load1X}'s job; there is no code to write it - see {@link
@@ -37,29 +48,37 @@ public final class Equate implements Xml.Serializable {
 		public final String label;
 		public final int labelAccess;
 		public final int address;
+		public final List<String> contexts;
 		public final String comment;
 		public final String error;
 		public final Equate equate;
 
 		ReadResult(EquateType equateType, String label, int labelAccess, int address, String comment,
 				String error) {
+			this(equateType, label, labelAccess, address, Collections.emptyList(), comment, error);
+		}
+
+		ReadResult(EquateType equateType, String label, int labelAccess, int address, List<String> contexts,
+				String comment, String error) {
 			this.equateType = equateType;
 			this.label = label;
 			this.labelAccess = labelAccess;
 			this.address = address;
+			this.contexts = Collections.unmodifiableList(new ArrayList<>(contexts));
 			this.comment = comment;
 			this.error = error;
-			this.equate = createEquate(equateType, label, labelAccess, address, comment, error);
+			this.equate = createEquate(equateType, label, labelAccess, address, this.contexts, comment, error);
 		}
 	}
 
 	private static Equate createEquate(EquateType equateType, String label, int labelAccess, int address,
-			String comment, String error) {
+			List<String> contexts, String comment, String error) {
 		if (!error.isEmpty() || equateType == EquateType.UNKNOWN) {
 			return null;
 		}
 		Equate equate = new Equate();
 		equate.init(equateType, label, labelAccess, address, comment);
+		equate.setContexts(contexts);
 		return equate;
 	}
 
@@ -67,6 +86,7 @@ public final class Equate implements Xml.Serializable {
 	private String label;
 	private int labelAccess; // Supported types of access.
 	private int labelValue;
+	private List<String> contexts; // Unmodifiable, empty for a global label.
 	private String comment;
 
 	private String baseLabel; // Transient.
@@ -112,6 +132,7 @@ public final class Equate implements Xml.Serializable {
 		label = "";
 		labelAccess = LabelAccess.UNKNOWN;
 		labelValue = 0;
+		contexts = Collections.emptyList();
 		comment = "";
 
 		initTransientFields();
@@ -188,6 +209,9 @@ public final class Equate implements Xml.Serializable {
 			} else {
 				Xml.setWordAttributeHex(element, "LabelValue", labelValue);
 			}
+			if (!contexts.isEmpty()) {
+				Xml.setStringAttribute(element, "Contexts", String.join(",", contexts));
+			}
 			if (!comment.isEmpty()) {
 				Xml.setStringAttribute(element, "Comment", comment);
 			}
@@ -207,6 +231,10 @@ public final class Equate implements Xml.Serializable {
 		label = Xml.getStringAttribute(element, "Label", label);
 		labelAccess = LabelAccess.fromKey(Xml.getStringAttribute(element, "LabelAccess", ""));
 		labelValue = Xml.getWordAttribute(element, "LabelValue", labelValue);
+		String contextsString = Xml.getStringAttribute(element, "Contexts", "");
+		if (!contextsString.isEmpty()) {
+			setContexts(Arrays.asList(contextsString.split(",")));
+		}
 		comment = Xml.getStringAttribute(element, "Comment", comment);
 		initTransientFields();
 	}
@@ -250,6 +278,35 @@ public final class Equate implements Xml.Serializable {
 
 	public String getComment() {
 		return comment;
+	}
+
+	/** The names of the label's contexts, empty for a global label. */
+	public List<String> getContexts() {
+		return contexts;
+	}
+
+	/** Package-private for the parser and for {@link EquateList#copyContextsFrom}. */
+	void setContexts(List<String> contexts) {
+		this.contexts = Collections.unmodifiableList(new ArrayList<>(contexts));
+	}
+
+	public boolean isGlobal() {
+		return contexts.isEmpty();
+	}
+
+	/** Whether one of the label's contexts is among {@code activeContexts}; never for a global label. */
+	public boolean isInContext(Set<String> activeContexts) {
+		for (String context : contexts) {
+			if (activeContexts.contains(context)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Whether the label applies with {@code activeContexts}: it is global or in one of them. */
+	public boolean isActive(Set<String> activeContexts) {
+		return isGlobal() || isInContext(activeContexts);
 	}
 
 	public void clearDefinition() {
@@ -410,23 +467,79 @@ public final class Equate implements Xml.Serializable {
 			}
 		}
 
+		List<String> contexts = new ArrayList<>();
 		if (skipBlanks(line, index)) {
-			return new ReadResult(equateType, label.toString(), labelAccess, address, comment, "");
+			return new ReadResult(equateType, label.toString(), labelAccess, address, contexts, comment, "");
+		}
+
+		// Scan for the contexts.
+		c = line.charAt(index[0]);
+		if (c == '[') {
+			String error = readContexts(line, index, contexts);
+			if (!error.isEmpty()) {
+				return new ReadResult(equateType, label.toString(), labelAccess, address, comment, error);
+			}
+			if (skipBlanks(line, index)) {
+				return new ReadResult(equateType, label.toString(), labelAccess, address, contexts, comment, "");
+			}
+			c = line.charAt(index[0]);
 		}
 
 		// Scan for line comment.
-		c = line.charAt(index[0]);
 		if (c == ';') {
 			index[0]++;
 			if (!skipBlanks(line, index)) {
 				comment = line.substring(index[0]).trim();
 			}
-			return new ReadResult(equateType, label.toString(), labelAccess, address, comment, "");
+			return new ReadResult(equateType, label.toString(), labelAccess, address, contexts, comment, "");
 		}
 
 		// ERROR: Invalid character "{0}" after value found. Line end or comment expected.
 		String error = Messages.E100.format(String.valueOf(c));
 		return new ReadResult(equateType, label.toString(), labelAccess, address, comment, error);
+	}
+
+	private static boolean isContextNameCharacter(char c) {
+		return Character.isLetterOrDigit(c) || c == '_' || c == '-';
+	}
+
+	/**
+	 * Reads a context list "[NAME, NAME]" starting at the "[" at {@code
+	 * index[0]} into {@code contexts}, leaving {@code index[0]} after the "]".
+	 * Blanks around names are allowed, a name given twice counts once. Returns
+	 * an error message, or "" on success.
+	 */
+	private static String readContexts(String line, int[] index, List<String> contexts) {
+		int start = index[0];
+		index[0]++;
+		while (true) {
+			skipBlanks(line, index);
+			int nameStart = index[0];
+			while (index[0] < line.length() && isContextNameCharacter(line.charAt(index[0]))) {
+				index[0]++;
+			}
+			String name = line.substring(nameStart, index[0]);
+			if (skipBlanks(line, index)) {
+				// ERROR: The context list at position {0} is not closed with "]".
+				return Messages.E101.format(String.valueOf(start + 1));
+			}
+			char c = line.charAt(index[0]);
+			if (c != ',' && c != ']') {
+				// ERROR: Character "{0}" at position {1} is not valid in a context name. Use letters, digits, "_" or "-".
+				return Messages.E102.format(String.valueOf(c), String.valueOf(index[0] + 1));
+			}
+			if (name.isEmpty()) {
+				// ERROR: Context name missing at position {0}.
+				return Messages.E103.format(String.valueOf(index[0] + 1));
+			}
+			if (!contexts.contains(name)) {
+				contexts.add(name);
+			}
+			index[0]++;
+			if (c == ']') {
+				return "";
+			}
+		}
 	}
 
 	@Override
@@ -440,6 +553,9 @@ public final class Equate implements Xml.Serializable {
 
 		case LABEL:
 			String value = HexUtility.getLongValueHexString(labelValue, 4);
+			if (!contexts.isEmpty()) {
+				value += " [" + String.join(", ", contexts) + "]";
+			}
 			if (!comment.isEmpty()) {
 				return label + " " + LabelAccess.getQualifier(labelAccess) + " $" + value + "; " + comment;
 			}

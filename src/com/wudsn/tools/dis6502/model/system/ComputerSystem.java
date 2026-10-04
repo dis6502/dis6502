@@ -13,11 +13,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import com.wudsn.tools.dis6502.model.CharacterSet;
 import com.wudsn.tools.dis6502.model.FileType;
 import com.wudsn.tools.dis6502.model.Memory;
+import com.wudsn.tools.dis6502.model.Segment;
 import com.wudsn.tools.dis6502.model.SegmentList;
 import com.wudsn.tools.dis6502.model.SegmentListInserter;
 
@@ -60,6 +63,15 @@ public abstract class ComputerSystem {
 	}
 
 	public abstract boolean isBaseAddress(int address);
+
+	/**
+	 * The equate contexts the system activates for a segment, on top of the
+	 * workspace's active contexts - e.g. a context for the labels of an
+	 * operating system the segment runs under. Default: none.
+	 */
+	public Set<String> getEquateContexts(Segment segment) {
+		return Collections.emptySet();
+	}
 
 	/**
 	 * Also used in code trace: this is how the program finds LO_BYTE/HI_BYTE

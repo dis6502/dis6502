@@ -109,6 +109,18 @@ what is new, changed or fixed compared with it. Known limits are in
 - Of several system equates at one address, only the referenced one is
   written when unreferenced system labels are omitted: `sta $02` defines
   `CASINI`, no longer also the constant `ICCOM`.
+- **Equate contexts:** a label in an equates file can name the contexts it
+  belongs to in brackets after its value (`S_FLAG = $0700 [SDX]`, several
+  comma-separated). A label with contexts is used only where one of them is
+  active, and a listing defines it only then. **Equates > Active
+  Contexts...** activates contexts for the whole workspace; the computer
+  system activates further ones per segment. The workspace keeps both.
+- The SpartaDOS X labels in `Atari800.equ` are in the context `SDX`, which
+  SpartaDOS X segments activate. Workspaces saved by earlier versions get
+  the context on their stored system equates when opened.
+- Fixed: the SpartaDOS X jump vectors (`JGETTD` and others at
+  `$FFC0`-`$FFD5`) were used for every program, not only for SpartaDOS X
+  segments.
 - Fixed: a user range based on a system equate (e.g. `COLPF0+1` based on
   `COLPF0`) left its base undefined when unreferenced system labels were
   omitted, so the listing did not assemble.

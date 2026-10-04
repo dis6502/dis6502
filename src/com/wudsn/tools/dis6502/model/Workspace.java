@@ -6,8 +6,12 @@
 package com.wudsn.tools.dis6502.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.w3c.dom.Element;
 
@@ -56,6 +60,7 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 
 	private final EquateList systemEquateList = new EquateList(WorkspaceProperty.SYSTEM_EQUATES);
 	private final EquateList userEquateList = new EquateList(WorkspaceProperty.USER_EQUATES);
+	private final Set<String> activeContexts = new TreeSet<>(); // The equate contexts chosen by the user.
 
 	private final SegmentList segmentList = new SegmentList(this);
 	private final Profile profile = new Profile();
@@ -84,6 +89,7 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 		segmentList.clear();
 		systemEquateList.clear();
 		userEquateList.clear();
+		activeContexts.clear();
 		profile.clear();
 
 		viewDisplayAsScreenCode = false;
@@ -181,18 +187,6 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 
 	public EquateList getUserEquateList() {
 		return userEquateList;
-	}
-
-	/** Finds an equate in the user equate list and then the system equate list. Address 0 is never a valid label. */
-	public Equate findEquateByAddress(int address, int labelAccess) {
-		if (address == 0) {
-			return null;
-		}
-		Equate equate = userEquateList.findEquateByAddress(address, labelAccess, true);
-		if (equate == null) {
-			equate = systemEquateList.findEquateByAddress(address, labelAccess, true);
-		}
-		return equate;
 	}
 
 	public Equate getEquateByLabel(String label) {
@@ -306,9 +300,46 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 		endUpdate();
 	}
 
+	/** The equate contexts the user activated for the whole workspace, sorted. */
+	public Set<String> getActiveContexts() {
+		return Collections.unmodifiableSet(activeContexts);
+	}
+
+	public void setActiveContexts(Set<String> contexts) {
+		if (!activeContexts.equals(contexts)) {
+			activeContexts.clear();
+			activeContexts.addAll(contexts);
+			notifyListeners(WorkspaceProperty.ACTIVE_CONTEXTS);
+		}
+	}
+
+	/**
+	 * The equate contexts active in {@code segment}: the workspace's, plus the
+	 * ones the computer system activates for the segment.
+	 */
+	public Set<String> getActiveContexts(Segment segment) {
+		Set<String> segmentContexts = computerSystem.getEquateContexts(segment);
+		if (segmentContexts.isEmpty()) {
+			return getActiveContexts();
+		}
+		Set<String> result = new TreeSet<>(activeContexts);
+		result.addAll(segmentContexts);
+		return result;
+	}
+
+	/** The names of all contexts the system and user equates use, sorted. */
+	public Set<String> getContextNames() {
+		Set<String> result = new TreeSet<>(systemEquateList.getContextNames());
+		result.addAll(userEquateList.getContextNames());
+		return result;
+	}
+
 	@Override
 	public void serializeTo(Element element) {
 		Xml.setStringAttribute(element, "ComputerSystemTypeID", computerSystem.getType().getId());
+		if (!activeContexts.isEmpty()) {
+			Xml.setStringAttribute(element, "ActiveContexts", String.join(",", activeContexts));
+		}
 
 		Element profileElement = Xml.addChildElement(element, "Profile");
 		profile.serializeTo(profileElement);
@@ -329,6 +360,10 @@ public final class Workspace implements Xml.Serializable, EquateListChangedListe
 
 		String computerSystemTypeID = Xml.getStringAttribute(element, "ComputerSystemTypeID", "");
 		setComputerSystemTypeID(computerSystemTypeID);
+		String activeContextsString = Xml.getStringAttribute(element, "ActiveContexts", "");
+		if (!activeContextsString.isEmpty()) {
+			setActiveContexts(new TreeSet<>(Arrays.asList(activeContextsString.split(","))));
+		}
 
 		Element profileElement = Xml.getFirstChildElement(element, "Profile");
 		if (profileElement != null) {

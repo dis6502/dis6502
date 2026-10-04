@@ -25,7 +25,7 @@ public final class LabelAccess {
 	private LabelAccess() {
 	}
 
-	/** Returns true if all bits of {@code labelAccess} are set in {@code value}. */
+	/** Returns true if any bit of {@code labelAccess} is set in {@code value}. */
 	public static boolean isSupported(int value, int labelAccess) {
 		return (value & labelAccess) != 0;
 	}

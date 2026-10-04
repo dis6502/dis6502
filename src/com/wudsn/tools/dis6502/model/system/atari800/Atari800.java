@@ -52,6 +52,9 @@ import com.wudsn.tools.dis6502.model.system.atari.AtariCartridgeReader;
  */
 public final class Atari800 extends ComputerSystem {
 
+	/** The equate context of the SpartaDOS X labels in {@code Atari800.equ}, active in SDX segments. */
+	public static final String SDX_EQUATE_CONTEXT = "SDX";
+
 	private static final int SDX_SYMBOL_LEN = 8;
 
 	private static final byte[] FUJI = { 'F', 'U', 'J', 'I' };
@@ -88,6 +91,11 @@ public final class Atari800 extends ComputerSystem {
 			return true;
 		}
 		return (address & 0xFF00) == 0;
+	}
+
+	@Override
+	public Set<String> getEquateContexts(Segment segment) {
+		return segment.isSDX() ? Set.of(SDX_EQUATE_CONTEXT) : Set.of();
 	}
 
 	@Override

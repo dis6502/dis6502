@@ -5,8 +5,18 @@
  */
 package com.wudsn.tools.dis6502.model;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 /**
- * Covers {@link Equate} line parsing.
+ * Covers {@link Equate} line parsing and writing, with and without contexts,
+ * and the context-aware lookup of {@link EquateList}.
  *
  * @author Peter Dell
  */
@@ -15,8 +25,10 @@ public final class EquateTest {
 	private EquateTest() {
 	}
 
-	public static void testEquate() {
+	public static void testEquate() throws Exception {
 		testParsing();
+		testContexts();
+		testContextLookup();
 	}
 
 	private static void testParsing() {
@@ -64,6 +76,70 @@ public final class EquateTest {
 				"Characters \"; Comment\" at position 8 cannot be interpreted as a hexadecimal number.");
 		assertEquateEquals("HEX = $xyz", EquateType.LABEL, "HEX", LabelAccess.READ_WRITE, 0, "",
 				"Characters \"xyz\" at position 8 cannot be interpreted as a hexadecimal number.");
+	}
+
+	private static void testContexts() throws Exception {
+		assertContexts("S_FLAG = $0700", "S_FLAG = $0700");
+		assertContexts("S_FLAG = $0700 [SDX]", "S_FLAG = $0700 [SDX]", "SDX");
+		assertContexts("CASINI = $02 [ OS-AB ,OS-XL ]  ; Comment", "CASINI = $0002 [OS-AB, OS-XL]; Comment", "OS-AB",
+				"OS-XL");
+		assertContexts("X_1 # 1 [A_1,A_1];", "X_1 # $0001 [A_1]", "A_1");
+
+		// Error cases.
+		assertEquateEquals("S_FLAG = $0700 [SDX", EquateType.LABEL, "S_FLAG", LabelAccess.READ_WRITE, 0x0700, "",
+				"The context list at position 16 is not closed with \"]\".");
+		assertEquateEquals("S_FLAG = $0700 [", EquateType.LABEL, "S_FLAG", LabelAccess.READ_WRITE, 0x0700, "",
+				"The context list at position 16 is not closed with \"]\".");
+		assertEquateEquals("S_FLAG = $0700 [S.X]", EquateType.LABEL, "S_FLAG", LabelAccess.READ_WRITE, 0x0700, "",
+				"Character \".\" at position 18 is not valid in a context name. Use letters, digits, \"_\" or \"-\".");
+		assertEquateEquals("S_FLAG = $0700 []", EquateType.LABEL, "S_FLAG", LabelAccess.READ_WRITE, 0x0700, "",
+				"Context name missing at position 17.");
+		assertEquateEquals("S_FLAG = $0700 [SDX,]", EquateType.LABEL, "S_FLAG", LabelAccess.READ_WRITE, 0x0700, "",
+				"Context name missing at position 21.");
+		assertEquateEquals("S_FLAG = $0700 [SDX] x", EquateType.LABEL, "S_FLAG", LabelAccess.READ_WRITE, 0x0700, "",
+				"Invalid character \"x\" after value found. Line end or comment expected.");
+	}
+
+	/** Parses {@code line}, checks its contexts and how it is written, and that the workspace XML keeps them. */
+	private static void assertContexts(String line, String expectedString, String... expectedContexts)
+			throws Exception {
+		Equate.ReadResult result = Equate.readFrom(line);
+		Assert.stringEquals(result.error, "");
+		List<String> expected = Arrays.asList(expectedContexts);
+		Assert.stringEquals(result.equate.getContexts().toString(), expected.toString());
+		Assert.boolEquals(result.equate.isGlobal(), expected.isEmpty());
+		Assert.stringEquals(result.equate.toString(), expectedString);
+		Assert.stringEquals(Equate.readFrom(result.equate.toString()).equate.getContexts().toString(),
+				expected.toString());
+
+		Document document = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
+				.newDocument();
+		Element element = document.createElement("Equate");
+		result.equate.serializeTo(element);
+		Equate copy = new Equate();
+		copy.deserializeFrom(element);
+		Assert.stringEquals(copy.toString(), expectedString);
+	}
+
+	/**
+	 * At one address, an equate of an active context wins over a global one,
+	 * whatever the order; one of an inactive context never matches.
+	 */
+	private static void testContextLookup() {
+		EquateList equateList = new EquateList(WorkspaceProperty.USER_EQUATES);
+		equateList.addEquate("GLOBAL = $0700");
+		equateList.addEquate("S_FLAG = $0700 [SDX]");
+		equateList.addEquate("ONLY_SDX = $0701 [SDX, OTHER]");
+		Set<String> none = Collections.emptySet();
+		Set<String> sdx = new HashSet<>(Arrays.asList("SDX"));
+		Set<String> other = new HashSet<>(Arrays.asList("OTHER"));
+
+		Assert.stringEquals(equateList.findEquateByAddress(0x0700, LabelAccess.READ, none).getLabel(), "GLOBAL");
+		Assert.stringEquals(equateList.findEquateByAddress(0x0700, LabelAccess.READ, sdx).getLabel(), "S_FLAG");
+		Assert.stringEquals(equateList.findEquateByAddress(0x0700, LabelAccess.READ, other).getLabel(), "GLOBAL");
+		Assert.isNull(equateList.findEquateByAddress(0x0701, LabelAccess.READ, none));
+		Assert.stringEquals(equateList.findEquateByAddress(0x0701, LabelAccess.READ, other).getLabel(), "ONLY_SDX");
+		Assert.stringEquals(equateList.getContextNames().toString(), "[OTHER, SDX]");
 	}
 
 	private static void assertEquateEquals(String actualLine, EquateType expectedEquateType, String expectedLabel,

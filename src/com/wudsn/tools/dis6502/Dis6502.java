@@ -75,6 +75,7 @@ import com.wudsn.tools.dis6502.ui.DisassemblyProgressDialog;
 import com.wudsn.tools.dis6502.ui.DiskImageExecutableFileDialog;
 import com.wudsn.tools.dis6502.ui.DiskImageSectorsDialog;
 import com.wudsn.tools.dis6502.ui.EquateDialog;
+import com.wudsn.tools.dis6502.ui.EquateContextsDialog;
 import com.wudsn.tools.dis6502.ui.EquateRangeDialog;
 import com.wudsn.tools.dis6502.ui.FileChoosers;
 import com.wudsn.tools.dis6502.ui.LowHighByteDialog;
@@ -329,6 +330,7 @@ public final class Dis6502 {
 		mainWindow.mainMenu.clearUserEquatesMenuItem.addActionListener(e -> performClearEquates(workspace.getUserEquateList()));
 		mainWindow.mainMenu.editUserEquatesMenuItem.addActionListener(e -> performEditEquates(workspace.getUserEquateList(), true));
 		mainWindow.mainMenu.defineUserAddressRangeMenuItem.addActionListener(e -> performDefineUserAddressRange());
+		mainWindow.mainMenu.activeContextsMenuItem.addActionListener(e -> performSelectActiveContexts());
 		mainWindow.mainMenu.openUserEquatesMenuItem.addActionListener(e -> performOpenUserEquates());
 		mainWindow.mainMenu.saveUserEquatesMenuItem.addActionListener(e -> performSaveUserEquates(false));
 		mainWindow.mainMenu.exportUserEquatesMenuItem.addActionListener(e -> performSaveUserEquates(true));
@@ -1080,6 +1082,13 @@ public final class Dis6502 {
 	private void performDefineUserAddressRange() {
 		EquateRangeDialog dialog = new EquateRangeDialog(mainWindow.getFrame());
 		if (dialog.show(workspace.getSystemEquateList(), workspace.getUserEquateList(), "")) {
+			updateDisassembly(false); // Respects "No Disassembly" mode - skipped if that view toggle is on.
+		}
+	}
+
+	/** Lets the user choose the equate contexts active in the whole workspace. */
+	private void performSelectActiveContexts() {
+		if (new EquateContextsDialog(mainWindow.getFrame()).show(workspace)) {
 			updateDisassembly(false); // Respects "No Disassembly" mode - skipped if that view toggle is on.
 		}
 	}

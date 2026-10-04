@@ -70,6 +70,12 @@ public final class Texts extends NLS {
 	public static String EquateDialog_DisplayTitle;
 	/** {@link com.wudsn.tools.dis6502.ui.EquateRangeDialog}'s window title. */
 	public static String EquateRangeDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.EquateContextsDialog}'s window title. */
+	public static String EquateContextsDialog_Title;
+	/** {@link com.wudsn.tools.dis6502.ui.EquateContextsDialog}'s explanation above the check boxes. */
+	public static String EquateContextsDialog_Description;
+	/** {@link com.wudsn.tools.dis6502.ui.EquateContextsDialog}'s text instead of the check boxes, if there are none. */
+	public static String EquateContextsDialog_NoContexts;
 	/** {@link com.wudsn.tools.dis6502.ui.LowHighByteDialog}'s window title. */
 	public static String LowHighByteDialog_Title;
 	/** {@link com.wudsn.tools.dis6502.ui.MemoryInspectorFindStringDialog}'s window title. */

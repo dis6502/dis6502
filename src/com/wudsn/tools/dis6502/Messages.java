@@ -318,6 +318,9 @@ public final class Messages extends NLS {
 	public static Message E098; // Invalid hexadecimal number: the characters, their position.
 	public static Message E099; // Invalid decimal number: the characters, their position.
 	public static Message E100; // Invalid character after the value: the character.
+	public static Message E101; // Context list not closed: the position of its "[".
+	public static Message E102; // Invalid character in a context name: the character, its position.
+	public static Message E103; // Context name missing: the position.
 
 	static {
 		initializeClass(Messages.class, null);

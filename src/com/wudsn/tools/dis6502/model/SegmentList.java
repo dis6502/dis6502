@@ -8,6 +8,7 @@ package com.wudsn.tools.dis6502.model;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.Objects;
 
 import org.w3c.dom.Element;
@@ -365,16 +366,16 @@ public final class SegmentList implements Xml.Serializable {
 		if (type == MemoryType.SYMBOL) {
 			return false;
 		}
+		Set<String> contexts = workspace.getActiveContexts(segmentList.get(segmentIndex));
 		// System equates are checked below: after the fixups, and not for relative branches.
-		if (workspace.getUserEquateList().findEquateByAddress(address, labelAccess, true) != null) {
+		if (workspace.getUserEquateList().findEquateByAddress(address, labelAccess, contexts) != null) {
 			return false;
 		}
 		if (getFixup(segmentIndex, type, pc, address) != null) {
 			return false;
 		}
 		if (mode != OperandMode.Relative) {
-			Segment segment = segmentList.get(segmentIndex);
-			if (workspace.getSystemEquateList().findEquateByAddress(address, labelAccess, segment.isSDX()) != null) {
+			if (workspace.getSystemEquateList().findEquateByAddress(address, labelAccess, contexts) != null) {
 				return false;
 			}
 		} else {
@@ -426,12 +427,13 @@ public final class SegmentList implements Xml.Serializable {
 	 */
 	public String defineLabelAtAddress(int segmentIndex, int address, boolean[] defined) {
 		defined[0] = false;
-		Equate equate = workspace.getUserEquateList().findAndMarkEquateByAddress(address, LabelAccess.READ);
+		Segment segment = segmentList.get(segmentIndex);
+		Set<String> contexts = workspace.getActiveContexts(segment);
+		Equate equate = workspace.getUserEquateList().findAndMarkEquateByAddress(address, LabelAccess.READ, contexts);
 		if (equate != null) {
 			return equate.getLabel();
 		}
 
-		Segment segment = segmentList.get(segmentIndex);
 		AddressLabel addressLabel = segment.getFixupAddressLabels().findNearestAddressLabel(address);
 		if (addressLabel == null) {
 			addressLabel = segment.getAddressLabels().findNearestAddressLabel(address);
@@ -440,7 +442,7 @@ public final class SegmentList implements Xml.Serializable {
 			return "";
 		}
 		address = addressLabel.isAligned() ? addressLabel.getAddress() : addressLabel.getNearestAddress();
-		equate = workspace.getUserEquateList().findAndMarkEquateByAddress(address, LabelAccess.READ);
+		equate = workspace.getUserEquateList().findAndMarkEquateByAddress(address, LabelAccess.READ, contexts);
 		if (equate != null) {
 			return equate.getLabel();
 		}
@@ -462,7 +464,8 @@ public final class SegmentList implements Xml.Serializable {
 				return "L" + HexUtility.getLongValueHexString(address, 4);
 			} else {
 				address = addressLabel.getAddress();
-				Equate equate = workspace.getUserEquateList().findEquateByAddress(nearestAddr, labelAccess, true);
+				Equate equate = workspace.getUserEquateList().findEquateByAddress(nearestAddr, labelAccess,
+						workspace.getActiveContexts(segment));
 				if (equate != null) {
 					equate.addLabelReference(labelAccess);
 					return equate.getLabel() + "+" + (address - nearestAddr);
@@ -496,16 +499,16 @@ public final class SegmentList implements Xml.Serializable {
 
 	private String getLabelAtAddressInternal(int segmentIndex, int pc, int address, MemoryType type,
 			OperandMode mode, int labelAccess) {
-		Equate equate = workspace.getUserEquateList().findEquateByAddress(address, labelAccess, true);
+		Set<String> contexts = workspace.getActiveContexts(getSegment(segmentIndex));
+		Equate equate = workspace.getUserEquateList().findEquateByAddress(address, labelAccess, contexts);
 		if (equate != null) {
 			equate.addLabelReference(labelAccess);
 			return equate.getLabel();
 		}
 
-		boolean sdx = getSegment(segmentIndex).isSDX();
 		if (mode == OperandMode.ZeroPageX || mode == OperandMode.ZeroPageY || mode == OperandMode.ZeroPage
 				|| mode == OperandMode.IndexedIndirect || mode == OperandMode.IndirectIndexed) {
-			equate = workspace.getSystemEquateList().findEquateByAddress(address, labelAccess, sdx);
+			equate = workspace.getSystemEquateList().findEquateByAddress(address, labelAccess, contexts);
 			if (equate != null) {
 				return equate.getLabel();
 			}
@@ -524,7 +527,7 @@ public final class SegmentList implements Xml.Serializable {
 					return Segment.formatDefaultLabel(segmentIndex, address);
 				}
 				address = addressLabel.getAddress();
-				equate = workspace.getUserEquateList().findEquateByAddress(nearestAddr, labelAccess, true);
+				equate = workspace.getUserEquateList().findEquateByAddress(nearestAddr, labelAccess, contexts);
 				int offset = address - nearestAddr;
 				if (equate != null) {
 					equate.addLabelReference(labelAccess);
@@ -554,7 +557,7 @@ public final class SegmentList implements Xml.Serializable {
 		if (!label.isEmpty()) {
 			return label;
 		}
-		equate = workspace.getSystemEquateList().findEquateByAddress(address, labelAccess, sdx);
+		equate = workspace.getSystemEquateList().findEquateByAddress(address, labelAccess, contexts);
 		if (equate != null) {
 			return equate.getLabel();
 		}

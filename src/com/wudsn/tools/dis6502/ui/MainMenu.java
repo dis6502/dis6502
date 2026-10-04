@@ -120,6 +120,8 @@ public final class MainMenu {
 			"editUserEquatesMenuItem");
 	public final JMenuItem defineUserAddressRangeMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Equates_DefineUserAddressRange,
 			"defineUserAddressRangeMenuItem");
+	public final JMenuItem activeContextsMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Equates_ActiveContexts,
+			"activeContextsMenuItem");
 	public final JMenuItem openUserEquatesMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Equates_OpenUserEquates,
 			"openUserEquatesMenuItem");
 	public final JMenuItem saveUserEquatesMenuItem = ElementFactory.createMenuItem(Actions.MainMenu_Equates_SaveUserEquates,
@@ -260,6 +262,9 @@ public final class MainMenu {
 		menu.add(clearUserEquatesMenuItem);
 		menu.add(editUserEquatesMenuItem);
 		menu.add(defineUserAddressRangeMenuItem);
+		menu.addSeparator();
+
+		menu.add(activeContextsMenuItem);
 		menu.addSeparator();
 
 		menu.add(openUserEquatesMenuItem);

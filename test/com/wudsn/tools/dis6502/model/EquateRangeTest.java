@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
 
 import com.wudsn.tools.dis6502.Application;
 import com.wudsn.tools.dis6502.model.system.ComputerSystemFactory;
@@ -74,8 +76,10 @@ public final class EquateRangeTest {
 
 		// An immediate operand only becomes a label once its byte is typed so; the range matches it then.
 		EquateList userEquates = workspace.getUserEquateList();
-		Assert.stringEquals(userEquates.findEquateByAddress(0x03, LabelAccess.IMMEDIATE, true).getLabel(), "ICCOM+1");
-		Assert.isNull(userEquates.findEquateByAddress(0x03, LabelAccess.WRITE, true));
+		Set<String> contexts = Collections.emptySet();
+		Assert.stringEquals(userEquates.findEquateByAddress(0x03, LabelAccess.IMMEDIATE, contexts).getLabel(),
+				"ICCOM+1");
+		Assert.isNull(userEquates.findEquateByAddress(0x03, LabelAccess.WRITE, contexts));
 	}
 
 	private static void testSharedAddress() throws IOException, InterruptedException {
@@ -90,7 +94,7 @@ public final class EquateRangeTest {
 		assembleWithMADS(code);
 	}
 
-	private static Workspace createWorkspace(int[] code) {
+	static Workspace createWorkspace(int[] code) {
 		Workspace workspace = new Workspace(new ComputerSystemFactory());
 		workspace.setComputerSystemType(ComputerSystemType.ATARI800);
 		new WorkspaceLogic(new Application()).loadSystemEquates(workspace);
@@ -109,7 +113,7 @@ public final class EquateRangeTest {
 	}
 
 	/** Disassembles and saves the listing; returns all its files' text, blanks collapsed. */
-	private static String disassemble(Workspace workspace, String name) throws IOException {
+	static String disassemble(Workspace workspace, String name) throws IOException {
 		Application application = new Application();
 		Disassembly disassembly = new Disassembly();
 		disassembly.setWorkspace(workspace);
@@ -130,7 +134,7 @@ public final class EquateRangeTest {
 	}
 
 	/** On Windows, assembles the saved listing with MADS; the program's bytes must come out. */
-	private static void assembleWithMADS(int[] code) throws IOException, InterruptedException {
+	static void assembleWithMADS(int[] code) throws IOException, InterruptedException {
 		if (!System.getProperty("os.name", "").startsWith("Windows")) {
 			Assert.log("EquateRangeTest: MADS check skipped, the vendored MADS is a Windows executable");
 			return;

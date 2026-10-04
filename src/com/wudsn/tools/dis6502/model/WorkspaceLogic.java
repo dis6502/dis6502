@@ -5,11 +5,13 @@
  */
 package com.wudsn.tools.dis6502.model;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -94,6 +96,7 @@ public final class WorkspaceLogic {
 				}
 			} else {
 				Xml.load(workspace, "Workspace", file);
+				copySystemEquateContexts(workspace);
 			}
 			workspace.setFilePath(filePath);
 
@@ -112,6 +115,33 @@ public final class WorkspaceLogic {
 		}
 
 		return false;
+	}
+
+	/**
+	 * A workspace stores a copy of its system equates. One saved before equate
+	 * contexts existed has, e.g., the SpartaDOS X labels without their
+	 * context, so they would apply to every program: its system equates get
+	 * the contexts of the shipped ones with the same label and value - see
+	 * {@link EquateList#copyContextsFrom}.
+	 */
+	private static void copySystemEquateContexts(Workspace workspace) throws IOException {
+		EquateList systemEquateList = workspace.getSystemEquateList();
+		if (systemEquateList.isEmpty() || !systemEquateList.getContextNames().isEmpty()) {
+			return;
+		}
+		InputStream inputStream = workspace.getComputerSystem().openResourceByExtension(".equ");
+		if (inputStream == null) {
+			return;
+		}
+		EquateList shippedEquateList = new EquateList(WorkspaceProperty.SYSTEM_EQUATES);
+		try (BufferedReader reader = new BufferedReader(
+				new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				shippedEquateList.addEquate(line); // The shipped file is valid; there are no errors to report.
+			}
+		}
+		systemEquateList.copyContextsFrom(shippedEquateList);
 	}
 
 	/**

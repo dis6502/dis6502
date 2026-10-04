@@ -137,6 +137,7 @@ public final class Actions extends NLS {
 	public static Action MainMenu_Equates_ClearUserEquates;
 	public static Action MainMenu_Equates_EditUserEquates;
 	public static Action MainMenu_Equates_DefineUserAddressRange;
+	public static Action MainMenu_Equates_ActiveContexts;
 	public static Action MainMenu_Equates_OpenUserEquates;
 	public static Action MainMenu_Equates_SaveUserEquates;
 	public static Action MainMenu_Equates_ExportUserEquates;

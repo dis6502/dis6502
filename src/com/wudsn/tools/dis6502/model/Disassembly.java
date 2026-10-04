@@ -6,6 +6,8 @@
 package com.wudsn.tools.dis6502.model;
 
 import java.util.Iterator;
+import java.util.TreeSet;
+import java.util.Set;
 
 import com.wudsn.tools.base.common.HexUtility;
 
@@ -1015,7 +1017,8 @@ public final class Disassembly {
 			break;
 
 		case SDX_SYM_DEFINED: {
-			Equate equate = workspace.getUserEquateList().findEquateByAddress(segment.wBegin, LabelAccess.READ, true);
+			Equate equate = workspace.getUserEquateList().findEquateByAddress(segment.wBegin, LabelAccess.READ,
+					workspace.getActiveContexts(segment));
 			String label;
 			if (equate == null) {
 				Segment labelSegment = segmentList.findBySDXBlockNumber(segment.bSDXBlockNumber);
@@ -1034,8 +1037,16 @@ public final class Disassembly {
 		}
 	}
 
-	/** Generates lines for system or user equates. */
+	/**
+	 * Generates lines for system or user equates. A label in contexts that are
+	 * active in no segment is left out: nothing in the program can use it.
+	 */
 	private void generateEquates(DisassemblySectionType disassemblySectionType, EquateList equateList) {
+		SegmentList segmentList = workspace.getSegmentList();
+		Set<String> listingContexts = new TreeSet<>(workspace.getActiveContexts());
+		for (int segmentIndex = 0; segmentIndex < segmentList.getCount(); segmentIndex++) {
+			listingContexts.addAll(workspace.getActiveContexts(segmentList.getSegment(segmentIndex)));
+		}
 		for (Equate equate : equateList.getEquates()) {
 			switch (equate.getType()) {
 			case UNKNOWN:
@@ -1051,7 +1062,7 @@ public final class Disassembly {
 
 			case LABEL:
 				// Ignoring those relative to a base label.
-				if (!equate.isRange()) {
+				if (!equate.isRange() && equate.isActive(listingContexts)) {
 					lineEquate = equate;
 					addLabel(equate.getLabel(), equate.getLabelValue(), disassemblySectionType, equate.getComment());
 					lineEquate = null;

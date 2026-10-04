@@ -36,7 +36,7 @@ Not port gaps - identical in C++ - but limits a user will meet:
   can) - see `Workspace1X`'s javadoc for why.
 - C64 `.prg` detection is deliberately permissive: any load address from
   `$0200` that fits into memory counts.
-- 6 `TODO` comments remain in the source, analyzed and grouped in
+- 5 `TODO` comments remain in the source, analyzed and grouped in
   [`SOURCE_TODOS.md`](SOURCE_TODOS.md).
 
 ## 4. Test coverage gaps
@@ -47,6 +47,10 @@ Not port gaps - identical in C++ - but limits a user will meet:
 ## 5. Improvements to consider
 
 - A review of `Oric.equ` (only 36 labels).
+- Equate contexts per address range, like a memory type, so the same
+  constant can resolve differently in different places (feature request
+  #60), and context data beyond SDX: OS-A/B vs. XL/XE labels, IOCB offset
+  constants, further label sets - see plan 14, step 4.
 - Persisting the window size and splitter positions (C++ does not do this
   either).
 - `ProfileLogic.loadDefaultProfile` (reopen the last-used profile) is ported

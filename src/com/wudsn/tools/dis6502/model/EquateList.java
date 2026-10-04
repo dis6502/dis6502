@@ -14,6 +14,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.w3c.dom.Element;
 
@@ -171,34 +173,46 @@ public final class EquateList implements Xml.Serializable {
 		}
 	}
 
+	/** The names of all contexts the equates use, sorted. */
+	public Set<String> getContextNames() {
+		Set<String> result = new TreeSet<>();
+		for (Equate equate : equateList) {
+			result.addAll(equate.getContexts());
+		}
+		return result;
+	}
+
 	/**
 	 * Finds an equate at the given address that supports the given access,
 	 * and marks it as referenced with that access. Address 0 is never a
-	 * valid label (it is the "no label" value). Unless {@code sdx} is true,
-	 * SDX page 7 ($0700-$07FF) is never matched, since it is not used for
-	 * non-SDX segments.
-	 * <p>
-	 * TODO: We must mark the system equates in a certain way instead of
-	 * hardcoding page 7 here, but right now it does the job.
+	 * valid label (it is the "no label" value). Of the equates in one of the
+	 * {@code activeContexts} and the global ones, the first in a context wins,
+	 * else the first global one; equates of other contexts never match.
 	 */
-	public Equate findEquateByAddress(int address, int labelAccess, boolean sdx) {
+	public Equate findEquateByAddress(int address, int labelAccess, Set<String> activeContexts) {
 		if (address == 0) {
 			return null;
 		}
-		if (!sdx && address >= 0x0700 && address <= 0x07FF) {
-			return null;
-		}
+		Equate globalEquate = null;
 		for (Equate equate : equateList) {
 			if (equate.getLabelValue() == address && equate.isLabelAccessSupported(labelAccess)) {
-				equate.addLabelReference(labelAccess);
-				return equate;
+				if (equate.isInContext(activeContexts)) {
+					equate.addLabelReference(labelAccess);
+					return equate;
+				}
+				if (equate.isGlobal() && globalEquate == null) {
+					globalEquate = equate;
+				}
 			}
 		}
-		return null;
+		if (globalEquate != null) {
+			globalEquate.addLabelReference(labelAccess);
+		}
+		return globalEquate;
 	}
 
-	public Equate findAndMarkEquateByAddress(int address, int labelAccess) {
-		Equate equate = findEquateByAddress(address, labelAccess, true);
+	public Equate findAndMarkEquateByAddress(int address, int labelAccess, Set<String> activeContexts) {
+		Equate equate = findEquateByAddress(address, labelAccess, activeContexts);
 		if (equate != null) {
 			equate.addDefinition();
 		}
@@ -245,6 +259,35 @@ public final class EquateList implements Xml.Serializable {
 				it.remove();
 			}
 		}
+	}
+
+	/**
+	 * Brings equates stored before contexts existed up to date: if none of
+	 * them has contexts, each label gets the contexts of the label in {@code
+	 * source} with the same name and value. Otherwise, or if nothing matches,
+	 * nothing changes. Returns whether any equate changed.
+	 */
+	public boolean copyContextsFrom(EquateList source) {
+		for (Equate equate : equateList) {
+			if (!equate.isGlobal()) {
+				return false;
+			}
+		}
+		boolean changed = false;
+		for (Equate equate : equateList) {
+			if (equate.getType() == EquateType.LABEL) {
+				Equate sourceEquate = source.getEquateByLabel(equate.getLabel());
+				if (sourceEquate != null && sourceEquate.getLabelValue() == equate.getLabelValue()
+						&& !sourceEquate.isGlobal()) {
+					equate.setContexts(sourceEquate.getContexts());
+					changed = true;
+				}
+			}
+		}
+		if (changed) {
+			notifyListeners();
+		}
+		return changed;
 	}
 
 	/** Clears the transient definition/reference flags of all equates. */

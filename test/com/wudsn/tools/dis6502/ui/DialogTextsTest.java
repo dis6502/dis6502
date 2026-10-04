@@ -76,6 +76,7 @@ public final class DialogTextsTest {
 		checkDialog("DiskImageSectorsDialog", () -> new DiskImageSectorsDialog(null));
 		checkDialog("EquateDialog", () -> new EquateDialog(null));
 		checkDialog("EquateRangeDialog", () -> new EquateRangeDialog(null));
+		checkDialog("EquateContextsDialog", () -> new EquateContextsDialog(null));
 		checkDialog("LowHighByteDialog", () -> new LowHighByteDialog(null));
 		checkDialog("MemoryInspectorFindStringDialog", () -> new MemoryInspectorFindStringDialog(null));
 		checkDialog("ProfileDialog", () -> new ProfileDialog(null, new ProfileLogic(application), null));

@@ -1,6 +1,7 @@
 # Equates and label access
 
-Status: In progress - steps 1 and 2 done (2026-10-04), see "Progress".
+Status: Done (2026-10-04) - steps 1 to 3 and 5; step 4 is later work, see
+"Progress".
 
 Four of the source TODOs ([`SOURCE_TODOS.md`](SOURCE_TODOS.md)) concern which
 equates a listing uses and writes. They overlap, so they are planned
@@ -219,6 +220,27 @@ For `LABEL+n` the nearest line prefers one already referenced at the same
 address. `EquateRangeTest` checks that `sta $02` writes `CASINI` but not
 `ICCOM` and assembles with MADS; it fails when the address rule is put back.
 
+**Step 3 (2026-10-04):** finding 4, equate contexts, with two decisions
+taken on the way (6 and 7 below). `Equate` reads, writes and stores its
+contexts; `EquateList.findEquateByAddress` takes the active contexts
+instead of the `sdx` flag, and the page-7 rule is gone. The active
+contexts of a segment are the workspace's plus
+`ComputerSystem.getEquateContexts(segment)` - `Atari800` returns `SDX` for
+SDX segments. `generateEquates` leaves out labels whose contexts are active
+in no segment. The 57 SDX labels in `Atari800.equ` have `[SDX]`. Parse
+errors `E101`-`E103`. `LabelAccess.isSupported`'s javadoc is corrected and
+the unused `Workspace.findEquateByAddress` removed.
+
+Tests: `EquateTest` parses and writes 0, 1 and 2 contexts, the errors, the
+XML round trip, and the lookup's preference; the new `EquateContextTest`
+checks on the real Atari 800 equates that a normal segment gets neither the
+page-7 labels nor `JGETTD` (with all system labels written, assembled with
+MADS), that the workspace's or an SDX segment's context brings them, the
+workspace file round trip, and the migration of an old workspace. Each of
+the listing filter, the lookup, the segment context, the migration and the
+preference is caught by a test when undone; `ReassemblyRoundTripTest`'s
+`unit001` also fails when the lookup ignores contexts.
+
 ## Decisions (2026-10-04)
 
 1. **Contexts per equate**, 0 to n each, not per file: `Atari800.equ` stays
@@ -233,3 +255,12 @@ address. `EquateRangeTest` checks that `sta $02` writes `CASINI` but not
    the context names of the loaded equates; default none.
 5. **Ranges in existing workspaces** (finding 3) keep their stored
    `READ_WRITE` access; only new ranges take their base's access.
+6. **Workspaces saved before contexts** store system equates without them.
+   When such a workspace is opened and none of its system equates has a
+   context, each gets the contexts of the shipped equate with the same
+   label and value (`EquateList.copyContextsFrom`); the stored copy
+   otherwise stays as it is.
+7. **Where the active contexts are chosen:** the workspace dialog only
+   appears for a new workspace, before equates are loaded. Instead, the new
+   **Equates > Active Contexts...** dialog lists the context names of the
+   loaded equates, at any time.

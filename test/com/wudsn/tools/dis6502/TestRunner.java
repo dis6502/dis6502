@@ -17,6 +17,7 @@ import com.wudsn.tools.dis6502.model.DisassemblyResultTest;
 import com.wudsn.tools.dis6502.model.DisassemblyUserCommentTest;
 import com.wudsn.tools.dis6502.model.EncodingTest;
 import com.wudsn.tools.dis6502.model.EquateListLogicTest;
+import com.wudsn.tools.dis6502.model.EquateContextTest;
 import com.wudsn.tools.dis6502.model.EquateRangeTest;
 import com.wudsn.tools.dis6502.model.EquateTest;
 import com.wudsn.tools.dis6502.model.FolderTypeTest;
@@ -135,6 +136,7 @@ public final class TestRunner {
 		runTest("AssemblerTest", () -> AssemblerTest.testAssembler(new Workspace(new ComputerSystemFactory())));
 		runTest("EquateTest", EquateTest::testEquate);
 		runTest("EquateRangeTest", EquateRangeTest::testEquateRanges);
+		runTest("EquateContextTest", EquateContextTest::testEquateContexts);
 		runTest("SegmentTest", SegmentTest::testSegment);
 		runTest("SegmentTest.testSegmentRangeEdit", SegmentTest::testSegmentRangeEdit);
 		runTest("SegmentTest.testUserComment", SegmentTest::testUserComment);
