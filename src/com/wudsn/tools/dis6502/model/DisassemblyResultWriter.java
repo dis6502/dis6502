@@ -81,7 +81,8 @@ public final class DisassemblyResultWriter implements AutoCloseable {
 			writeString(lineNumberString);
 		}
 
-		// TODO Alignment disabled, because comments and labels cannot be aligned.
+		// Only the directives this writer inserts itself (include, end) ask for alignment: the listing
+		// lines are already aligned by the disassembler, and comments and labels must start in column 1.
 		if (useAlignment && !line.startsWith(profile.commentPrefix)) {
 			int instructionAlignmentOffset = profile.alignInstructions ? 8 : 0;
 			for (int i = lineNumberString.length(); i < instructionAlignmentOffset; i++) {

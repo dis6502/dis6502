@@ -552,7 +552,9 @@ public final class Disassembly {
 				if (segmentIndex >= segmentList.getCount()) {
 					clearMemoryBlockIterator();
 					segmentIndex = savedSegmentIndex;
-					pc++; // TODO: Why?
+					// Past the last byte read, as in the else branch below: findSymbolByAddress(..., pc - 2, ...)
+					// relies on it after an absolute operand that ends the last segment.
+					pc++;
 					break;
 				}
 

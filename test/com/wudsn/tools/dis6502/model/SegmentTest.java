@@ -57,6 +57,44 @@ public final class SegmentTest {
 	 * Hand-computed exact byte/offset values throughout, matching this
 	 * project's testing convention.
 	 */
+	/**
+	 * The comment dialog's round trip: {@link SegmentList#getUserComment} joins
+	 * the comments of a line's bytes, {@link SegmentList#setUserComment} replaces
+	 * them by one comment at the line's first byte.
+	 */
+	public static void testUserComment() {
+		SegmentList segmentList = new SegmentList(null);
+		Segment segment = segmentList.insertSegmentAt(0);
+		segment.wBegin = 0x2000;
+		segment.wEnd = 0x2007;
+		segment.createMemoryBlockFromBeginToEnd();
+		addComment(segment, 1, "Opcode");
+		addComment(segment, 3, "High byte");
+		addComment(segment, 2, "Low byte");
+		addComment(segment, 4, "Next line");
+
+		Assert.stringEquals(segmentList.getUserComment(0, 1, 3), "Opcode\nLow byte\nHigh byte");
+		Assert.stringEquals(segmentList.getUserComment(0, 2, 0), "Low byte"); // Size 0 counts as 1.
+		Assert.stringEquals(segmentList.getUserComment(0, 0, 1), "");
+		Assert.stringEquals(segmentList.getUserComment(0, 1, 0xFFFF), ""); // No line.
+
+		segmentList.setUserComment(0, 1, 3, "Edited");
+		Assert.stringEquals(segmentList.getUserComment(0, 1, 3), "Edited");
+		Assert.stringEquals(segment.findComment(1), "Edited");
+		Assert.stringEquals(segment.findComment(2), "");
+		Assert.stringEquals(segment.findComment(4), "Next line");
+
+		segmentList.setUserComment(0, 1, 3, "");
+		Assert.stringEquals(segmentList.getUserComment(0, 1, 3), "");
+		Assert.log("SegmentTest.testUserComment completed");
+	}
+
+	private static void addComment(Segment segment, int offset, String text) {
+		Comment comment = segment.allocateComment();
+		comment.setOffset(offset);
+		comment.setText(text);
+	}
+
 	public static void testSegmentRangeEdit() {
 		testDeleteRangeFromMiddle();
 		testDeleteRangeShrinksToEmpty();

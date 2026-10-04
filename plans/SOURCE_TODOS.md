@@ -20,7 +20,6 @@ Not counted: the `; $XXXX` format text in `DisassemblyGridPanel`.
 |---|---|
 | [`DisassemblyWriter.java:51`](../src/com/wudsn/tools/dis6502/model/DisassemblyWriter.java) | Which bytes `showNonASCIIChararactersAsBytes` treats as non-ASCII depends on the character set. Now possible through `CharacterSet`; the ranges are still hardcoded. |
 | [`EquateList.java:256`](../src/com/wudsn/tools/dis6502/model/EquateList.java) | Consider the parent equate list and recursion. One level was added since (the `IOCB0+ICCOM` offset label, lines 267-272); the parent list and deeper recursion are missing. |
-| [`Disassembly.java:555`](../src/com/wudsn/tools/dis6502/model/Disassembly.java) | "Why `pc++`?" Probably to keep `pc` pointing past the last byte read when the last segment runs out, matching the normal `else` branch. Likely, not verified. |
 
 ## Open - unchanged
 
@@ -32,6 +31,4 @@ Not counted: the `; $XXXX` format text in `DisassemblyGridPanel`.
 | [`Disassembly.java:298`](../src/com/wudsn/tools/dis6502/model/Disassembly.java) | The referenced check does not distinguish the access type, so if `$80` is referenced, the zero-page and display-list constants count as referenced alike. |
 | [`Oric.java:68`](../src/com/wudsn/tools/dis6502/model/system/oric/Oric.java) | Are all zero-page addresses really base addresses on the Oric? Needs research. |
 | [`Oric.java:78`](../src/com/wudsn/tools/dis6502/model/system/oric/Oric.java) | File type detection should support the Orix header format (https://orix.oric.org/orix-header/) and the tape header format (https://forum.defence-force.org/viewtopic.php?t=201). |
-| [`SegmentList.java:578`](../src/com/wudsn/tools/dis6502/model/SegmentList.java) | Is `getUserComment`'s per-byte comment lookup over the line's size correct? It looks right; unconfirmed. |
-| [`DisassemblyResultWriter.java:84`](../src/com/wudsn/tools/dis6502/model/DisassemblyResultWriter.java) | A note rather than a task: listing lines are printed with `useAlignment=false`; only the inserted directives use `true`. Could become a plain comment. |
 | [`DisassemblyResultFile.java:191`](../src/com/wudsn/tools/dis6502/model/DisassemblyResultFile.java) | `saveListing` should return the include files it wrote. No caller would use the list yet (e.g. for a success message). |

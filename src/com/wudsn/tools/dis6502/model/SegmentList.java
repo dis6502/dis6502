@@ -561,6 +561,14 @@ public final class SegmentList implements Xml.Serializable {
 		return "";
 	}
 
+	/**
+	 * The comments of the {@code size} bytes at {@code offset} - a listing line's
+	 * bytes - joined by line breaks, for the comment dialog to edit. {@link
+	 * #setUserComment} then replaces them by one comment at {@code offset}, so
+	 * editing a line combines e.g. its operand bytes' comments, the same way the
+	 * listing shows them together before the instruction. A size of 0 counts as
+	 * 1; {@code 0xFFFF} (no line) has no comment.
+	 */
 	public String getUserComment(int segmentIndex, int offset, int size) {
 		StringBuilder result = new StringBuilder();
 		Segment segment = segmentList.get(segmentIndex);
@@ -569,7 +577,6 @@ public final class SegmentList implements Xml.Serializable {
 			if (size == 0) {
 				size = 1;
 			}
-			// TODO: Is this correct?
 			for (int relativeOffset = 0; relativeOffset < size; relativeOffset++) {
 				String comment = segment.findComment(offset + relativeOffset);
 				if (!comment.isEmpty()) {

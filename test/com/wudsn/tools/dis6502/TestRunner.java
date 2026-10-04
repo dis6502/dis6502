@@ -135,6 +135,7 @@ public final class TestRunner {
 		runTest("EquateTest", EquateTest::testEquate);
 		runTest("SegmentTest", SegmentTest::testSegment);
 		runTest("SegmentTest.testSegmentRangeEdit", SegmentTest::testSegmentRangeEdit);
+		runTest("SegmentTest.testUserComment", SegmentTest::testUserComment);
 		runTest("DisassemblyResultTest", DisassemblyResultTest::testDisassemblyResult);
 		runTest("DisassemblyResultTest.testFindAndSelectLines", DisassemblyResultTest::testFindAndSelectLines);
 		runTest("DisassemblyUserCommentTest", DisassemblyUserCommentTest::testUserComments);
