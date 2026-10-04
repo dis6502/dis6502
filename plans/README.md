@@ -25,3 +25,4 @@ The standing documents are not numbered: `DEVELOPMENT_GUIDE.md`, `MEMORY.md`,
 | 12 | [CARTRIDGE_IMPORT_PLAN](12_CARTRIDGE_IMPORT_PLAN.md) | One shared class importing every Atari 800 and Atari 5200 cartridge type defined by WUDSN Base's `CartridgeType` | Done 2026-10-04 |
 | 13 | [ROM_TYPE_PROPOSAL](13_ROM_TYPE_PROPOSAL.md) | A system-independent `ROMType` instead of WUDSN Base's Atari `CartridgeType` outside the Atari `ComputerSystem` subclasses | Done 2026-10-04 |
 | 14 | [EQUATES_LABEL_ACCESS_PLAN](14_EQUATES_LABEL_ACCESS_PLAN.md) | Which equates a listing uses and writes: user ranges on system equates, shared addresses, range access, equate contexts (SDX, OS) | Done |
+| 15 | [MRU_LIST_EXTRACTION_PLAN](15_MRU_LIST_EXTRACTION_PLAN.md) | Move `ApplicationSettingsSection`, `MRUEntry`/`MRUList` and the MRU menu to WUDSN Base; the MRU list generic over a project's file type value set | Planned |
