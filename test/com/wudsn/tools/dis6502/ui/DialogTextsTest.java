@@ -5,6 +5,7 @@
  */
 package com.wudsn.tools.dis6502.ui;
 
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -145,7 +146,9 @@ public final class DialogTextsTest {
 				Assert.isNull(dialog.getROMType());
 
 				dialog.setInput(file, candidates);
-				buttons[2].doClick();
+				// Escape - ModalDialog's Cancel.
+				dialog.getRootPane().getActionMap().get("CANCEL")
+						.actionPerformed(new ActionEvent(dialog, ActionEvent.ACTION_PERFORMED, "CANCEL"));
 				Assert.boolEquals(dialog.isConfirmed(), false);
 			} finally {
 				dialog.dispose();

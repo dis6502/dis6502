@@ -6,6 +6,7 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -14,16 +15,16 @@ import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
+import com.wudsn.tools.dis6502.Actions;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.system.ROMType;
@@ -40,70 +41,62 @@ import com.wudsn.tools.dis6502.model.system.ROMType;
  *
  * @author Peter Dell
  */
-public final class ROMTypeDialog extends JDialog {
+public final class ROMTypeDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
 
 	private final JTextField filePathField = new JTextField();
 	private final DefaultListModel<ROMType> listModel = new DefaultListModel<>();
 	private final JList<ROMType> romTypeList = new JList<>(listModel);
-	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
-	// Fully qualified: com.wudsn.tools.base.Actions is already imported as "Actions" for ButtonBar_OK/Cancel.
 	private final JButton rawFileButton = ElementFactory
-			.createButton(com.wudsn.tools.dis6502.Actions.ROMTypeDialog_OpenAsRawFile, true);
-	private final JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
+			.createButton(Actions.ROMTypeDialog_OpenAsRawFile, true);
 
 	private ROMType romType;
-	private boolean confirmed;
+	private boolean rawFile; // "Open as Raw File" was clicked.
 
 	public ROMTypeDialog(Frame owner) {
-		super(owner, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle(Texts.ROMTypeDialog_Title);
+		super(owner, Texts.ROMTypeDialog_Title);
 
 		filePathField.setEditable(false);
 
 		romTypeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); // Shows ROMType.toString(), the text.
-		romTypeList.addListSelectionListener(e -> okButton.setEnabled(romTypeList.getSelectedValue() != null));
+		romTypeList.addListSelectionListener(e -> getOKButton().setEnabled(romTypeList.getSelectedValue() != null));
 		romTypeList.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2 && okButton.isEnabled()) {
-					okButton.doClick();
+				if (e.getClickCount() == 2 && getOKButton().isEnabled()) {
+					getOKButton().doClick();
 				}
 			}
 		});
 
-		okButton.setEnabled(false);
-		okButton.addActionListener(e -> close(true, romTypeList.getSelectedValue()));
-		rawFileButton.addActionListener(e -> close(true, null));
-		cancelButton.addActionListener(e -> close(false, null));
+		getOKButton().setEnabled(false);
+		rawFileButton.addActionListener(e -> {
+			rawFile = true;
+			romType = null;
+			close();
+		});
+		addButtonBarButton(rawFileButton);
 
 		JPanel topPanel = new JPanel(new BorderLayout(4, 4));
 		topPanel.add(ElementFactory.createLabel(DataTypes.ROMTypeDialog_File, filePathField), BorderLayout.WEST);
 		topPanel.add(filePathField, BorderLayout.CENTER);
 		topPanel.add(ElementFactory.createLabel(DataTypes.ROMTypeDialog_ROMType, romTypeList), BorderLayout.SOUTH);
 
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(okButton);
-		buttonPanel.add(rawFileButton);
-		buttonPanel.add(cancelButton);
+		JScrollPane romTypeScrollPane = new JScrollPane(romTypeList);
+		romTypeScrollPane.setPreferredSize(new Dimension(440, 220));
 
-		getContentPane().setLayout(new BorderLayout(4, 4));
-		getContentPane().add(topPanel, BorderLayout.NORTH);
-		getContentPane().add(new JScrollPane(romTypeList), BorderLayout.CENTER);
-		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-		setSize(460, 360);
-		setLocationRelativeTo(owner);
-
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
+		JPanel mainPanel = new JPanel(new BorderLayout(4, 4));
+		mainPanel.add(topPanel, BorderLayout.NORTH);
+		mainPanel.add(romTypeScrollPane, BorderLayout.CENTER);
+		getContentPane().add(mainPanel, BorderLayout.CENTER);
 	}
 
-	private void close(boolean confirmed, ROMType romType) {
-		this.confirmed = confirmed;
-		this.romType = romType;
-		setVisible(false);
+	/** OK: the selected ROM type. */
+	@Override
+	protected boolean validateOK() {
+		romType = romTypeList.getSelectedValue();
+		return romType != null;
 	}
 
 	/** Fills the dialog for {@link #show}; package-private so tests can fill it without the blocking modal call. */
@@ -117,8 +110,9 @@ public final class ROMTypeDialog extends JDialog {
 		if (!romTypes.isEmpty()) {
 			romTypeList.setSelectedIndex(0);
 		}
-		okButton.setEnabled(!romTypes.isEmpty());
-		confirmed = false;
+		getOKButton().setEnabled(!romTypes.isEmpty());
+		okPressed = false;
+		rawFile = false;
 		romType = null;
 	}
 
@@ -129,8 +123,8 @@ public final class ROMTypeDialog extends JDialog {
 	 */
 	public boolean show(File file, List<ROMType> romTypes) {
 		setInput(file, romTypes);
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
-		return confirmed;
+		showModal(romTypeList);
+		return isConfirmed();
 	}
 
 	/** @return the chosen ROM type, or {@code null} to open the file as raw file */
@@ -140,12 +134,12 @@ public final class ROMTypeDialog extends JDialog {
 
 	/** Whether the user confirmed with OK or "Open as Raw File"; package-private for tests. */
 	boolean isConfirmed() {
-		return confirmed;
+		return okPressed || rawFile;
 	}
 
-	/** For tests: the OK, "Open as Raw File" and Cancel buttons. */
+	/** For tests: the OK and "Open as Raw File" buttons. */
 	JButton[] getButtons() {
-		return new JButton[] { okButton, rawFileButton, cancelButton };
+		return new JButton[] { getOKButton(), rawFileButton };
 	}
 
 	/** For tests: the listed ROM types. */

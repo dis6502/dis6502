@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -23,8 +22,8 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Texts;
@@ -53,20 +52,17 @@ import com.wudsn.tools.dis6502.model.system.atari800.ImgError;
  *
  * @author Peter Dell
  */
-public final class SegmentWriteBootDiskDialog extends JDialog {
+public final class SegmentWriteBootDiskDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
 
 	private final JTextField loadAddressField = new JTextField(4);
 	private final JTextField initAddressField = new JTextField(4);
-	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 
 	private Segment segment;
 
 	public SegmentWriteBootDiskDialog(Frame owner) {
-		super(owner, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle(Texts.SegmentWriteBootDiskDialog_Title);
+		super(owner, Texts.SegmentWriteBootDiskDialog_Title);
 
 		JPanel panel = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
@@ -88,17 +84,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 		c.anchor = GridBagConstraints.WEST;
 		panel.add(initAddressField, c);
 
-		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
-		cancelButton.addActionListener(e -> setVisible(false));
-
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(okButton);
-		buttonPanel.add(cancelButton);
-
-		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(panel, BorderLayout.CENTER);
-		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
 		DocumentListener updateOKEnabled = new DocumentListener() {
 			@Override
@@ -117,35 +103,33 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 			}
 
 			private void update() {
-				okButton.setEnabled(!loadAddressField.getText().isEmpty() && !initAddressField.getText().isEmpty());
+				getOKButton().setEnabled(!loadAddressField.getText().isEmpty() && !initAddressField.getText().isEmpty());
 			}
 		};
 		loadAddressField.getDocument().addDocumentListener(updateOKEnabled);
 		initAddressField.getDocument().addDocumentListener(updateOKEnabled);
-
-		pack();
-		setLocationRelativeTo(owner);
-
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
-	/** Prompts for a target file and writes the boot disk to it. */
-	private void performOK() {
+	/**
+	 * Prompts for a target file and writes the boot disk to it. Cancelling the
+	 * file chooser keeps the dialog open; after writing, also after an error
+	 * shown here, it closes.
+	 */
+	@Override
+	protected boolean validateOK() {
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogTitle(Texts.SegmentWriteBootDiskDialog_Title);
 		if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
-			return;
+			return false;
 		}
 		File file = fileChooser.getSelectedFile();
 		try {
 			writeBootDisk(file.getPath());
-			setVisible(false);
 		} catch (IOException ex) {
 			JOptionPane.showMessageDialog(this, ex.getMessage(), Texts.SegmentWriteBootDiskDialog_Title,
 					JOptionPane.ERROR_MESSAGE);
-			setVisible(false);
 		}
+		return true;
 	}
 
 	/**
@@ -213,7 +197,7 @@ public final class SegmentWriteBootDiskDialog extends JDialog {
 		this.segment = segment;
 		loadAddressField.setText(String.format("%04X", segment.wBegin));
 		initAddressField.setText(withInitAddress ? String.format("%04X", initAddress) : "");
-		okButton.setEnabled(!initAddressField.getText().isEmpty());
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
+		getOKButton().setEnabled(!initAddressField.getText().isEmpty());
+		showModal(initAddressField);
 	}
 }

@@ -14,15 +14,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.common.TextUtility;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
+import com.wudsn.tools.dis6502.Actions;
 import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.DefaultFolders;
 import com.wudsn.tools.dis6502.model.FolderType;
@@ -39,7 +39,7 @@ import com.wudsn.tools.dis6502.model.FolderType;
  *
  * @author Peter Dell
  */
-public final class DefaultFoldersDialog extends JDialog {
+public final class DefaultFoldersDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
 
@@ -49,11 +49,9 @@ public final class DefaultFoldersDialog extends JDialog {
 			FolderType.DISASSEMBLY_FILES };
 
 	private final Map<FolderType, JTextField> fields = new HashMap<>(); // FolderType is a value set, not an enum.
-	private boolean confirmed;
 
 	public DefaultFoldersDialog(Frame owner) {
-		super(owner, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		super(owner, ""); // The title names the computer system - see show.
 
 		JPanel formPanel = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
@@ -75,9 +73,8 @@ public final class DefaultFoldersDialog extends JDialog {
 			c.weightx = 1;
 			formPanel.add(field, c);
 
-			// Fully qualified: com.wudsn.tools.base.Actions is already imported as "Actions" for ButtonBar_OK/Cancel below.
 			// No mnemonic: this same Action is reused for one button per row, all simultaneously visible.
-			JButton browseButton = ElementFactory.createButton(com.wudsn.tools.dis6502.Actions.DefaultFoldersDialog_Browse, false);
+			JButton browseButton = ElementFactory.createButton(Actions.DefaultFoldersDialog_Browse, false);
 			browseButton.addActionListener(e -> browse(folderType, field));
 			c.gridx = 2;
 			c.fill = GridBagConstraints.NONE;
@@ -87,28 +84,7 @@ public final class DefaultFoldersDialog extends JDialog {
 			row++;
 		}
 
-		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
-		okButton.addActionListener(e -> {
-			confirmed = true;
-			setVisible(false);
-		});
-		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
-		cancelButton.addActionListener(e -> {
-			confirmed = false;
-			setVisible(false);
-		});
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(okButton);
-		buttonPanel.add(cancelButton);
-
-		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(formPanel, BorderLayout.CENTER);
-		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-		pack();
-		setLocationRelativeTo(owner);
-
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	/** Opens a directory chooser for {@code folderType}'s field. */
@@ -122,8 +98,8 @@ public final class DefaultFoldersDialog extends JDialog {
 	}
 
 	/**
-	 * Opens the dialog as one blocking call, idiomatic for a Swing modal
-	 * {@link JDialog}. Returns {@code true}, and writes the edited values
+	 * Opens the dialog as one blocking call - a WUDSN Base
+	 * {@link ModalDialog}. Returns {@code true}, and writes the edited values
 	 * back into {@code defaultFolders}, only if the user clicked OK.
 	 */
 	public boolean show(DefaultFolders defaultFolders) {
@@ -131,15 +107,13 @@ public final class DefaultFoldersDialog extends JDialog {
 		for (FolderType folderType : EDITABLE_FOLDER_TYPES) {
 			fields.get(folderType).setText(defaultFolders.getFolderPath(folderType));
 		}
-		confirmed = false;
+		showModal(fields.get(EDITABLE_FOLDER_TYPES[0]));
 
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
-
-		if (confirmed) {
+		if (okPressed) {
 			for (FolderType folderType : EDITABLE_FOLDER_TYPES) {
 				defaultFolders.setFolderPath(folderType, fields.get(folderType).getText());
 			}
 		}
-		return confirmed;
+		return okPressed;
 	}
 }

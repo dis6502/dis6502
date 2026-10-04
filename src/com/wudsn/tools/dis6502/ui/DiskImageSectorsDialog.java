@@ -6,6 +6,7 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -18,7 +19,6 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -29,8 +29,9 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
+import com.wudsn.tools.dis6502.Actions;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Texts;
 import com.wudsn.tools.dis6502.model.MutableByteRangeSelection;
@@ -63,7 +64,7 @@ import com.wudsn.tools.dis6502.model.system.atari800.ImgRWPacket;
  *
  * @author Peter Dell
  */
-public final class DiskImageSectorsDialog extends JDialog {
+public final class DiskImageSectorsDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
 
@@ -73,23 +74,18 @@ public final class DiskImageSectorsDialog extends JDialog {
 	private final HexGridPanel grid = new HexGridPanel();
 	private final MutableByteRangeSelection selection = new MutableByteRangeSelection();
 	private final JTextField addressField = new JTextField(6);
-	// Fully qualified: com.wudsn.tools.base.Actions is already imported as "Actions" for ButtonBar_OK/Cancel below.
-	private final JButton addSectorButton = ElementFactory.createButton(com.wudsn.tools.dis6502.Actions.DiskImageSectorsDialog_AddSector, true);
-	private final JButton removeSectorButton = ElementFactory.createButton(com.wudsn.tools.dis6502.Actions.DiskImageSectorsDialog_RemoveSector,
+	private final JButton addSectorButton = ElementFactory.createButton(Actions.DiskImageSectorsDialog_AddSector, true);
+	private final JButton removeSectorButton = ElementFactory.createButton(Actions.DiskImageSectorsDialog_RemoveSector,
 			true);
-	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
 	private final DefaultListModel<Item> itemsListModel = new DefaultListModel<>();
 	private final JList<Item> itemsList = new JList<>(itemsListModel);
 
 	private final ImgRWPacket sector = new ImgRWPacket();
 	private int currentSectorNumber;
 	private int currentSectorSize;
-	private boolean confirmed;
 
 	public DiskImageSectorsDialog(Frame owner) {
-		super(owner, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle(Texts.DiskImageSectorsDialog_Title);
+		super(owner, Texts.DiskImageSectorsDialog_Title);
 
 		diskImageFilePathField.setEditable(false);
 		itemsList.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
@@ -131,16 +127,7 @@ public final class DiskImageSectorsDialog extends JDialog {
 			}
 		});
 
-		okButton.setEnabled(false);
-		okButton.addActionListener(e -> {
-			confirmed = true;
-			setVisible(false);
-		});
-		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
-		cancelButton.addActionListener(e -> {
-			confirmed = false;
-			setVisible(false);
-		});
+		getOKButton().setEnabled(false);
 
 		JPanel topPanel = new JPanel(new BorderLayout(4, 4));
 		topPanel.add(ElementFactory.createLabel(DataTypes.DiskImageSectorsDialog_DiskImageFile, diskImageFilePathField), BorderLayout.WEST);
@@ -173,23 +160,13 @@ public final class DiskImageSectorsDialog extends JDialog {
 		middlePanel.add(centerPanel);
 		middlePanel.add(itemsPanel);
 
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(okButton);
-		buttonPanel.add(cancelButton);
+		middlePanel.setPreferredSize(new Dimension(980, 420)); // The sector's hex grid and the list side by side.
 
-		JPanel southPanel = new JPanel(new BorderLayout());
-		southPanel.add(fieldsPanel, BorderLayout.NORTH);
-		southPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-		getContentPane().setLayout(new BorderLayout(4, 4));
-		getContentPane().add(topPanel, BorderLayout.NORTH);
-		getContentPane().add(middlePanel, BorderLayout.CENTER);
-		getContentPane().add(southPanel, BorderLayout.SOUTH);
-		setSize(1000, 560);
-		setLocationRelativeTo(owner);
-
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
+		JPanel mainPanel = new JPanel(new BorderLayout(4, 4));
+		mainPanel.add(topPanel, BorderLayout.NORTH);
+		mainPanel.add(middlePanel, BorderLayout.CENTER);
+		mainPanel.add(fieldsPanel, BorderLayout.SOUTH);
+		getContentPane().add(mainPanel, BorderLayout.CENTER);
 	}
 
 	/** The font the sector's bytes are painted with - see {@link HexGridPanel#setComputerFont}. */
@@ -234,7 +211,7 @@ public final class DiskImageSectorsDialog extends JDialog {
 		int size = end - begin + 1;
 
 		itemsListModel.addElement(new Item(currentSectorNumber, address[0], begin, size));
-		okButton.setEnabled(true);
+		getOKButton().setEnabled(true);
 
 		addressField.setText(String.format("%04X", (address[0] + size) & 0xFFFF));
 
@@ -250,7 +227,7 @@ public final class DiskImageSectorsDialog extends JDialog {
 			itemsListModel.remove(selectedIndices[i]);
 		}
 		removeSectorButton.setEnabled(false);
-		okButton.setEnabled(!itemsListModel.isEmpty());
+		getOKButton().setEnabled(!itemsListModel.isEmpty());
 	}
 
 	/** Reads and displays sector {@code sectorNumber}, clearing any selection. */
@@ -285,8 +262,8 @@ public final class DiskImageSectorsDialog extends JDialog {
 	}
 
 	/**
-	 * Opens the dialog as one blocking call, idiomatic for a Swing modal
-	 * {@link JDialog}. {@code diskInfo} must already be a successfully
+	 * Opens the dialog as one blocking call - a WUDSN Base
+	 * {@link ModalDialog}. {@code diskInfo} must already be a successfully
 	 * recognized disk image (checked by the caller via {@link
 	 * DiskImage#getInfo}/{@link DiskImage#isError} before showing this
 	 * dialog). Returns {@code true} if the user added at least one sector
@@ -300,7 +277,7 @@ public final class DiskImageSectorsDialog extends JDialog {
 
 		itemsListModel.clear();
 		addressField.setText("");
-		okButton.setEnabled(false);
+		getOKButton().setEnabled(false);
 		removeSectorButton.setEnabled(false);
 
 		sectorSpinnerModel.setMinimum(1);
@@ -308,10 +285,8 @@ public final class DiskImageSectorsDialog extends JDialog {
 		sectorSpinnerModel.setValue(1);
 		loadAndDisplaySector(1);
 
-		confirmed = false;
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
-
-		return confirmed;
+		showModal(addressField);
+		return okPressed;
 	}
 
 	/** One picked byte range: sector, load address, and the offset/size within that sector. */

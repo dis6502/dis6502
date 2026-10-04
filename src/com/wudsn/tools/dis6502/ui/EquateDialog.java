@@ -6,22 +6,22 @@
 package com.wudsn.tools.dis6502.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Frame;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
+import com.wudsn.tools.dis6502.Actions;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Texts;
@@ -45,23 +45,20 @@ import com.wudsn.tools.dis6502.model.WorkspaceProperty;
  *
  * @author Peter Dell
  */
-public final class EquateDialog extends JDialog {
+public final class EquateDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
 
 	private final DefaultListModel<String> listModel = new DefaultListModel<>();
 	private final JList<String> equateJList = new JList<>(listModel);
 	private final JTextField equateLineField = new JTextField();
-	// Fully qualified: com.wudsn.tools.base.Actions is already imported as "Actions" for ButtonBar_OK/Cancel below.
-	private final JButton addButton = ElementFactory.createButton(com.wudsn.tools.dis6502.Actions.EquateDialog_AddModify, true);
-	private final JButton deleteButton = ElementFactory.createButton(com.wudsn.tools.dis6502.Actions.EquateDialog_Delete, true);
+	private final JButton addButton = ElementFactory.createButton(Actions.EquateDialog_AddModify, true);
+	private final JButton deleteButton = ElementFactory.createButton(Actions.EquateDialog_Delete, true);
 
 	private boolean editable;
-	private boolean confirmed;
 
 	public EquateDialog(Frame owner) {
-		super(owner, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		super(owner, Texts.EquateDialog_EditTitle); // Display or edit - see show.
 
 		equateLineField.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
@@ -96,18 +93,6 @@ public final class EquateDialog extends JDialog {
 		deleteButton.setEnabled(false);
 		deleteButton.addActionListener(e -> performDelete());
 
-		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
-		okButton.addActionListener(e -> {
-			performAdd();
-			confirmed = true;
-			setVisible(false);
-		});
-		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
-		cancelButton.addActionListener(e -> {
-			confirmed = false;
-			setVisible(false);
-		});
-
 		JPanel editRowPanel = new JPanel(new BorderLayout(4, 4));
 		editRowPanel.add(ElementFactory.createLabel(DataTypes.EquateDialog_Equate, equateLineField), BorderLayout.WEST);
 		editRowPanel.add(equateLineField, BorderLayout.CENTER);
@@ -116,19 +101,20 @@ public final class EquateDialog extends JDialog {
 		editButtonPanel.add(deleteButton);
 		editRowPanel.add(editButtonPanel, BorderLayout.EAST);
 
-		JPanel okCancelPanel = new JPanel();
-		okCancelPanel.add(okButton);
-		okCancelPanel.add(cancelButton);
+		JScrollPane equateScrollPane = new JScrollPane(equateJList);
+		equateScrollPane.setPreferredSize(new Dimension(460, 300));
 
-		getContentPane().setLayout(new BorderLayout(4, 4));
-		getContentPane().add(editRowPanel, BorderLayout.NORTH);
-		getContentPane().add(new JScrollPane(equateJList), BorderLayout.CENTER);
-		getContentPane().add(okCancelPanel, BorderLayout.SOUTH);
-		setSize(480, 420);
-		setLocationRelativeTo(owner);
+		JPanel mainPanel = new JPanel(new BorderLayout(4, 4));
+		mainPanel.add(editRowPanel, BorderLayout.NORTH);
+		mainPanel.add(equateScrollPane, BorderLayout.CENTER);
+		getContentPane().add(mainPanel, BorderLayout.CENTER);
+	}
 
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
+	/** OK also commits the line being edited, as Add/Modify would. */
+	@Override
+	protected boolean validateOK() {
+		performAdd();
+		return true;
 	}
 
 	private void updateAddButtonEnabled() {
@@ -197,8 +183,8 @@ public final class EquateDialog extends JDialog {
 	}
 
 	/**
-	 * Opens the dialog as one blocking call, idiomatic for a Swing modal
-	 * {@link JDialog}. Returns {@code true}, and replaces {@code equateList}'s
+	 * Opens the dialog as one blocking call - a WUDSN Base
+	 * {@link ModalDialog}. Returns {@code true}, and replaces {@code equateList}'s
 	 * entire content with the dialog's edited lines, only if the user clicked
 	 * OK on an editable dialog.
 	 */
@@ -219,13 +205,11 @@ public final class EquateDialog extends JDialog {
 
 		if (!address.isEmpty()) {
 			equateLineField.setText("L" + address + " = $" + address);
-			SwingUtilities.invokeLater(equateLineField::requestFocusInWindow);
 		}
 
-		confirmed = false;
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
+		showModal(editable ? equateLineField : equateJList);
 
-		boolean changed = confirmed && editable;
+		boolean changed = okPressed && editable;
 		if (changed) {
 			equateList.clear();
 			for (int i = 0; i < listModel.size(); i++) {

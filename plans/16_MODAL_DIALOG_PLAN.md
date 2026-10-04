@@ -1,6 +1,6 @@
 # Plan 16: DIS6502's dialogs on WUDSN Base's `ModalDialog`
 
-Status: In progress - steps 1 and 2 done (2026-10-05), see "Progress".
+Status: In progress - steps 1 to 3 done (2026-10-05), see "Progress".
 
 ## Goal
 
@@ -244,11 +244,37 @@ stays open (`EquateRangeDialog`, `SegmentPropertiesDialog`,
   by `ModalDialogTest`).
 
 Both test modes pass. `UIWiringTest` failed twice with "cannot open system
-clipboard" in the first three full runs, then passed in five; the
-committed code passed three of three. None of the changed dialogs uses the
-clipboard - most likely another program held it - but it is noted here in
-case it returns. Screenshots of the workspace, low/high byte, address range
+clipboard" during a parallel Claude session for RMT, which used the
+clipboard at the same time; repeated afterwards, it passed three of three.
+Screenshots of the workspace, low/high byte, address range
 and raw file dialogs checked the layout.
+
+**Step 3 (2026-10-05):** the 7 dialogs of groups B-D extend `ModalDialog`;
+only group E (About, Assemble, Disassembly Progress) stays on `JDialog`.
+
+- `DialogTextsTest` clicks `ROMTypeDialog`'s buttons without showing the
+  dialog; it cancels through the Escape action now, since `ModalDialog`'s
+  Cancel button is private (a `getCancelButton()` for this test alone was
+  added and removed again - a library method only tests need).
+- Extra buttons go to the left of the button bar with
+  `addButtonBarButton`: Restore Defaults (`OptionsDialog`), Load/Save
+  Profile (`ProfileDialog`), Open as Raw File (`ROMTypeDialog`, which ended
+  between OK and Cancel before). "Open as Raw File" sets its flag and calls
+  `close()`; `isConfirmed()` is OK or raw file.
+- `DefaultFoldersDialog` and `EquateDialog` set their title in `show`;
+  they start with an empty or the edit title.
+- `EquateDialog`, `ROMTypeDialog` and `DiskImageSectorsDialog` had fixed
+  sizes; their list or middle area got a preferred size instead.
+- Correction to the design: `SegmentWriteBootDiskDialog` closes after a
+  write error too (it shows the error first), as before - the plan assumed
+  it stayed open. Cancelling its file chooser keeps it open.
+- With the base `Actions` import no longer needed for OK/Cancel, the
+  dialogs refer to DIS6502's `Actions` by its simple name again.
+
+Both test modes pass. The layout of all seven was checked on images the
+dialogs painted themselves (`rootPane.printAll`) - a first attempt with
+screen captures recorded other windows in front of the dialogs and was
+deleted.
 
 ## Decisions (2026-10-05)
 

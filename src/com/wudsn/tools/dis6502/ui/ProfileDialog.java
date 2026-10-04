@@ -17,17 +17,17 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
 import com.wudsn.tools.base.gui.ValueSetField;
 import com.wudsn.tools.base.repository.DataType;
+import com.wudsn.tools.dis6502.Actions;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Messages;
 import com.wudsn.tools.dis6502.Texts;
@@ -57,10 +57,9 @@ import com.wudsn.tools.dis6502.model.system.ComputerSystemType;
  *
  * @author Peter Dell
  */
-public final class ProfileDialog extends JDialog {
+public final class ProfileDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
-
 
 	// General.
 	private final JTextField commentField = new JTextField(4);
@@ -118,14 +117,11 @@ public final class ProfileDialog extends JDialog {
 	private final Profile workingProfile = new Profile();
 	private ComputerSystemType computerSystemType;
 	private File lastProfileFile;
-	private boolean confirmed;
 
 	public ProfileDialog(Frame owner, ProfileLogic profileLogic, FileChoosers fileChoosers) {
-		super(owner, true);
+		super(owner, Texts.ProfileDialog_Title);
 		this.profileLogic = profileLogic;
 		this.fileChoosers = fileChoosers;
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle(Texts.ProfileDialog_Title);
 
 		ButtonGroup includeFileGroup = new ButtonGroup();
 		includeFileGroup.add(radioIncludeOneFile);
@@ -164,41 +160,21 @@ public final class ProfileDialog extends JDialog {
 		cc.weighty = 1;
 		contentPanel.add(rightPanel, cc);
 
-		JButton loadButton = ElementFactory.createButton(com.wudsn.tools.dis6502.Actions.ProfileDialog_LoadProfile, true);
+		JButton loadButton = ElementFactory.createButton(Actions.ProfileDialog_LoadProfile, true);
 		loadButton.addActionListener(e -> performLoadProfile());
-		JButton saveButton = ElementFactory.createButton(com.wudsn.tools.dis6502.Actions.ProfileDialog_SaveProfile, true);
+		JButton saveButton = ElementFactory.createButton(Actions.ProfileDialog_SaveProfile, true);
 		saveButton.addActionListener(e -> performSaveProfile());
-		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
-		okButton.addActionListener(e -> {
-			confirmed = true;
-			setVisible(false);
-		});
-		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
-		cancelButton.addActionListener(e -> {
-			confirmed = false;
-			setVisible(false);
-		});
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.add(loadButton);
-		buttonPanel.add(saveButton);
-		buttonPanel.add(okButton);
-		buttonPanel.add(cancelButton);
+		addButtonBarButton(saveButton); // Each goes to the far left: Load, Save, then OK, Cancel.
+		addButtonBarButton(loadButton);
 
-		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(new JScrollPane(contentPanel), BorderLayout.CENTER);
-		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-		// pack() instead of a fixed setSize(...): this dialog's three titled
+		// Packed by showModal instead of a fixed setSize(...): this dialog's three titled
 		// panels (17+7+8 rows) need more than 520px of height to show without
 		// scrolling, so a fixed size showed a spurious vertical scrollbar on
 		// first open - packing sizes the dialog to its actual content, and it
 		// stays resizable (no setResizable(false) here) if the user wants to
 		// shrink it afterward, at which point the JScrollPane's scrollbar is
 		// the correct, expected behavior.
-		pack();
-		setLocationRelativeTo(owner);
-
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	private JPanel createGeneralPanel() {
@@ -506,8 +482,8 @@ public final class ProfileDialog extends JDialog {
 	}
 
 	/**
-	 * Opens the dialog as one blocking call, idiomatic for a Swing modal
-	 * {@link JDialog}. Returns {@code true}, and writes the edited values
+	 * Opens the dialog as one blocking call - a WUDSN Base
+	 * {@link ModalDialog}. Returns {@code true}, and writes the edited values
 	 * back into {@code profile}, only if the user clicked OK - see the class
 	 * javadoc for why that matters, not just as an implementation detail.
 	 */
@@ -517,12 +493,11 @@ public final class ProfileDialog extends JDialog {
 		setDialogValues(profile);
 		getDialogValues(workingProfile);
 
-		confirmed = false;
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
+		showModal(useHexCheckBox);
 
-		if (confirmed) {
+		if (okPressed) {
 			getDialogValues(profile);
 		}
-		return confirmed;
+		return okPressed;
 	}
 }

@@ -21,14 +21,14 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
+import com.wudsn.tools.dis6502.Actions;
 import com.wudsn.tools.dis6502.DataTypes;
 import com.wudsn.tools.dis6502.Options;
 import com.wudsn.tools.dis6502.Texts;
@@ -54,13 +54,13 @@ import com.wudsn.tools.dis6502.model.CharacterSet;
  * <p>
  * {@link #restoreDefaultsButton} only resets this dialog's own controls to
  * the {@link Options} defaults - a pending edit like any other control
- * here: it takes a click on {@link #okButton} to actually delete the
+ * here: it takes a click on OK to actually delete the
  * persisted preferences, via {@link #isRestoreDefaultsRequested}.
  * Cancel/close discards it, same as any other edit.
  *
  * @author Peter Dell
  */
-public final class OptionsDialog extends JDialog {
+public final class OptionsDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
 
@@ -80,22 +80,17 @@ public final class OptionsDialog extends JDialog {
 	private final SamplePanel nativeFontPreview = new SamplePanel(NATIVE_FONT_SAMPLE, () -> selectedNativeFont().getGlyphWidth(),
 			() -> selectedNativeFont().getGlyphHeight(),
 			(g2, text, x, y) -> selectedNativeFont().drawText(g2, text, Color.BLACK, x, y));
-	private final JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
-	// Fully qualified: com.wudsn.tools.base.Actions is already imported as "Actions" for ButtonBar_OK/Cancel above.
 	private final JButton restoreDefaultsButton = ElementFactory.createButton(
-			com.wudsn.tools.dis6502.Actions.OptionsDialog_RestoreDefaults, true);
+			Actions.OptionsDialog_RestoreDefaults, true);
 
 	private CharacterSet characterSet;
-	private boolean confirmed;
 	private boolean restoreDefaultsRequested;
 	private String selectedFontFamilyName = "";
 	private int selectedTextFontSize;
 	private int selectedNativeFontSize;
 
 	public OptionsDialog(Frame owner) {
-		super(owner, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setTitle(Texts.OptionsDialog_Title);
+		super(owner, Texts.OptionsDialog_Title);
 
 		fontComboBox.addActionListener(e -> textFontPreview.refresh());
 		textFontSizeSpinner.addChangeListener(e -> textFontPreview.refresh());
@@ -119,25 +114,8 @@ public final class OptionsDialog extends JDialog {
 		groupsPanel.add(textFontPanel);
 		groupsPanel.add(nativeFontPanel);
 
-		okButton.addActionListener(e -> performOK());
-		JButton cancelButton = ElementFactory.createButton(Actions.ButtonBar_Cancel, true);
-		cancelButton.addActionListener(e -> setVisible(false));
-
-		JPanel restorePanel = new JPanel();
-		restorePanel.add(restoreDefaultsButton);
-		JPanel okCancelPanel = new JPanel();
-		okCancelPanel.add(okButton);
-		okCancelPanel.add(cancelButton);
-		JPanel buttonPanel = new JPanel(new BorderLayout());
-		buttonPanel.add(restorePanel, BorderLayout.WEST);
-		buttonPanel.add(okCancelPanel, BorderLayout.EAST);
-
-		getContentPane().setLayout(new BorderLayout(4, 4));
+		addButtonBarButton(restoreDefaultsButton);
 		getContentPane().add(groupsPanel, BorderLayout.CENTER);
-		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, cancelButton::doClick);
 	}
 
 	private static JPanel createGroupPanel(String title) {
@@ -185,12 +163,12 @@ public final class OptionsDialog extends JDialog {
 		return ComputerFont.get(characterSet, (Integer) nativeFontSizeSpinner.getValue());
 	}
 
-	private void performOK() {
+	@Override
+	protected boolean validateOK() {
 		selectedFontFamilyName = selectedFontFamilyName();
 		selectedTextFontSize = (Integer) textFontSizeSpinner.getValue();
 		selectedNativeFontSize = (Integer) nativeFontSizeSpinner.getValue();
-		confirmed = true;
-		setVisible(false);
+		return true;
 	}
 
 	private void performRestoreDefaults() {
@@ -245,17 +223,9 @@ public final class OptionsDialog extends JDialog {
 		textFontSizeSpinner.setValue(Math.max(MIN_TEXT_FONT_SIZE, Math.min(MAX_TEXT_FONT_SIZE, currentTextFontSize)));
 		nativeFontSizeSpinner.setValue(Math.max(ComputerFont.NATIVE_HEIGHT, Math.min(MAX_NATIVE_FONT_SIZE, currentNativeFontSize)));
 
-		// Packed here, not in the constructor: the combo box is still empty at
-		// construction time, so packing then sized the dialog too narrow to
-		// show the populated item text once items were added afterwards.
-		pack();
-		setLocationRelativeTo(getOwner());
-
-		confirmed = false;
 		restoreDefaultsRequested = false;
-		setVisible(true); // Blocks until disposed/hidden - this is a modal dialog.
-
-		return confirmed;
+		showModal(fontComboBox);
+		return okPressed;
 	}
 
 	private interface SamplePainter {
