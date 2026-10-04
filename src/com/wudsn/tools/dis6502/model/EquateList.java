@@ -214,19 +214,25 @@ public final class EquateList implements Xml.Serializable {
 		return null;
 	}
 
-	public void setRange(String label, int labelAddress, int startAddress, int endAddress) {
+	/**
+	 * Replaces the equates from {@code startAddress} to {@code endAddress} by
+	 * range equates relative to the base label {@code label} at {@code
+	 * labelAddress} ("LABEL+1", "LABEL-2", ...), with the base equate's {@code
+	 * labelAccess}: a range on a {@code #} constant must not match memory
+	 * accesses, one on a read-only register not writes.
+	 */
+	public void setRange(String label, int labelAddress, int labelAccess, int startAddress, int endAddress) {
 		removeRange(startAddress, endAddress);
-		addRange(label, labelAddress, startAddress, endAddress);
+		addRange(label, labelAddress, labelAccess, startAddress, endAddress);
 		notifyListeners();
 	}
 
-	// TODO: Add labelAccess.
-	private void addRange(String label, int labelAddress, int startAddress, int endAddress) {
+	private void addRange(String label, int labelAddress, int labelAccess, int startAddress, int endAddress) {
 		for (int address = startAddress; address <= endAddress; address++) {
 			String rangeLabel = label + (address > labelAddress ? "+" : "-")
 					+ Math.abs(address - labelAddress);
 			Equate equate = addEquate();
-			equate.init(EquateType.LABEL, rangeLabel, LabelAccess.READ_WRITE, address, "");
+			equate.init(EquateType.LABEL, rangeLabel, labelAccess, address, "");
 		}
 	}
 
@@ -250,30 +256,53 @@ public final class EquateList implements Xml.Serializable {
 	}
 
 	/**
-	 * Detects labels of the form EXAMPLE+$xxxx. When found, label EXAMPLE is
-	 * marked as referenced.
-	 * <p>
-	 * TODO: Consider parent equate list. Also consider recursion.
+	 * Marks the base label of every referenced range label as referenced with
+	 * the same access - "EXAMPLE+1" marks "EXAMPLE" - since the listing writes
+	 * only the base. "IOCB0+ICCOM" also marks "ICCOM", which it uses just as
+	 * much. A base is looked up in the range's own list first, then in the
+	 * other lists: a user range can be based on a system equate. Repeats until
+	 * nothing new is marked, since a base can itself be a range label; this
+	 * ends, since each pass can only add access bits.
 	 */
-	public void setBaseLabelsReferenced() {
-		for (Equate equate : equateList) {
-			int referencedAccess = equate.getReferencedLabelAccess();
-			if (equate.isRange() && referencedAccess != LabelAccess.UNKNOWN) {
-				Equate baseEquate = getEquateByLabel(equate.getBaseLabel());
-				// Be tolerant wrt. inconsistent label definitions.
-				if (baseEquate != null) {
-					baseEquate.addLabelReference(referencedAccess);
-				}
-				// "IOCB0+ICCOM" uses ICCOM just as much as IOCB0 - without this, ICCOM is
-				// omitted as unreferenced and the listing no longer assembles.
-				if (equate.getOffsetLabel() != null) {
-					Equate offsetEquate = getEquateByLabel(equate.getOffsetLabel());
-					if (offsetEquate != null) {
-						offsetEquate.addLabelReference(referencedAccess);
+	public static void setBaseLabelsReferenced(EquateList... equateLists) {
+		boolean changed;
+		do {
+			changed = false;
+			for (EquateList equateList : equateLists) {
+				for (Equate equate : equateList.equateList) {
+					int referencedAccess = equate.getReferencedLabelAccess();
+					if (equate.isRange() && referencedAccess != LabelAccess.UNKNOWN) {
+						// Be tolerant wrt. inconsistent label definitions: a missing base is skipped.
+						changed |= addLabelReference(
+								getEquateByLabel(equate.getBaseLabel(), equateList, equateLists), referencedAccess);
+						if (equate.getOffsetLabel() != null) {
+							changed |= addLabelReference(
+									getEquateByLabel(equate.getOffsetLabel(), equateList, equateLists),
+									referencedAccess);
+						}
 					}
 				}
 			}
+		} while (changed);
+	}
+
+	/** The equate with {@code label} in {@code ownList}, else in the first of {@code equateLists} that has one. */
+	private static Equate getEquateByLabel(String label, EquateList ownList, EquateList[] equateLists) {
+		Equate equate = ownList.getEquateByLabel(label);
+		for (int i = 0; equate == null && i < equateLists.length; i++) {
+			equate = equateLists[i].getEquateByLabel(label);
 		}
+		return equate;
+	}
+
+	/** Adds {@code labelAccess} to the equate's references; returns whether that added anything. */
+	private static boolean addLabelReference(Equate equate, int labelAccess) {
+		if (equate == null) {
+			return false;
+		}
+		int before = equate.getReferencedLabelAccess();
+		equate.addLabelReference(labelAccess);
+		return equate.getReferencedLabelAccess() != before;
 	}
 
 	public boolean isEquateAddressReferenced(int address, int labelAccess) {

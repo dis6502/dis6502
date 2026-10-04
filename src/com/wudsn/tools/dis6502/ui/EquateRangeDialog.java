@@ -148,7 +148,8 @@ public final class EquateRangeDialog extends JDialog {
 				// ERROR: Equate address is inside range.
 				JOptionPane.showMessageDialog(this, Messages.E046.format(), title, JOptionPane.ERROR_MESSAGE);
 			} else {
-				userEquateList.setRange(selectedEquate.getLabel(), baseAddress, startAddress, endAddress);
+				userEquateList.setRange(selectedEquate.getLabel(), baseAddress, selectedEquate.getLabelAccess(),
+						startAddress, endAddress);
 				confirmed = true;
 				setVisible(false);
 			}

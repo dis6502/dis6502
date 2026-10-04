@@ -102,6 +102,13 @@ what is new, changed or fixed compared with it. Known limits are in
 
 ### Equates
 
+- **Define Address Range** gives the range the access of its base equate
+  (read, write, read/write or immediate): a range based on a constant no
+  longer turns memory accesses into labels. Ranges in existing workspaces
+  keep their access.
+- Fixed: a user range based on a system equate (e.g. `COLPF0+1` based on
+  `COLPF0`) left its base undefined when unreferenced system labels were
+  omitted, so the listing did not assemble.
 - Fixed: in **Edit User Equates**, Add/Modify always appended a new line
   instead of replacing the selected one.
 

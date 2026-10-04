@@ -1,7 +1,6 @@
 # Equates and label access
 
-Status: Planned (2026-10-04) - every design question is decided, see
-"Decisions".
+Status: In progress - step 1 done (2026-10-04), see "Progress".
 
 Four of the source TODOs ([`SOURCE_TODOS.md`](SOURCE_TODOS.md)) concern which
 equates a listing uses and writes. They overlap, so they are planned
@@ -194,6 +193,24 @@ applies where at least one of them is **active**.
    for the OS, IOCB constants and further label sets.
 5. `SOURCE_TODOS.md`, `FURTHER_IMPROVEMENTS.md` (TODO count), `CHANGES.md`
    (finding 1 is a fix: the logic came unchanged from 3.6.1).
+
+## Progress
+
+**Step 1 (2026-10-04):** findings 1 and 3.
+`EquateList.setBaseLabelsReferenced` is static over all equate lists: a base
+label is looked up in the range's own list, then in the others, and the
+marking repeats until nothing new is marked. `setRange` takes the base
+equate's access, which `EquateRangeDialog` passes. The new
+`EquateRangeTest` checks, on the real Atari 800 system equates, that a user
+range on `COLPF0` defines `COLPF0` and that its listing assembles with MADS
+into the program's bytes, and that a range on the `#` constant `ICCOM`
+leaves `sta $03` as `CASINI+1` while matching an immediate lookup. It fails
+when either fix is undone.
+
+Found on the way: an immediate operand only becomes a label once its byte
+is typed so (the memory inspector's immediate type); by default
+`ldx #$03` stays a number, so a range's immediate access only matters for
+typed operands.
 
 ## Decisions (2026-10-04)
 

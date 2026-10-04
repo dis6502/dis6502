@@ -1779,8 +1779,7 @@ public final class Disassembly {
 		setPass(6, "Cleanup");
 
 		// Mark the base labels of ranges as referenced.
-		workspace.getSystemEquateList().setBaseLabelsReferenced();
-		workspace.getUserEquateList().setBaseLabelsReferenced();
+		EquateList.setBaseLabelsReferenced(workspace.getUserEquateList(), workspace.getSystemEquateList());
 
 		// Start creating the result.
 		generateEquates(DisassemblySectionType.SYSTEM_EQUATES, workspace.getSystemEquateList());
