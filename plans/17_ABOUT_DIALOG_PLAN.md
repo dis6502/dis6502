@@ -1,6 +1,6 @@
 # Plan 17: The About dialogs on WUDSN Base's `ModalDialog`
 
-Status: In progress - steps 1 and 2 done (2026-10-05), see "Progress".
+Status: In progress - steps 1 to 3 done (2026-10-05), see "Progress".
 
 ## Goal
 
@@ -145,6 +145,14 @@ closes and disposes it. The method is `showDialog()`, not `show()`: a
 public `show()` overrides AWT's `Dialog.show()`, which `setVisible(true)`
 calls - `showModal` would recurse. `ElementUtilities.closeOnEscape` keeps
 one user, `DisassemblyProgressDialog`. Both test modes pass.
+
+**Step 3 (2026-10-05):** RMT's `AboutDialog` extends the OK-only
+`ModalDialog`; its `GridBagLayout` content stays at the center, its own OK
+panel and Escape binding are gone, OK has its mnemonic. `showDialog()`
+(RMT's naming, and not `show()` - see step 2) is called by
+`RmtMainWindow.showAbout`. RMT's 666 tests pass; a painted image shows the
+content unchanged and OK at the right of the standard button bar, OK the
+default button, Escape closing and disposing the dialog.
 
 ## Decisions (2026-10-05)
 
