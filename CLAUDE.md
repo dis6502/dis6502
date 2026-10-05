@@ -28,9 +28,12 @@ The standing documents stay unnumbered:
   working on this port (state ownership, Swing UI conventions, porting
   fidelity rules), so the same guidance is visible to anyone working in this
   repository, not just a future Claude session.
-- [`plans/RULES_WUDSN_BASE.md`](plans/RULES_WUDSN_BASE.md) - standing rules
-  for using WUDSN Base's repository/`Action`/`ElementFactory` pattern for
-  menu items, buttons, and other labeled Swing components.
+- WUDSN Base's [`plans/RULES_WUDSN_BASE.md`](https://github.com/wudsn/wudsn-base/blob/master/plans/RULES_WUDSN_BASE.md)
+  (local: `C:\jac\system\Java\Programming\Repositories\WUDSN-Base\plans\RULES_WUDSN_BASE.md`) - standing
+  rules, shared with RASTER Music Tracker, for using WUDSN Base's
+  repository/`Action`/`ElementFactory` pattern for menu items, buttons,
+  and other labeled Swing components, and its `ModalDialog` for OK/Cancel
+  dialogs.
 - [`plans/RULES_LOCALIZATION.md`](plans/RULES_LOCALIZATION.md) - standing
   rules for texts and messages: where they go, punctuation, quoting.
 - [`plans/RULES_SYSTEM_SUBPACKAGES_PLAN.md`](plans/RULES_SYSTEM_SUBPACKAGES_PLAN.md) -

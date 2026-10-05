@@ -231,6 +231,18 @@ screenshot - closing that gap is worth it even when it surfaces
 short-term test failures. Apply the same native-L&F setup to any future
 test that renders real Swing UI.
 
+### Check a dialog's layout on an image it paints itself
+
+To look at a dialog, show it and paint its `JRootPane` into a
+`BufferedImage` with `printAll(g)` on the event dispatch thread - never
+capture the screen at the dialog's bounds with `java.awt.Robot`. A screen
+capture records whatever window is in front at that moment: during plan 16
+the user worked in parallel, and the captures recorded their browser and
+mail inbox instead of the dialogs (deleted at once). A painted image holds
+only the dialog's own pixels (without the title bar). Run such a harness
+with `-Ddis6502.settingsNode=test`, so it never touches the user's
+settings.
+
 ## File conventions
 
 ### Keep the working tree's CRLF line endings on every write

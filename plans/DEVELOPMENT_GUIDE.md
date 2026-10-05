@@ -8,7 +8,7 @@ porting process this file used to describe is in its git history.
 
 More standing rules: [`MEMORY.md`](MEMORY.md) (state ownership, NLS and
 `ValueSet` patterns, persisted preferences, file conventions),
-[`RULES_WUDSN_BASE.md`](RULES_WUDSN_BASE.md),
+WUDSN Base's [`RULES_WUDSN_BASE.md`](https://github.com/wudsn/wudsn-base/blob/master/plans/RULES_WUDSN_BASE.md),
 [`RULES_LOCALIZATION.md`](RULES_LOCALIZATION.md) and
 [`RULES_SYSTEM_SUBPACKAGES_PLAN.md`](RULES_SYSTEM_SUBPACKAGES_PLAN.md).
 

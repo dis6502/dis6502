@@ -29,14 +29,13 @@ public final class ElementUtilities {
 
 	/**
 	 * Wires Esc, for as long as {@code dialog}'s window has focus, to run
-	 * {@code closeAction} - the same {@link AbstractAction}-on-the-root-
-	 * pane's-input/action-map idiom {@link EquateDialog} and {@link
-	 * AboutDialog} each used to duplicate individually. Swing has no
-	 * built-in Esc-closes-dialog mapping the way a native Win32 modal
-	 * dialog defaults {@code IDCANCEL} for, so every dialog that wants this
-	 * needs to wire it explicitly - pass the same {@link Runnable} the
-	 * dialog's own Cancel/OK button's {@code ActionListener} already runs,
-	 * so Esc behaves exactly like clicking that button.
+	 * {@code closeAction}. Only for the dialogs that are no OK/Cancel dialogs
+	 * - {@link AboutDialog} and {@link DisassemblyProgressDialog}: an
+	 * OK/Cancel dialog extends WUDSN Base's {@code ModalDialog}, which wires
+	 * Esc itself. Swing has no built-in Esc-closes-dialog mapping the way a
+	 * native Win32 modal dialog defaults {@code IDCANCEL} for - pass the same
+	 * {@link Runnable} the dialog's own close button's {@code ActionListener}
+	 * already runs, so Esc behaves exactly like clicking that button.
 	 */
 	public static void closeOnEscape(JDialog dialog, Runnable closeAction) {
 		dialog.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),

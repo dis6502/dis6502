@@ -5,9 +5,10 @@ order they were created. A new plan gets the next free number. Each plan
 carries its status in its first lines; this table is the overview.
 
 The standing documents are not numbered: `DEVELOPMENT_GUIDE.md`, `MEMORY.md`,
-`RULES_WUDSN_BASE.md`, `RULES_LOCALIZATION.md`,
-`RULES_SYSTEM_SUBPACKAGES_PLAN.md`, `FURTHER_IMPROVEMENTS.md`,
-`SOURCE_TODOS.md` and `DIS6502_WIN32_TODOS.md` - see `CLAUDE.md` at the repository root.
+`RULES_LOCALIZATION.md`, `RULES_SYSTEM_SUBPACKAGES_PLAN.md`,
+`FURTHER_IMPROVEMENTS.md`, `SOURCE_TODOS.md` and `DIS6502_WIN32_TODOS.md` -
+see `CLAUDE.md` at the repository root. The rules for using WUDSN Base are
+in WUDSN Base itself: [`RULES_WUDSN_BASE.md`](https://github.com/wudsn/wudsn-base/blob/master/plans/RULES_WUDSN_BASE.md).
 
 | No. | Plan | Purpose | Status |
 |---|---|---|---|
@@ -26,4 +27,4 @@ The standing documents are not numbered: `DEVELOPMENT_GUIDE.md`, `MEMORY.md`,
 | 13 | [ROM_TYPE_PROPOSAL](13_ROM_TYPE_PROPOSAL.md) | A system-independent `ROMType` instead of WUDSN Base's Atari `CartridgeType` outside the Atari `ComputerSystem` subclasses | Done 2026-10-04 |
 | 14 | [EQUATES_LABEL_ACCESS_PLAN](14_EQUATES_LABEL_ACCESS_PLAN.md) | Which equates a listing uses and writes: user ranges on system equates, shared addresses, range access, equate contexts (SDX, OS) | Done |
 | 15 | [MRU_LIST_EXTRACTION_PLAN](15_MRU_LIST_EXTRACTION_PLAN.md) | Move `ApplicationSettingsSection`, `MRUEntry`/`MRUList` and the MRU menu to WUDSN Base; the MRU list generic over a project's file type value set | Done |
-| 16 | [MODAL_DIALOG_PLAN](16_MODAL_DIALOG_PLAN.md) | DIS6502's OK/Cancel dialogs on WUDSN Base's `ModalDialog`, as in RASTER Music Tracker; the changes `ModalDialog` needs | Planned |
+| 16 | [MODAL_DIALOG_PLAN](16_MODAL_DIALOG_PLAN.md) | DIS6502's OK/Cancel dialogs on WUDSN Base's `ModalDialog`, as in RASTER Music Tracker; the changes `ModalDialog` needs | Done |

@@ -1,6 +1,6 @@
 # Plan 16: DIS6502's dialogs on WUDSN Base's `ModalDialog`
 
-Status: In progress - steps 1 to 3 done (2026-10-05), see "Progress".
+Status: Done (2026-10-05), see "Progress".
 
 ## Goal
 
@@ -275,6 +275,16 @@ Both test modes pass. The layout of all seven was checked on images the
 dialogs painted themselves (`rootPane.printAll`) - a first attempt with
 screen captures recorded other windows in front of the dialogs and was
 deleted.
+
+**Step 4 (2026-10-05):** `RULES_WUDSN_BASE.md` describes `ModalDialog` and
+`MRUMenu` and has the rule "an OK/Cancel dialog extends `ModalDialog`"; its
+rule for runtime-generated menu items points to `MRUMenu`.
+`ElementUtilities.closeOnEscape`'s javadoc names its two remaining users.
+`plans/MEMORY.md` has the lesson on checking dialog layouts with painted
+images instead of screen captures. Afterwards, `RULES_WUDSN_BASE.md` moved
+to WUDSN Base's `plans/` folder, generalized for every application on
+WUDSN Base (the wiring rule describes DIS6502's direct wiring and RMT's
+command dispatch side by side); DIS6502 and RMT refer to it there.
 
 ## Decisions (2026-10-05)
 
