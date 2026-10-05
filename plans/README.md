@@ -28,4 +28,4 @@ in WUDSN Base itself: [`RULES_WUDSN_BASE.md`](https://github.com/wudsn/wudsn-bas
 | 14 | [EQUATES_LABEL_ACCESS_PLAN](14_EQUATES_LABEL_ACCESS_PLAN.md) | Which equates a listing uses and writes: user ranges on system equates, shared addresses, range access, equate contexts (SDX, OS) | Done |
 | 15 | [MRU_LIST_EXTRACTION_PLAN](15_MRU_LIST_EXTRACTION_PLAN.md) | Move `ApplicationSettingsSection`, `MRUEntry`/`MRUList` and the MRU menu to WUDSN Base; the MRU list generic over a project's file type value set | Done |
 | 16 | [MODAL_DIALOG_PLAN](16_MODAL_DIALOG_PLAN.md) | DIS6502's OK/Cancel dialogs on WUDSN Base's `ModalDialog`, as in RASTER Music Tracker; the changes `ModalDialog` needs | Done |
-| 17 | [ABOUT_DIALOG_PLAN](17_ABOUT_DIALOG_PLAN.md) | The About dialogs of DIS6502, RMT and The!Cart Studio on an OK-only `ModalDialog` | Planned |
+| 17 | [ABOUT_DIALOG_PLAN](17_ABOUT_DIALOG_PLAN.md) | The About dialogs of DIS6502, RMT and The!Cart Studio on an OK-only `ModalDialog` | Done |

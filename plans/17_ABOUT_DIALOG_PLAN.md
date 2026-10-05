@@ -1,6 +1,7 @@
 # Plan 17: The About dialogs on WUDSN Base's `ModalDialog`
 
-Status: In progress - steps 1 to 3 done (2026-10-05), see "Progress".
+Status: Done (2026-10-05), see "Progress" - The!Cart Studio's dialog is a
+TODO there.
 
 ## Goal
 
@@ -153,6 +154,13 @@ panel and Escape binding are gone, OK has its mnemonic. `showDialog()`
 `RmtMainWindow.showAbout`. RMT's 666 tests pass; a painted image shows the
 content unchanged and OK at the right of the standard button bar, OK the
 default button, Escape closing and disposing the dialog.
+
+**Step 4 (2026-10-05), The!Cart Studio `52e72e9`:** a `TODO` in
+`AboutDialog`'s class javadoc names the change (OK-only `ModalDialog`
+instead of `SimpleDialog`, constructor and `showDialog()`, no fixed size,
+a new dialog per use in `TheCartStudio.performAboutDialog`). Only that
+file was committed; the project compiles. `TheCartStudio.java` keeps the
+user's local changes, uncommitted.
 
 ## Decisions (2026-10-05)
 
