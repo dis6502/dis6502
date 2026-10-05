@@ -16,15 +16,13 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
-import com.wudsn.tools.base.Actions;
 import com.wudsn.tools.base.gui.Desktop;
 import com.wudsn.tools.base.gui.ElementFactory;
+import com.wudsn.tools.base.gui.ModalDialog;
 import com.wudsn.tools.dis6502.Texts;
 
 /**
@@ -46,20 +44,22 @@ import com.wudsn.tools.dis6502.Texts;
  * A per-module version/description listbox is not implemented: there is no
  * single versioned native module to query the way a native executable
  * carries its own embedded version resource for a launched-from-a-jar Java
- * application - dropped rather than faked with a placeholder. Every
- * control's background is forced to white by giving the content pane an
- * explicit white background, since Swing components already inherit their
- * container's background by default.
+ * application - dropped rather than faked with a placeholder.
+ * <p>
+ * A WUDSN Base {@link ModalDialog} with OK only: the white panel with the
+ * header and the text lines sits at the center of the content pane, like
+ * the form of every other dialog, and {@code ModalDialog}'s button bar
+ * below it. The content pane is white too, so the button bar - which is
+ * not opaque - shows white instead of a gray strip.
  *
  * @author Peter Dell
  */
-public final class AboutDialog extends JDialog {
+public final class AboutDialog extends ModalDialog {
 
 	private static final long serialVersionUID = 1L;
 
 	public AboutDialog(Frame owner) {
-		super(owner, Texts.AboutDialog_WindowTitle, true);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		super(owner, Texts.AboutDialog_WindowTitle, false);
 
 		JPanel contentPanel = new JPanel(new BorderLayout(8, 8));
 		contentPanel.setBackground(Color.WHITE);
@@ -92,20 +92,17 @@ public final class AboutDialog extends JDialog {
 		}
 		contentPanel.add(textPanel, BorderLayout.CENTER);
 
-		JButton okButton = ElementFactory.createButton(Actions.ButtonBar_OK, true);
-		okButton.addActionListener(e -> setVisible(false));
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.setBackground(Color.WHITE);
-		buttonPanel.add(okButton);
-		contentPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-		setContentPane(contentPanel);
-		getRootPane().setDefaultButton(okButton);
-		ElementUtilities.closeOnEscape(this, okButton::doClick);
-
-		pack();
+		getContentPane().setBackground(Color.WHITE);
+		getContentPane().add(contentPanel, BorderLayout.CENTER);
 		setResizable(false);
-		setLocationRelativeTo(owner);
+	}
+
+	/**
+	 * Shows the dialog until the user closes it. Not {@code show()}: that would
+	 * override AWT's {@code Dialog.show()}, which {@code setVisible(true)} calls.
+	 */
+	public void showDialog() {
+		showModal(getOKButton());
 	}
 
 	private static JLabel createLinkLabel(String url) {

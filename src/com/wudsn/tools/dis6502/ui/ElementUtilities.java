@@ -29,10 +29,10 @@ public final class ElementUtilities {
 
 	/**
 	 * Wires Esc, for as long as {@code dialog}'s window has focus, to run
-	 * {@code closeAction}. Only for the dialogs that are no OK/Cancel dialogs
-	 * - {@link AboutDialog} and {@link DisassemblyProgressDialog}: an
-	 * OK/Cancel dialog extends WUDSN Base's {@code ModalDialog}, which wires
-	 * Esc itself. Swing has no built-in Esc-closes-dialog mapping the way a
+	 * {@code closeAction}. Only for a dialog that is no {@code ModalDialog} -
+	 * today {@link DisassemblyProgressDialog}: an OK/Cancel dialog, and an
+	 * OK-only one like {@link AboutDialog}, extends WUDSN Base's {@code
+	 * ModalDialog}, which wires Esc itself. Swing has no built-in Esc-closes-dialog mapping the way a
 	 * native Win32 modal dialog defaults {@code IDCANCEL} for - pass the same
 	 * {@link Runnable} the dialog's own close button's {@code ActionListener}
 	 * already runs, so Esc behaves exactly like clicking that button.

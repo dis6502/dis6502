@@ -1,7 +1,6 @@
 # Plan 17: The About dialogs on WUDSN Base's `ModalDialog`
 
-Status: Planned (2026-10-05) - every design question is decided, see
-"Decisions".
+Status: In progress - steps 1 and 2 done (2026-10-05), see "Progress".
 
 ## Goal
 
@@ -125,6 +124,27 @@ which the change also touches, has uncommitted local changes.
 Each repository is committed separately; no `CHANGES.md` entry in
 DIS6502 beyond what users see (the About dialog's OK at the right, in the
 standard button bar).
+
+## Progress
+
+**Step 1 (2026-10-05), WUDSN Base `1332f03`:** `ModalDialog(owner, title,
+false)` has OK only; the Cancel button is created only when wanted, the
+Escape binding uses the internal cancel action in both variants.
+`ModalDialogTest.testOKOnly` checks one button in the bar, OK closing with
+`okPressed` true, Escape and the close box with false; it fails when
+Cancel is always added. `RULES_WUDSN_BASE.md` describes the variant; its
+DIS6502 example of dialogs that stay on `JDialog` is now `AssembleDialog`
+and `DisassemblyProgressDialog` (it claimed both use `closeOnEscape`; only
+the latter does). RMT's 666 tests pass unchanged.
+
+**Step 2 (2026-10-05):** DIS6502's `AboutDialog` extends the OK-only
+`ModalDialog`. Its white panel sits at the content pane's center; the
+content pane is white, so the button bar below shows white - checked on a
+painted image: no gray strip, OK at the right, the default button; Escape
+closes and disposes it. The method is `showDialog()`, not `show()`: a
+public `show()` overrides AWT's `Dialog.show()`, which `setVisible(true)`
+calls - `showModal` would recurse. `ElementUtilities.closeOnEscape` keeps
+one user, `DisassemblyProgressDialog`. Both test modes pass.
 
 ## Decisions (2026-10-05)
 

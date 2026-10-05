@@ -1997,8 +1997,7 @@ public final class Dis6502 {
 
 	/** Opens {@link AboutDialog} - see that class's own javadoc for details. */
 	private void performAbout() {
-		AboutDialog dialog = new AboutDialog(mainWindow.getFrame());
-		dialog.setVisible(true);
+		new AboutDialog(mainWindow.getFrame()).showDialog();
 	}
 
 	/** Sets the main window's title (and the segment list's file name) from the current file/computer system. */
