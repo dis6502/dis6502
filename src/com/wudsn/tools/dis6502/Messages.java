@@ -26,6 +26,9 @@ import com.wudsn.tools.base.repository.NLS;
  */
 public final class Messages extends NLS {
 
+	/** The user-defined short upper-case identifier prefixing all message numbers of this class. */
+	public static final String ID = "DIS"; // DIS6502
+
 	/** {@link Dis6502#run}'s startup warning message. */
 	public static Message I001;
 
